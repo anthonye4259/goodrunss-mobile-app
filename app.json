@@ -1,0 +1,75 @@
+{
+  "expo": {
+    "name": "GoodRunss",
+    "slug": "goodrunss-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.jpg",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.jpg",
+      "resizeMode": "contain",
+      "backgroundColor": "#0A0A0A"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.goodrunss.mobile",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "GoodRunss needs your location to show nearby trainers, courts, and studios.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "GoodRunss needs your location to show nearby trainers, courts, and studios.",
+        "NSCameraUsageDescription": "GoodRunss needs camera access to upload profile pictures and venue photos.",
+        "NSPhotoLibraryUsageDescription": "GoodRunss needs photo library access to upload pictures.",
+        "NSMicrophoneUsageDescription": "GoodRunss needs microphone access for voice messages."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.jpg",
+        "backgroundColor": "#0A0A0A"
+      },
+      "package": "com.goodrunss.mobile",
+      "versionCode": 1,
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "RECORD_AUDIO"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.jpg"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow GoodRunss to use your location to show nearby trainers, courts, and studios."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "GoodRunss needs access to your photos to upload profile pictures and venue photos.",
+          "cameraPermission": "GoodRunss needs camera access to take photos."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#7ED957"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "your-project-id-here"
+      }
+    }
+  }
+}

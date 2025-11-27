@@ -1,0 +1,46 @@
+node_modules/
+.expo/
+.expo-shared/
+dist/
+npm-debug.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/
+
+# Environment
+.env
+.env.local
+.env.production
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+logs/
+
+# Metro
+.metro-health-check*
+
+# Testing
+coverage/
+
+# EAS
+.eas/
+build/
+*.ipa
+*.apk
+*.aab
+
+# Temporary files
+tmp/
+temp/
+
