@@ -47,7 +47,8 @@
     "react-native-screens": "~4.4.0",
     "react-native-snap-carousel": "^3.9.1",
     "react-native-svg": "15.8.0",
-    "react-native-view-shot": "^4.0.3"
+    "react-native-view-shot": "^4.0.3",
+    "react-native-worklets-core": "^1.6.2"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
