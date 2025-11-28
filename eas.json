@@ -28,6 +28,13 @@
         "resourceClass": "medium"
       }
     },
+    "simulator": {
+      "channel": "development",
+      "ios": {
+        "simulator": true,
+        "resourceClass": "m-medium"
+      }
+    },
     "production": {
       "channel": "production",
       "ios": {
