@@ -4,10 +4,8 @@
     "slug": "goodrunss-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.jpg",
     "userInterfaceStyle": "dark",
     "splash": {
-      "image": "./assets/splash.jpg",
       "resizeMode": "contain",
       "backgroundColor": "#0A0A0A"
     },
@@ -25,10 +23,6 @@
       }
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.jpg",
-        "backgroundColor": "#0A0A0A"
-      },
       "package": "com.goodrunss.mobile",
       "versionCode": 1,
       "permissions": [
@@ -39,9 +33,6 @@
         "WRITE_EXTERNAL_STORAGE",
         "RECORD_AUDIO"
       ]
-    },
-    "web": {
-      "favicon": "./assets/favicon.jpg"
     },
     "plugins": [
       "expo-router",
@@ -58,18 +49,7 @@
           "cameraPermission": "GoodRunss needs camera access to take photos."
         }
       ],
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/notification-icon.png",
-          "color": "#7ED957"
-        }
-      ]
-    ],
-    "extra": {
-      "eas": {
-        "projectId": "your-project-id-here"
-      }
-    }
+      "expo-notifications"
+    ]
   }
 }
