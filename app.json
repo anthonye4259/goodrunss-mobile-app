@@ -9,7 +9,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#0A0A0A"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.goodrunss.mobile",
@@ -20,19 +22,20 @@
         "NSLocationAlwaysAndWhenInUseUsageDescription": "GoodRunss needs your location to show nearby trainers, courts, and studios.",
         "NSCameraUsageDescription": "GoodRunss needs camera access to upload profile pictures and venue photos.",
         "NSPhotoLibraryUsageDescription": "GoodRunss needs photo library access to upload pictures.",
-        "NSMicrophoneUsageDescription": "GoodRunss needs microphone access for voice messages."
+        "NSMicrophoneUsageDescription": "GoodRunss needs microphone access for voice messages.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "package": "com.goodrunss.mobile",
       "versionCode": 1,
       "permissions": [
-        "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION",
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
-        "RECORD_AUDIO"
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "plugins": [
@@ -64,6 +67,14 @@
           }
         }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "1b9c4733-0326-48c5-9993-e793620f5077"
+      }
+    }
   }
 }
