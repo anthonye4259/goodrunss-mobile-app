@@ -1,4 +1,3 @@
-"use client"
 
 import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"

@@ -1,4 +1,3 @@
-"use client"
 
 import { Card } from "@/components/ui/card"
 import { Trophy, Flame, Target, Zap, Award, Star } from "lucide-react"

@@ -1,4 +1,3 @@
-"use client"
 
 import { Crown } from "lucide-react"
 import { cn } from "@/lib/utils"

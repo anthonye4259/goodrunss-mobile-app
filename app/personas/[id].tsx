@@ -1,4 +1,3 @@
-"use client"
 
 import { useRef, useEffect } from "react"
 import { View, Text, ScrollView, TouchableOpacity, Animated } from "react-native"

@@ -1,4 +1,3 @@
-"use client"
 
 import { useState } from "react"
 import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, Image } from "react-native"

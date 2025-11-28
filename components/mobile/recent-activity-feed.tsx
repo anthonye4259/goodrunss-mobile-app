@@ -1,4 +1,3 @@
-"use client"
 
 import { Card } from "@/components/ui/card"
 import { Trophy, Calendar, Users, TrendingUp } from "lucide-react"

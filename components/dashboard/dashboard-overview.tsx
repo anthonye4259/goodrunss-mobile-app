@@ -1,4 +1,3 @@
-"use client"
 
 import { Card } from "@/components/ui/card"
 import { DollarSign, Users, Calendar, TrendingUp, ArrowUpRight } from "lucide-react"

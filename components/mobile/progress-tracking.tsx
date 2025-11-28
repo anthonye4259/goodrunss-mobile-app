@@ -1,4 +1,3 @@
-"use client"
 
 import { Card } from "@/components/ui/card"
 import { TrendingUp, Target, Zap } from "lucide-react"

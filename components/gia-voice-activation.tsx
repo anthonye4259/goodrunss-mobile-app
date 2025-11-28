@@ -1,4 +1,3 @@
-"use client"
 
 import { useState } from "react"
 import { Mic, Volume2, Sparkles } from "lucide-react"

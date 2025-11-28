@@ -1,4 +1,3 @@
-"use client"
 
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Modal } from "react-native"
 import { Ionicons } from "@expo/vector-icons"

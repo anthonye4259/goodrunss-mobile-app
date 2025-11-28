@@ -1,4 +1,3 @@
-"use client"
 
 import { View, Animated } from "react-native"
 import { useEffect, useRef } from "react"

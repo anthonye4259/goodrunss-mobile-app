@@ -1,4 +1,3 @@
-"use client"
 
 import { View, Text, TouchableOpacity, Modal } from "react-native"
 import { Calendar } from "react-native-calendars"

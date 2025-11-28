@@ -1,4 +1,3 @@
-"use client"
 
 import { View, Text, ScrollView, TouchableOpacity, Switch } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
