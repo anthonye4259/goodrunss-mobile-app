@@ -1,6 +1,7 @@
 {
   "cli": {
-    "version": ">= 13.2.0"
+    "version": ">= 13.2.0",
+    "appVersionSource": "remote"
   },
   "build": {
     "development": {
@@ -30,8 +31,7 @@
     "production": {
       "channel": "production",
       "ios": {
-        "resourceClass": "m-medium",
-        "bundler": "metro"
+        "resourceClass": "m-medium"
       },
       "android": {
         "buildType": "app-bundle",
