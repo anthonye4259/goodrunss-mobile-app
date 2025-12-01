@@ -6,7 +6,7 @@
  */
 
 import axios from 'axios'
-import { SportType, FacilityType, Venue, SPORT_SEARCH_KEYWORDS } from '../../lib/types/global-facilities'
+import { SportType, FacilityType, Venue, SPORT_SEARCH_KEYWORDS, RECOVERY_SEARCH_KEYWORDS } from '../../lib/types/global-facilities'
 
 // ===== CONFIGURATION =====
 const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY || ''
@@ -156,7 +156,8 @@ export class GlobalFacilityFetcher {
       includeClosed?: boolean
     }
   ): Promise<GooglePlaceResult[]> {
-    const keywords = SPORT_SEARCH_KEYWORDS[sport]
+    // Check both sport and recovery keywords
+    const keywords = SPORT_SEARCH_KEYWORDS[sport] || RECOVERY_SEARCH_KEYWORDS[sport] || [sport]
     const results: GooglePlaceResult[] = []
 
     for (const keyword of keywords) {

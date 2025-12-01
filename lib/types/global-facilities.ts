@@ -107,6 +107,18 @@ export type FacilityType =
   | "climbing_gym"
   | "bowling_alley"
   | "park"
+  // Recovery & Wellness (NEW!)
+  | "physical_therapy"
+  | "sports_medicine"
+  | "chiropractic"
+  | "massage_therapy"
+  | "acupuncture"
+  | "cryotherapy"
+  | "float_spa"
+  | "sauna_spa"
+  | "recovery_studio"
+  | "athletic_training"
+  | "orthopedic_clinic"
 
 // ===== ACCESS TYPES =====
 export type AccessType =
@@ -424,5 +436,32 @@ export const FACILITY_DISPLAY_NAMES: Record<FacilityType, string> = {
   climbing_gym: "Climbing Gym",
   bowling_alley: "Bowling Alley",
   park: "Park",
+  // Recovery & Wellness
+  physical_therapy: "Physical Therapy",
+  sports_medicine: "Sports Medicine",
+  chiropractic: "Chiropractic",
+  massage_therapy: "Massage Therapy",
+  acupuncture: "Acupuncture",
+  cryotherapy: "Cryotherapy",
+  float_spa: "Float Spa",
+  sauna_spa: "Sauna & Spa",
+  recovery_studio: "Recovery Studio",
+  athletic_training: "Athletic Training",
+  orthopedic_clinic: "Orthopedic Clinic",
+}
+
+// ===== RECOVERY FACILITY SEARCH KEYWORDS =====
+export const RECOVERY_SEARCH_KEYWORDS: Record<string, string[]> = {
+  physical_therapy: ["physical therapy", "PT clinic", "physiotherapy", "physical therapist"],
+  sports_medicine: ["sports medicine", "sports doctor", "sports clinic", "athletic medicine"],
+  chiropractic: ["chiropractor", "chiropractic", "spinal adjustment"],
+  massage_therapy: ["massage therapy", "sports massage", "deep tissue massage", "massage therapist"],
+  acupuncture: ["acupuncture", "acupuncturist", "dry needling"],
+  cryotherapy: ["cryotherapy", "cryo spa", "cold therapy", "whole body cryotherapy"],
+  float_spa: ["float spa", "sensory deprivation", "float tank", "flotation therapy"],
+  sauna_spa: ["sauna", "infrared sauna", "spa", "steam room"],
+  recovery_studio: ["recovery studio", "athletic recovery", "recovery lounge", "normatec"],
+  athletic_training: ["athletic trainer", "sports training facility"],
+  orthopedic_clinic: ["orthopedic", "orthopedist", "bone doctor", "joint specialist"],
 }
 

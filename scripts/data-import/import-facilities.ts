@@ -53,6 +53,22 @@ const SPORT_TO_FACILITY: Record<string, FacilityType> = {
   crossfit: 'crossfit_box',
   gym: 'commercial_gym',
   golf: 'golf_course',
+  // Recovery facilities
+  physical_therapy: 'physical_therapy',
+  pt: 'physical_therapy',
+  sports_medicine: 'sports_medicine',
+  chiropractic: 'chiropractic',
+  chiropractor: 'chiropractic',
+  massage: 'massage_therapy',
+  massage_therapy: 'massage_therapy',
+  acupuncture: 'acupuncture',
+  cryotherapy: 'cryotherapy',
+  cryo: 'cryotherapy',
+  float: 'float_spa',
+  float_spa: 'float_spa',
+  sauna: 'sauna_spa',
+  recovery: 'recovery_studio',
+  orthopedic: 'orthopedic_clinic',
 }
 
 // ===== CLI SETUP =====
@@ -93,6 +109,10 @@ async function main() {
     // Fetch all sports (limit for demo)
     sportsToFetch = ['basketball', 'tennis', 'swimming', 'soccer', 'yoga', 'gym']
     console.log('📊 Fetching ALL major sports')
+  } else if (options.sport === 'recovery') {
+    // Fetch all recovery facilities
+    sportsToFetch = ['physical_therapy', 'sports_medicine', 'chiropractic', 'massage', 'cryotherapy'] as any[]
+    console.log('🏥 Fetching ALL recovery facilities')
   } else if (options.sport) {
     sportsToFetch = [options.sport as SportType]
     console.log(`📊 Fetching: ${options.sport}`)
