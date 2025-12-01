@@ -52,7 +52,7 @@ const MOCK_RECOVERY_SCORE: RecoveryScore = {
 }
 
 export default function RecoveryScreen() {
-  const [activeTab, setActiveTab] = useState<'home' | 'warmups' | 'recovery' | 'injuries' | 'shop'>('home')
+  const [activeTab, setActiveTab] = useState<'home' | 'warmups' | 'recovery' | 'injuries' | 'wearables'>('home')
   const [showBodyMap, setShowBodyMap] = useState(false)
   const [showRoutinePlayer, setShowRoutinePlayer] = useState(false)
   const [selectedRoutine, setSelectedRoutine] = useState<WarmupRoutine | RecoveryRoutine | null>(null)
@@ -116,10 +116,10 @@ export default function RecoveryScreen() {
           onPress={() => setActiveTab('injuries')}
         />
         <TabButton
-          icon="cart"
-          label="Shop"
-          active={activeTab === 'shop'}
-          onPress={() => setActiveTab('shop')}
+          icon="watch"
+          label="Wearables"
+          active={activeTab === 'wearables'}
+          onPress={() => setActiveTab('wearables')}
         />
       </View>
 
@@ -170,8 +170,8 @@ export default function RecoveryScreen() {
           />
         )}
 
-        {activeTab === 'shop' && (
-          <ShopTab />
+        {activeTab === 'wearables' && (
+          <WearablesTab />
         )}
 
         <View className="h-20" />
@@ -464,36 +464,152 @@ function InjuriesTab({
   )
 }
 
-// Shop Tab
-function ShopTab() {
+// Wearables Tab
+function WearablesTab() {
+  const [connectedDevices, setConnectedDevices] = useState<string[]>([])
+
+  const handleConnectDevice = (device: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+    // In production, this would initiate OAuth or HealthKit permissions
+    if (connectedDevices.includes(device)) {
+      setConnectedDevices(connectedDevices.filter(d => d !== device))
+    } else {
+      setConnectedDevices([...connectedDevices, device])
+    }
+  }
+
   return (
     <View className="px-4 pt-4">
-      <Text className="text-white text-xl font-bold mb-2">Recovery Gear</Text>
+      <Text className="text-white text-xl font-bold mb-2">Wearable Devices</Text>
       <Text className="text-gray-400 mb-6">
-        Curated products to optimize your recovery
+        Connect your devices for automatic recovery tracking
       </Text>
 
-      {/* Categories */}
-      <View className="flex-row flex-wrap">
-        <ShopCategory icon="fitness" label="Foam Rollers" color="#F97316" />
-        <ShopCategory icon="flash" label="Massage Guns" color="#8B5CF6" />
-        <ShopCategory icon="body" label="Compression" color="#3B82F6" />
-        <ShopCategory icon="snow" label="Ice & Heat" color="#06B6D4" />
-        <ShopCategory icon="nutrition" label="Supplements" color="#EAB308" />
-        <ShopCategory icon="watch" label="Wearables" color="#EC4899" />
+      {/* Wearable Cards */}
+      <WearableCard
+        name="Apple Watch"
+        icon="watch"
+        color="#FF2D55"
+        description="Sync HRV, sleep, heart rate, and activity data via HealthKit"
+        metrics={['HRV', 'Sleep', 'Heart Rate', 'Steps', 'Workouts']}
+        connected={connectedDevices.includes('apple_watch')}
+        onConnect={() => handleConnectDevice('apple_watch')}
+      />
+
+      <WearableCard
+        name="WHOOP"
+        icon="fitness"
+        color="#00DC5A"
+        description="Get your recovery score, strain, and sleep performance"
+        metrics={['Recovery', 'Strain', 'Sleep', 'HRV', 'RHR']}
+        connected={connectedDevices.includes('whoop')}
+        onConnect={() => handleConnectDevice('whoop')}
+      />
+
+      <WearableCard
+        name="Oura Ring"
+        icon="ellipse"
+        color="#C4A052"
+        description="Track readiness, sleep quality, and activity goals"
+        metrics={['Readiness', 'Sleep Score', 'Activity', 'HRV', 'Temperature']}
+        connected={connectedDevices.includes('oura')}
+        onConnect={() => handleConnectDevice('oura')}
+      />
+
+      {/* Data Usage Info */}
+      <View className="bg-gray-800 rounded-xl p-4 mt-4">
+        <View className="flex-row items-center mb-2">
+          <Ionicons name="shield-checkmark" size={20} color="#22C55E" />
+          <Text className="text-white font-semibold ml-2">Your Data is Secure</Text>
+        </View>
+        <Text className="text-gray-400 text-sm">
+          We only read health data to calculate your recovery score. Your data is never shared or sold.
+        </Text>
       </View>
 
-      {/* Coming Soon */}
-      <View className="items-center py-8">
-        <Ionicons name="construct" size={48} color="#4B5563" />
-        <Text className="text-gray-400 mt-4">Full marketplace coming soon!</Text>
+      {/* What We Track */}
+      <View className="mt-6">
+        <Text className="text-gray-400 text-sm mb-3">WHAT WE USE FOR RECOVERY SCORE</Text>
+        <View className="flex-row flex-wrap">
+          <MetricTag icon="heart" label="HRV" color="#F87171" />
+          <MetricTag icon="moon" label="Sleep" color="#818CF8" />
+          <MetricTag icon="pulse" label="Resting HR" color="#FB923C" />
+          <MetricTag icon="flame" label="Activity" color="#22C55E" />
+          <MetricTag icon="thermometer" label="Temperature" color="#06B6D4" />
+          <MetricTag icon="trending-up" label="Trends" color="#FACC15" />
+        </View>
       </View>
     </View>
   )
 }
 
-// Shop Category Card
-function ShopCategory({
+// Wearable Card Component
+function WearableCard({
+  name,
+  icon,
+  color,
+  description,
+  metrics,
+  connected,
+  onConnect,
+}: {
+  name: string
+  icon: string
+  color: string
+  description: string
+  metrics: string[]
+  connected: boolean
+  onConnect: () => void
+}) {
+  return (
+    <View className={`bg-gray-800 rounded-2xl p-4 mb-3 ${connected ? 'border-2' : ''}`}
+      style={connected ? { borderColor: color } : undefined}
+    >
+      <View className="flex-row items-center">
+        <View
+          className="w-14 h-14 rounded-full items-center justify-center"
+          style={{ backgroundColor: `${color}20` }}
+        >
+          <Ionicons name={icon as any} size={28} color={color} />
+        </View>
+        <View className="flex-1 ml-4">
+          <View className="flex-row items-center">
+            <Text className="text-white font-semibold text-lg">{name}</Text>
+            {connected && (
+              <View className="bg-green-500 px-2 py-0.5 rounded-full ml-2">
+                <Text className="text-white text-xs font-semibold">Connected</Text>
+              </View>
+            )}
+          </View>
+          <Text className="text-gray-400 text-sm mt-1">{description}</Text>
+        </View>
+      </View>
+
+      {/* Metrics */}
+      <View className="flex-row flex-wrap mt-3">
+        {metrics.map((metric, index) => (
+          <View key={index} className="bg-gray-700 px-2 py-1 rounded mr-1 mb-1">
+            <Text className="text-gray-300 text-xs">{metric}</Text>
+          </View>
+        ))}
+      </View>
+
+      {/* Connect Button */}
+      <TouchableOpacity
+        onPress={onConnect}
+        className={`mt-4 py-3 rounded-xl ${connected ? 'bg-gray-700' : ''}`}
+        style={!connected ? { backgroundColor: color } : undefined}
+      >
+        <Text className="text-white text-center font-semibold">
+          {connected ? 'Disconnect' : 'Connect'}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  )
+}
+
+// Metric Tag Component
+function MetricTag({
   icon,
   label,
   color,
@@ -503,17 +619,10 @@ function ShopCategory({
   color: string
 }) {
   return (
-    <TouchableOpacity className="w-1/3 p-1">
-      <View className="bg-gray-800 rounded-xl p-4 items-center">
-        <View
-          className="w-12 h-12 rounded-full items-center justify-center mb-2"
-          style={{ backgroundColor: `${color}20` }}
-        >
-          <Ionicons name={icon as any} size={24} color={color} />
-        </View>
-        <Text className="text-white text-xs text-center">{label}</Text>
-      </View>
-    </TouchableOpacity>
+    <View className="flex-row items-center bg-gray-800 px-3 py-2 rounded-full mr-2 mb-2">
+      <Ionicons name={icon as any} size={14} color={color} />
+      <Text className="text-gray-300 text-sm ml-1">{label}</Text>
+    </View>
   )
 }
 
