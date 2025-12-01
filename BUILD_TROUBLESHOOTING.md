@@ -46,3 +46,4 @@ Current setup uses Firebase web SDK (`firebase` package). This works in React Na
 - JavaScript bundling now works
 - Native iOS build is the last hurdle
 
+
