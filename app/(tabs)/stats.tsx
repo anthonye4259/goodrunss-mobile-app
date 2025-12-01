@@ -5,7 +5,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { useUserPreferences } from "@/lib/user-preferences"
 import { useEffect, useRef } from "react"
 import * as Haptics from "expo-haptics"
-import { useRouter } from "next/router"
+import { useRouter } from "expo-router"
 
 export default function StatsScreen() {
   const router = useRouter()

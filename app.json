@@ -15,7 +15,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.goodrunss.app",
-      "buildNumber": "101",
+      "buildNumber": "102",
       "deploymentTarget": "15.1",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "GoodRunss needs your location to show nearby trainers, courts, and studios.",

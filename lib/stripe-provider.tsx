@@ -1,13 +1,18 @@
-import { StripeProvider as StripeProviderNative } from "@stripe/stripe-react-native"
-import type { ReactNode } from "react"
+import React, { ReactNode } from "react"
 
-// Replace with your Stripe publishable key
-const STRIPE_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || ""
+interface StripeProviderProps {
+  children: ReactNode
+}
 
-export function StripeProvider({ children }: { children: ReactNode }) {
-  return (
-    <StripeProviderNative publishableKey={STRIPE_PUBLISHABLE_KEY} merchantIdentifier="merchant.com.goodrunss">
-      {children}
-    </StripeProviderNative>
-  )
+// Stripe provider placeholder - configure with your Stripe keys when ready
+export function StripeProvider({ children }: StripeProviderProps) {
+  // TODO: Add Stripe configuration when ready for payments
+  // import { StripeProvider as StripeProviderNative } from "@stripe/stripe-react-native"
+  // return (
+  //   <StripeProviderNative publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || ""}>
+  //     {children}
+  //   </StripeProviderNative>
+  // )
+  
+  return <>{children}</>
 }

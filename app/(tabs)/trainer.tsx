@@ -1,11 +1,11 @@
 
 import { useState, useEffect, useRef } from "react"
 import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, Animated } from "react-native"
-import { Users, Plus, DollarSign, Share2, Image as ImageIcon, X } from "lucide-react-native"
+// Using Ionicons instead of lucide-react-native
 import { Ionicons } from "@expo/vector-icons"
 import * as Haptics from "expo-haptics"
 import { useUserPreferences } from "@/lib/user-preferences"
-import { useRouter } from "next/navigation"
+import { useRouter } from "expo-router"
 
 type Client = {
   id: string
@@ -119,12 +119,12 @@ export default function TrainerDashboard() {
           <View className="px-6 mb-6">
             <View className="flex-row gap-3">
               <View className="flex-1 bg-gradient-to-br from-lime-500/20 to-emerald-500/20 rounded-2xl p-4 border border-lime-500/30">
-                <Users size={24} color="#84cc16" />
+                <Ionicons name="people" size={24} color="#84cc16" />
                 <Text className="text-white text-2xl font-bold mt-2">{clients.length}</Text>
                 <Text className="text-zinc-400 text-sm">Active Clients</Text>
               </View>
               <View className="flex-1 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-2xl p-4 border border-blue-500/30">
-                <DollarSign size={24} color="#3b82f6" />
+                <Ionicons name="cash" size={24} color="#3b82f6" />
                 <Text className="text-white text-2xl font-bold mt-2">$2,450</Text>
                 <Text className="text-zinc-400 text-sm">This Month</Text>
               </View>
@@ -143,7 +143,7 @@ export default function TrainerDashboard() {
                 className="bg-lime-500 rounded-xl p-4 flex-row items-center justify-between"
               >
                 <View className="flex-row items-center gap-3">
-                  <Plus size={24} color="#000" />
+                  <Ionicons name="add" size={24} color="#000" />
                   <Text className="text-black text-lg font-semibold">Add New Client</Text>
                 </View>
               </TouchableOpacity>
@@ -153,7 +153,7 @@ export default function TrainerDashboard() {
                 className="bg-gradient-to-r from-pink-500 to-purple-500 rounded-xl p-4 flex-row items-center justify-between border border-pink-400/30"
               >
                 <View className="flex-row items-center gap-3">
-                  <Share2 size={24} color="#fff" />
+                  <Ionicons name="share-social" size={24} color="#fff" />
                   <Text className="text-white text-lg font-semibold">Generate Promo Post</Text>
                 </View>
                 <Text className="text-white/70 text-sm">AI Powered</Text>
@@ -228,7 +228,7 @@ export default function TrainerDashboard() {
             <View className="flex-row items-center justify-between mb-6">
               <Text className="text-white text-2xl font-bold">Add New Client</Text>
               <TouchableOpacity onPress={() => setShowAddClient(false)}>
-                <X size={24} color="#fff" />
+                <Ionicons name="close" size={24} color="#fff" />
               </TouchableOpacity>
             </View>
 
@@ -289,14 +289,14 @@ export default function TrainerDashboard() {
             <View className="flex-row items-center justify-between mb-6">
               <Text className="text-white text-2xl font-bold">Generate Promo Post</Text>
               <TouchableOpacity onPress={() => setShowPromoGenerator(false)}>
-                <X size={24} color="#fff" />
+                <Ionicons name="close" size={24} color="#fff" />
               </TouchableOpacity>
             </View>
 
             {/* Preview */}
             <View className="bg-gradient-to-br from-pink-500 to-purple-600 rounded-2xl p-6 mb-6 border border-pink-400/30">
               <View className="items-center">
-                <ImageIcon size={48} color="#fff" className="mb-4" />
+                <Ionicons name="image" size={48} color="#fff" style={{ marginBottom: 16 }} />
                 <Text className="text-white text-xl font-bold text-center mb-2">
                   {preferences.activityType === "studio" ? "🧘‍♀️ Transform Your Practice" : "🏀 Level Up Your Game"}
                 </Text>

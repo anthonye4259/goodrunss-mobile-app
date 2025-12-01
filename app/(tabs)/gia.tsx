@@ -10,7 +10,7 @@ import {
   Platform,
   Animated,
 } from "react-native"
-import { MessageCircle, Send } from "lucide-react-native"
+import { Ionicons } from "@expo/vector-icons"
 import { useUserPreferences } from "@/lib/user-preferences"
 import * as Haptics from "expo-haptics"
 
@@ -115,7 +115,7 @@ export default function GIAScreen() {
         <View className="px-6 pt-16 pb-4 border-b border-zinc-800">
           <View className="flex-row items-center gap-3">
             <View className="w-12 h-12 rounded-full bg-gradient-to-br from-lime-400 to-emerald-500 items-center justify-center">
-              <MessageCircle size={24} color="#000" />
+              <Ionicons name="chatbubble" size={24} color="#000" />
             </View>
             <View>
               <Text className="text-white text-2xl font-bold">GIA</Text>
@@ -209,7 +209,7 @@ export default function GIAScreen() {
                 input.trim() ? "bg-lime-500" : "bg-zinc-800"
               }`}
             >
-              <Send size={20} color={input.trim() ? "#000" : "#71717a"} />
+              <Ionicons name="send" size={20} color={input.trim() ? "#000" : "#71717a"} />
             </TouchableOpacity>
           </View>
         </View>

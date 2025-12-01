@@ -37,29 +37,59 @@ export class NotificationService {
   }
 
   async requestPermissions(): Promise<boolean> {
-    const { status: existingStatus } = await Notifications.getPermissionsAsync()
-    let finalStatus = existingStatus
+    try {
+      const { status: existingStatus } = await Notifications.getPermissionsAsync()
+      let finalStatus = existingStatus
 
-    if (existingStatus !== "granted") {
-      const { status } = await Notifications.requestPermissionsAsync()
-      finalStatus = status
-    }
+      if (existingStatus !== "granted") {
+        const { status } = await Notifications.requestPermissionsAsync()
+        finalStatus = status
+      }
 
-    if (finalStatus !== "granted") {
-      console.log("[v0] Notification permissions denied")
+      if (finalStatus !== "granted") {
+        console.log("[v0] Notification permissions denied")
+        return false
+      }
+
+      if (Platform.OS === "android") {
+        await Notifications.setNotificationChannelAsync("default", {
+          name: "default",
+          importance: Notifications.AndroidImportance.MAX,
+          vibrationPattern: [0, 250, 250, 250],
+          lightColor: "#7ED957",
+        })
+      }
+
+      return true
+    } catch (error) {
+      console.error("[v0] Error requesting permissions:", error)
       return false
     }
+  }
 
-    if (Platform.OS === "android") {
-      await Notifications.setNotificationChannelAsync("default", {
-        name: "default",
-        importance: Notifications.AndroidImportance.MAX,
-        vibrationPattern: [0, 250, 250, 250],
-        lightColor: "#7ED957",
-      })
+  async registerForPushNotifications(): Promise<string | null> {
+    try {
+      const token = await this.getPushToken()
+      if (token) {
+        // Store token for later use
+        await AsyncStorage.setItem("pushToken", token)
+        console.log("[v0] Registered for push notifications:", token)
+      }
+      return token
+    } catch (error) {
+      console.error("[v0] Error registering for push notifications:", error)
+      return null
     }
+  }
 
-    return true
+  setNotificationHandler(handler: {
+    handleNotification: () => Promise<{
+      shouldShowAlert: boolean
+      shouldPlaySound: boolean
+      shouldSetBadge: boolean
+    }>
+  }) {
+    Notifications.setNotificationHandler(handler)
   }
 
   async getPushToken(): Promise<string | null> {

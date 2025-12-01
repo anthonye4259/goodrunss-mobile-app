@@ -1,5 +1,6 @@
 
-import { View, Text, ScrollView, TouchableOpacity, useState, useEffect } from "react-native"
+import { useState, useEffect } from "react"
+import { View, Text, ScrollView, TouchableOpacity } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { useUserPreferences } from "@/lib/user-preferences"

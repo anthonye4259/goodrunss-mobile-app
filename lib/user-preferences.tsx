@@ -9,6 +9,8 @@ type UserPreferences = {
   isRecUser: boolean
   userType: "player" | "practitioner" | "trainer" | "instructor" | "both" | null
   primaryActivity?: string
+  activityType?: "studio" | "rec" | "both"
+  userId?: string
   location?: {
     latitude: number
     longitude: number
