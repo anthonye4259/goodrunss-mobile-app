@@ -107,7 +107,7 @@ export function LeaguesScreen({ sport }: { sport?: string }) {
     }
   }, [sport])
 
-  const sports = ["All", "Basketball", "Tennis", "Soccer", "Volleyball", "Baseball"]
+  const sports = ["All", "Basketball", "Tennis", "Soccer", "Volleyball", "Swimming", "Baseball"]
 
   const filteredLeagues = leagues.filter((league) => {
     const matchesSearch =

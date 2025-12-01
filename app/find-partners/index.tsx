@@ -13,7 +13,7 @@ export default function FindPartnersScreen() {
   const [selectedSkillLevel, setSelectedSkillLevel] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  const sports = ["Basketball", "Tennis", "Pickleball", "Golf", "Yoga"]
+  const sports = ["Basketball", "Tennis", "Pickleball", "Golf", "Swimming", "Yoga"]
   const skillLevels = ["Beginner", "Intermediate", "Advanced", "Expert"]
 
   // Mock nearby players - would come from GPS-based backend query

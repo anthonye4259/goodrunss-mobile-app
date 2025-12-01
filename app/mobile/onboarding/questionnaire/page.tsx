@@ -17,7 +17,7 @@ const playerQuestions = [
     categories: {
       rec: {
         title: "GoodRunss Rec",
-        options: ["Basketball", "Tennis", "Pickleball", "Golf", "Soccer", "Volleyball"],
+        options: ["Basketball", "Tennis", "Pickleball", "Golf", "Soccer", "Volleyball", "Swimming"],
       },
       studios: {
         title: "GoodRunss Studios",
@@ -42,7 +42,7 @@ const trainerQuestions = [
     categories: {
       rec: {
         title: "GoodRunss Rec",
-        options: ["Basketball", "Tennis", "Pickleball", "Golf", "Soccer", "Volleyball"],
+        options: ["Basketball", "Tennis", "Pickleball", "Golf", "Soccer", "Volleyball", "Swimming"],
       },
       studios: {
         title: "GoodRunss Studios",
@@ -86,7 +86,7 @@ const bothQuestions = [
   {
     id: "sports_involvement",
     question: "Which sports are you involved in?",
-    options: ["Basketball", "Pickleball", "Tennis", "Golf", "Sports Performance", "Multiple sports"],
+    options: ["Basketball", "Pickleball", "Tennis", "Golf", "Swimming", "Sports Performance", "Multiple sports"],
   },
   {
     id: "skill_level",

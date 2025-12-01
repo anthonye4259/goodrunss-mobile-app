@@ -5,6 +5,7 @@ export type Activity =
   | "Golf"
   | "Soccer"
   | "Volleyball"
+  | "Swimming"
   | "Pilates"
   | "Yoga"
   | "Lagree"
@@ -580,6 +581,78 @@ export const ACTIVITY_CONTENT: Record<Activity, ActivityContent> = {
       },
     ],
   },
+
+  Swimming: {
+    category: "rec",
+    displayName: "Swimming",
+    trainerTitle: "Coach",
+    sessionType: "Lesson",
+    locationPrefix: "Pool",
+    groupType: "Team",
+    sampleTrainers: [
+      {
+        name: "Coach Michael Torres",
+        rating: 4.9,
+        reviews: 184,
+        price: 80,
+        location: "Olympic Aquatic Center",
+        specialties: ["Freestyle", "Stroke Technique", "Open Water"],
+        bio: "Former Olympic trial swimmer with 12+ years coaching experience. Specialized in stroke mechanics, competitive training, and open water swimming.",
+        certifications: ["USA Swimming Certified", "Red Cross Lifeguard", "ASCA Level 3"],
+      },
+      {
+        name: "Coach Sarah Chen",
+        rating: 4.8,
+        reviews: 156,
+        price: 70,
+        location: "Community Pool & Beach",
+        specialties: ["Beginners", "Water Safety", "Triathlon"],
+        bio: "Certified swim instructor specializing in adult beginners, water safety, and triathlon training. Patient and encouraging approach.",
+        certifications: ["American Red Cross WSI", "Lifeguard Certified", "Triathlon Coach"],
+      },
+    ],
+    sampleSessions: [
+      { title: "Lap Swimming Technique", location: "Olympic Aquatic Center", time: "Tomorrow, 6:00 AM" },
+      { title: "Open Water Training", location: "Santa Monica Beach", time: "Saturday, 7:00 AM", participants: 8 },
+      { title: "Adult Learn to Swim", location: "Community Pool", time: "Today, 5:30 PM", participants: 4 },
+    ],
+    marketplaceItems: [
+      {
+        name: "TYR Competition Goggles",
+        condition: "New",
+        price: 35,
+        seller: "Michael Torres",
+        image: "/swim-goggles.png",
+      },
+      {
+        name: "Speedo Training Fins",
+        condition: "Like New",
+        price: 45,
+        seller: "Sarah Chen",
+        image: "/swim-fins.png",
+      },
+    ],
+    activityFeed: [
+      {
+        type: "achievement",
+        title: "Achievement Unlocked!",
+        description: "Swam 10 miles this month",
+        time: "2 hours ago",
+      },
+      {
+        type: "session",
+        title: "Lesson Completed",
+        description: "Freestyle technique with Coach Michael",
+        time: "Yesterday",
+      },
+      {
+        type: "skill",
+        title: "Skill Improved",
+        description: "Your lap time improved by 8%",
+        time: "3 days ago",
+      },
+    ],
+  },
 }
 
 export function getActivityContent(activity: Activity): ActivityContent {
@@ -597,6 +670,6 @@ export function isStudioActivity(activity: string): boolean {
 }
 
 export function isRecActivity(activity: string): boolean {
-  const recActivities = ["Basketball", "Tennis", "Pickleball", "Golf", "Soccer", "Volleyball"]
+  const recActivities = ["Basketball", "Tennis", "Pickleball", "Golf", "Soccer", "Volleyball", "Swimming"]
   return recActivities.includes(activity)
 }

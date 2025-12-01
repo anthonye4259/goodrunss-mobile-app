@@ -40,6 +40,14 @@ const sportsData = [
     trending: false,
   },
   {
+    id: "swimming",
+    name: "Swimming",
+    icon: "🏊",
+    color: "from-cyan-500 to-blue-500",
+    stats: { players: "2.1k", pools: 234, sessions: "380/week" },
+    trending: true,
+  },
+  {
     id: "baseball",
     name: "Baseball",
     icon: "⚾",

@@ -23,7 +23,7 @@ export function CreateGameScreen() {
     description: "",
   })
 
-  const sports = ["Basketball", "Tennis", "Soccer", "Volleyball", "Baseball", "Football"]
+  const sports = ["Basketball", "Tennis", "Soccer", "Volleyball", "Swimming", "Baseball", "Football"]
   const skillLevels = ["All Levels", "Beginner", "Intermediate", "Advanced"]
 
   const handleSubmit = (e: React.FormEvent) => {

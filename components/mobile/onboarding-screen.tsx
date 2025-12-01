@@ -22,7 +22,7 @@ export function OnboardingScreen() {
     bio: "",
   })
 
-  const recSports = ["Basketball", "Tennis", "Soccer", "Volleyball", "Baseball", "Football"]
+  const recSports = ["Basketball", "Tennis", "Soccer", "Volleyball", "Swimming", "Baseball", "Football"]
   const studioActivities = ["Pilates", "Yoga", "Lagree", "Barre", "Meditation"]
   const skillLevels = ["Beginner", "Intermediate", "Advanced", "Pro"]
 

@@ -11,7 +11,7 @@ export default function SendPSAScreen() {
   const [selectedSport, setSelectedSport] = useState<string | null>(null)
   const [radius, setRadius] = useState(5)
 
-  const sports = ["Basketball", "Tennis", "Pickleball", "Golf", "Yoga", "All Sports"]
+  const sports = ["Basketball", "Tennis", "Pickleball", "Golf", "Swimming", "Yoga", "All Sports"]
 
   const handleSend = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
