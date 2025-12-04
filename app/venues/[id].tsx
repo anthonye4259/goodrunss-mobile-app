@@ -1,9 +1,10 @@
 
-import { View, Text, ScrollView, TouchableOpacity, Image } from "react-native"
+import { View, Text, ScrollView, TouchableOpacity, Image, Linking, Platform } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { useState } from "react"
 import { router, useLocalSearchParams } from "expo-router"
+import { useAuth } from "@/lib/auth-context"
 import { useUserPreferences } from "@/lib/user-preferences"
 import { getActivityContent, getPrimaryActivity, type Activity } from "@/lib/activity-content"
 import {
@@ -437,7 +438,12 @@ export default function VenueDetailScreen() {
                   className="bg-card border border-primary rounded-xl px-6 py-4"
                   onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-                    console.log("[v0] Get directions to:", venue.name)
+                    const address = encodeURIComponent(venue.address)
+                    const url = Platform.select({
+                      ios: `maps:?daddr=${address}`,
+                      android: `google.navigation:q=${address}`,
+                    })
+                    if (url) Linking.openURL(url)
                   }}
                 >
                   <Ionicons name="navigate" size={24} color="#7ED957" />
@@ -479,7 +485,7 @@ export default function VenueDetailScreen() {
                   className="bg-primary rounded-xl py-4"
                   onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-                    console.log("[v0] Book venue:", venue.name)
+                    router.push(`/booking/${id}`)
                   }}
                 >
                   <Text className="text-background font-bold text-center text-lg">Book {venue.type}</Text>

@@ -112,7 +112,13 @@ export default function HomeScreen() {
                   <Text className="text-muted-foreground mb-3">{trainer.bio}</Text>
                   <View className="flex-row justify-between items-center">
                     <Text className="text-primary font-bold text-xl">${trainer.price}/session</Text>
-                    <TouchableOpacity className="bg-primary rounded-lg px-6 py-2">
+                    <TouchableOpacity
+                      className="bg-primary rounded-lg px-6 py-2"
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                        router.push("/trainers/0")
+                      }}
+                    >
                       <Text className="text-background font-bold">Book Now</Text>
                     </TouchableOpacity>
                   </View>

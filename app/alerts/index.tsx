@@ -137,7 +137,7 @@ export default function AlertsScreen() {
                 className="bg-card border border-border rounded-2xl p-4 mb-4"
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-                  console.log("[v0] Respond to alert:", alert.id)
+                  router.push(`/venues/${alert.id}`)
                 }}
               >
                 <View className="flex-row items-start justify-between mb-3">
