@@ -21,15 +21,20 @@ type UserPreferences = {
   credits?: number
   referralCode?: string
   isPremium?: boolean
+  playerRating?: {
+    sport: string
+    rating: number
+    matches: number
+  }
 }
 
 const UserPreferencesContext = createContext<
   | {
-      preferences: UserPreferences
-      setPreferences: (prefs: UserPreferences) => void
-      clearPreferences: () => Promise<void>
-      addCredits: (amount: number) => void
-    }
+    preferences: UserPreferences
+    setPreferences: (prefs: UserPreferences) => void
+    clearPreferences: () => Promise<void>
+    addCredits: (amount: number) => void
+  }
   | undefined
 >(undefined)
 

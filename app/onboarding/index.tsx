@@ -11,7 +11,10 @@ export default function OnboardingScreen() {
 
   const handleContinue = () => {
     if (userType) {
-      router.push("/onboarding/questionnaire")
+      router.push({
+        pathname: "/onboarding/questionnaire",
+        params: { userType }
+      })
     }
   }
 
@@ -33,10 +36,10 @@ export default function OnboardingScreen() {
               ]}
             >
               <View style={styles.optionIconContainer}>
-                <Ionicons 
-                  name="basketball" 
-                  size={32} 
-                  color={userType === "player" ? "#84CC16" : "#888"} 
+                <Ionicons
+                  name="basketball"
+                  size={32}
+                  color={userType === "player" ? "#84CC16" : "#888"}
                 />
               </View>
               <View style={styles.optionTextContainer}>
@@ -56,10 +59,10 @@ export default function OnboardingScreen() {
               ]}
             >
               <View style={styles.optionIconContainer}>
-                <Ionicons 
-                  name="fitness" 
-                  size={32} 
-                  color={userType === "trainer" ? "#84CC16" : "#888"} 
+                <Ionicons
+                  name="fitness"
+                  size={32}
+                  color={userType === "trainer" ? "#84CC16" : "#888"}
                 />
               </View>
               <View style={styles.optionTextContainer}>

@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, StyleSheet } from "react-native"
-import { useRouter } from "expo-router"
+import { useRouter, useLocalSearchParams } from "expo-router"
 import { LinearGradient } from "expo-linear-gradient"
 import { useUserPreferences } from "@/lib/user-preferences"
 import { useLocation } from "@/lib/location-context"
@@ -13,15 +13,40 @@ const STUDIO_ACTIVITIES = ["Pilates", "Yoga", "Lagree", "Barre", "Meditation"]
 
 export default function QuestionnaireScreen() {
   const router = useRouter()
+  const params = useLocalSearchParams()
+  const userType = (params.userType as "player" | "trainer") || "player"
+
   const { setPreferences } = useUserPreferences()
   const { requestLocation, loading: locationLoading, error: locationError } = useLocation()
-  const [selectedActivity, setSelectedActivity] = useState<string | null>(null)
+
+  const [selectedActivities, setSelectedActivities] = useState<string[]>([])
   const [step, setStep] = useState<"activity" | "skill" | "location">("activity")
   const [selectedSkillLevel, setSelectedSkillLevel] = useState<number | null>(null)
 
-  const handleActivitySelect = () => {
-    if (selectedActivity) {
-      if (RATING_CONFIGS[selectedActivity]) {
+  const toggleActivity = (activity: string) => {
+    if (userType === "trainer") {
+      // Single select for trainers
+      if (selectedActivities.includes(activity)) {
+        setSelectedActivities([])
+      } else {
+        setSelectedActivities([activity])
+      }
+    } else {
+      // Multi select for players
+      if (selectedActivities.includes(activity)) {
+        setSelectedActivities(prev => prev.filter(a => a !== activity))
+      } else {
+        setSelectedActivities(prev => [...prev, activity])
+      }
+    }
+  }
+
+  const handleActivityContinue = () => {
+    if (selectedActivities.length > 0) {
+      // Find first activity that needs rating
+      const activityToRate = selectedActivities.find(a => RATING_CONFIGS[a])
+
+      if (activityToRate) {
         setStep("skill")
       } else {
         setStep("location")
@@ -45,32 +70,41 @@ export default function QuestionnaireScreen() {
   }
 
   const handleComplete = () => {
-    if (selectedActivity) {
-      const isStudio = STUDIO_ACTIVITIES.includes(selectedActivity)
+    if (selectedActivities.length > 0) {
+      const primaryActivity = selectedActivities[0]
+      const isStudio = selectedActivities.some(a => STUDIO_ACTIVITIES.includes(a))
+      const isRec = selectedActivities.some(a => REC_ACTIVITIES.includes(a))
+
+      // Determine rating to save
+      const activityToRate = selectedActivities.find(a => RATING_CONFIGS[a])
+      const playerRating = (activityToRate && selectedSkillLevel !== null)
+        ? {
+          sport: activityToRate,
+          rating: selectedSkillLevel,
+          matches: 0,
+        }
+        : undefined
+
       setPreferences({
-        activities: [selectedActivity],
+        activities: selectedActivities,
         isStudioUser: isStudio,
-        isRecUser: !isStudio,
-        userType: "player",
-        primaryActivity: selectedActivity,
-        playerRating:
-          selectedSkillLevel !== null
-            ? {
-                sport: selectedActivity,
-                rating: selectedSkillLevel,
-                matches: 0,
-              }
-            : undefined,
+        isRecUser: isRec,
+        userType: userType,
+        primaryActivity: primaryActivity,
+        playerRating: playerRating,
       })
       router.replace("/(tabs)")
     }
   }
 
-  if (step === "skill" && selectedActivity && RATING_CONFIGS[selectedActivity]) {
-    const config = RATING_CONFIGS[selectedActivity]
+  // Get the activity we are rating
+  const activityToRate = selectedActivities.find(a => RATING_CONFIGS[a])
+
+  if (step === "skill" && activityToRate && RATING_CONFIGS[activityToRate]) {
+    const config = RATING_CONFIGS[activityToRate]
 
     return (
-      <LinearGradient colors={["#0A0A0A", "#141414"]} style={styles.container}>
+      <LinearGradient colors={["#0A0A0A", "#141414"]} style={{ flex: 1 }}>
         <SafeAreaView style={styles.safeArea}>
           <ScrollView contentContainerStyle={styles.scrollContent}>
             <View style={styles.progressContainer}>
@@ -80,7 +114,7 @@ export default function QuestionnaireScreen() {
               </View>
             </View>
 
-            <Text style={styles.title}>What's your {selectedActivity} skill level?</Text>
+            <Text style={styles.title}>What's your {activityToRate} skill level?</Text>
             <Text style={styles.subtitle}>{config.description}</Text>
 
             <View style={styles.optionsList}>
@@ -118,7 +152,7 @@ export default function QuestionnaireScreen() {
 
   if (step === "location") {
     return (
-      <LinearGradient colors={["#0A0A0A", "#141414"]} style={styles.container}>
+      <LinearGradient colors={["#0A0A0A", "#141414"]} style={{ flex: 1 }}>
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.locationContainer}>
             <Ionicons name="location" size={80} color="#84CC16" />
@@ -155,7 +189,7 @@ export default function QuestionnaireScreen() {
   }
 
   return (
-    <LinearGradient colors={["#0A0A0A", "#141414"]} style={styles.container}>
+    <LinearGradient colors={["#0A0A0A", "#141414"]} style={{ flex: 1 }}>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.progressContainer}>
@@ -165,7 +199,14 @@ export default function QuestionnaireScreen() {
             </View>
           </View>
 
-          <Text style={styles.title}>What activities do you enjoy?</Text>
+          <Text style={styles.title}>
+            {userType === "trainer"
+              ? "What's your primary specialty?"
+              : "What activities do you enjoy?"}
+          </Text>
+          {userType === "player" && (
+            <Text style={styles.subtitle}>Select all that apply</Text>
+          )}
 
           <View style={styles.sectionContainer}>
             <Text style={styles.sectionTitle}>GoodRunss Rec</Text>
@@ -173,14 +214,14 @@ export default function QuestionnaireScreen() {
               {REC_ACTIVITIES.map((activity) => (
                 <TouchableOpacity
                   key={activity}
-                  onPress={() => setSelectedActivity(activity)}
+                  onPress={() => toggleActivity(activity)}
                   style={[
                     styles.activityCard,
-                    selectedActivity === activity && styles.cardSelected
+                    selectedActivities.includes(activity) && styles.cardSelected
                   ]}
                 >
                   <Text style={styles.activityText}>{activity}</Text>
-                  {selectedActivity === activity && (
+                  {selectedActivities.includes(activity) && (
                     <Ionicons name="checkmark-circle" size={24} color="#84CC16" />
                   )}
                 </TouchableOpacity>
@@ -194,14 +235,14 @@ export default function QuestionnaireScreen() {
               {STUDIO_ACTIVITIES.map((activity) => (
                 <TouchableOpacity
                   key={activity}
-                  onPress={() => setSelectedActivity(activity)}
+                  onPress={() => toggleActivity(activity)}
                   style={[
                     styles.activityCard,
-                    selectedActivity === activity && styles.cardSelected
+                    selectedActivities.includes(activity) && styles.cardSelected
                   ]}
                 >
                   <Text style={styles.activityText}>{activity}</Text>
-                  {selectedActivity === activity && (
+                  {selectedActivities.includes(activity) && (
                     <Ionicons name="checkmark-circle" size={24} color="#84CC16" />
                   )}
                 </TouchableOpacity>
@@ -209,8 +250,8 @@ export default function QuestionnaireScreen() {
             </View>
           </View>
 
-          {selectedActivity && (
-            <TouchableOpacity onPress={handleActivitySelect} style={styles.continueButton}>
+          {selectedActivities.length > 0 && (
+            <TouchableOpacity onPress={handleActivityContinue} style={styles.continueButton}>
               <Text style={styles.continueText}>Continue</Text>
             </TouchableOpacity>
           )}
@@ -255,7 +296,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "bold",
     color: "#FFFFFF",
-    marginBottom: 16,
+    marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
