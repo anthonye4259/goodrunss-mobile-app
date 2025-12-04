@@ -131,8 +131,16 @@ export default function QuestionnaireScreen() {
               </View>
             </View>
 
-            <Text style={styles.title}>What's your {currentActivityToRate} skill level?</Text>
-            <Text style={styles.subtitle}>{config.description}</Text>
+            <Text style={styles.title}>
+              {config.system === "HANDICAP"
+                ? `What's your Golf Handicap?`
+                : config.system === "UTR"
+                  ? `What's your Tennis UTR?`
+                  : config.system === "DUPR"
+                    ? `What's your Pickleball DUPR?`
+                    : `What's your ${currentActivityToRate} skill level?`}
+            </Text>
+            <Text style={styles.subtitle}>{config.systemName}</Text>
 
             <View style={styles.optionsList}>
               {config.levels.map((level) => (
