@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react"
 import { View, Text, ScrollView, TouchableOpacity } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
@@ -10,6 +9,10 @@ import { GlobalSearch } from "@/components/global-search"
 import { TrainerCardSkeleton } from "@/components/skeleton-loader"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { LocationService } from "@/lib/location-service"
+import { getVenuesForSport } from "@/lib/venue-data"
+import { predictVenueTraffic } from "@/lib/traffic-prediction"
+import { router } from "expo-router"
+import * as Haptics from "expo-haptics"
 
 export default function HomeScreen() {
   const { preferences } = useUserPreferences()
@@ -116,6 +119,84 @@ export default function HomeScreen() {
                 </View>
               </TouchableOpacity>
             )}
+          </View>
+
+          {/* Nearby Venues with Traffic Prediction */}
+          <View className="px-6 mb-6">
+            <View className="flex-row justify-between items-center mb-4">
+              <Text className="text-xl font-bold text-foreground">Nearby {content.locationPrefix}s</Text>
+              <TouchableOpacity onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                router.push("/(tabs)/explore")
+              }}>
+                <Text className="text-primary">View All</Text>
+              </TouchableOpacity>
+            </View>
+            {getVenuesForSport(primaryActivity).slice(0, 2).map((venue) => {
+              const trafficPrediction = predictVenueTraffic(venue.id, new Date(), venue.activePlayersNow)
+              const minutesAgo = venue.lastActivityTimestamp
+                ? Math.floor((Date.now() - venue.lastActivityTimestamp.getTime()) / 60000)
+                : null
+
+              return (
+                <TouchableOpacity
+                  key={venue.id}
+                  className="bg-card rounded-xl p-4 mb-3 border border-border"
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                    router.push(`/venues/${venue.id}`)
+                  }}
+                >
+                  <View className="flex-row items-start justify-between mb-2">
+                    <View className="flex-1">
+                      <Text className="text-foreground font-bold text-base mb-1">{venue.name}</Text>
+                      <View className="flex-row items-center mb-1">
+                        <Ionicons name="location-outline" size={14} color="#84CC16" />
+                        <Text className="text-muted-foreground text-sm ml-1">{venue.address}</Text>
+                      </View>
+                      <View className="flex-row items-center">
+                        <Ionicons name="star" size={14} color="#84CC16" />
+                        <Text className="text-foreground text-sm ml-1">{venue.rating}</Text>
+                        <Text className="text-muted-foreground text-sm ml-1">• {venue.distance || "0.8"} mi</Text>
+                      </View>
+                    </View>
+                  </View>
+
+                  {/* Traffic Prediction Badge */}
+                  <View className="flex-row items-center gap-2 mb-2">
+                    <View
+                      className="flex-row items-center px-3 py-1.5 rounded-lg"
+                      style={{ backgroundColor: `${trafficPrediction.color}20` }}
+                    >
+                      <Text className="text-sm mr-1">{trafficPrediction.emoji}</Text>
+                      <Text
+                        className="text-sm font-semibold"
+                        style={{ color: trafficPrediction.color }}
+                      >
+                        {trafficPrediction.label}
+                      </Text>
+                    </View>
+                    {trafficPrediction.estimatedWaitTime && (
+                      <Text className="text-muted-foreground text-xs">{trafficPrediction.estimatedWaitTime}</Text>
+                    )}
+                  </View>
+
+                  {/* Real-time Player Activity */}
+                  {venue.activePlayersNow && venue.activePlayersNow > 0 && (
+                    <View className="flex-row items-center bg-primary/10 px-3 py-1.5 rounded-lg">
+                      <View className="w-1.5 h-1.5 rounded-full bg-primary mr-2" />
+                      <Ionicons name="people" size={12} color="#7ED957" />
+                      <Text className="text-primary text-xs font-medium ml-1">
+                        {venue.activePlayersNow} {venue.activePlayersNow === 1 ? "player" : "players"} active now
+                      </Text>
+                      {minutesAgo !== null && (
+                        <Text className="text-muted-foreground text-xs ml-1">• {minutesAgo}m ago</Text>
+                      )}
+                    </View>
+                  )}
+                </TouchableOpacity>
+              )
+            })}
           </View>
 
           {/* Upcoming Sessions */}
