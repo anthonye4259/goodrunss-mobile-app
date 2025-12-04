@@ -9,11 +9,13 @@ import { getActivityContent, getPrimaryActivity, type Activity } from "@/lib/act
 import { TrainerBookingModal } from "@/components/trainer-booking-modal"
 import { ShareProfileCard } from "@/components/share-profile-card"
 import { useState } from "react"
+import { useAuth } from "@/lib/auth-context"
 
 export default function TrainerDetailScreen() {
   const { id } = useLocalSearchParams()
   const { preferences } = useUserPreferences()
   const { calculateDistance } = useLocation()
+  const { isAuthenticated } = useAuth()
   const [showBookingModal, setShowBookingModal] = useState(false)
 
   const primaryActivity = getPrimaryActivity(preferences.activities) as Activity
@@ -25,8 +27,22 @@ export default function TrainerDetailScreen() {
   const isOwnProfile = preferences.role === "trainer"
 
   const startChat = async () => {
+    if (!isAuthenticated) {
+      router.push("/auth")
+      return
+    }
     // Create or get existing conversation
     router.push(`/chat/${id}`)
+  }
+
+  const handleBooking = () => {
+    if (!isAuthenticated) {
+      // Redirect to sign up for guest users
+      router.push("/auth")
+      return
+    }
+    // Open booking modal for authenticated users
+    setShowBookingModal(true)
   }
 
   return (
@@ -164,7 +180,7 @@ export default function TrainerDetailScreen() {
             <Ionicons name="chatbubble-outline" size={20} color="#7ED957" />
             <Text className="text-primary font-bold ml-2">Message</Text>
           </TouchableOpacity>
-          <TouchableOpacity className="flex-[2] bg-primary rounded-2xl py-4" onPress={() => setShowBookingModal(true)}>
+          <TouchableOpacity className="flex-[2] bg-primary rounded-2xl py-4" onPress={handleBooking}>
             <Text className="text-background font-bold text-center text-lg">Book - ${trainer.price}</Text>
           </TouchableOpacity>
         </View>
