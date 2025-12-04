@@ -40,7 +40,7 @@ export default function HomeScreen() {
 
   if (!primaryActivity) {
     return (
-      <LinearGradient colors={["#0A0A0A", "#141414"]} className="flex-1 justify-center items-center">
+      <LinearGradient colors={["#0A0A0A", "#141414"]} className="justify-center items-center" style={{ flex: 1 }}>
         <Text className="text-foreground">Loading...</Text>
       </LinearGradient>
     )
@@ -54,7 +54,7 @@ export default function HomeScreen() {
 
   return (
     <ErrorBoundary>
-      <LinearGradient colors={["#0A0A0A", "#141414"]} className="flex-1">
+      <LinearGradient colors={["#0A0A0A", "#141414"]} style={{ flex: 1 }}>
         <ScrollView className="flex-1" contentContainerClassName="pb-6">
           {/* Header */}
           <View className="px-6 pt-16 pb-6">

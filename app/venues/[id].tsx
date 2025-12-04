@@ -208,7 +208,7 @@ export default function VenueDetailScreen() {
 
   return (
     <ErrorBoundary>
-      <LinearGradient colors={["#0A0A0A", "#141414"]} className="flex-1">
+      <LinearGradient colors={["#0A0A0A", "#141414"]} style={{ flex: 1 }}>
         <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
           <View className="relative">
             <Image source={{ uri: venue.images[0] }} className="w-full h-64" resizeMode="cover" />

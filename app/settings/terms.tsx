@@ -6,7 +6,7 @@ import { router } from "expo-router"
 
 export default function TermsScreen() {
   return (
-    <LinearGradient colors={["#0A0A0A", "#141414"]} className="flex-1">
+    <LinearGradient colors={["#0A0A0A", "#141414"]} style={{ flex: 1 }}>
       <ScrollView className="flex-1" contentContainerClassName="pb-10">
         {/* Header */}
         <View className="px-6 pt-16 pb-6">

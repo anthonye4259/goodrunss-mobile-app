@@ -21,7 +21,7 @@ export default function MarketplaceItemScreen() {
   }
 
   return (
-    <LinearGradient colors={["#0A0A0A", "#141414"]} className="flex-1">
+    <LinearGradient colors={["#0A0A0A", "#141414"]} style={{ flex: 1 }}>
       <ScrollView className="flex-1">
         <View className="relative">
           <Image source={{ uri: item.images[0] }} className="w-full h-96" resizeMode="cover" />

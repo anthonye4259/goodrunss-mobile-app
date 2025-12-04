@@ -78,7 +78,7 @@ export default function AlertsScreen() {
   ]
 
   return (
-    <LinearGradient colors={["#0A0A0A", "#141414"]} className="flex-1">
+    <LinearGradient colors={["#0A0A0A", "#141414"]} style={{ flex: 1 }}>
       <View className="px-6 pt-16 pb-4">
         <Text className="text-3xl font-bold text-foreground mb-2">Player Alerts</Text>
         <Text className="text-muted-foreground">Find active players and games near you</Text>

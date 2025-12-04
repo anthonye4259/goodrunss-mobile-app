@@ -6,7 +6,8 @@
       "@/*": [
         "./*"
       ]
-    }
+    },
+    "jsxImportSource": "nativewind"
   },
   "include": [
     "**/*.ts",
@@ -14,6 +15,3 @@
     "nativewind-env.d.ts"
   ]
 }
-
-
-

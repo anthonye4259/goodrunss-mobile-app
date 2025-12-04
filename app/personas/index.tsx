@@ -114,7 +114,7 @@ export default function PersonasScreen() {
     )
 
   return (
-    <LinearGradient colors={["#0A0A0A", "#141414"]} className="flex-1">
+    <LinearGradient colors={["#0A0A0A", "#141414"]} style={{ flex: 1 }}>
       <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
         <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
           {/* Header */}

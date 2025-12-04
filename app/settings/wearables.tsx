@@ -29,7 +29,7 @@ export default function WearablesScreen() {
   ]
 
   return (
-    <LinearGradient colors={["#0A0A0A", "#141414"]} className="flex-1">
+    <LinearGradient colors={["#0A0A0A", "#141414"]} style={{ flex: 1 }}>
       <ScrollView className="flex-1" contentContainerClassName="pb-10">
         <View className="px-6 pt-16 pb-6">
           <View className="flex-row items-center mb-4">

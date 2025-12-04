@@ -65,7 +65,7 @@ export default function ReportFacilityScreen() {
   }
 
   return (
-    <LinearGradient colors={["#0A0A0A", "#141414"]} className="flex-1">
+    <LinearGradient colors={["#0A0A0A", "#141414"]} style={{ flex: 1 }}>
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <View className="px-6 pt-16 pb-6">
           <View className="flex-row items-center mb-6">
