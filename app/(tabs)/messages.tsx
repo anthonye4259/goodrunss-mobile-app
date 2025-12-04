@@ -1,137 +1,281 @@
-
-import { View, Text, ScrollView, TouchableOpacity, TextInput } from "react-native"
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { router } from "expo-router"
-import { useUserPreferences } from "@/lib/user-preferences"
-import { useState, useEffect } from "react"
-import { collection, query, where, orderBy, onSnapshot, type Timestamp } from "firebase/firestore"
-import { db } from "@/lib/firebase-config"
-import { EmptyState } from "@/components/empty-state"
-import { SkeletonLoader } from "@/components/skeleton-loader"
+import * as Haptics from "expo-haptics"
+import { SafeAreaView } from "react-native-safe-area-context"
+import { useState } from "react"
 
-interface Conversation {
+type Conversation = {
   id: string
-  otherUser: {
-    name: string
-    role: string
-  }
+  name: string
   lastMessage: string
-  timestamp: Timestamp
-  unread: boolean
+  time: string
+  unread: number
+  avatar: string
+  isOnline?: boolean
 }
 
+const MOCK_CONVERSATIONS: Conversation[] = [
+  {
+    id: "1",
+    name: "Coach Mike",
+    lastMessage: "Great session today! See you next week.",
+    time: "2m ago",
+    unread: 2,
+    avatar: "M",
+    isOnline: true,
+  },
+  {
+    id: "2",
+    name: "Sarah Johnson",
+    lastMessage: "Are you free for a match tomorrow?",
+    time: "1h ago",
+    unread: 0,
+    avatar: "S",
+    isOnline: true,
+  },
+  {
+    id: "3",
+    name: "Downtown Courts",
+    lastMessage: "Your booking is confirmed for Saturday.",
+    time: "3h ago",
+    unread: 1,
+    avatar: "D",
+  },
+  {
+    id: "4",
+    name: "Alex Chen",
+    lastMessage: "Thanks for the tip!",
+    time: "Yesterday",
+    unread: 0,
+    avatar: "A",
+  },
+]
+
 export default function MessagesScreen() {
-  const { preferences } = useUserPreferences()
-  const [conversations, setConversations] = useState<Conversation[]>([])
-  const [searchQuery, setSearchQuery] = useState("")
-  const [loading, setLoading] = useState(true)
+  const [conversations] = useState<Conversation[]>(MOCK_CONVERSATIONS)
 
-  useEffect(() => {
-    const conversationsRef = collection(db, "conversations")
-    const q = query(
-      conversationsRef,
-      where("participants", "array-contains", preferences.userId || "user123"),
-      orderBy("lastMessageTime", "desc"),
-    )
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const convos: Conversation[] = snapshot.docs.map((doc) => {
-        const data = doc.data()
-        return {
-          id: doc.id,
-          otherUser: {
-            name: data.otherUserName || "Unknown User",
-            role: data.otherUserRole || "player",
-          },
-          lastMessage: data.lastMessage || "",
-          timestamp: data.lastMessageTime,
-          unread: data.unreadCount > 0,
-        }
-      })
-      setConversations(convos)
-      setLoading(false)
-    })
-
-    return () => unsubscribe()
-  }, [preferences.userId])
-
-  const filteredConversations = conversations.filter((conv) =>
-    conv.otherUser.name.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
-
-  const formatTime = (timestamp: Timestamp) => {
-    if (!timestamp) return ""
-    const date = timestamp.toDate()
-    const now = new Date()
-    const diff = now.getTime() - date.getTime()
-    const hours = Math.floor(diff / (1000 * 60 * 60))
-
-    if (hours < 1) return "Just now"
-    if (hours < 24) return `${hours}h ago`
-    if (hours < 48) return "Yesterday"
-    return date.toLocaleDateString()
+  const handlePress = (id: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    router.push(`/chat/${id}`)
   }
 
   return (
-    <LinearGradient colors={["#0A0A0A", "#141414"]} className="flex-1">
-      <View className="px-6 pt-16 pb-4">
-        <Text className="text-foreground font-bold text-3xl mb-6">Messages</Text>
-
-        {/* Search Bar */}
-        <View className="bg-card border border-border rounded-2xl px-4 py-3 flex-row items-center mb-4">
-          <Ionicons name="search" size={20} color="#666" />
-          <TextInput
-            placeholder="Search conversations..."
-            placeholderTextColor="#666"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            className="flex-1 ml-3 text-foreground"
-          />
-        </View>
-      </View>
-
-      <ScrollView className="flex-1 px-6">
-        {loading ? (
-          <View className="gap-3">
-            <SkeletonLoader width="100%" height={80} />
-            <SkeletonLoader width="100%" height={80} />
-            <SkeletonLoader width="100%" height={80} />
-          </View>
-        ) : filteredConversations.length === 0 ? (
-          <EmptyState
-            icon="chatbubbles-outline"
-            title="No conversations yet"
-            description="Book a session to start chatting with trainers and other players"
-            actionText="Explore Trainers"
-            onAction={() => router.push("/(tabs)/explore")}
-          />
-        ) : (
-          filteredConversations.map((conversation) => (
-            <TouchableOpacity
-              key={conversation.id}
-              onPress={() => router.push(`/chat/${conversation.id}`)}
-              className="bg-card border border-border rounded-2xl p-4 mb-3 flex-row items-center"
-            >
-              <View className="bg-primary/20 rounded-full w-12 h-12 items-center justify-center mr-4">
-                <Text className="text-primary font-bold text-lg">{conversation.otherUser.name.charAt(0)}</Text>
-              </View>
-
-              <View className="flex-1">
-                <View className="flex-row items-center justify-between mb-1">
-                  <Text className="text-foreground font-bold text-base">{conversation.otherUser.name}</Text>
-                  <Text className="text-muted-foreground text-xs">{formatTime(conversation.timestamp)}</Text>
-                </View>
-                <Text className="text-muted-foreground text-sm" numberOfLines={1}>
-                  {conversation.lastMessage}
-                </Text>
-              </View>
-
-              {conversation.unread && <View className="bg-primary rounded-full w-2 h-2 ml-2" />}
+    <LinearGradient colors={["#0A0A0A", "#141414"]} style={styles.container}>
+      <SafeAreaView style={styles.safeArea} edges={["top"]}>
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          {/* Header */}
+          <View style={styles.header}>
+            <Text style={styles.title}>Messages</Text>
+            <TouchableOpacity style={styles.newMessageButton}>
+              <Ionicons name="create-outline" size={24} color="#84CC16" />
             </TouchableOpacity>
-          ))
-        )}
-      </ScrollView>
+          </View>
+
+          {/* Conversations */}
+          {conversations.length > 0 ? (
+            <View style={styles.conversationsContainer}>
+              {conversations.map((conversation) => (
+                <TouchableOpacity
+                  key={conversation.id}
+                  style={styles.conversationItem}
+                  onPress={() => handlePress(conversation.id)}
+                >
+                  <View style={styles.avatarContainer}>
+                    <View style={styles.avatar}>
+                      <Text style={styles.avatarText}>{conversation.avatar}</Text>
+                    </View>
+                    {conversation.isOnline && <View style={styles.onlineIndicator} />}
+                  </View>
+                  
+                  <View style={styles.conversationContent}>
+                    <View style={styles.conversationHeader}>
+                      <Text style={styles.conversationName}>{conversation.name}</Text>
+                      <Text style={styles.conversationTime}>{conversation.time}</Text>
+                    </View>
+                    <View style={styles.conversationFooter}>
+                      <Text style={styles.lastMessage} numberOfLines={1}>
+                        {conversation.lastMessage}
+                      </Text>
+                      {conversation.unread > 0 && (
+                        <View style={styles.unreadBadge}>
+                          <Text style={styles.unreadText}>{conversation.unread}</Text>
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : (
+            <View style={styles.emptyState}>
+              <View style={styles.emptyIcon}>
+                <Ionicons name="chatbubbles-outline" size={64} color="#333" />
+              </View>
+              <Text style={styles.emptyTitle}>No Messages Yet</Text>
+              <Text style={styles.emptyDescription}>
+                Start a conversation with a trainer or player to see your messages here.
+              </Text>
+              <TouchableOpacity style={styles.startButton} onPress={() => router.push("/(tabs)/explore")}>
+                <Text style={styles.startButtonText}>Find People</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </ScrollView>
+      </SafeAreaView>
     </LinearGradient>
   )
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  safeArea: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 40,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 16,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+  },
+  newMessageButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#1A1A1A",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  conversationsContainer: {
+    paddingHorizontal: 24,
+  },
+  conversationItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#1A1A1A",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+  },
+  avatarContainer: {
+    position: "relative",
+    marginRight: 12,
+  },
+  avatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "rgba(132, 204, 22, 0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatarText: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#84CC16",
+  },
+  onlineIndicator: {
+    position: "absolute",
+    bottom: 2,
+    right: 2,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: "#22C55E",
+    borderWidth: 2,
+    borderColor: "#1A1A1A",
+  },
+  conversationContent: {
+    flex: 1,
+  },
+  conversationHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  conversationName: {
+    fontSize: 17,
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
+  conversationTime: {
+    fontSize: 13,
+    color: "#666",
+  },
+  conversationFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  lastMessage: {
+    fontSize: 15,
+    color: "#9CA3AF",
+    flex: 1,
+    marginRight: 8,
+  },
+  unreadBadge: {
+    backgroundColor: "#84CC16",
+    borderRadius: 12,
+    minWidth: 24,
+    height: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 8,
+  },
+  unreadText: {
+    fontSize: 13,
+    fontWeight: "bold",
+    color: "#000",
+  },
+  emptyState: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 48,
+    paddingTop: 100,
+  },
+  emptyIcon: {
+    marginBottom: 24,
+  },
+  emptyTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    marginBottom: 8,
+  },
+  emptyDescription: {
+    fontSize: 16,
+    color: "#9CA3AF",
+    textAlign: "center",
+    marginBottom: 24,
+    lineHeight: 24,
+  },
+  startButton: {
+    backgroundColor: "#84CC16",
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+  },
+  startButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#000",
+  },
+})

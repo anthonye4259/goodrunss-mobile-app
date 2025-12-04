@@ -183,3 +183,9 @@ export function useWearableConnection(provider: WearableProvider): {
 
 export default useWearables
 
+
+
+
+
+
+

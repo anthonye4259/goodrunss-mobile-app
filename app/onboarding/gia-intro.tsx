@@ -1,11 +1,10 @@
-
 import { useState } from "react"
-import { View, Text, TouchableOpacity, Dimensions } from "react-native"
+import { View, Text, TouchableOpacity, Dimensions, StyleSheet, ScrollView } from "react-native"
 import { useRouter } from "expo-router"
 import { LinearGradient } from "expo-linear-gradient"
-import Animated, { FadeIn, FadeOut } from "react-native-reanimated"
 import { Ionicons } from "@expo/vector-icons"
 import AsyncStorage from "@react-native-async-storage/async-storage"
+import { SafeAreaView } from "react-native-safe-area-context"
 
 const { width } = Dimensions.get("window")
 
@@ -14,34 +13,34 @@ const INTRO_STEPS = [
     title: "Meet GIA",
     subtitle: "Your Personal AI Assistant",
     description: "GIA is your intelligent fitness companion, designed to help you achieve your goals faster.",
-    gradient: ["#0EA5E9", "#0369A1", "#0A0A0A"],
+    gradient: ["#0EA5E9", "#0369A1", "#0A0A0A"] as const,
     icon: "sparkles" as const,
   },
   {
     title: "What GIA Can Do",
     subtitle: "Your All-in-One Fitness Partner",
     features: [
-      { icon: "location", text: "Find nearby courts and facilities" },
-      { icon: "barbell", text: "Generate personalized workouts" },
-      { icon: "calendar", text: "Book trainers and classes instantly" },
-      { icon: "stats-chart", text: "Track your progress and stats" },
-      { icon: "people", text: "Connect with players near you" },
-      { icon: "chatbubbles", text: "Get instant answers to fitness questions" },
+      { icon: "location" as const, text: "Find nearby courts and facilities" },
+      { icon: "barbell" as const, text: "Generate personalized workouts" },
+      { icon: "calendar" as const, text: "Book trainers and classes instantly" },
+      { icon: "stats-chart" as const, text: "Track your progress and stats" },
+      { icon: "people" as const, text: "Connect with players near you" },
+      { icon: "chatbubbles" as const, text: "Get instant answers to fitness questions" },
     ],
-    gradient: ["#8B5CF6", "#6D28D9", "#0A0A0A"],
+    gradient: ["#8B5CF6", "#6D28D9", "#0A0A0A"] as const,
   },
   {
     title: "Seamless Integrations",
     subtitle: "Connect Your Favorite Apps",
     integrations: [
-      { icon: "fitness", text: "Apple Health & HealthKit" },
-      { icon: "watch", text: "Apple Watch" },
-      { icon: "bicycle", text: "Strava" },
-      { icon: "heart", text: "Fitbit" },
-      { icon: "analytics", text: "MyFitnessPal" },
-      { icon: "calendar", text: "Google Calendar" },
+      { icon: "fitness" as const, text: "Apple Health & HealthKit" },
+      { icon: "watch" as const, text: "Apple Watch" },
+      { icon: "bicycle" as const, text: "Strava" },
+      { icon: "heart" as const, text: "Fitbit" },
+      { icon: "analytics" as const, text: "MyFitnessPal" },
+      { icon: "calendar" as const, text: "Google Calendar" },
     ],
-    gradient: ["#84CC16", "#65A30D", "#0A0A0A"],
+    gradient: ["#84CC16", "#65A30D", "#0A0A0A"] as const,
   },
 ]
 
@@ -65,104 +64,257 @@ export default function GIAIntroScreen() {
   }
 
   return (
-    <LinearGradient colors={step.gradient} className="flex-1">
-      <View className="flex-1 px-6 pt-16 pb-10">
-        {/* Skip Button */}
-        {currentStep < INTRO_STEPS.length - 1 && (
-          <TouchableOpacity onPress={handleSkip} className="self-end mb-8">
-            <Text className="text-white/70 text-base">Skip</Text>
-          </TouchableOpacity>
-        )}
+    <LinearGradient colors={[...step.gradient]} style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          {/* Skip Button */}
+          {currentStep < INTRO_STEPS.length - 1 && (
+            <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
+              <Text style={styles.skipText}>Skip</Text>
+            </TouchableOpacity>
+          )}
 
-        {/* Content */}
-        <Animated.View
-          key={currentStep}
-          entering={FadeIn.duration(400)}
-          exiting={FadeOut.duration(200)}
-          className="flex-1 justify-center"
-        >
-          {/* Icon */}
-          {step.icon && (
-            <View className="items-center mb-8">
-              <View className="w-24 h-24 rounded-full bg-white/10 items-center justify-center">
-                <Ionicons name={step.icon} size={48} color="white" />
+          {/* Content */}
+          <View style={styles.content}>
+            {/* Icon */}
+            {step.icon && (
+              <View style={styles.iconContainer}>
+                <View style={styles.iconCircle}>
+                  <Ionicons name={step.icon} size={48} color="white" />
+                </View>
               </View>
-            </View>
-          )}
+            )}
 
-          {/* Title */}
-          <Text className="text-white text-5xl font-bold mb-3 text-center">{step.title}</Text>
-          <Text className="text-white/90 text-2xl mb-6 text-center" style={{ fontFamily: "serif" }}>
-            {step.subtitle}
-          </Text>
+            {/* Title */}
+            <Text style={styles.title}>{step.title}</Text>
+            <Text style={styles.subtitle}>{step.subtitle}</Text>
 
-          {/* Description */}
-          {step.description && <Text className="text-white/80 text-lg text-center mb-8 px-4">{step.description}</Text>}
+            {/* Description */}
+            {step.description && (
+              <Text style={styles.description}>{step.description}</Text>
+            )}
 
-          {/* Features List */}
-          {step.features && (
-            <View className="space-y-4 mb-8">
-              {step.features.map((feature, index) => (
-                <Animated.View
-                  key={index}
-                  entering={FadeIn.delay(index * 100).duration(400)}
-                  className="flex-row items-center bg-white/10 rounded-2xl p-4"
-                >
-                  <View className="w-12 h-12 rounded-full bg-white/20 items-center justify-center mr-4">
-                    <Ionicons name={feature.icon} size={24} color="white" />
+            {/* Features List */}
+            {step.features && (
+              <View style={styles.featuresList}>
+                {step.features.map((feature, index) => (
+                  <View key={index} style={styles.featureItem}>
+                    <View style={styles.featureIcon}>
+                      <Ionicons name={feature.icon} size={24} color="white" />
+                    </View>
+                    <Text style={styles.featureText}>{feature.text}</Text>
                   </View>
-                  <Text className="text-white text-base flex-1">{feature.text}</Text>
-                </Animated.View>
-              ))}
-            </View>
-          )}
+                ))}
+              </View>
+            )}
 
-          {/* Integrations Grid */}
-          {step.integrations && (
-            <View className="flex-row flex-wrap justify-center gap-3 mb-8">
-              {step.integrations.map((integration, index) => (
-                <Animated.View
-                  key={index}
-                  entering={FadeIn.delay(index * 80).duration(400)}
-                  className="bg-white/10 rounded-2xl p-4 items-center"
-                  style={{ width: (width - 60) / 2 - 6 }}
-                >
-                  <View className="w-12 h-12 rounded-full bg-white/20 items-center justify-center mb-2">
-                    <Ionicons name={integration.icon} size={24} color="white" />
+            {/* Integrations Grid */}
+            {step.integrations && (
+              <View style={styles.integrationsGrid}>
+                {step.integrations.map((integration, index) => (
+                  <View key={index} style={styles.integrationItem}>
+                    <View style={styles.integrationIcon}>
+                      <Ionicons name={integration.icon} size={24} color="white" />
+                    </View>
+                    <Text style={styles.integrationText}>{integration.text}</Text>
                   </View>
-                  <Text className="text-white text-sm text-center">{integration.text}</Text>
-                </Animated.View>
-              ))}
-            </View>
-          )}
-        </Animated.View>
+                ))}
+              </View>
+            )}
+          </View>
+        </ScrollView>
 
-        {/* Progress Dots */}
-        <View className="flex-row justify-center items-center mb-6">
-          {INTRO_STEPS.map((_, index) => (
-            <View
-              key={index}
-              className={`h-2 rounded-full mx-1 ${index === currentStep ? "w-8 bg-white" : "w-2 bg-white/30"}`}
-            />
-          ))}
-        </View>
+        {/* Bottom Section */}
+        <View style={styles.bottomSection}>
+          {/* Progress Dots */}
+          <View style={styles.dotsContainer}>
+            {INTRO_STEPS.map((_, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.dot,
+                  index === currentStep ? styles.dotActive : styles.dotInactive
+                ]}
+              />
+            ))}
+          </View>
 
-        {/* Get Started Button */}
-        <TouchableOpacity onPress={handleNext} className="bg-white rounded-2xl py-5">
-          <Text className="text-center text-black font-bold text-lg">
-            {currentStep === INTRO_STEPS.length - 1 ? "Get Started" : "Continue"}
-          </Text>
-        </TouchableOpacity>
-
-        {/* Login Link */}
-        {currentStep === INTRO_STEPS.length - 1 && (
-          <TouchableOpacity onPress={() => router.push("/auth")} className="mt-4">
-            <Text className="text-white/70 text-center">
-              Already have an account? <Text className="text-white font-semibold">Log In</Text>
+          {/* Get Started Button */}
+          <TouchableOpacity onPress={handleNext} style={styles.nextButton}>
+            <Text style={styles.nextButtonText}>
+              {currentStep === INTRO_STEPS.length - 1 ? "Get Started" : "Continue"}
             </Text>
           </TouchableOpacity>
-        )}
-      </View>
+
+          {/* Login Link */}
+          {currentStep === INTRO_STEPS.length - 1 && (
+            <TouchableOpacity onPress={() => router.push("/auth")} style={styles.loginLink}>
+              <Text style={styles.loginText}>
+                Already have an account? <Text style={styles.loginBold}>Log In</Text>
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </SafeAreaView>
     </LinearGradient>
   )
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  safeArea: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+  },
+  skipButton: {
+    alignSelf: "flex-end",
+    marginBottom: 24,
+  },
+  skipText: {
+    color: "rgba(255,255,255,0.7)",
+    fontSize: 16,
+  },
+  content: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  iconContainer: {
+    alignItems: "center",
+    marginBottom: 32,
+  },
+  iconCircle: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: "rgba(255,255,255,0.1)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  title: {
+    color: "#FFFFFF",
+    fontSize: 40,
+    fontWeight: "bold",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  subtitle: {
+    color: "rgba(255,255,255,0.9)",
+    fontSize: 20,
+    marginBottom: 24,
+    textAlign: "center",
+  },
+  description: {
+    color: "rgba(255,255,255,0.8)",
+    fontSize: 18,
+    textAlign: "center",
+    marginBottom: 32,
+    paddingHorizontal: 16,
+    lineHeight: 26,
+  },
+  featuresList: {
+    width: "100%",
+    gap: 12,
+  },
+  featureItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.1)",
+    borderRadius: 16,
+    padding: 16,
+  },
+  featureIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 16,
+  },
+  featureText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    flex: 1,
+  },
+  integrationsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: 12,
+    width: "100%",
+  },
+  integrationItem: {
+    backgroundColor: "rgba(255,255,255,0.1)",
+    borderRadius: 16,
+    padding: 16,
+    alignItems: "center",
+    width: (width - 60) / 2 - 6,
+  },
+  integrationIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 8,
+  },
+  integrationText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    textAlign: "center",
+  },
+  bottomSection: {
+    paddingHorizontal: 24,
+    paddingBottom: 24,
+  },
+  dotsContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  dot: {
+    height: 8,
+    borderRadius: 4,
+    marginHorizontal: 4,
+  },
+  dotActive: {
+    width: 32,
+    backgroundColor: "#FFFFFF",
+  },
+  dotInactive: {
+    width: 8,
+    backgroundColor: "rgba(255,255,255,0.3)",
+  },
+  nextButton: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    paddingVertical: 20,
+  },
+  nextButtonText: {
+    textAlign: "center",
+    color: "#000000",
+    fontWeight: "bold",
+    fontSize: 18,
+  },
+  loginLink: {
+    marginTop: 16,
+  },
+  loginText: {
+    color: "rgba(255,255,255,0.7)",
+    textAlign: "center",
+    fontSize: 16,
+  },
+  loginBold: {
+    color: "#FFFFFF",
+    fontWeight: "600",
+  },
+})

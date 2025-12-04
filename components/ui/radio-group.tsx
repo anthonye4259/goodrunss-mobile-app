@@ -1,37 +1,101 @@
+import React, { createContext, useContext, useState } from "react"
+import { View, TouchableOpacity, StyleSheet } from "react-native"
 
-import * as React from "react"
-import * as RadioGroupPrimitive from "@radix-ui/react-radio-group"
-import { Circle } from "lucide-react"
+interface RadioGroupContextType {
+  value: string
+  onValueChange: (value: string) => void
+}
 
-import { cn } from "@/lib/utils"
+const RadioGroupContext = createContext<RadioGroupContextType | null>(null)
 
-const RadioGroup = React.forwardRef<
-  React.ElementRef<typeof RadioGroupPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Root>
->(({ className, ...props }, ref) => {
-  return <RadioGroupPrimitive.Root className={cn("grid gap-2", className)} {...props} ref={ref} />
-})
-RadioGroup.displayName = RadioGroupPrimitive.Root.displayName
+interface RadioGroupProps {
+  value?: string
+  defaultValue?: string
+  onValueChange?: (value: string) => void
+  children: React.ReactNode
+  style?: any
+}
 
-const RadioGroupItem = React.forwardRef<
-  React.ElementRef<typeof RadioGroupPrimitive.Item>,
-  React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Item>
->(({ className, ...props }, ref) => {
+export function RadioGroup({ 
+  value: controlledValue, 
+  defaultValue, 
+  onValueChange, 
+  children, 
+  style 
+}: RadioGroupProps) {
+  const [internalValue, setInternalValue] = useState(defaultValue || "")
+  
+  const value = controlledValue !== undefined ? controlledValue : internalValue
+  
+  const handleValueChange = (newValue: string) => {
+    if (controlledValue === undefined) {
+      setInternalValue(newValue)
+    }
+    onValueChange?.(newValue)
+  }
+
   return (
-    <RadioGroupPrimitive.Item
-      ref={ref}
-      className={cn(
-        "aspect-square h-4 w-4 rounded-full border border-primary text-primary ring-offset-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-        className,
-      )}
-      {...props}
-    >
-      <RadioGroupPrimitive.Indicator className="flex items-center justify-center">
-        <Circle className="h-2.5 w-2.5 fill-current text-current" />
-      </RadioGroupPrimitive.Indicator>
-    </RadioGroupPrimitive.Item>
+    <RadioGroupContext.Provider value={{ value, onValueChange: handleValueChange }}>
+      <View style={[styles.group, style]}>
+        {children}
+      </View>
+    </RadioGroupContext.Provider>
   )
-})
-RadioGroupItem.displayName = RadioGroupPrimitive.Item.displayName
+}
 
-export { RadioGroup, RadioGroupItem }
+interface RadioGroupItemProps {
+  value: string
+  children?: React.ReactNode
+  style?: any
+}
+
+export function RadioGroupItem({ value, children, style }: RadioGroupItemProps) {
+  const context = useContext(RadioGroupContext)
+  
+  if (!context) {
+    throw new Error("RadioGroupItem must be used within a RadioGroup")
+  }
+
+  const isSelected = context.value === value
+
+  return (
+    <TouchableOpacity
+      style={[styles.item, style]}
+      onPress={() => context.onValueChange(value)}
+    >
+      <View style={[styles.radio, isSelected && styles.radioSelected]}>
+        {isSelected && <View style={styles.radioInner} />}
+      </View>
+      {children}
+    </TouchableOpacity>
+  )
+}
+
+const styles = StyleSheet.create({
+  group: {
+    gap: 8,
+  },
+  item: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  radio: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: "#84CC16",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  radioSelected: {
+    borderColor: "#84CC16",
+  },
+  radioInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "#84CC16",
+  },
+})

@@ -18,3 +18,9 @@ export { wearablesManager, WearablesManager } from './manager'
 // Default export
 export { wearablesManager as default } from './manager'
 
+
+
+
+
+
+

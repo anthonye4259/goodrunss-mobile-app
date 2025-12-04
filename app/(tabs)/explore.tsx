@@ -1,556 +1,421 @@
-
-import { View, Text, ScrollView, TouchableOpacity, Animated } from "react-native"
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
-import { useState, useRef } from "react"
+import { useState } from "react"
 import { useUserPreferences } from "@/lib/user-preferences"
-import { useLocation } from "@/lib/location-context"
 import { getActivityContent, getPrimaryActivity, type Activity } from "@/lib/activity-content"
+
+// Mock venues data
+const MOCK_VENUES = [
+  { name: "Downtown Sports Complex", address: "123 Main St", rating: 4.8, distance: "0.5 mi", amenities: ["Parking", "Locker Room", "Pro Shop"] },
+  { name: "Community Recreation Center", address: "456 Oak Ave", rating: 4.5, distance: "1.2 mi", amenities: ["Free Parking", "Showers", "Cafe"] },
+  { name: "Fitness Plus Arena", address: "789 Park Blvd", rating: 4.7, distance: "2.0 mi", amenities: ["24/7 Access", "Equipment", "Classes"] },
+]
 import { router } from "expo-router"
 import * as Haptics from "expo-haptics"
-import { calculateGoodRunssRating } from "@/lib/venue-quality-types"
-import { GoodRunssVerifiedBadge } from "@/components/goodrunss-verified-badge"
-import { GlobalSearch } from "@/components/global-search"
-import { TrainerCardSkeleton, VenueCardSkeleton } from "@/components/skeleton-loader"
-import { ErrorBoundary } from "@/components/error-boundary"
-import { formatCurrency, formatDistance } from "@/lib/global-format"
-import type { VenueType } from "@/lib/check-in-types"
+import { SafeAreaView } from "react-native-safe-area-context"
 
 export default function ExploreScreen() {
   const { preferences } = useUserPreferences()
-  const { location, calculateDistance } = useLocation()
   const [searchQuery, setSearchQuery] = useState("")
-  const [activeTab, setActiveTab] = useState<"trainers" | "venues" | "marketplace" | "personas">("trainers")
-  const [showGlobalSearch, setShowGlobalSearch] = useState(false)
-  const [loading, setLoading] = useState(false)
-
-  const [priceFilter, setPriceFilter] = useState<"all" | "low" | "medium" | "high">("all")
-  const [distanceFilter, setDistanceFilter] = useState<number>(10)
-  const [ratingFilter, setRatingFilter] = useState<number>(0)
-
-  const [venueTypeFilter, setVenueTypeFilter] = useState<VenueType | "all">(
-    preferences.isStudioUser && !preferences.isRecUser
-      ? "studio"
-      : preferences.isRecUser && !preferences.isStudioUser
-        ? "recreational"
-        : "all",
-  )
-
-  const tabIndicatorAnim = useRef(new Animated.Value(0)).current
-  const contentFadeAnim = useRef(new Animated.Value(1)).current
+  const [activeTab, setActiveTab] = useState<"trainers" | "venues">("trainers")
 
   const primaryActivity = getPrimaryActivity(preferences.activities) as Activity
   const content = getActivityContent(primaryActivity)
 
-  const getVenueLabel = (type: VenueType) => {
-    if (type === "studio") return preferences.isStudioUser ? "Studio" : "Studio"
-    return content.locationPrefix || "Court"
-  }
-
-  const getTrainerLabel = () => {
-    return preferences.isStudioUser ? "Instructor" : content.trainerTitle || "Trainer"
-  }
-
-  const switchTab = (tab: "trainers" | "venues" | "marketplace" | "personas", position: number) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-
-    Animated.sequence([
-      Animated.timing(contentFadeAnim, {
-        toValue: 0,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-      Animated.timing(tabIndicatorAnim, {
-        toValue: position,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      setActiveTab(tab)
-      Animated.timing(contentFadeAnim, {
-        toValue: 1,
-        duration: 200,
-        useNativeDriver: true,
-      }).start()
-    })
-  }
-
-  const venueQualityData = [
-    { rimQuality: 4.5, netPresence: true, courtGrip: 4.8, lighting: 4.2 },
-    { rimQuality: 3.8, netPresence: false, courtGrip: 3.5, lighting: 4.5 },
-    { rimQuality: 4.9, netPresence: true, courtGrip: 4.7, lighting: 4.8 },
-  ]
-
-  const filterTrainers = (trainers: typeof content.sampleTrainers) => {
-    return trainers.filter((trainer) => {
-      if (ratingFilter > 0 && trainer.rating < ratingFilter) return false
-      if (priceFilter === "low" && trainer.price > 50) return false
-      if (priceFilter === "medium" && (trainer.price < 50 || trainer.price > 100)) return false
-      if (priceFilter === "high" && trainer.price < 100) return false
-      return true
-    })
+  const handlePress = (action: () => void) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    action()
   }
 
   return (
-    <ErrorBoundary>
-      <LinearGradient colors={["#0A0A0A", "#141414"]} className="flex-1">
-        <ScrollView className="flex-1" contentContainerClassName="pb-10" showsVerticalScrollIndicator={false}>
+    <LinearGradient colors={["#0A0A0A", "#141414"]} style={styles.container}>
+      <SafeAreaView style={styles.safeArea} edges={["top"]}>
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {/* Header */}
-          <View className="px-6 pt-16 pb-6">
-            <Text className="text-3xl font-bold text-foreground mb-4">Explore</Text>
+          <View style={styles.header}>
+            <Text style={styles.title}>Explore</Text>
+            
+            {/* Search Bar */}
+            <View style={styles.searchContainer}>
+              <Ionicons name="search" size={20} color="#9CA3AF" />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search trainers, venues..."
+                placeholderTextColor="#9CA3AF"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+            </View>
+          </View>
 
+          {/* Tabs */}
+          <View style={styles.tabsContainer}>
             <TouchableOpacity
-              className="bg-primary rounded-xl p-4 mb-4 flex-row items-center justify-between"
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-                router.push("/for-you")
-              }}
+              style={[styles.tab, activeTab === "trainers" && styles.tabActive]}
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveTab("trainers") }}
             >
-              <View className="flex-row items-center flex-1">
-                <Ionicons name="sparkles" size={24} color="#000" />
-                <View className="ml-3 flex-1">
-                  <Text className="text-background font-bold text-lg">For You Feed</Text>
-                  <Text className="text-background/70 text-sm">AI-personalized recommendations</Text>
-                </View>
-              </View>
-              <Ionicons name="chevron-forward" size={24} color="#000" />
+              <Text style={[styles.tabText, activeTab === "trainers" && styles.tabTextActive]}>
+                {content.trainerTitle}s
+              </Text>
             </TouchableOpacity>
-
             <TouchableOpacity
-              className="glass-card rounded-xl flex-row items-center px-4 py-3"
-              onPress={() => setShowGlobalSearch(true)}
+              style={[styles.tab, activeTab === "venues" && styles.tabActive]}
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveTab("venues") }}
             >
-              <Ionicons name="search" size={20} color="#7ED957" />
-              <Text className="flex-1 ml-3 text-muted-foreground">
-                Search {getTrainerLabel().toLowerCase()}s, {getVenueLabel("recreational").toLowerCase()}s...
+              <Text style={[styles.tabText, activeTab === "venues" && styles.tabTextActive]}>
+                Venues
               </Text>
             </TouchableOpacity>
           </View>
 
-          {/* Tabs with smooth indicator */}
-          <View className="px-6 mb-6">
-            <View className="glass-card rounded-xl p-1">
-              <View className="flex-row">
+          {/* Content */}
+          {activeTab === "trainers" ? (
+            <View style={styles.contentSection}>
+              <Text style={styles.sectionTitle}>Top {content.trainerTitle}s Near You</Text>
+              {content.sampleTrainers.map((trainer, index) => (
                 <TouchableOpacity
-                  className={`flex-1 py-3 rounded-lg ${activeTab === "trainers" ? "bg-primary" : ""}`}
-                  onPress={() => switchTab("trainers", 0)}
-                  activeOpacity={0.8}
+                  key={index}
+                  style={styles.trainerCard}
+                  onPress={() => handlePress(() => router.push(`/trainers/${index}`))}
                 >
-                  <Text
-                    className={`text-center font-semibold ${activeTab === "trainers" ? "text-background" : "text-muted-foreground"}`}
-                  >
-                    {getTrainerLabel()}s
-                  </Text>
+                  <View style={styles.trainerHeader}>
+                    <View style={styles.trainerAvatar}>
+                      <Text style={styles.trainerInitial}>{trainer.name.charAt(0)}</Text>
+                    </View>
+                    <View style={styles.trainerInfo}>
+                      <Text style={styles.trainerName}>{trainer.name}</Text>
+                      <View style={styles.trainerRating}>
+                        <Ionicons name="star" size={14} color="#84CC16" />
+                        <Text style={styles.trainerRatingText}>{trainer.rating} ({trainer.reviews} reviews)</Text>
+                      </View>
+                      <Text style={styles.trainerSpecialty}>{trainer.specialties?.[0] || primaryActivity}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.trainerFooter}>
+                    <View>
+                      <Text style={styles.trainerLocation}>
+                        <Ionicons name="location" size={14} color="#9CA3AF" /> {trainer.location}
+                      </Text>
+                    </View>
+                    <View style={styles.trainerPriceContainer}>
+                      <Text style={styles.trainerPrice}>${trainer.price}/hr</Text>
+                      <TouchableOpacity style={styles.bookButton}>
+                        <Text style={styles.bookButtonText}>Book</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
                 </TouchableOpacity>
+              ))}
+            </View>
+          ) : (
+            <View style={styles.contentSection}>
+              <Text style={styles.sectionTitle}>Nearby Venues</Text>
+              {MOCK_VENUES.map((venue, index) => (
                 <TouchableOpacity
-                  className={`flex-1 py-3 rounded-lg ${activeTab === "venues" ? "bg-primary" : ""}`}
-                  onPress={() => switchTab("venues", 1)}
-                  activeOpacity={0.8}
+                  key={index}
+                  style={styles.venueCard}
+                  onPress={() => handlePress(() => router.push(`/venues/${index}`))}
                 >
-                  <Text
-                    className={`text-center font-semibold ${activeTab === "venues" ? "text-background" : "text-muted-foreground"}`}
-                  >
-                    Venues
-                  </Text>
+                  <View style={styles.venueHeader}>
+                    <View style={styles.venueIcon}>
+                      <Ionicons name="location" size={24} color="#84CC16" />
+                    </View>
+                    <View style={styles.venueInfo}>
+                      <Text style={styles.venueName}>{venue.name}</Text>
+                      <Text style={styles.venueAddress}>{venue.address}</Text>
+                      <View style={styles.venueRating}>
+                        <Ionicons name="star" size={14} color="#84CC16" />
+                        <Text style={styles.venueRatingText}>{venue.rating}</Text>
+                        <Text style={styles.venueDistance}> • {venue.distance}</Text>
+                      </View>
+                    </View>
+                  </View>
+                  <View style={styles.venueFooter}>
+                    <View style={styles.venueAmenities}>
+                      {venue.amenities?.slice(0, 3).map((amenity, i) => (
+                        <View key={i} style={styles.amenityBadge}>
+                          <Text style={styles.amenityText}>{amenity}</Text>
+                        </View>
+                      ))}
+                    </View>
+                    <TouchableOpacity style={styles.viewButton}>
+                      <Text style={styles.viewButtonText}>View</Text>
+                      <Ionicons name="chevron-forward" size={16} color="#84CC16" />
+                    </TouchableOpacity>
+                  </View>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  className={`flex-1 py-3 rounded-lg ${activeTab === "marketplace" ? "bg-primary" : ""}`}
-                  onPress={() => switchTab("marketplace", 2)}
-                  activeOpacity={0.8}
-                >
-                  <Text
-                    className={`text-center font-semibold ${activeTab === "marketplace" ? "text-background" : "text-muted-foreground"}`}
-                  >
-                    Gear
-                  </Text>
+              ))}
+            </View>
+          )}
+
+          {/* Categories */}
+          <View style={styles.contentSection}>
+            <Text style={styles.sectionTitle}>Categories</Text>
+            <View style={styles.categoriesGrid}>
+              {["Basketball", "Tennis", "Pickleball", "Golf", "Soccer", "Yoga", "Pilates", "Swimming"].map((sport, index) => (
+                <TouchableOpacity key={index} style={styles.categoryCard} onPress={() => handlePress(() => {})}>
+                  <Ionicons 
+                    name={
+                      sport === "Basketball" ? "basketball" :
+                      sport === "Tennis" ? "tennisball" :
+                      sport === "Golf" ? "golf" :
+                      sport === "Soccer" ? "football" :
+                      sport === "Yoga" || sport === "Pilates" ? "body" :
+                      sport === "Swimming" ? "water" :
+                      "fitness"
+                    } 
+                    size={28} 
+                    color="#84CC16" 
+                  />
+                  <Text style={styles.categoryText}>{sport}</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  className={`flex-1 py-3 rounded-lg ${activeTab === "personas" ? "bg-primary" : ""}`}
-                  onPress={() => switchTab("personas", 3)}
-                  activeOpacity={0.8}
-                >
-                  <Text
-                    className={`text-center font-semibold ${activeTab === "personas" ? "text-background" : "text-muted-foreground"}`}
-                  >
-                    AI Personas
-                  </Text>
-                </TouchableOpacity>
-              </View>
+              ))}
             </View>
           </View>
-
-          {activeTab === "venues" && (preferences.isStudioUser || preferences.isRecUser) && (
-            <View className="px-6 mb-4">
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2">
-                {preferences.isStudioUser && preferences.isRecUser && (
-                  <TouchableOpacity
-                    className={`rounded-full px-4 py-2 border ${venueTypeFilter === "all" ? "bg-primary border-primary" : "bg-card border-border"}`}
-                    onPress={() => setVenueTypeFilter("all")}
-                  >
-                    <Text className={venueTypeFilter === "all" ? "text-background font-semibold" : "text-foreground"}>
-                      All Venues
-                    </Text>
-                  </TouchableOpacity>
-                )}
-                {preferences.isRecUser && (
-                  <TouchableOpacity
-                    className={`rounded-full px-4 py-2 border ${venueTypeFilter === "recreational" ? "bg-primary border-primary" : "bg-card border-border"}`}
-                    onPress={() => setVenueTypeFilter("recreational")}
-                  >
-                    <Text
-                      className={
-                        venueTypeFilter === "recreational" ? "text-background font-semibold" : "text-foreground"
-                      }
-                    >
-                      Courts & Fields
-                    </Text>
-                  </TouchableOpacity>
-                )}
-                {preferences.isStudioUser && (
-                  <TouchableOpacity
-                    className={`rounded-full px-4 py-2 border ${venueTypeFilter === "studio" ? "bg-primary border-primary" : "bg-card border-border"}`}
-                    onPress={() => setVenueTypeFilter("studio")}
-                  >
-                    <Text
-                      className={venueTypeFilter === "studio" ? "text-background font-semibold" : "text-foreground"}
-                    >
-                      Studios & Classes
-                    </Text>
-                  </TouchableOpacity>
-                )}
-              </ScrollView>
-            </View>
-          )}
-
-          {activeTab === "trainers" && (
-            <View className="px-6 mb-4">
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2">
-                <TouchableOpacity
-                  className={`rounded-full px-4 py-2 border ${priceFilter === "all" ? "bg-primary border-primary" : "bg-card border-border"}`}
-                  onPress={() => setPriceFilter("all")}
-                >
-                  <Text className={priceFilter === "all" ? "text-background font-semibold" : "text-foreground"}>
-                    All Prices
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  className={`rounded-full px-4 py-2 border ${priceFilter === "low" ? "bg-primary border-primary" : "bg-card border-border"}`}
-                  onPress={() => setPriceFilter("low")}
-                >
-                  <Text className={priceFilter === "low" ? "text-background font-semibold" : "text-foreground"}>
-                    Under {formatCurrency(50)}
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  className={`rounded-full px-4 py-2 border ${priceFilter === "medium" ? "bg-primary border-primary" : "bg-card border-border"}`}
-                  onPress={() => setPriceFilter("medium")}
-                >
-                  <Text className={priceFilter === "medium" ? "text-background font-semibold" : "text-foreground"}>
-                    {formatCurrency(50)}-{formatCurrency(100)}
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  className={`rounded-full px-4 py-2 border ${priceFilter === "high" ? "bg-primary border-primary" : "bg-card border-border"}`}
-                  onPress={() => setPriceFilter("high")}
-                >
-                  <Text className={priceFilter === "high" ? "text-background font-semibold" : "text-foreground"}>
-                    {formatCurrency(100)}+
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  className={`rounded-full px-4 py-2 border ${ratingFilter > 0 ? "bg-primary border-primary" : "bg-card border-border"}`}
-                  onPress={() => setRatingFilter(ratingFilter > 0 ? 0 : 4.5)}
-                >
-                  <Text className={ratingFilter > 0 ? "text-background font-semibold" : "text-foreground"}>
-                    4.5+ Rating
-                  </Text>
-                </TouchableOpacity>
-              </ScrollView>
-            </View>
-          )}
-
-          {/* Animated content */}
-          <Animated.View style={{ opacity: contentFadeAnim }}>
-            {/* Trainers Tab */}
-            {activeTab === "trainers" && (
-              <View className="px-6">
-                <View className="flex-row justify-between items-center mb-4">
-                  <Text className="text-xl font-bold text-foreground">Top {getTrainerLabel()}s Near You</Text>
-                  <TouchableOpacity>
-                    <Ionicons name="options-outline" size={24} color="#7ED957" />
-                  </TouchableOpacity>
-                </View>
-
-                {loading ? (
-                  <>
-                    <TrainerCardSkeleton />
-                    <TrainerCardSkeleton />
-                    <TrainerCardSkeleton />
-                  </>
-                ) : (
-                  filterTrainers(content.sampleTrainers).map((trainer, index) => {
-                    const distance = calculateDistance(40.7589 + index * 0.01, -73.9851 + index * 0.01)
-                    return (
-                      <TouchableOpacity
-                        key={index}
-                        className="bg-card border border-border rounded-2xl p-4 mb-4"
-                        onPress={() => router.push(`/trainers/${index}`)}
-                      >
-                        <View className="flex-row items-start mb-3">
-                          <View className="bg-primary/20 rounded-full w-16 h-16 items-center justify-center mr-4">
-                            <Text className="text-primary font-bold text-2xl">{trainer.name.charAt(0)}</Text>
-                          </View>
-                          <View className="flex-1">
-                            <Text className="text-foreground font-bold text-lg mb-1">{trainer.name}</Text>
-                            <View className="flex-row items-center mb-1">
-                              <Ionicons name="star" size={16} color="#7ED957" />
-                              <Text className="text-foreground ml-1">
-                                {trainer.rating} ({trainer.reviews} reviews)
-                              </Text>
-                            </View>
-                            <View className="flex-row items-center">
-                              <Ionicons name="location-outline" size={14} color="#666" />
-                              <Text className="text-muted-foreground text-sm ml-1">
-                                {distance ? formatDistance(distance) : trainer.location}
-                              </Text>
-                            </View>
-                          </View>
-                          <View className="items-end">
-                            <Text className="text-primary font-bold text-xl">{formatCurrency(trainer.price)}</Text>
-                            <Text className="text-muted-foreground text-xs">/session</Text>
-                          </View>
-                        </View>
-
-                        <Text className="text-muted-foreground text-sm mb-3" numberOfLines={2}>
-                          {trainer.bio}
-                        </Text>
-
-                        <View className="flex-row flex-wrap gap-2 mb-3">
-                          {trainer.specialties.map((specialty, idx) => (
-                            <View key={idx} className="bg-primary/10 rounded-lg px-3 py-1">
-                              <Text className="text-primary text-xs font-medium">{specialty}</Text>
-                            </View>
-                          ))}
-                        </View>
-
-                        <TouchableOpacity className="bg-primary rounded-xl py-3">
-                          <Text className="text-background font-bold text-center">Book Session</Text>
-                        </TouchableOpacity>
-                      </TouchableOpacity>
-                    )
-                  })
-                )}
-              </View>
-            )}
-
-            {/* Venues Tab */}
-            {activeTab === "venues" && (
-              <View className="px-6">
-                <Text className="text-xl font-bold text-foreground mb-4">
-                  {venueTypeFilter === "studio"
-                    ? "Studios"
-                    : venueTypeFilter === "recreational"
-                      ? "Courts & Fields"
-                      : "All Venues"}{" "}
-                  Near You
-                </Text>
-
-                {loading ? (
-                  <>
-                    <VenueCardSkeleton />
-                    <VenueCardSkeleton />
-                    <VenueCardSkeleton />
-                  </>
-                ) : (
-                  content.sampleSessions.map((session, index) => {
-                    const quality = venueQualityData[index] || venueQualityData[0]
-
-                    const verifiedRating = calculateGoodRunssRating(
-                      primaryActivity,
-                      {
-                        rimQuality: quality.rimQuality,
-                        netPresence: quality.netPresence,
-                        courtSlipperiness: 5 - quality.courtGrip,
-                        lighting: quality.lighting,
-                        backboardCondition: 4.5,
-                        lineVisibility: 4.3,
-                        doubleRim: false,
-                      },
-                      45 + index * 20,
-                    )
-
-                    return (
-                      <TouchableOpacity
-                        key={index}
-                        className="bg-card border border-border rounded-2xl p-4 mb-4"
-                        onPress={() => {
-                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-                          router.push(`/venues/${index}`)
-                        }}
-                      >
-                        <View className="flex-row items-start mb-3">
-                          <View className="bg-primary/20 rounded-xl w-16 h-16 items-center justify-center mr-4">
-                            <Ionicons name="location" size={28} color="#7ED957" />
-                          </View>
-                          <View className="flex-1">
-                            <Text className="text-foreground font-bold text-lg mb-1">{session.location}</Text>
-
-                            <View className="mb-2">
-                              <GoodRunssVerifiedBadge rating={verifiedRating} size="small" showScore={false} />
-                            </View>
-
-                            <View className="flex-row items-center mb-1">
-                              <Ionicons name="time-outline" size={14} color="#666" />
-                              <Text className="text-muted-foreground text-sm ml-1">Open 6 AM - 10 PM</Text>
-                            </View>
-                            <View className="flex-row items-center">
-                              <Ionicons name="location-outline" size={14} color="#666" />
-                              <Text className="text-muted-foreground text-sm ml-1">
-                                {formatDistance(calculateDistance(40.7589 + index * 0.02, -73.9851) || 0)} away
-                              </Text>
-                            </View>
-                          </View>
-                        </View>
-
-                        {primaryActivity === "Basketball" && (
-                          <View className="bg-muted/30 rounded-xl p-3 mb-3">
-                            <Text className="text-foreground font-semibold mb-2">Court Quality</Text>
-                            <View className="flex-row flex-wrap gap-2">
-                              <View className="flex-row items-center bg-card rounded-lg px-2 py-1">
-                                <Ionicons name="basketball" size={14} color="#7ED957" />
-                                <Text className="text-foreground text-xs ml-1">Rim: {quality.rimQuality}/5</Text>
-                              </View>
-                              <View className="flex-row items-center bg-card rounded-lg px-2 py-1">
-                                <Ionicons
-                                  name={quality.netPresence ? "checkmark-circle" : "close-circle"}
-                                  size={14}
-                                  color={quality.netPresence ? "#7ED957" : "#FF6B6B"}
-                                />
-                                <Text className="text-foreground text-xs ml-1">
-                                  {quality.netPresence ? "Has Net" : "No Net"}
-                                </Text>
-                              </View>
-                              <View className="flex-row items-center bg-card rounded-lg px-2 py-1">
-                                <Ionicons name="hand-left" size={14} color="#7ED957" />
-                                <Text className="text-foreground text-xs ml-1">Grip: {quality.courtGrip}/5</Text>
-                              </View>
-                              <View className="flex-row items-center bg-card rounded-lg px-2 py-1">
-                                <Ionicons name="sunny" size={14} color="#7ED957" />
-                                <Text className="text-foreground text-xs ml-1">Light: {quality.lighting}/5</Text>
-                              </View>
-                            </View>
-                          </View>
-                        )}
-
-                        <View className="flex-row gap-2">
-                          <TouchableOpacity
-                            className="flex-1 bg-primary rounded-xl py-3"
-                            onPress={() => {
-                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-                              router.push(`/venues/${index}`)
-                            }}
-                          >
-                            <Text className="text-background font-bold text-center">
-                              Book {getVenueLabel(venueTypeFilter === "studio" ? "studio" : "recreational")}
-                            </Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            className="bg-card border border-primary rounded-xl px-4 py-3"
-                            onPress={() => {
-                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-                              router.push("/venues/map")
-                            }}
-                          >
-                            <Ionicons name="map-outline" size={20} color="#7ED957" />
-                          </TouchableOpacity>
-                        </View>
-                      </TouchableOpacity>
-                    )
-                  })
-                )}
-              </View>
-            )}
-
-            {/* Marketplace Tab */}
-            {activeTab === "marketplace" && (
-              <View className="px-6">
-                <Text className="text-xl font-bold text-foreground mb-4">Gear & Equipment</Text>
-
-                <View className="flex-row flex-wrap justify-between">
-                  {content.marketplaceItems.map((item, index) => (
-                    <TouchableOpacity key={index} className="w-[48%] bg-card border border-border rounded-2xl mb-4">
-                      <View className="bg-muted rounded-t-2xl h-40 items-center justify-center">
-                        <Ionicons name="image-outline" size={48} color="#666" />
-                      </View>
-                      <View className="p-3">
-                        <Text className="text-foreground font-bold mb-1" numberOfLines={2}>
-                          {item.name}
-                        </Text>
-                        <Text className="text-muted-foreground text-xs mb-2">{item.condition}</Text>
-                        <View className="flex-row justify-between items-center">
-                          <Text className="text-primary font-bold text-lg">{formatCurrency(item.price)}</Text>
-                          <TouchableOpacity
-                            className="bg-primary rounded-lg px-3 py-1"
-                            onPress={() => {
-                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-                              router.push(`/marketplace/${item.name}`)
-                            }}
-                          >
-                            <Text className="text-background text-xs font-bold">Buy</Text>
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-            )}
-
-            {/* Personas Tab */}
-            {activeTab === "personas" && (
-              <View className="px-6">
-                <Text className="text-xl font-bold text-foreground mb-4">Featured AI Personas</Text>
-
-                <TouchableOpacity
-                  className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-2xl p-6 mb-4"
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-                    router.push("/personas")
-                  }}
-                >
-                  <View className="flex-row items-center mb-4">
-                    <View className="bg-purple-500/30 rounded-full w-12 h-12 items-center justify-center mr-3">
-                      <Ionicons name="sparkles" size={24} color="#a855f7" />
-                    </View>
-                    <View className="flex-1">
-                      <Text className="text-white font-bold text-lg mb-1">Train with AI Coaches</Text>
-                      <Text className="text-zinc-400 text-sm">Get personalized coaching from AI personas</Text>
-                    </View>
-                  </View>
-
-                  <View className="flex-row gap-2 mb-4">
-                    <View className="bg-purple-500/20 rounded-lg px-3 py-1">
-                      <Text className="text-purple-400 text-xs font-medium">24/7 Available</Text>
-                    </View>
-                    <View className="bg-purple-500/20 rounded-lg px-3 py-1">
-                      <Text className="text-purple-400 text-xs font-medium">Voice Enabled</Text>
-                    </View>
-                    <View className="bg-purple-500/20 rounded-lg px-3 py-1">
-                      <Text className="text-purple-400 text-xs font-medium">Custom Workouts</Text>
-                    </View>
-                  </View>
-
-                  <TouchableOpacity className="bg-purple-500 rounded-xl py-3">
-                    <Text className="text-white font-bold text-center">Explore AI Personas</Text>
-                  </TouchableOpacity>
-                </TouchableOpacity>
-              </View>
-            )}
-          </Animated.View>
         </ScrollView>
-
-        <GlobalSearch visible={showGlobalSearch} onClose={() => setShowGlobalSearch(false)} />
-      </LinearGradient>
-    </ErrorBoundary>
+      </SafeAreaView>
+    </LinearGradient>
   )
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  safeArea: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 40,
+  },
+  header: {
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 16,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    marginBottom: 16,
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#1A1A1A",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  searchInput: {
+    flex: 1,
+    marginLeft: 12,
+    fontSize: 16,
+    color: "#FFFFFF",
+  },
+  tabsContainer: {
+    flexDirection: "row",
+    paddingHorizontal: 24,
+    marginBottom: 24,
+    gap: 12,
+  },
+  tab: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 50,
+    backgroundColor: "#1A1A1A",
+  },
+  tabActive: {
+    backgroundColor: "#84CC16",
+  },
+  tabText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#9CA3AF",
+  },
+  tabTextActive: {
+    color: "#000000",
+  },
+  contentSection: {
+    paddingHorizontal: 24,
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    marginBottom: 16,
+  },
+  trainerCard: {
+    backgroundColor: "#1A1A1A",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+  },
+  trainerHeader: {
+    flexDirection: "row",
+    marginBottom: 12,
+  },
+  trainerAvatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "rgba(132, 204, 22, 0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  trainerInitial: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#84CC16",
+  },
+  trainerInfo: {
+    flex: 1,
+  },
+  trainerName: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+  },
+  trainerRating: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 4,
+  },
+  trainerRatingText: {
+    fontSize: 14,
+    color: "#9CA3AF",
+    marginLeft: 4,
+  },
+  trainerSpecialty: {
+    fontSize: 14,
+    color: "#84CC16",
+    marginTop: 4,
+  },
+  trainerFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  trainerLocation: {
+    fontSize: 14,
+    color: "#9CA3AF",
+  },
+  trainerPriceContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  trainerPrice: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#84CC16",
+  },
+  bookButton: {
+    backgroundColor: "#84CC16",
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  bookButtonText: {
+    color: "#000000",
+    fontWeight: "600",
+  },
+  venueCard: {
+    backgroundColor: "#1A1A1A",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+  },
+  venueHeader: {
+    flexDirection: "row",
+    marginBottom: 12,
+  },
+  venueIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    backgroundColor: "rgba(132, 204, 22, 0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  venueInfo: {
+    flex: 1,
+  },
+  venueName: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+  },
+  venueAddress: {
+    fontSize: 14,
+    color: "#9CA3AF",
+    marginTop: 4,
+  },
+  venueRating: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 4,
+  },
+  venueRatingText: {
+    fontSize: 14,
+    color: "#84CC16",
+    marginLeft: 4,
+  },
+  venueDistance: {
+    fontSize: 14,
+    color: "#9CA3AF",
+  },
+  venueFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  venueAmenities: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  amenityBadge: {
+    backgroundColor: "#2A2A2A",
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  amenityText: {
+    fontSize: 12,
+    color: "#9CA3AF",
+  },
+  viewButton: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  viewButtonText: {
+    color: "#84CC16",
+    fontWeight: "600",
+    marginRight: 4,
+  },
+  categoriesGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+  },
+  categoryCard: {
+    backgroundColor: "#1A1A1A",
+    borderRadius: 12,
+    padding: 16,
+    width: "30%",
+    alignItems: "center",
+  },
+  categoryText: {
+    fontSize: 12,
+    color: "#FFFFFF",
+    marginTop: 8,
+    textAlign: "center",
+  },
+})

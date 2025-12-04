@@ -1,6 +1,5 @@
-
 import { useState } from "react"
-import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView } from "react-native"
+import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView, StyleSheet } from "react-native"
 import { useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 import AsyncStorage from "@react-native-async-storage/async-storage"
@@ -49,29 +48,29 @@ export default function LanguageSelection() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <View className="flex-1 items-center justify-center px-6">
+    <SafeAreaView style={styles.container}>
+      <View style={styles.content}>
         {/* GoodRunss Logo/Icon */}
-        <View className="w-16 h-16 bg-lime-500 rounded-full items-center justify-center mb-8">
+        <View style={styles.logoContainer}>
           <Ionicons name="fitness" size={32} color="white" />
         </View>
 
         {/* Title */}
-        <Text className="text-2xl font-bold text-gray-900 mb-2 text-center">Select Your Language</Text>
-        <Text className="text-base text-gray-500 mb-8 text-center">Choose your preferred language to continue</Text>
+        <Text style={styles.title}>Select Your Language</Text>
+        <Text style={styles.subtitle}>Choose your preferred language to continue</Text>
 
         {/* Language Selector Card */}
-        <View className="w-full max-w-md bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+        <View style={styles.card}>
           {/* Selected Language Button */}
           <TouchableOpacity
             onPress={() => setShowDropdown(!showDropdown)}
-            className="flex-row items-center justify-between px-5 py-4 border-b border-gray-200"
+            style={styles.selectedButton}
           >
-            <View className="flex-row items-center gap-3">
+            <View style={styles.selectedRow}>
               <Ionicons name="globe-outline" size={24} color="#84CC16" />
-              <View>
-                <Text className="text-lg font-semibold text-gray-900">{selectedLang.name}</Text>
-                <Text className="text-sm text-gray-500">{selectedLang.region}</Text>
+              <View style={styles.selectedText}>
+                <Text style={styles.selectedName}>{selectedLang.name}</Text>
+                <Text style={styles.selectedRegion}>{selectedLang.region}</Text>
               </View>
             </View>
             <Ionicons name={showDropdown ? "chevron-up" : "chevron-down"} size={24} color="#9CA3AF" />
@@ -79,15 +78,15 @@ export default function LanguageSelection() {
 
           {/* Search Bar */}
           {showDropdown && (
-            <View className="px-5 py-3 border-b border-gray-200">
-              <View className="flex-row items-center bg-gray-100 rounded-lg px-3 py-2">
+            <View style={styles.searchContainer}>
+              <View style={styles.searchBar}>
                 <Ionicons name="search" size={20} color="#9CA3AF" />
                 <TextInput
                   value={searchQuery}
                   onChangeText={setSearchQuery}
                   placeholder="Search..."
                   placeholderTextColor="#9CA3AF"
-                  className="flex-1 ml-2 text-base text-gray-900"
+                  style={styles.searchInput}
                 />
               </View>
             </View>
@@ -95,19 +94,20 @@ export default function LanguageSelection() {
 
           {/* Language List */}
           {showDropdown && (
-            <ScrollView className="max-h-96">
+            <ScrollView style={styles.languageList}>
               {filteredLanguages.map((language) => (
                 <TouchableOpacity
                   key={language.code}
                   onPress={() => handleLanguageSelect(language.code)}
-                  className={`px-5 py-4 border-b border-gray-100 ${
-                    selectedLanguage === language.code ? "bg-lime-50" : ""
-                  }`}
+                  style={[
+                    styles.languageItem,
+                    selectedLanguage === language.code && styles.languageItemSelected
+                  ]}
                 >
-                  <View className="flex-row items-center justify-between">
+                  <View style={styles.languageItemContent}>
                     <View>
-                      <Text className="text-base font-medium text-gray-900">{language.name}</Text>
-                      <Text className="text-sm text-gray-500 mt-0.5">{language.nativeName}</Text>
+                      <Text style={styles.languageName}>{language.name}</Text>
+                      <Text style={styles.languageNative}>{language.nativeName}</Text>
                     </View>
                     {selectedLanguage === language.code && (
                       <Ionicons name="checkmark-circle" size={24} color="#84CC16" />
@@ -120,16 +120,148 @@ export default function LanguageSelection() {
         </View>
 
         {/* Continue Button */}
-        <TouchableOpacity
-          onPress={handleContinue}
-          className="w-full max-w-md bg-lime-500 rounded-full py-4 mt-8 shadow-lg"
-        >
-          <Text className="text-white text-center text-lg font-semibold">Continue</Text>
+        <TouchableOpacity onPress={handleContinue} style={styles.continueButton}>
+          <Text style={styles.continueText}>Continue</Text>
         </TouchableOpacity>
 
         {/* Footer Text */}
-        <Text className="text-sm text-gray-400 mt-6 text-center">You can change this later in settings</Text>
+        <Text style={styles.footer}>You can change this later in settings</Text>
       </View>
     </SafeAreaView>
   )
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#0A0A0A",
+  },
+  content: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 24,
+  },
+  logoContainer: {
+    width: 64,
+    height: 64,
+    backgroundColor: "#84CC16",
+    borderRadius: 32,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 32,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  subtitle: {
+    fontSize: 16,
+    color: "#9CA3AF",
+    marginBottom: 32,
+    textAlign: "center",
+  },
+  card: {
+    width: "100%",
+    backgroundColor: "#1A1A1A",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#333",
+    overflow: "hidden",
+  },
+  selectedButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#333",
+  },
+  selectedRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  selectedText: {
+    marginLeft: 12,
+  },
+  selectedName: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
+  selectedRegion: {
+    fontSize: 14,
+    color: "#9CA3AF",
+  },
+  searchContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#333",
+  },
+  searchBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#2A2A2A",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  searchInput: {
+    flex: 1,
+    marginLeft: 8,
+    fontSize: 16,
+    color: "#FFFFFF",
+  },
+  languageList: {
+    maxHeight: 300,
+  },
+  languageItem: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#222",
+  },
+  languageItemSelected: {
+    backgroundColor: "#1a2e0a",
+  },
+  languageItemContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  languageName: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#FFFFFF",
+  },
+  languageNative: {
+    fontSize: 14,
+    color: "#9CA3AF",
+    marginTop: 2,
+  },
+  continueButton: {
+    width: "100%",
+    backgroundColor: "#84CC16",
+    borderRadius: 50,
+    paddingVertical: 16,
+    marginTop: 32,
+  },
+  continueText: {
+    color: "#000000",
+    textAlign: "center",
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  footer: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 24,
+    textAlign: "center",
+  },
+})

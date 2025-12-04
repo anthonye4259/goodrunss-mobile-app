@@ -164,3 +164,9 @@ export const WEARABLE_COLORS: Record<WearableProvider, string> = {
   garmin: '#007CC3',
 }
 
+
+
+
+
+
+

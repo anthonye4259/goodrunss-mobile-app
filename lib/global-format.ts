@@ -29,7 +29,7 @@ const defaultSettings: GlobalSettings = {
   currency: "USD",
   distanceUnit: "miles",
   weightUnit: "lbs",
-  locale: Localization.locale,
+  locale: Localization.locale || "en-US",
   timezone: Localization.timezone || "UTC",
 }
 
@@ -117,7 +117,9 @@ export function formatPhoneNumber(phone: string, countryCode?: string): string {
   return phone
 }
 
-export function detectCurrencyFromLocale(locale: string): Currency {
+export function detectCurrencyFromLocale(locale?: string): Currency {
+  if (!locale) return "USD"
+  
   const currencyMap: Record<string, Currency> = {
     US: "USD",
     GB: "GBP",
@@ -135,7 +137,9 @@ export function detectCurrencyFromLocale(locale: string): Currency {
   return currencyMap[country] || "USD"
 }
 
-export function detectDistanceUnitFromLocale(locale: string): DistanceUnit {
+export function detectDistanceUnitFromLocale(locale?: string): DistanceUnit {
+  if (!locale) return "miles"
+  
   const milesCountries = ["US", "GB", "LR", "MM"] // USA, UK, Liberia, Myanmar
   const country = locale.split("-")[1] || locale.split("_")[1]
 
@@ -143,8 +147,9 @@ export function detectDistanceUnitFromLocale(locale: string): DistanceUnit {
 }
 
 // Initialize settings based on device locale
-const detectedCurrency = detectCurrencyFromLocale(Localization.locale)
-const detectedDistanceUnit = detectDistanceUnitFromLocale(Localization.locale)
+const deviceLocale = Localization.locale || "en-US"
+const detectedCurrency = detectCurrencyFromLocale(deviceLocale)
+const detectedDistanceUnit = detectDistanceUnitFromLocale(deviceLocale)
 
 setGlobalSettings({
   currency: detectedCurrency,

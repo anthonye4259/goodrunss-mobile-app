@@ -212,8 +212,9 @@ const resources = {
 
 i18n.use(initReactI18next).init({
   resources,
-  lng: Localization.locale.split("-")[0],
+  lng: (Localization.locale || "en-US").split("-")[0],
   fallbackLng: "en",
+  compatibilityJSON: "v3",
   interpolation: {
     escapeValue: false,
   },
