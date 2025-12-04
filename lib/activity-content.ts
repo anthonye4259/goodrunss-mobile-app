@@ -4,6 +4,7 @@ export type Activity =
   | "Pickleball"
   | "Padel"
   | "Racquetball"
+  | "Volleyball"
   | "Golf"
   | "Soccer"
   | "Swimming"
@@ -622,6 +623,44 @@ export const ACTIVITY_CONTENT: Record<Activity, ActivityContent> = {
     ],
   },
 
+  Volleyball: {
+    category: "rec",
+    displayName: "Volleyball",
+    trainerTitle: "Coach",
+    sessionType: "Training",
+    locationPrefix: "Court",
+    groupType: "League",
+    sampleTrainers: [
+      {
+        name: "Coach Lisa Martinez",
+        rating: 4.8,
+        reviews: 92,
+        price: 70,
+        location: "Beach Volleyball Courts",
+        specialties: ["Serving", "Blocking", "Team Play"],
+        bio: "Professional volleyball coach with 8+ years experience. Specialized in serving techniques, blocking strategies, and team coordination.",
+        certifications: ["USA Volleyball Certified", "Beach Volleyball Specialist", "CPR/First Aid"],
+      },
+    ],
+    sampleSessions: [{ title: "Volleyball Fundamentals", location: "Beach Courts", time: "Tomorrow, 5:00 PM" }],
+    marketplaceItems: [
+      {
+        name: "Mikasa Volleyball - Pro Touch",
+        condition: "Good",
+        price: 40,
+        seller: "Lisa Martinez",
+        image: "/volleyball-game.png",
+      },
+    ],
+    activityFeed: [
+      {
+        type: "session",
+        title: "Session Completed",
+        description: "Volleyball training with Coach Lisa",
+        time: "Yesterday",
+      },
+    ],
+  },
 
   Swimming: {
     category: "rec",
@@ -711,6 +750,6 @@ export function isStudioActivity(activity: string): boolean {
 }
 
 export function isRecActivity(activity: string): boolean {
-  const recActivities = ["Basketball", "Tennis", "Pickleball", "Padel", "Racquetball", "Golf", "Soccer", "Swimming"]
+  const recActivities = ["Basketball", "Tennis", "Pickleball", "Padel", "Racquetball", "Volleyball", "Golf", "Soccer", "Swimming"]
   return recActivities.includes(activity)
 }

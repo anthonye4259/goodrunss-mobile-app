@@ -271,6 +271,47 @@ export const RACQUETBALL_VENUES: Venue[] = [
     },
 ]
 
+export const VOLLEYBALL_VENUES: Venue[] = [
+    {
+        id: "volleyball-1",
+        name: "Manhattan Beach Volleyball",
+        type: "Beach Courts",
+        sport: "Volleyball",
+        address: "2801 The Strand",
+        city: "Manhattan Beach",
+        state: "CA",
+        zipCode: "90266",
+        coordinates: { lat: 33.8847, lon: -118.4109 },
+        rating: 4.9,
+        reviews: 234,
+        amenities: ["Beach", "Nets", "Restrooms", "Parking"],
+        hours: "6:00 AM - 10:00 PM",
+        price: "Free",
+        images: ["/volleyball-beach.png"],
+        activePlayersNow: 24,
+        lastActivityTimestamp: new Date(Date.now() - 3 * 60000),
+    },
+    {
+        id: "volleyball-2",
+        name: "Chelsea Piers Field House",
+        type: "Indoor Courts",
+        sport: "Volleyball",
+        address: "Pier 62, Hudson River",
+        city: "New York",
+        state: "NY",
+        zipCode: "10011",
+        coordinates: { lat: 40.7488, lon: -74.0079 },
+        rating: 4.7,
+        reviews: 156,
+        amenities: ["Indoor", "Leagues", "Locker Rooms", "Pro Shop"],
+        hours: "6:00 AM - 11:00 PM",
+        price: "$40/hr court",
+        images: ["/volleyball-indoor.png"],
+        activePlayersNow: 18,
+        lastActivityTimestamp: new Date(Date.now() - 8 * 60000),
+    },
+]
+
 export function getVenuesForSport(sport: string): Venue[] {
     const venueMap: Record<string, Venue[]> = {
         Basketball: BASKETBALL_VENUES,
@@ -281,6 +322,7 @@ export function getVenuesForSport(sport: string): Venue[] {
         Pickleball: PICKLEBALL_VENUES,
         Padel: PADEL_VENUES,
         Racquetball: RACQUETBALL_VENUES,
+        Volleyball: VOLLEYBALL_VENUES,
     }
     return venueMap[sport] || []
 }
