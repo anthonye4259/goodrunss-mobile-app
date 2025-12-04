@@ -227,6 +227,50 @@ export const PICKLEBALL_VENUES: Venue[] = [
     },
 ]
 
+export const PADEL_VENUES: Venue[] = [
+    {
+        id: "padel-1",
+        name: "Padel Haus NYC",
+        type: "Padel Courts",
+        sport: "Padel",
+        address: "120 North 11th St",
+        city: "Brooklyn",
+        state: "NY",
+        zipCode: "11249",
+        coordinates: { lat: 40.7214, lon: -73.9577 },
+        rating: 4.8,
+        reviews: 156,
+        amenities: ["Indoor", "Pro Shop", "Locker Rooms", "Lessons"],
+        hours: "7:00 AM - 11:00 PM",
+        price: "$60/hour",
+        images: ["/padel-court.png"],
+        activePlayersNow: 12,
+        lastActivityTimestamp: new Date(Date.now() - 5 * 60000),
+    },
+]
+
+export const RACQUETBALL_VENUES: Venue[] = [
+    {
+        id: "racquet-1",
+        name: "Equinox Sports Club",
+        type: "Racquetball Courts",
+        sport: "Racquetball",
+        address: "344 Amsterdam Ave",
+        city: "New York",
+        state: "NY",
+        zipCode: "10024",
+        coordinates: { lat: 40.7823, lon: -73.9792 },
+        rating: 4.7,
+        reviews: 89,
+        amenities: ["Indoor", "Pro Shop", "Locker Rooms", "Sauna"],
+        hours: "5:00 AM - 11:00 PM",
+        price: "$30/hour (members)",
+        images: ["/racquetball-court.png"],
+        activePlayersNow: 6,
+        lastActivityTimestamp: new Date(Date.now() - 10 * 60000),
+    },
+]
+
 export function getVenuesForSport(sport: string): Venue[] {
     const venueMap: Record<string, Venue[]> = {
         Basketball: BASKETBALL_VENUES,
@@ -235,6 +279,8 @@ export function getVenuesForSport(sport: string): Venue[] {
         Pilates: PILATES_VENUES,
         Golf: GOLF_VENUES,
         Pickleball: PICKLEBALL_VENUES,
+        Padel: PADEL_VENUES,
+        Racquetball: RACQUETBALL_VENUES,
     }
     return venueMap[sport] || []
 }

@@ -8,7 +8,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { RATING_CONFIGS } from "@/lib/player-rating-types"
 import { SafeAreaView } from "react-native-safe-area-context"
 
-const REC_ACTIVITIES = ["Basketball", "Tennis", "Pickleball", "Golf", "Soccer", "Volleyball", "Swimming"]
+const REC_ACTIVITIES = ["Basketball", "Tennis", "Pickleball", "Padel", "Racquetball", "Golf", "Soccer", "Swimming"]
 const STUDIO_ACTIVITIES = ["Pilates", "Yoga", "Lagree", "Barre", "Meditation"]
 
 export default function QuestionnaireScreen() {

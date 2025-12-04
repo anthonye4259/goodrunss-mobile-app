@@ -2,9 +2,10 @@ export type Activity =
   | "Basketball"
   | "Tennis"
   | "Pickleball"
+  | "Padel"
+  | "Racquetball"
   | "Golf"
   | "Soccer"
-  | "Volleyball"
   | "Swimming"
   | "Pilates"
   | "Yoga"
@@ -543,44 +544,84 @@ export const ACTIVITY_CONTENT: Record<Activity, ActivityContent> = {
     ],
   },
 
-  Volleyball: {
+  Padel: {
     category: "rec",
-    displayName: "Volleyball",
+    displayName: "Padel",
     trainerTitle: "Coach",
     sessionType: "Training",
     locationPrefix: "Court",
     groupType: "League",
     sampleTrainers: [
       {
-        name: "Coach Lisa Martinez",
-        rating: 4.8,
-        reviews: 92,
-        price: 70,
-        location: "Beach Volleyball Courts",
-        specialties: ["Serving", "Blocking", "Team Play"],
-        bio: "Professional volleyball coach with 8+ years experience. Specialized in serving techniques, blocking strategies, and team coordination.",
-        certifications: ["USA Volleyball Certified", "Beach Volleyball Specialist", "CPR/First Aid"],
+        name: "Coach Carlos Mendez",
+        rating: 4.9,
+        reviews: 78,
+        price: 80,
+        location: "Padel World NYC",
+        specialties: ["Doubles Strategy", "Wall Play", "Power Shots"],
+        bio: "Professional padel coach with 10+ years experience. Specialized in doubles strategy, wall techniques, and competitive play.",
+        certifications: ["World Padel Tour Certified", "FIP Instructor", "CPR/First Aid"],
       },
     ],
-    sampleSessions: [{ title: "Volleyball Fundamentals", location: "Beach Courts", time: "Tomorrow, 5:00 PM" }],
+    sampleSessions: [{ title: "Padel Fundamentals", location: "Padel World NYC", time: "Tomorrow, 6:00 PM" }],
     marketplaceItems: [
       {
-        name: "Mikasa Volleyball - Pro Touch",
-        condition: "Good",
-        price: 40,
-        seller: "Lisa Martinez",
-        image: "/volleyball-game.png",
+        name: "Bullpadel Vertex Pro Racket",
+        condition: "Like New",
+        price: 180,
+        seller: "Carlos Mendez",
+        image: "/padel-racket.png",
       },
     ],
     activityFeed: [
       {
         type: "session",
         title: "Session Completed",
-        description: "Volleyball training with Coach Lisa",
+        description: "Padel training with Coach Carlos",
         time: "Yesterday",
       },
     ],
   },
+
+  Racquetball: {
+    category: "rec",
+    displayName: "Racquetball",
+    trainerTitle: "Coach",
+    sessionType: "Training",
+    locationPrefix: "Court",
+    groupType: "League",
+    sampleTrainers: [
+      {
+        name: "Coach Ryan Brooks",
+        rating: 4.8,
+        reviews: 65,
+        price: 70,
+        location: "Downtown Racquet Club",
+        specialties: ["Serves", "Kill Shots", "Court Positioning"],
+        bio: "Former pro racquetball player with 12+ years coaching experience. Specialized in power serves, kill shot techniques, and competitive strategy.",
+        certifications: ["USA Racquetball Certified", "Level 2 Instructor", "CPR/First Aid"],
+      },
+    ],
+    sampleSessions: [{ title: "Racquetball Skills Clinic", location: "Downtown Racquet Club", time: "Tomorrow, 7:00 PM" }],
+    marketplaceItems: [
+      {
+        name: "HEAD Graphene Racquet",
+        condition: "Good",
+        price: 85,
+        seller: "Ryan Brooks",
+        image: "/racquetball-racket.png",
+      },
+    ],
+    activityFeed: [
+      {
+        type: "session",
+        title: "Session Completed",
+        description: "Racquetball training with Coach Ryan",
+        time: "Yesterday",
+      },
+    ],
+  },
+
 
   Swimming: {
     category: "rec",
@@ -670,6 +711,6 @@ export function isStudioActivity(activity: string): boolean {
 }
 
 export function isRecActivity(activity: string): boolean {
-  const recActivities = ["Basketball", "Tennis", "Pickleball", "Golf", "Soccer", "Volleyball", "Swimming"]
+  const recActivities = ["Basketball", "Tennis", "Pickleball", "Padel", "Racquetball", "Golf", "Soccer", "Swimming"]
   return recActivities.includes(activity)
 }
