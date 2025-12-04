@@ -21,7 +21,8 @@ export default function QuestionnaireScreen() {
 
   const [selectedActivities, setSelectedActivities] = useState<string[]>([])
   const [step, setStep] = useState<"activity" | "skill" | "location">("activity")
-  const [selectedSkillLevel, setSelectedSkillLevel] = useState<number | null>(null)
+  const [activityRatings, setActivityRatings] = useState<Record<string, number>>({})
+  const [currentRatingIndex, setCurrentRatingIndex] = useState(0)
 
   const toggleActivity = (activity: string) => {
     if (userType === "trainer") {
@@ -43,10 +44,11 @@ export default function QuestionnaireScreen() {
 
   const handleActivityContinue = () => {
     if (selectedActivities.length > 0) {
-      // Find first activity that needs rating
-      const activityToRate = selectedActivities.find(a => RATING_CONFIGS[a])
+      // Find all activities that need rating
+      const activitiesToRate = selectedActivities.filter(a => RATING_CONFIGS[a])
 
-      if (activityToRate) {
+      if (activitiesToRate.length > 0) {
+        setCurrentRatingIndex(0)
         setStep("skill")
       } else {
         setStep("location")
@@ -54,8 +56,18 @@ export default function QuestionnaireScreen() {
     }
   }
 
-  const handleSkillSelect = () => {
-    if (selectedSkillLevel !== null) {
+  const handleSkillSelect = (rating: number) => {
+    const activitiesToRate = selectedActivities.filter(a => RATING_CONFIGS[a])
+    const currentActivity = activitiesToRate[currentRatingIndex]
+
+    // Save the rating for this activity
+    const newRatings = { ...activityRatings, [currentActivity]: rating }
+    setActivityRatings(newRatings)
+
+    // Check if there are more activities to rate
+    if (currentRatingIndex < activitiesToRate.length - 1) {
+      setCurrentRatingIndex(currentRatingIndex + 1)
+    } else {
       setStep("location")
     }
   }
@@ -75,12 +87,11 @@ export default function QuestionnaireScreen() {
       const isStudio = selectedActivities.some(a => STUDIO_ACTIVITIES.includes(a))
       const isRec = selectedActivities.some(a => REC_ACTIVITIES.includes(a))
 
-      // Determine rating to save
-      const activityToRate = selectedActivities.find(a => RATING_CONFIGS[a])
-      const playerRating = (activityToRate && selectedSkillLevel !== null)
+      // Use the rating for the primary activity if available
+      const playerRating = activityRatings[primaryActivity]
         ? {
-          sport: activityToRate,
-          rating: selectedSkillLevel,
+          sport: primaryActivity,
+          rating: activityRatings[primaryActivity],
           matches: 0,
         }
         : undefined
@@ -97,34 +108,40 @@ export default function QuestionnaireScreen() {
     }
   }
 
-  // Get the activity we are rating
-  const activityToRate = selectedActivities.find(a => RATING_CONFIGS[a])
+  // Get the current activity we are rating
+  const activitiesToRate = selectedActivities.filter(a => RATING_CONFIGS[a])
+  const currentActivityToRate = activitiesToRate[currentRatingIndex]
 
-  if (step === "skill" && activityToRate && RATING_CONFIGS[activityToRate]) {
-    const config = RATING_CONFIGS[activityToRate]
+  if (step === "skill" && currentActivityToRate && RATING_CONFIGS[currentActivityToRate]) {
+    const config = RATING_CONFIGS[currentActivityToRate]
+    const currentRating = activityRatings[currentActivityToRate]
 
     return (
       <LinearGradient colors={["#0A0A0A", "#141414"]} style={{ flex: 1 }}>
         <SafeAreaView style={styles.safeArea}>
           <ScrollView contentContainerStyle={styles.scrollContent}>
             <View style={styles.progressContainer}>
-              <Text style={styles.progressText}>Question 2 of 3</Text>
+              <Text style={styles.progressText}>
+                {activitiesToRate.length > 1
+                  ? `Rating ${currentRatingIndex + 1} of ${activitiesToRate.length}`
+                  : "Question 2 of 3"}
+              </Text>
               <View style={styles.progressBar}>
                 <View style={[styles.progressFill, { width: "66%" }]} />
               </View>
             </View>
 
-            <Text style={styles.title}>What's your {activityToRate} skill level?</Text>
+            <Text style={styles.title}>What's your {currentActivityToRate} skill level?</Text>
             <Text style={styles.subtitle}>{config.description}</Text>
 
             <View style={styles.optionsList}>
               {config.levels.map((level) => (
                 <TouchableOpacity
                   key={level.value}
-                  onPress={() => setSelectedSkillLevel(level.value)}
+                  onPress={() => handleSkillSelect(level.value)}
                   style={[
                     styles.skillCard,
-                    selectedSkillLevel === level.value && styles.cardSelected
+                    currentRating === level.value && styles.cardSelected
                   ]}
                 >
                   <View style={styles.skillHeader}>
@@ -138,12 +155,6 @@ export default function QuestionnaireScreen() {
                 </TouchableOpacity>
               ))}
             </View>
-
-            {selectedSkillLevel !== null && (
-              <TouchableOpacity onPress={handleSkillSelect} style={styles.continueButton}>
-                <Text style={styles.continueText}>Continue</Text>
-              </TouchableOpacity>
-            )}
           </ScrollView>
         </SafeAreaView>
       </LinearGradient>
