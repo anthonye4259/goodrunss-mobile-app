@@ -46,35 +46,35 @@ export default function VenueDetailScreen() {
     quality:
       primaryActivity === "Basketball"
         ? {
-            rimQuality: 4.5,
-            netPresence: true,
-            doubleRim: false,
-            courtGrip: 4.8,
-            lighting: 4.2,
-            backboard: 4.6,
-            surface: "Outdoor Asphalt",
-            lines: 4.3,
-          }
+          rimQuality: 4.5,
+          netPresence: true,
+          doubleRim: false,
+          courtGrip: 4.8,
+          lighting: 4.2,
+          backboard: 4.6,
+          surface: "Outdoor Asphalt",
+          lines: 4.3,
+        }
         : primaryActivity === "Golf"
           ? {
-              grassQuality: 4.7,
-              patchiness: 4.5,
-              greenSpeed: 4.6,
-              bunkers: 4.4,
-              fairways: 4.8,
-              teeBoxes: 4.5,
-              drainage: 4.3,
-            }
+            grassQuality: 4.7,
+            patchiness: 4.5,
+            greenSpeed: 4.6,
+            bunkers: 4.4,
+            fairways: 4.8,
+            teeBoxes: 4.5,
+            drainage: 4.3,
+          }
           : {
-              cleanliness: 4.9,
-              equipment: 4.7,
-              ambiance: 4.8,
-              temperature: 4.6,
-              spacing: 4.5,
-              flooring: 4.8,
-              mirrors: 4.7,
-              sound: 4.6,
-            },
+            cleanliness: 4.9,
+            equipment: 4.7,
+            ambiance: 4.8,
+            temperature: 4.6,
+            spacing: 4.5,
+            flooring: 4.8,
+            mirrors: 4.7,
+            sound: 4.6,
+          },
   }
 
   const qualityAttributes = getVenueQualityAttributes(primaryActivity)
@@ -366,7 +366,7 @@ export default function VenueDetailScreen() {
 
               <View className="flex-row flex-wrap gap-3">
                 {qualityAttributes.map((attribute, index) => {
-                  const value = getQualityValue(attribute)
+                  const value = getQualityValue(attribute) || 4.5
                   const color = getQualityColor(value)
                   return (
                     <View key={index} className="w-[48%] bg-muted/30 rounded-xl p-3">
