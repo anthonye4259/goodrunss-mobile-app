@@ -4,13 +4,8 @@ import { Ionicons } from "@expo/vector-icons"
 import { useState } from "react"
 import { useUserPreferences } from "@/lib/user-preferences"
 import { getActivityContent, getPrimaryActivity, type Activity } from "@/lib/activity-content"
-
-// Mock venues data
-const MOCK_VENUES = [
-  { name: "Downtown Sports Complex", address: "123 Main St", rating: 4.8, distance: "0.5 mi", amenities: ["Parking", "Locker Room", "Pro Shop"] },
-  { name: "Community Recreation Center", address: "456 Oak Ave", rating: 4.5, distance: "1.2 mi", amenities: ["Free Parking", "Showers", "Cafe"] },
-  { name: "Fitness Plus Arena", address: "789 Park Blvd", rating: 4.7, distance: "2.0 mi", amenities: ["24/7 Access", "Equipment", "Classes"] },
-]
+import { getVenuesForSport } from "@/lib/venue-data"
+import { predictVenueTraffic } from "@/lib/traffic-prediction"
 import { router } from "expo-router"
 import * as Haptics from "expo-haptics"
 import { SafeAreaView } from "react-native-safe-area-context"
@@ -35,7 +30,7 @@ export default function ExploreScreen() {
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.title}>Explore</Text>
-            
+
             {/* Search Bar */}
             <View style={styles.searchContainer}>
               <Ionicons name="search" size={20} color="#9CA3AF" />
@@ -110,42 +105,77 @@ export default function ExploreScreen() {
             </View>
           ) : (
             <View style={styles.contentSection}>
-              <Text style={styles.sectionTitle}>Nearby Venues</Text>
-              {MOCK_VENUES.map((venue, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.venueCard}
-                  onPress={() => handlePress(() => router.push(`/venues/${index}`))}
-                >
-                  <View style={styles.venueHeader}>
-                    <View style={styles.venueIcon}>
-                      <Ionicons name="location" size={24} color="#84CC16" />
-                    </View>
-                    <View style={styles.venueInfo}>
-                      <Text style={styles.venueName}>{venue.name}</Text>
-                      <Text style={styles.venueAddress}>{venue.address}</Text>
-                      <View style={styles.venueRating}>
-                        <Ionicons name="star" size={14} color="#84CC16" />
-                        <Text style={styles.venueRatingText}>{venue.rating}</Text>
-                        <Text style={styles.venueDistance}> • {venue.distance}</Text>
+              <Text style={styles.sectionTitle}>Nearby {content.locationPrefix}s</Text>
+              {getVenuesForSport(primaryActivity).map((venue, index) => {
+                const trafficPrediction = predictVenueTraffic(venue.id, new Date(), venue.activePlayersNow)
+                const minutesAgo = venue.lastActivityTimestamp
+                  ? Math.floor((Date.now() - venue.lastActivityTimestamp.getTime()) / 60000)
+                  : null
+
+                return (
+                  <TouchableOpacity
+                    key={venue.id}
+                    style={styles.venueCard}
+                    onPress={() => handlePress(() => router.push(`/venues/${venue.id}`))}
+                  >
+                    <View style={styles.venueHeader}>
+                      <View style={styles.venueIcon}>
+                        <Ionicons name="location" size={24} color="#84CC16" />
+                      </View>
+                      <View style={styles.venueInfo}>
+                        <Text style={styles.venueName}>{venue.name}</Text>
+                        <Text style={styles.venueAddress}>{venue.address}</Text>
+                        <View style={styles.venueRating}>
+                          <Ionicons name="star" size={14} color="#84CC16" />
+                          <Text style={styles.venueRatingText}>{venue.rating}</Text>
+                          <Text style={styles.venueDistance}> • {venue.distance || "0.8"} mi</Text>
+                        </View>
                       </View>
                     </View>
-                  </View>
-                  <View style={styles.venueFooter}>
-                    <View style={styles.venueAmenities}>
-                      {venue.amenities?.slice(0, 3).map((amenity, i) => (
-                        <View key={i} style={styles.amenityBadge}>
-                          <Text style={styles.amenityText}>{amenity}</Text>
-                        </View>
-                      ))}
+
+                    {/* Traffic Prediction */}
+                    <View style={styles.trafficContainer}>
+                      <View style={[styles.trafficBadge, { backgroundColor: `${trafficPrediction.color}20` }]}>
+                        <Text style={styles.trafficEmoji}>{trafficPrediction.emoji}</Text>
+                        <Text style={[styles.trafficLabel, { color: trafficPrediction.color }]}>
+                          {trafficPrediction.label}
+                        </Text>
+                      </View>
+                      {trafficPrediction.estimatedWaitTime && (
+                        <Text style={styles.waitTime}>{trafficPrediction.estimatedWaitTime}</Text>
+                      )}
                     </View>
-                    <TouchableOpacity style={styles.viewButton}>
-                      <Text style={styles.viewButtonText}>View</Text>
-                      <Ionicons name="chevron-forward" size={16} color="#84CC16" />
-                    </TouchableOpacity>
-                  </View>
-                </TouchableOpacity>
-              ))}
+
+                    {/* Real-time Player Activity */}
+                    {venue.activePlayersNow && venue.activePlayersNow > 0 && (
+                      <View style={styles.activePlayersContainer}>
+                        <View style={styles.activeDot} />
+                        <Ionicons name="people" size={14} color="#7ED957" />
+                        <Text style={styles.activePlayersText}>
+                          {venue.activePlayersNow} {venue.activePlayersNow === 1 ? "player" : "players"} active now
+                        </Text>
+                        {minutesAgo !== null && (
+                          <Text style={styles.activePlayersTime}> • {minutesAgo}m ago</Text>
+                        )}
+                      </View>
+                    )}
+
+                    <View style={styles.venueFooter}>
+                      <View style={styles.venueAmenities}>
+                        {venue.amenities?.slice(0, 3).map((amenity, i) => (
+                          <View key={i} style={styles.amenityBadge}>
+                            <Text style={styles.amenityText}>{amenity}</Text>
+                          </View>
+                        ))}
+                      </View>
+                      <TouchableOpacity style={styles.viewButton}>
+                        <Text style={styles.viewButtonText}>View</Text>
+                        <Ionicons name="chevron-forward" size={16} color="#84CC16" />
+                      </TouchableOpacity>
+                    </View>
+                  </TouchableOpacity>
+                )
+              })}
             </View>
           )}
 
@@ -154,19 +184,19 @@ export default function ExploreScreen() {
             <Text style={styles.sectionTitle}>Categories</Text>
             <View style={styles.categoriesGrid}>
               {["Basketball", "Tennis", "Pickleball", "Golf", "Soccer", "Yoga", "Pilates", "Swimming"].map((sport, index) => (
-                <TouchableOpacity key={index} style={styles.categoryCard} onPress={() => handlePress(() => {})}>
-                  <Ionicons 
+                <TouchableOpacity key={index} style={styles.categoryCard} onPress={() => handlePress(() => { })}>
+                  <Ionicons
                     name={
                       sport === "Basketball" ? "basketball" :
-                      sport === "Tennis" ? "tennisball" :
-                      sport === "Golf" ? "golf" :
-                      sport === "Soccer" ? "football" :
-                      sport === "Yoga" || sport === "Pilates" ? "body" :
-                      sport === "Swimming" ? "water" :
-                      "fitness"
-                    } 
-                    size={28} 
-                    color="#84CC16" 
+                        sport === "Tennis" ? "tennisball" :
+                          sport === "Golf" ? "golf" :
+                            sport === "Soccer" ? "football" :
+                              sport === "Yoga" || sport === "Pilates" ? "body" :
+                                sport === "Swimming" ? "water" :
+                                  "fitness"
+                    }
+                    size={28}
+                    color="#84CC16"
                   />
                   <Text style={styles.categoryText}>{sport}</Text>
                 </TouchableOpacity>
@@ -388,6 +418,56 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   amenityText: {
+    fontSize: 12,
+    color: "#9CA3AF",
+  },
+  trafficContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+    gap: 8,
+  },
+  trafficBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    gap: 6,
+  },
+  trafficEmoji: {
+    fontSize: 14,
+  },
+  trafficLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  waitTime: {
+    fontSize: 12,
+    color: "#9CA3AF",
+  },
+  activePlayersContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(126, 217, 87, 0.1)",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    marginBottom: 12,
+    gap: 6,
+  },
+  activeDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#7ED957",
+  },
+  activePlayersText: {
+    fontSize: 13,
+    color: "#7ED957",
+    fontWeight: "500",
+  },
+  activePlayersTime: {
     fontSize: 12,
     color: "#9CA3AF",
   },
