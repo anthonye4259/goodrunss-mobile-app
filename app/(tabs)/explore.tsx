@@ -1,10 +1,12 @@
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput } from "react-native"
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useUserPreferences } from "@/lib/user-preferences"
 import { getActivityContent, getPrimaryActivity, type Activity } from "@/lib/activity-content"
-import { getVenuesForSport } from "@/lib/venue-data"
+import { getVenuesForSport, Venue } from "@/lib/venue-data"
+import { venueService } from "@/lib/services/venue-service"
+import { useUserLocation } from "@/lib/services/location-service"
 import { predictVenueTraffic } from "@/lib/traffic-prediction"
 import { router } from "expo-router"
 import * as Haptics from "expo-haptics"
@@ -14,9 +16,45 @@ export default function ExploreScreen() {
   const { preferences } = useUserPreferences()
   const [searchQuery, setSearchQuery] = useState("")
   const [activeTab, setActiveTab] = useState<"trainers" | "venues">("trainers")
+  const [venues, setVenues] = useState<Venue[]>([])
+  const [loading, setLoading] = useState(false)
+  const { location, loading: locationLoading } = useUserLocation()
 
   const primaryActivity = getPrimaryActivity(preferences.activities) as Activity
   const content = getActivityContent(primaryActivity)
+
+  useEffect(() => {
+    if (!locationLoading) {
+      loadVenues()
+    }
+  }, [primaryActivity, location, locationLoading])
+
+  const loadVenues = async () => {
+    if (activeTab === "venues" || true) { // Always load for now to be ready
+      setLoading(true)
+      try {
+        // Try fetching from Firestore first
+        const remoteVenues = await venueService.getVenuesNearby(
+          location,
+          50, // 50km radius
+          primaryActivity
+        )
+
+        if (remoteVenues.length > 0) {
+          setVenues(remoteVenues)
+        } else {
+          // Fallback to local data
+          console.log("Using local venue data fallback")
+          setVenues(getVenuesForSport(primaryActivity))
+        }
+      } catch (error) {
+        console.error("Failed to load venues:", error)
+        setVenues(getVenuesForSport(primaryActivity))
+      } finally {
+        setLoading(false)
+      }
+    }
+  }
 
   const handlePress = (action: () => void) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
@@ -106,76 +144,80 @@ export default function ExploreScreen() {
           ) : (
             <View style={styles.contentSection}>
               <Text style={styles.sectionTitle}>Nearby {content.locationPrefix}s</Text>
-              {getVenuesForSport(primaryActivity).map((venue, index) => {
-                const trafficPrediction = predictVenueTraffic(venue.id, new Date(), venue.activePlayersNow)
-                const minutesAgo = venue.lastActivityTimestamp
-                  ? Math.floor((Date.now() - venue.lastActivityTimestamp.getTime()) / 60000)
-                  : null
+              {loading ? (
+                <ActivityIndicator size="large" color="#84CC16" style={{ marginTop: 20 }} />
+              ) : (
+                venues.map((venue, index) => {
+                  const trafficPrediction = predictVenueTraffic(venue.id, new Date(), venue.activePlayersNow)
+                  const minutesAgo = venue.lastActivityTimestamp
+                    ? Math.floor((Date.now() - venue.lastActivityTimestamp.getTime()) / 60000)
+                    : null
 
-                return (
-                  <TouchableOpacity
-                    key={venue.id}
-                    style={styles.venueCard}
-                    onPress={() => handlePress(() => router.push(`/venues/${venue.id}`))}
-                  >
-                    <View style={styles.venueHeader}>
-                      <View style={styles.venueIcon}>
-                        <Ionicons name="location" size={24} color="#84CC16" />
-                      </View>
-                      <View style={styles.venueInfo}>
-                        <Text style={styles.venueName}>{venue.name}</Text>
-                        <Text style={styles.venueAddress}>{venue.address}</Text>
-                        <View style={styles.venueRating}>
-                          <Ionicons name="star" size={14} color="#84CC16" />
-                          <Text style={styles.venueRatingText}>{venue.rating}</Text>
-                          <Text style={styles.venueDistance}> • {venue.distance || "0.8"} mi</Text>
+                  return (
+                    <TouchableOpacity
+                      key={venue.id}
+                      style={styles.venueCard}
+                      onPress={() => handlePress(() => router.push(`/venues/${venue.id}`))}
+                    >
+                      <View style={styles.venueHeader}>
+                        <View style={styles.venueIcon}>
+                          <Ionicons name="location" size={24} color="#84CC16" />
+                        </View>
+                        <View style={styles.venueInfo}>
+                          <Text style={styles.venueName}>{venue.name}</Text>
+                          <Text style={styles.venueAddress}>{venue.address}</Text>
+                          <View style={styles.venueRating}>
+                            <Ionicons name="star" size={14} color="#84CC16" />
+                            <Text style={styles.venueRatingText}>{venue.rating}</Text>
+                            <Text style={styles.venueDistance}> • {venue.distance || "0.8"} mi</Text>
+                          </View>
                         </View>
                       </View>
-                    </View>
 
-                    {/* Traffic Prediction */}
-                    <View style={styles.trafficContainer}>
-                      <View style={[styles.trafficBadge, { backgroundColor: `${trafficPrediction.color}20` }]}>
-                        <Text style={styles.trafficEmoji}>{trafficPrediction.emoji}</Text>
-                        <Text style={[styles.trafficLabel, { color: trafficPrediction.color }]}>
-                          {trafficPrediction.label}
-                        </Text>
-                      </View>
-                      {trafficPrediction.estimatedWaitTime && (
-                        <Text style={styles.waitTime}>{trafficPrediction.estimatedWaitTime}</Text>
-                      )}
-                    </View>
-
-                    {/* Real-time Player Activity */}
-                    {venue.activePlayersNow && venue.activePlayersNow > 0 && (
-                      <View style={styles.activePlayersContainer}>
-                        <View style={styles.activeDot} />
-                        <Ionicons name="people" size={14} color="#7ED957" />
-                        <Text style={styles.activePlayersText}>
-                          {venue.activePlayersNow} {venue.activePlayersNow === 1 ? "player" : "players"} active now
-                        </Text>
-                        {minutesAgo !== null && (
-                          <Text style={styles.activePlayersTime}> • {minutesAgo}m ago</Text>
+                      {/* Traffic Prediction */}
+                      <View style={styles.trafficContainer}>
+                        <View style={[styles.trafficBadge, { backgroundColor: `${trafficPrediction.color}20` }]}>
+                          <Text style={styles.trafficEmoji}>{trafficPrediction.emoji}</Text>
+                          <Text style={[styles.trafficLabel, { color: trafficPrediction.color }]}>
+                            {trafficPrediction.label}
+                          </Text>
+                        </View>
+                        {trafficPrediction.estimatedWaitTime && (
+                          <Text style={styles.waitTime}>{trafficPrediction.estimatedWaitTime}</Text>
                         )}
                       </View>
-                    )}
 
-                    <View style={styles.venueFooter}>
-                      <View style={styles.venueAmenities}>
-                        {venue.amenities?.slice(0, 3).map((amenity, i) => (
-                          <View key={i} style={styles.amenityBadge}>
-                            <Text style={styles.amenityText}>{amenity}</Text>
-                          </View>
-                        ))}
+                      {/* Real-time Player Activity */}
+                      {venue.activePlayersNow && venue.activePlayersNow > 0 && (
+                        <View style={styles.activePlayersContainer}>
+                          <View style={styles.activeDot} />
+                          <Ionicons name="people" size={14} color="#7ED957" />
+                          <Text style={styles.activePlayersText}>
+                            {venue.activePlayersNow} {venue.activePlayersNow === 1 ? "player" : "players"} active now
+                          </Text>
+                          {minutesAgo !== null && (
+                            <Text style={styles.activePlayersTime}> • {minutesAgo}m ago</Text>
+                          )}
+                        </View>
+                      )}
+
+                      <View style={styles.venueFooter}>
+                        <View style={styles.venueAmenities}>
+                          {venue.amenities?.slice(0, 3).map((amenity, i) => (
+                            <View key={i} style={styles.amenityBadge}>
+                              <Text style={styles.amenityText}>{amenity}</Text>
+                            </View>
+                          ))}
+                        </View>
+                        <TouchableOpacity style={styles.viewButton}>
+                          <Text style={styles.viewButtonText}>View</Text>
+                          <Ionicons name="chevron-forward" size={16} color="#84CC16" />
+                        </TouchableOpacity>
                       </View>
-                      <TouchableOpacity style={styles.viewButton}>
-                        <Text style={styles.viewButtonText}>View</Text>
-                        <Ionicons name="chevron-forward" size={16} color="#84CC16" />
-                      </TouchableOpacity>
-                    </View>
-                  </TouchableOpacity>
-                )
-              })}
+                    </TouchableOpacity>
+                  )
+                })}
+              )}
             </View>
           )}
 

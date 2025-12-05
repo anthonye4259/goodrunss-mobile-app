@@ -1,5 +1,7 @@
 import { initializeApp, FirebaseApp, getApps, getApp } from "firebase/app"
 import { getFirestore, Firestore } from "firebase/firestore"
+import { getAuth, Auth, initializeAuth, getReactNativePersistence } from "firebase/auth"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || "",
@@ -13,15 +15,21 @@ const firebaseConfig = {
 // Safe initialization - won't crash if Firebase isn't configured
 let app: FirebaseApp | null = null
 let db: Firestore | null = null
+let auth: Auth | null = null
 
 try {
   // Check if Firebase app already exists
   if (getApps().length > 0) {
     app = getApp()
+    auth = getAuth(app)
   } else if (firebaseConfig.projectId) {
     app = initializeApp(firebaseConfig)
+    // Initialize Auth with AsyncStorage persistence for React Native
+    auth = initializeAuth(app, {
+      persistence: getReactNativePersistence(AsyncStorage)
+    })
   }
-  
+
   if (app) {
     db = getFirestore(app)
     console.log("✅ Firebase initialized successfully")
@@ -33,5 +41,4 @@ try {
   // App will continue without Firebase
 }
 
-// Auth will be handled separately via AuthContext with AsyncStorage for now
-export { db, app }
+export { db, app, auth }

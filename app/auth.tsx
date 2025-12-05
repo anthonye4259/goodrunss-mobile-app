@@ -1,20 +1,42 @@
 import { useState } from "react"
-import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from "react-native"
+import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Alert } from "react-native"
 import { useRouter } from "expo-router"
 import { LinearGradient } from "expo-linear-gradient"
-import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useAuth } from "@/lib/auth-context"
 
 export default function AuthScreen() {
   const router = useRouter()
-  const { continueAsGuest } = useAuth()
+  const { login, signup, continueAsGuest } = useAuth()
   const [isLogin, setIsLogin] = useState(true)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [name, setName] = useState("")
+  const [loading, setLoading] = useState(false)
 
   const handleAuth = async () => {
-    await AsyncStorage.setItem("isAuthenticated", "true")
-    router.replace("/(tabs)")
+    if (!email || !password) {
+      Alert.alert("Error", "Please fill in all fields")
+      return
+    }
+
+    if (!isLogin && !name) {
+      Alert.alert("Error", "Please enter your name")
+      return
+    }
+
+    setLoading(true)
+    try {
+      if (isLogin) {
+        await login(email, password)
+      } else {
+        await signup(email, password, name)
+      }
+      router.replace("/(tabs)")
+    } catch (error: any) {
+      Alert.alert("Error", error.message || "Authentication failed")
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleGuestMode = () => {
@@ -32,6 +54,20 @@ export default function AuthScreen() {
           </View>
 
           <View className="space-y-4">
+            {!isLogin && (
+              <View>
+                <Text className="text-foreground mb-2 font-medium">Name</Text>
+                <TextInput
+                  value={name}
+                  onChangeText={setName}
+                  placeholder="Enter your name"
+                  placeholderTextColor="#666"
+                  autoCapitalize="words"
+                  className="bg-card border border-border rounded-xl px-4 py-4 text-foreground"
+                />
+              </View>
+            )}
+
             <View>
               <Text className="text-foreground mb-2 font-medium">Email</Text>
               <TextInput
@@ -57,8 +93,14 @@ export default function AuthScreen() {
               />
             </View>
 
-            <TouchableOpacity onPress={handleAuth} className="bg-primary rounded-xl py-4 mt-4">
-              <Text className="text-center text-background font-bold text-lg">{isLogin ? "Sign In" : "Sign Up"}</Text>
+            <TouchableOpacity
+              onPress={handleAuth}
+              className="bg-primary rounded-xl py-4 mt-4"
+              disabled={loading}
+            >
+              <Text className="text-center text-background font-bold text-lg">
+                {loading ? "Loading..." : (isLogin ? "Sign In" : "Sign Up")}
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={handleGuestMode} className="border-2 border-border rounded-xl py-4">

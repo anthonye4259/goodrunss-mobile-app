@@ -1,6 +1,15 @@
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import AsyncStorage from "@react-native-async-storage/async-storage"
+import { auth, db } from "./firebase-config"
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut as firebaseSignOut,
+  onAuthStateChanged,
+  User as FirebaseUser
+} from "firebase/auth"
+import { doc, getDoc, setDoc } from "firebase/firestore"
 
 interface AuthContextType {
   isAuthenticated: boolean
@@ -11,6 +20,7 @@ interface AuthContextType {
     email: string
   } | null
   login: (email: string, password: string) => Promise<void>
+  signup: (email: string, password: string, name: string) => Promise<void>
   logout: () => Promise<void>
   continueAsGuest: () => void
   promptLogin: (feature: string) => boolean
@@ -22,42 +32,117 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isGuest, setIsGuest] = useState(true)
   const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    checkAuth()
+    if (!auth) {
+      setLoading(false)
+      return
+    }
+
+    // Listen to auth state changes
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        // User is signed in
+        await loadUserData(firebaseUser)
+        setIsAuthenticated(true)
+        setIsGuest(false)
+      } else {
+        // User is signed out
+        const guestMode = await AsyncStorage.getItem("guestMode")
+        if (guestMode === "true") {
+          setIsGuest(true)
+          setIsAuthenticated(false)
+        }
+        setUser(null)
+      }
+      setLoading(false)
+    })
+
+    return () => unsubscribe()
   }, [])
 
-  const checkAuth = async () => {
-    const authToken = await AsyncStorage.getItem("authToken")
-    const guestMode = await AsyncStorage.getItem("guestMode")
+  const loadUserData = async (firebaseUser: FirebaseUser) => {
+    if (!db) return
 
-    if (authToken) {
-      setIsAuthenticated(true)
-      setIsGuest(false)
-      // Load user data
-    } else if (guestMode === "true") {
-      setIsGuest(true)
-      setIsAuthenticated(false)
+    try {
+      const userDoc = await getDoc(doc(db, "users", firebaseUser.uid))
+
+      if (userDoc.exists()) {
+        const userData = userDoc.data()
+        setUser({
+          id: firebaseUser.uid,
+          email: firebaseUser.email || "",
+          name: userData.name || "",
+          ...userData
+        })
+      } else {
+        // Create user document if it doesn't exist
+        const newUser = {
+          id: firebaseUser.uid,
+          email: firebaseUser.email || "",
+          name: firebaseUser.displayName || "",
+          createdAt: new Date().toISOString()
+        }
+        await setDoc(doc(db, "users", firebaseUser.uid), newUser)
+        setUser(newUser)
+      }
+    } catch (error) {
+      console.error("Error loading user data:", error)
     }
   }
 
   const login = async (email: string, password: string) => {
-    // Mock login - replace with real API call
-    await AsyncStorage.setItem("authToken", "mock-token")
-    await AsyncStorage.removeItem("guestMode")
-    setIsAuthenticated(true)
-    setIsGuest(false)
+    if (!auth) throw new Error("Firebase Auth not initialized")
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password)
+      await AsyncStorage.removeItem("guestMode")
+    } catch (error: any) {
+      console.error("Login error:", error)
+      throw new Error(error.message || "Failed to login")
+    }
+  }
+
+  const signup = async (email: string, password: string, name: string) => {
+    if (!auth || !db) throw new Error("Firebase not initialized")
+
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password)
+
+      // Create user document in Firestore
+      await setDoc(doc(db, "users", userCredential.user.uid), {
+        name,
+        email,
+        createdAt: new Date().toISOString(),
+        activities: [],
+        preferences: {}
+      })
+
+      await AsyncStorage.removeItem("guestMode")
+    } catch (error: any) {
+      console.error("Signup error:", error)
+      throw new Error(error.message || "Failed to sign up")
+    }
   }
 
   const logout = async () => {
-    await AsyncStorage.removeItem("authToken")
-    setIsAuthenticated(false)
-    setUser(null)
+    if (!auth) return
+
+    try {
+      await firebaseSignOut(auth)
+      await AsyncStorage.removeItem("guestMode")
+      setIsAuthenticated(false)
+      setUser(null)
+    } catch (error) {
+      console.error("Logout error:", error)
+    }
   }
 
   const continueAsGuest = async () => {
     await AsyncStorage.setItem("guestMode", "true")
     setIsGuest(true)
+    setIsAuthenticated(false)
   }
 
   const promptLogin = (feature: string): boolean => {
@@ -65,8 +150,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return isGuest
   }
 
+  if (loading) {
+    return null // or a loading spinner
+  }
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated, isGuest, user, login, logout, continueAsGuest, promptLogin }}>
+    <AuthContext.Provider value={{
+      isAuthenticated,
+      isGuest,
+      user,
+      login,
+      signup,
+      logout,
+      continueAsGuest,
+      promptLogin
+    }}>
       {children}
     </AuthContext.Provider>
   )

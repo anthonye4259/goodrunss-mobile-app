@@ -31,6 +31,7 @@ export interface Venue {
     lastActivityTimestamp?: Date
     isOpen?: boolean
     source?: string
+    distance?: number
 }
 
 // Map sport names from Google Places format to our Activity format

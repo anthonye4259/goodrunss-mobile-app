@@ -1,8 +1,7 @@
-
-import { View, Text, ScrollView, TouchableOpacity, Image, Linking, Platform } from "react-native"
+import { View, Text, ScrollView, TouchableOpacity, Image, Linking, Platform, ActivityIndicator } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { router, useLocalSearchParams } from "expo-router"
 import { useAuth } from "@/lib/auth-context"
 import { useUserPreferences } from "@/lib/user-preferences"
@@ -18,64 +17,116 @@ import { ImageService } from "@/lib/image-service"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { NotificationService } from "@/lib/notification-service"
 import { WaitlistJoinModal } from "@/components/waitlist-join-modal"
+import { ReviewModal } from "@/components/review-modal"
+import { venueService } from "@/lib/services/venue-service"
+import { Venue } from "@/lib/venue-data"
 
 export default function VenueDetailScreen() {
   const { id } = useLocalSearchParams()
   const { preferences } = useUserPreferences()
+  const { user } = useAuth()
   const [showReviewModal, setShowReviewModal] = useState(false)
   const [isCheckedIn, setIsCheckedIn] = useState(false)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [showWaitlist, setShowWaitlist] = useState(false)
   const [isFullyBooked, setIsFullyBooked] = useState(false)
+  const [venue, setVenue] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [activePlayers, setActivePlayers] = useState<any[]>([])
+  const [needPlayersAlerts, setNeedPlayersAlerts] = useState<any[]>([])
 
   const primaryActivity = getPrimaryActivity(preferences.activities) as Activity
   const content = getActivityContent(primaryActivity)
 
-  const venue = {
-    id,
-    name: content.sampleSessions[0].location,
-    type: content.locationPrefix,
-    sport: primaryActivity,
-    rating: 4.7,
-    reviews: 89,
-    distance: "0.8 mi",
-    address: "123 Main St, New York, NY 10001",
-    hours: "6:00 AM - 10:00 PM",
-    price: "$5 day pass",
-    amenities: ["Parking", "Restrooms", "Water Fountain", "Seating"],
-    images: ["/outdoor-basketball-court.png"],
-    quality:
-      primaryActivity === "Basketball"
-        ? {
-          rimQuality: 4.5,
-          netPresence: true,
-          doubleRim: false,
-          courtGrip: 4.8,
-          lighting: 4.2,
-          backboard: 4.6,
-          surface: "Outdoor Asphalt",
-          lines: 4.3,
+  useEffect(() => {
+    loadVenue()
+  }, [id])
+
+  const loadVenue = async () => {
+    if (typeof id !== "string") return
+    setLoading(true)
+    const fetchedVenue = await venueService.getVenueById(id)
+
+    if (fetchedVenue) {
+      // Enrich with mock quality data for UI
+      const enrichedVenue = {
+        ...fetchedVenue,
+        quality: generateMockQuality(primaryActivity, fetchedVenue.rating),
+        distance: fetchedVenue.distance ? `${fetchedVenue.distance.toFixed(1)} mi` : "0.8 mi",
+        price: fetchedVenue.price || "Free",
+        hours: fetchedVenue.hours || "6:00 AM - 10:00 PM",
+        amenities: fetchedVenue.amenities || ["Parking", "Restrooms"],
+        images: fetchedVenue.photos && fetchedVenue.photos.length > 0 ? fetchedVenue.photos : ["/outdoor-basketball-court.png"]
+      }
+      setVenue(enrichedVenue)
+
+      // Load real-time data
+      loadCheckIns(id)
+      loadAlerts(id)
+    }
+    setLoading(false)
+  }
+
+  const loadCheckIns = async (venueId: string) => {
+    const checkIns = await venueService.getVenueCheckIns(venueId)
+    // Group check-ins by time periods
+    const grouped = checkIns.reduce((acc: any[], checkIn: any) => {
+      const timestamp = checkIn.timestamp?.toDate?.() || new Date()
+      const minutesAgo = Math.floor((Date.now() - timestamp.getTime()) / 60000)
+
+      // Group into 15-minute buckets
+      const bucket = Math.floor(minutesAgo / 15)
+      if (!acc[bucket]) {
+        acc[bucket] = {
+          id: `group-${bucket}`,
+          count: 0,
+          sport: primaryActivity,
+          timestamp: new Date(Date.now() - bucket * 15 * 60000)
         }
-        : primaryActivity === "Golf"
-          ? {
-            grassQuality: 4.7,
-            patchiness: 4.5,
-            greenSpeed: 4.6,
-            bunkers: 4.4,
-            fairways: 4.8,
-            teeBoxes: 4.5,
-            drainage: 4.3,
-          }
-          : {
-            cleanliness: 4.9,
-            equipment: 4.7,
-            ambiance: 4.8,
-            temperature: 4.6,
-            spacing: 4.5,
-            flooring: 4.8,
-            mirrors: 4.7,
-            sound: 4.6,
-          },
+      }
+      acc[bucket].count++
+      return acc
+    }, [])
+
+    setActivePlayers(grouped.filter(Boolean).slice(0, 5))
+  }
+
+  const loadAlerts = async (venueId: string) => {
+    const alerts = await venueService.getVenueAlerts(venueId)
+    const formatted = alerts.map((alert: any) => ({
+      id: alert.id,
+      userName: alert.userName || "Anonymous",
+      playersNeeded: alert.playersNeeded || 1,
+      skillLevel: alert.skillLevel || "Any",
+      timestamp: alert.timestamp?.toDate?.() || new Date()
+    }))
+    setNeedPlayersAlerts(formatted)
+  }
+
+  const generateMockQuality = (sport: string, rating: number) => {
+    const base = rating || 4.5
+    if (sport === "Basketball") {
+      return {
+        rimQuality: base,
+        netPresence: true,
+        doubleRim: false,
+        courtGrip: base + 0.2,
+        lighting: base - 0.3,
+        backboard: base + 0.1,
+        surface: "Outdoor Asphalt",
+        lines: base - 0.2,
+      }
+    }
+    return {
+      cleanliness: base + 0.2,
+      equipment: base,
+      ambiance: base + 0.1,
+      temperature: base,
+      spacing: base - 0.1,
+      flooring: base + 0.1,
+      mirrors: base,
+      sound: base - 0.1,
+    }
   }
 
   const qualityAttributes = getVenueQualityAttributes(primaryActivity)
@@ -110,6 +161,7 @@ export default function VenueDetailScreen() {
   }
 
   const getQualityValue = (attribute: string): number => {
+    if (!venue?.quality) return 4.5
     const key = attribute.toLowerCase().replace(/\s+/g, "").replace("/", "")
     return (venue.quality as any)[key] || 4.5
   }
@@ -130,36 +182,54 @@ export default function VenueDetailScreen() {
     return colorMap[tier] || "#FFFFFF"
   }
 
+  if (loading || !venue) {
+    return (
+      <View style={{ flex: 1, backgroundColor: "#0A0A0A", justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#84CC16" />
+      </View>
+    )
+  }
+
   const verifiedRating: GoodRunssVerifiedRating = calculateGoodRunssRating(
     primaryActivity,
     venue.quality,
-    venue.reviews,
+    venue.reviews || 0,
   )
 
-  const activePlayers = [
-    { id: "1", count: 3, sport: "Basketball", timestamp: new Date(Date.now() - 15 * 60000) },
-    { id: "2", count: 2, sport: "Basketball", timestamp: new Date(Date.now() - 30 * 60000) },
-  ]
-
-  const needPlayersAlerts = [
-    {
-      id: "1",
-      userName: "Mike J.",
-      playersNeeded: 2,
-      skillLevel: "Intermediate",
-      timestamp: new Date(Date.now() - 10 * 60000),
-    },
-  ]
 
   const handleCheckIn = async () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
     setIsCheckedIn(!isCheckedIn)
-    console.log("[v0] Check-in toggled:", !isCheckedIn)
+
+    if (!isCheckedIn && typeof id === "string") {
+      // Check in
+      const userId = user?.id || "guest-" + Math.random().toString(36).substr(2, 9)
+      await venueService.checkIn(id, userId)
+
+      // Update local state to reflect +1 player
+      setVenue(prev => ({
+        ...prev,
+        activePlayersNow: (prev.activePlayersNow || 0) + 1
+      }))
+    }
+  }
+
+  const handleReviewSubmit = async (rating: number, text: string) => {
+    if (typeof id !== "string") return
+
+    const userId = user?.id || "guest-" + Math.random().toString(36).substr(2, 9)
+    const success = await venueService.addReview(id, userId, rating, text)
+
+    if (success) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+      // Refresh venue data
+      loadVenue()
+    }
   }
 
   const handleNeedPlayers = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-    router.push(`/need-players/${id}`)
+    router.push(`/ need - players / ${id} `)
   }
 
   const handleUploadPhoto = async () => {
@@ -528,6 +598,13 @@ export default function VenueDetailScreen() {
           onJoin={handleJoinWaitlist}
           type="facility"
           name={venue.name}
+        />
+
+        <ReviewModal
+          visible={showReviewModal}
+          onClose={() => setShowReviewModal(false)}
+          onSubmit={handleReviewSubmit}
+          venueName={venue.name}
         />
       </LinearGradient>
     </ErrorBoundary>
