@@ -143,6 +143,20 @@ export default function ExploreScreen() {
             </View>
           ) : (
             <View style={styles.contentSection}>
+              {/* Environmental Impact Banner */}
+              <View style={styles.impactBanner}>
+                <View style={styles.impactIconContainer}>
+                  <Ionicons name="leaf" size={24} color="#84CC16" />
+                </View>
+                <View style={styles.impactTextContainer}>
+                  <Text style={styles.impactTitle}>Check Before You Go</Text>
+                  <Text style={styles.impactDesc}>Save gas money, time & reduce CO₂ emissions</Text>
+                </View>
+                <View style={styles.impactStats}>
+                  <Text style={styles.impactNumber}>🌍</Text>
+                </View>
+              </View>
+
               <Text style={styles.sectionTitle}>Nearby {content.locationPrefix}s</Text>
               {loading ? (
                 <ActivityIndicator size="large" color="#84CC16" style={{ marginTop: 20 }} />
@@ -570,5 +584,44 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     marginTop: 8,
     textAlign: "center",
+  },
+  impactBanner: {
+    backgroundColor: "rgba(132, 204, 22, 0.1)",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(132, 204, 22, 0.3)",
+  },
+  impactIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "rgba(132, 204, 22, 0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  impactTextContainer: {
+    flex: 1,
+  },
+  impactTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    marginBottom: 2,
+  },
+  impactDesc: {
+    fontSize: 13,
+    color: "#9CA3AF",
+  },
+  impactStats: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  impactNumber: {
+    fontSize: 24,
   },
 })

@@ -100,7 +100,7 @@ export default function HomeScreen() {
             </LinearGradient>
           </TouchableOpacity>
 
-          {/* Quick Report - NEW */}
+          {/* Quick Report - Environmental Impact */}
           <TouchableOpacity
             style={styles.reportCard}
             onPress={() => handlePress(() => router.push("/report-facility/quick"))}
@@ -108,11 +108,12 @@ export default function HomeScreen() {
           >
             <View style={styles.reportCardContent}>
               <View style={styles.reportIconContainer}>
-                <Ionicons name="clipboard" size={32} color="#84CC16" />
+                <Ionicons name="leaf" size={32} color="#84CC16" />
               </View>
               <View style={styles.reportTextContainer}>
                 <Text style={styles.reportTitle}>Report Court Condition</Text>
-                <Text style={styles.reportDesc}>Help the community & earn $1-31</Text>
+                <Text style={styles.reportDesc}>Save gas, time & help the planet 🌍</Text>
+                <Text style={styles.reportEarnings}>Earn $1-31 per report</Text>
               </View>
               <View style={styles.reportBadge}>
                 <Ionicons name="cash" size={16} color="#84CC16" />
@@ -570,6 +571,12 @@ const styles = StyleSheet.create({
   reportDesc: {
     fontSize: 14,
     color: "#9CA3AF",
+    marginBottom: 2,
+  },
+  reportEarnings: {
+    fontSize: 12,
+    color: "#84CC16",
+    fontWeight: "600",
   },
   reportBadge: {
     width: 32,
