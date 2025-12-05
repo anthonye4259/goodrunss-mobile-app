@@ -64,7 +64,7 @@ export default function HomeScreen() {
             <Text className="text-4xl font-bold text-foreground mb-2">Welcome to {content.displayName}</Text>
             {location && (
               <View className="flex-row items-center mt-2">
-                <Ionicons name="location" size={16} color="#84CC16" />
+                <Ionicons name="location" size={16} color="#7ED957" />
                 <Text className="text-muted-foreground ml-2">
                   {location.city}, {location.state}
                 </Text>
@@ -75,7 +75,7 @@ export default function HomeScreen() {
               className="glass-card rounded-xl flex-row items-center px-4 py-3 mt-4"
               onPress={() => setShowGlobalSearch(true)}
             >
-              <Ionicons name="search" size={20} color="#84CC16" />
+              <Ionicons name="search" size={20} color="#7ED957" />
               <Text className="flex-1 ml-3 text-muted-foreground">Search trainers, venues, activities...</Text>
             </TouchableOpacity>
           </View>
@@ -91,19 +91,19 @@ export default function HomeScreen() {
                 <View className="p-4">
                   <View className="flex-row items-center mb-3">
                     <View className="w-16 h-16 rounded-full bg-primary/20 items-center justify-center">
-                      <Ionicons name="person" size={32} color="#84CC16" />
+                      <Ionicons name="person" size={32} color="#7ED957" />
                     </View>
                     <View className="flex-1 ml-4">
                       <Text className="text-foreground font-bold text-lg">{trainer.name}</Text>
                       <View className="flex-row items-center mt-1">
-                        <Ionicons name="star" size={16} color="#84CC16" />
+                        <Ionicons name="star" size={16} color="#7ED957" />
                         <Text className="text-foreground ml-1">
                           {trainer.rating} ({trainer.reviews} reviews)
                         </Text>
                       </View>
                       {distance && (
                         <View className="flex-row items-center mt-1">
-                          <Ionicons name="location-outline" size={14} color="#84CC16" />
+                          <Ionicons name="location-outline" size={14} color="#7ED957" />
                           <Text className="text-muted-foreground text-sm ml-1">{distance.toFixed(1)} miles away</Text>
                         </View>
                       )}
@@ -157,11 +157,11 @@ export default function HomeScreen() {
                     <View className="flex-1">
                       <Text className="text-foreground font-bold text-base mb-1">{venue.name}</Text>
                       <View className="flex-row items-center mb-1">
-                        <Ionicons name="location-outline" size={14} color="#84CC16" />
+                        <Ionicons name="location-outline" size={14} color="#7ED957" />
                         <Text className="text-muted-foreground text-sm ml-1">{venue.address}</Text>
                       </View>
                       <View className="flex-row items-center">
-                        <Ionicons name="star" size={14} color="#84CC16" />
+                        <Ionicons name="star" size={14} color="#7ED957" />
                         <Text className="text-foreground text-sm ml-1">{venue.rating}</Text>
                         <Text className="text-muted-foreground text-sm ml-1">• {venue.distance || "0.8"} mi</Text>
                       </View>
@@ -217,11 +217,11 @@ export default function HomeScreen() {
               <TouchableOpacity key={index} className="bg-card rounded-xl p-4 mb-3 border border-border">
                 <Text className="text-foreground font-bold mb-1">{session.title}</Text>
                 <View className="flex-row items-center mb-1">
-                  <Ionicons name="location-outline" size={14} color="#84CC16" />
+                  <Ionicons name="location-outline" size={14} color="#7ED957" />
                   <Text className="text-muted-foreground text-sm ml-1">{session.location}</Text>
                 </View>
                 <View className="flex-row items-center">
-                  <Ionicons name="time-outline" size={14} color="#84CC16" />
+                  <Ionicons name="time-outline" size={14} color="#7ED957" />
                   <Text className="text-muted-foreground text-sm ml-1">{session.time}</Text>
                 </View>
               </TouchableOpacity>

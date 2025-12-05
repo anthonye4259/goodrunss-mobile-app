@@ -67,7 +67,7 @@ export default function LanguageSelection() {
             style={styles.selectedButton}
           >
             <View style={styles.selectedRow}>
-              <Ionicons name="globe-outline" size={24} color="#84CC16" />
+              <Ionicons name="globe-outline" size={24} color="#7ED957" />
               <View style={styles.selectedText}>
                 <Text style={styles.selectedName}>{selectedLang.name}</Text>
                 <Text style={styles.selectedRegion}>{selectedLang.region}</Text>
@@ -110,7 +110,7 @@ export default function LanguageSelection() {
                       <Text style={styles.languageNative}>{language.nativeName}</Text>
                     </View>
                     {selectedLanguage === language.code && (
-                      <Ionicons name="checkmark-circle" size={24} color="#84CC16" />
+                      <Ionicons name="checkmark-circle" size={24} color="#7ED957" />
                     )}
                   </View>
                 </TouchableOpacity>
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
   logoContainer: {
     width: 64,
     height: 64,
-    backgroundColor: "#84CC16",
+    backgroundColor: "#7ED957",
     borderRadius: 32,
     alignItems: "center",
     justifyContent: "center",
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
   },
   continueButton: {
     width: "100%",
-    backgroundColor: "#84CC16",
+    backgroundColor: "#7ED957",
     borderRadius: 50,
     paddingVertical: 16,
     marginTop: 32,

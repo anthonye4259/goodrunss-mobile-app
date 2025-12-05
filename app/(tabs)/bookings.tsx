@@ -98,7 +98,7 @@ export default function BookingsScreen() {
                 >
                   <View style={styles.bookingHeader}>
                     <View style={styles.bookingIcon}>
-                      <Ionicons name="calendar" size={24} color="#84CC16" />
+                      <Ionicons name="calendar" size={24} color="#7ED957" />
                     </View>
                     <View style={styles.bookingInfo}>
                       <Text style={styles.bookingTitle}>{booking.title}</Text>
@@ -126,7 +126,7 @@ export default function BookingsScreen() {
                     <Text style={styles.bookingPrice}>${booking.price}</Text>
                     <TouchableOpacity style={styles.viewButton}>
                       <Text style={styles.viewButtonText}>View Details</Text>
-                      <Ionicons name="chevron-forward" size={16} color="#84CC16" />
+                      <Ionicons name="chevron-forward" size={16} color="#7ED957" />
                     </TouchableOpacity>
                   </View>
                 </TouchableOpacity>
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#1A1A1A",
   },
   tabActive: {
-    backgroundColor: "#84CC16",
+    backgroundColor: "#7ED957",
   },
   tabText: {
     fontSize: 16,
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#84CC16",
+    color: "#7ED957",
   },
   bookingDetails: {
     marginBottom: 16,
@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
   bookingPrice: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#84CC16",
+    color: "#7ED957",
   },
   viewButton: {
     flexDirection: "row",
@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
   viewButtonText: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#84CC16",
+    color: "#7ED957",
     marginRight: 4,
   },
   emptyState: {
@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   findButton: {
-    backgroundColor: "#84CC16",
+    backgroundColor: "#7ED957",
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 32,

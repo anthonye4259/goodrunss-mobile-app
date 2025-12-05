@@ -69,7 +69,7 @@ export default function MessagesScreen() {
           <View style={styles.header}>
             <Text style={styles.title}>Messages</Text>
             <TouchableOpacity style={styles.newMessageButton}>
-              <Ionicons name="create-outline" size={24} color="#84CC16" />
+              <Ionicons name="create-outline" size={24} color="#7ED957" />
             </TouchableOpacity>
           </View>
 
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: 22,
     fontWeight: "bold",
-    color: "#84CC16",
+    color: "#7ED957",
   },
   onlineIndicator: {
     position: "absolute",
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   unreadBadge: {
-    backgroundColor: "#84CC16",
+    backgroundColor: "#7ED957",
     borderRadius: 12,
     minWidth: 24,
     height: 24,
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   startButton: {
-    backgroundColor: "#84CC16",
+    backgroundColor: "#7ED957",
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 32,

@@ -71,14 +71,66 @@ export class NotificationService {
     try {
       const token = await this.getPushToken()
       if (token) {
-        // Store token for later use
+        // Store token locally
         await AsyncStorage.setItem("pushToken", token)
         console.log("[v0] Registered for push notifications:", token)
+
+        // Register token with Firebase backend
+        await this.registerFCMToken(token)
       }
       return token
     } catch (error) {
       console.error("[v0] Error registering for push notifications:", error)
       return null
+    }
+  }
+
+  /**
+   * Register FCM token with Firebase backend
+   */
+  async registerFCMToken(token: string): Promise<boolean> {
+    try {
+      // Import Firebase functions
+      const { getFunctions, httpsCallable } = await import("firebase/functions")
+      const { app } = await import("@/lib/firebase-config")
+
+      if (!app) {
+        console.warn("[v0] Firebase not configured, skipping FCM registration")
+        return false
+      }
+
+      const functions = getFunctions(app)
+      const registerToken = httpsCallable(functions, "registerFCMToken")
+
+      // Get device ID
+      const deviceId = await this.getDeviceId()
+
+      await registerToken({ token, deviceId })
+      console.log("[v0] FCM token registered with backend")
+      return true
+    } catch (error) {
+      console.error("[v0] Error registering FCM token:", error)
+      return false
+    }
+  }
+
+  /**
+   * Get unique device ID
+   */
+  async getDeviceId(): Promise<string> {
+    try {
+      let deviceId = await AsyncStorage.getItem("deviceId")
+
+      if (!deviceId) {
+        // Generate unique device ID
+        deviceId = `${Platform.OS}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+        await AsyncStorage.setItem("deviceId", deviceId)
+      }
+
+      return deviceId
+    } catch (error) {
+      console.error("[v0] Error getting device ID:", error)
+      return `${Platform.OS}-${Date.now()}`
     }
   }
 

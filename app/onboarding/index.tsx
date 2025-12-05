@@ -39,7 +39,7 @@ export default function OnboardingScreen() {
                 <Ionicons
                   name="basketball"
                   size={32}
-                  color={userType === "player" ? "#84CC16" : "#888"}
+                  color={userType === "player" ? "#7ED957" : "#888"}
                 />
               </View>
               <View style={styles.optionTextContainer}>
@@ -47,7 +47,7 @@ export default function OnboardingScreen() {
                 <Text style={styles.optionDescription}>Find courts, trainers, and join games</Text>
               </View>
               {userType === "player" && (
-                <Ionicons name="checkmark-circle" size={28} color="#84CC16" />
+                <Ionicons name="checkmark-circle" size={28} color="#7ED957" />
               )}
             </TouchableOpacity>
 
@@ -62,7 +62,7 @@ export default function OnboardingScreen() {
                 <Ionicons
                   name="fitness"
                   size={32}
-                  color={userType === "trainer" ? "#84CC16" : "#888"}
+                  color={userType === "trainer" ? "#7ED957" : "#888"}
                 />
               </View>
               <View style={styles.optionTextContainer}>
@@ -70,7 +70,7 @@ export default function OnboardingScreen() {
                 <Text style={styles.optionDescription}>Manage clients and grow your business</Text>
               </View>
               {userType === "trainer" && (
-                <Ionicons name="checkmark-circle" size={28} color="#84CC16" />
+                <Ionicons name="checkmark-circle" size={28} color="#7ED957" />
               )}
             </TouchableOpacity>
           </View>
@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#1A1A1A",
   },
   optionCardSelected: {
-    borderColor: "#84CC16",
+    borderColor: "#7ED957",
     backgroundColor: "rgba(132, 204, 22, 0.1)",
   },
   optionIconContainer: {
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#84CC16",
+    backgroundColor: "#7ED957",
     borderRadius: 12,
     paddingVertical: 16,
     marginTop: 32,

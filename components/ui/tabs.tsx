@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   tabsTriggerActive: {
-    backgroundColor: "#84CC16",
+    backgroundColor: "#7ED957",
   },
   tabsTriggerText: {
     color: "#888",

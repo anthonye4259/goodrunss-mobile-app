@@ -25,6 +25,8 @@
         "NSCameraUsageDescription": "GoodRunss needs camera access to upload profile pictures and venue photos.",
         "NSPhotoLibraryUsageDescription": "GoodRunss needs photo library access to upload pictures.",
         "NSMicrophoneUsageDescription": "GoodRunss needs microphone access for voice messages.",
+        "NSHealthShareUsageDescription": "GoodRunss needs access to read your workout data to provide personalized recommendations.",
+        "NSHealthUpdateUsageDescription": "GoodRunss needs access to save your workout sessions to Apple Health.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
@@ -75,7 +77,9 @@
       ],
       "expo-asset",
       "expo-font",
-      "expo-localization"
+      "expo-localization",
+      "react-native-health",
+      "expo-web-browser"
     ],
     "extra": {
       "router": {

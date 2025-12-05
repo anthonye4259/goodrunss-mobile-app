@@ -121,7 +121,7 @@ export default function ExploreScreen() {
                     <View style={styles.trainerInfo}>
                       <Text style={styles.trainerName}>{trainer.name}</Text>
                       <View style={styles.trainerRating}>
-                        <Ionicons name="star" size={14} color="#84CC16" />
+                        <Ionicons name="star" size={14} color="#7ED957" />
                         <Text style={styles.trainerRatingText}>{trainer.rating} ({trainer.reviews} reviews)</Text>
                       </View>
                       <Text style={styles.trainerSpecialty}>{trainer.specialties?.[0] || primaryActivity}</Text>
@@ -148,7 +148,7 @@ export default function ExploreScreen() {
               {/* Environmental Impact Banner */}
               <View style={styles.impactBanner}>
                 <View style={styles.impactIconContainer}>
-                  <Ionicons name="leaf" size={24} color="#84CC16" />
+                  <Ionicons name="leaf" size={24} color="#7ED957" />
                 </View>
                 <View style={styles.impactTextContainer}>
                   <Text style={styles.impactTitle}>Check Before You Go</Text>
@@ -161,7 +161,7 @@ export default function ExploreScreen() {
 
               <Text style={styles.sectionTitle}>Nearby {content.locationPrefix}s</Text>
               {loading ? (
-                <ActivityIndicator size="large" color="#84CC16" style={{ marginTop: 20 }} />
+                <ActivityIndicator size="large" color="#7ED957" style={{ marginTop: 20 }} />
               ) : (
                 venues.map((venue, index) => {
                   const trafficPrediction = predictVenueTraffic(venue.id, new Date(), venue.activePlayersNow)
@@ -177,13 +177,13 @@ export default function ExploreScreen() {
                     >
                       <View style={styles.venueHeader}>
                         <View style={styles.venueIcon}>
-                          <Ionicons name="location" size={24} color="#84CC16" />
+                          <Ionicons name="location" size={24} color="#7ED957" />
                         </View>
                         <View style={styles.venueInfo}>
                           <Text style={styles.venueName}>{venue.name}</Text>
                           <Text style={styles.venueAddress}>{venue.address}</Text>
                           <View style={styles.venueRating}>
-                            <Ionicons name="star" size={14} color="#84CC16" />
+                            <Ionicons name="star" size={14} color="#7ED957" />
                             <Text style={styles.venueRatingText}>{venue.rating}</Text>
                             <Text style={styles.venueDistance}> • {venue.distance || "0.8"} mi</Text>
                           </View>
@@ -233,12 +233,12 @@ export default function ExploreScreen() {
                               handlePress(() => router.push(`/report-facility/${venue.id}`))
                             }}
                           >
-                            <Ionicons name="clipboard-outline" size={16} color="#84CC16" />
+                            <Ionicons name="clipboard-outline" size={16} color="#7ED957" />
                             <Text style={styles.reportButtonText}>Report</Text>
                           </TouchableOpacity>
                           <TouchableOpacity style={styles.viewButton}>
                             <Text style={styles.viewButtonText}>View</Text>
-                            <Ionicons name="chevron-forward" size={16} color="#84CC16" />
+                            <Ionicons name="chevron-forward" size={16} color="#7ED957" />
                           </TouchableOpacity>
                         </View>
                       </View>
@@ -266,7 +266,7 @@ export default function ExploreScreen() {
                                   "fitness"
                     }
                     size={28}
-                    color="#84CC16"
+                    color="#7ED957"
                   />
                   <Text style={styles.categoryText}>{sport}</Text>
                 </TouchableOpacity>
@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#1A1A1A",
   },
   tabActive: {
-    backgroundColor: "#84CC16",
+    backgroundColor: "#7ED957",
   },
   tabText: {
     fontSize: 16,
@@ -372,7 +372,7 @@ const styles = StyleSheet.create({
   trainerInitial: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#84CC16",
+    color: "#7ED957",
   },
   trainerInfo: {
     flex: 1,
@@ -394,7 +394,7 @@ const styles = StyleSheet.create({
   },
   trainerSpecialty: {
     fontSize: 14,
-    color: "#84CC16",
+    color: "#7ED957",
     marginTop: 4,
   },
   trainerFooter: {
@@ -414,10 +414,10 @@ const styles = StyleSheet.create({
   trainerPrice: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#84CC16",
+    color: "#7ED957",
   },
   bookButton: {
-    backgroundColor: "#84CC16",
+    backgroundColor: "#7ED957",
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -465,7 +465,7 @@ const styles = StyleSheet.create({
   },
   venueRatingText: {
     fontSize: 14,
-    color: "#84CC16",
+    color: "#7ED957",
     marginLeft: 4,
   },
   venueDistance: {
@@ -546,7 +546,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   viewButtonText: {
-    color: "#84CC16",
+    color: "#7ED957",
     fontWeight: "600",
     marginRight: 4,
   },
@@ -565,7 +565,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   reportButtonText: {
-    color: "#84CC16",
+    color: "#7ED957",
     fontWeight: "600",
     fontSize: 13,
   },

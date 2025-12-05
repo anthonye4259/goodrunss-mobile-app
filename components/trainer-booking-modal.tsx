@@ -56,27 +56,59 @@ export function TrainerBookingModal({ visible, onClose, trainer }: TrainerBookin
     try {
       setIsProcessing(true)
 
-      const response = await fetch("YOUR_BACKEND_URL/create-payment-intent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount: (trainer.price + 5) * 100,
-          currency: "usd",
-          trainerId: trainer.name,
-          date: selectedDate,
-          time: selectedTime,
-        }),
+      // Import Firebase functions
+      const { getFunctions, httpsCallable } = await import("firebase/functions")
+      const { app } = await import("@/lib/firebase-config")
+      const { useAuth } = await import("@/lib/auth-context")
+      const { CalendarService } = await import("@/lib/services/calendar-service")
+      const { trainerService } = await import("@/lib/services/trainer-service")
+
+      if (!app) {
+        Alert.alert("Error", "Firebase not configured. Please contact support.")
+        setIsProcessing(false)
+        return
+      }
+
+      const functions = getFunctions(app)
+      const createPaymentIntent = httpsCallable(functions, "createPaymentIntent")
+
+      // Create booking first
+      const bookingData = {
+        trainerId: trainer.name, // Should be trainer ID
+        date: selectedDate,
+        time: selectedTime,
+        duration: 60,
+        notes,
+        status: "pending",
+        paymentStatus: "pending",
+      }
+
+      const booking = await trainerService.createBooking(bookingData)
+
+      if (!booking) {
+        Alert.alert("Error", "Failed to create booking. Please try again.")
+        setIsProcessing(false)
+        return
+      }
+
+      // Create payment intent
+      const result = await createPaymentIntent({
+        amount: trainer.price + 5, // Total with service fee
+        currency: "usd",
+        trainerId: trainer.name,
+        userId: "current-user-id", // Get from auth context
+        bookingId: booking.id,
+        duration: 60,
       })
 
-      const { paymentIntent, ephemeralKey, customer } = await response.json()
+      const { clientSecret } = result.data as { clientSecret: string; paymentIntentId: string }
 
+      // Initialize payment sheet
       const { error: initError } = await initPaymentSheet({
         merchantDisplayName: "GoodRunss",
-        customerId: customer,
-        customerEphemeralKeySecret: ephemeralKey,
-        paymentIntentClientSecret: paymentIntent,
+        paymentIntentClientSecret: clientSecret,
         defaultBillingDetails: {
-          name: "User Name",
+          name: "User Name", // Get from user profile
         },
         appearance: {
           colors: {
@@ -99,24 +131,38 @@ export function TrainerBookingModal({ visible, onClose, trainer }: TrainerBookin
         return
       }
 
+      // Present payment sheet
       const { error: presentError } = await presentPaymentSheet()
 
       if (presentError) {
-        Alert.alert("Payment cancelled", presentError.message)
+        Alert.alert("Payment Cancelled", presentError.message)
         setIsProcessing(false)
         return
       }
 
+      // Payment successful! Add to calendar
+      const calendarService = CalendarService.getInstance()
+      await calendarService.addTrainerBooking({
+        trainerName: trainer.name,
+        date: selectedDate,
+        time: selectedTime,
+        duration: 60,
+        location: "Downtown Sports Complex", // Get from trainer data
+        notes,
+      })
+
+      // Send local notification
       await notificationService.sendLocalNotification({
         type: "booking_confirmed",
-        title: "Booking Confirmed!",
+        title: "Booking Confirmed! 🎉",
         body: `Your session with ${trainer.name} on ${selectedDate} at ${selectedTime} is confirmed.`,
       })
 
+      // Show success and share modal
       setShowShareModal(true)
       onClose()
-    } catch (error) {
-      Alert.alert("Error", "Payment failed. Please try again.")
+    } catch (error: any) {
+      Alert.alert("Error", error.message || "Payment failed. Please try again.")
       console.error("[v0] Payment error:", error)
     } finally {
       setIsProcessing(false)

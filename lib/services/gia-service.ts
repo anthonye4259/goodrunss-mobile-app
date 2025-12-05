@@ -16,26 +16,56 @@ export const giaService = {
         location?: { city?: string; state?: string }
         sport?: string
         userType?: string
+        healthData?: {
+            todayStats?: { steps: number; calories: number; activeMinutes: number }
+            weeklyStats?: { totalWorkouts: number; totalCalories: number; totalMinutes: number; favoriteActivity?: string }
+            recentWorkouts?: Array<{ workoutType: string; duration: number; calories: number; date: Date }>
+        }
     }): Promise<string> {
         try {
+            // Build health context string
+            let healthContext = "";
+            if (userContext?.healthData) {
+                const { todayStats, weeklyStats, recentWorkouts } = userContext.healthData;
+
+                if (todayStats) {
+                    healthContext += `\n\nToday's Activity:\n- Steps: ${todayStats.steps.toLocaleString()}\n- Calories burned: ${todayStats.calories}\n- Active minutes: ${todayStats.activeMinutes}`;
+                }
+
+                if (weeklyStats) {
+                    healthContext += `\n\nThis Week:\n- Workouts: ${weeklyStats.totalWorkouts}\n- Total calories: ${weeklyStats.totalCalories.toLocaleString()}\n- Total minutes: ${weeklyStats.totalMinutes}\n- Favorite activity: ${weeklyStats.favoriteActivity || 'N/A'}`;
+                }
+
+                if (recentWorkouts && recentWorkouts.length > 0) {
+                    const recent = recentWorkouts.slice(0, 3);
+                    healthContext += `\n\nRecent Workouts:\n${recent.map(w => `- ${w.workoutType}: ${w.duration} min, ${w.calories} cal`).join('\n')}`;
+                }
+            }
+
             // Add system context
             const systemMessage: Message = {
                 role: "system",
-                content: `You are GIA, the AI assistant for GoodRunss - a platform that helps people find courts, trainers, and pickup games for sports like basketball, tennis, pickleball, etc.
+                content: `You are GIA, the AI fitness coach for GoodRunss - a platform that helps people find courts, trainers, and pickup games for sports like basketball, tennis, pickleball, etc.
         
 User context:
 - Location: ${userContext?.location?.city || "Unknown"}, ${userContext?.location?.state || ""}
 - Sport: ${userContext?.sport || "recreational sports"}
-- User type: ${userContext?.userType || "player"}
+- User type: ${userContext?.userType || "player"}${healthContext}
 
 Your role is to help users:
 1. Find nearby courts and venues
 2. Book trainers and classes
 3. Report court conditions
 4. Find pickup games and players
-5. Get workout recommendations
+5. Get personalized workout recommendations based on their fitness data
 
-Be helpful, concise, and action-oriented. When appropriate, suggest using app features like "Find nearby courts" or "Book a trainer".`
+Be helpful, concise, and action-oriented. Use their health data to provide personalized recommendations. 
+- If they've been very active, suggest recovery or lighter activities
+- If they haven't been active, encourage them to get moving
+- Celebrate their achievements and progress
+- Provide specific, actionable suggestions based on their activity patterns
+
+When appropriate, suggest using app features like "Find nearby courts" or "Book a trainer".`
             }
 
             const response = await axios.post(

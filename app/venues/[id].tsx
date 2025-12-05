@@ -20,6 +20,7 @@ import { WaitlistJoinModal } from "@/components/waitlist-join-modal"
 import { ReviewModal } from "@/components/review-modal"
 import { venueService } from "@/lib/services/venue-service"
 import { Venue } from "@/lib/venue-data"
+import { MapsService } from "@/lib/services/maps-service"
 
 export default function VenueDetailScreen() {
   const { id } = useLocalSearchParams()
@@ -185,7 +186,7 @@ export default function VenueDetailScreen() {
   if (loading || !venue) {
     return (
       <View style={{ flex: 1, backgroundColor: "#0A0A0A", justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#84CC16" />
+        <ActivityIndicator size="large" color="#7ED957" />
       </View>
     )
   }
@@ -275,6 +276,19 @@ export default function VenueDetailScreen() {
   const handleReportFacility = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
     router.push(`/report-facility/${id}`)
+  }
+
+  const handleGetDirections = async () => {
+    if (!venue) return
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+
+    const mapsService = MapsService.getInstance()
+    await mapsService.openDirections({
+      latitude: venue.lat || venue.coordinates?.lat || 0,
+      longitude: venue.lng || venue.coordinates?.lon || 0,
+      name: venue.name,
+      address: venue.address,
+    })
   }
 
   return (
@@ -474,6 +488,14 @@ export default function VenueDetailScreen() {
                   <Text className="text-foreground ml-3">{venue.address}</Text>
                 </View>
               </View>
+
+              <TouchableOpacity
+                className="bg-primary rounded-xl py-3 mt-4 flex-row items-center justify-center"
+                onPress={handleGetDirections}
+              >
+                <Ionicons name="navigate" size={20} color="#000" />
+                <Text className="text-black font-bold ml-2">Get Directions</Text>
+              </TouchableOpacity>
             </View>
 
             <View className="bg-card border border-border rounded-2xl p-4 mb-6">

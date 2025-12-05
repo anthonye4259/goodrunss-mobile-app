@@ -85,17 +85,17 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: "#84CC16",
+    borderColor: "#7ED957",
     alignItems: "center",
     justifyContent: "center",
   },
   radioSelected: {
-    borderColor: "#84CC16",
+    borderColor: "#7ED957",
   },
   radioInner: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: "#84CC16",
+    backgroundColor: "#7ED957",
   },
 })

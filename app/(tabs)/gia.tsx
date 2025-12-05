@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   userBubble: {
-    backgroundColor: "#84CC16",
+    backgroundColor: "#7ED957",
     borderBottomRightRadius: 4,
   },
   assistantBubble: {
@@ -361,7 +361,7 @@ const styles = StyleSheet.create({
   },
   suggestionText: {
     fontSize: 14,
-    color: "#84CC16",
+    color: "#7ED957",
   },
   inputContainer: {
     paddingHorizontal: 16,
@@ -389,7 +389,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#84CC16",
+    backgroundColor: "#7ED957",
     alignItems: "center",
     justifyContent: "center",
     marginLeft: 8,

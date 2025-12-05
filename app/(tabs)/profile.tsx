@@ -78,7 +78,7 @@ export default function ProfileScreen() {
               >
                 <View style={styles.menuItemLeft}>
                   <View style={styles.menuIcon}>
-                    <Ionicons name={item.icon as any} size={22} color="#84CC16" />
+                    <Ionicons name={item.icon as any} size={22} color="#7ED957" />
                   </View>
                   <Text style={styles.menuLabel}>{item.label}</Text>
                 </View>
@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: 40,
     fontWeight: "bold",
-    color: "#84CC16",
+    color: "#7ED957",
   },
   editAvatarButton: {
     position: "absolute",
@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "#84CC16",
+    backgroundColor: "#7ED957",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#84CC16",
+    color: "#7ED957",
   },
   statLabel: {
     fontSize: 14,

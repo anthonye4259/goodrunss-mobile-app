@@ -40,7 +40,7 @@ const INTRO_STEPS = [
       { icon: "analytics" as const, text: "MyFitnessPal" },
       { icon: "calendar" as const, text: "Google Calendar" },
     ],
-    gradient: ["#84CC16", "#65A30D", "#0A0A0A"] as const,
+    gradient: ["#7ED957", "#65A30D", "#0A0A0A"] as const,
   },
 ]
 

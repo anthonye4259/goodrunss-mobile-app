@@ -81,7 +81,7 @@ export default function HomeScreen() {
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={["#84CC16", "#65A30D"]}
+              colors={["#7ED957", "#65A30D"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.forYouGradient}
@@ -108,7 +108,7 @@ export default function HomeScreen() {
           >
             <View style={styles.reportCardContent}>
               <View style={styles.reportIconContainer}>
-                <Ionicons name="leaf" size={32} color="#84CC16" />
+                <Ionicons name="leaf" size={32} color="#7ED957" />
               </View>
               <View style={styles.reportTextContainer}>
                 <Text style={styles.reportTitle}>Report Court Condition</Text>
@@ -116,7 +116,7 @@ export default function HomeScreen() {
                 <Text style={styles.reportEarnings}>Earn $1-31 per report</Text>
               </View>
               <View style={styles.reportBadge}>
-                <Ionicons name="cash" size={16} color="#84CC16" />
+                <Ionicons name="cash" size={16} color="#7ED957" />
               </View>
             </View>
           </TouchableOpacity>
@@ -151,7 +151,7 @@ export default function HomeScreen() {
             >
               <View style={styles.upcomingHeader}>
                 <View style={styles.upcomingIcon}>
-                  <Ionicons name="calendar" size={24} color="#84CC16" />
+                  <Ionicons name="calendar" size={24} color="#7ED957" />
                 </View>
                 <View style={styles.upcomingInfo}>
                   <Text style={styles.upcomingTitle}>{content.sampleSessions[0]?.title || "Next Session"}</Text>
@@ -190,7 +190,7 @@ export default function HomeScreen() {
                     <View style={styles.trainerInfo}>
                       <Text style={styles.trainerName}>{trainer.name}</Text>
                       <View style={styles.trainerRating}>
-                        <Ionicons name="star" size={14} color="#84CC16" />
+                        <Ionicons name="star" size={14} color="#7ED957" />
                         <Text style={styles.trainerRatingText}>
                           {trainer.rating} ({trainer.reviews})
                         </Text>
@@ -215,7 +215,7 @@ export default function HomeScreen() {
             <View style={styles.quickActionsGrid}>
               <TouchableOpacity style={styles.quickAction} onPress={() => router.push("/(tabs)/explore")}>
                 <View style={[styles.quickActionIcon, { backgroundColor: "rgba(132, 204, 22, 0.2)" }]}>
-                  <Ionicons name="search" size={24} color="#84CC16" />
+                  <Ionicons name="search" size={24} color="#7ED957" />
                 </View>
                 <Text style={styles.quickActionText}>Find Courts</Text>
               </TouchableOpacity>
@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   guestModeLabel: {
-    color: "#84CC16",
+    color: "#7ED957",
     fontWeight: "bold",
     fontSize: 12,
   },
@@ -290,7 +290,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   signUpButton: {
-    backgroundColor: "#84CC16",
+    backgroundColor: "#7ED957",
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#84CC16",
+    color: "#7ED957",
   },
   statLabel: {
     fontSize: 14,
@@ -433,7 +433,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   startButton: {
-    backgroundColor: "#84CC16",
+    backgroundColor: "#7ED957",
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -464,7 +464,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   trainerInitial: {
-    color: "#84CC16",
+    color: "#7ED957",
     fontWeight: "bold",
     fontSize: 18,
   },
@@ -496,12 +496,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   trainerPrice: {
-    color: "#84CC16",
+    color: "#7ED957",
     fontWeight: "bold",
     fontSize: 18,
   },
   bookButton: {
-    backgroundColor: "#84CC16",
+    backgroundColor: "#7ED957",
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -542,7 +542,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: "#1A1A1A",
     borderWidth: 2,
-    borderColor: "#84CC16",
+    borderColor: "#7ED957",
     overflow: "hidden",
   },
   reportCardContent: {
@@ -575,7 +575,7 @@ const styles = StyleSheet.create({
   },
   reportEarnings: {
     fontSize: 12,
-    color: "#84CC16",
+    color: "#7ED957",
     fontWeight: "600",
   },
   reportBadge: {

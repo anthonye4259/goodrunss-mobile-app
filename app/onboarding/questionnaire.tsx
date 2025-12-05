@@ -174,7 +174,7 @@ export default function QuestionnaireScreen() {
       <LinearGradient colors={["#0A0A0A", "#141414"]} style={{ flex: 1 }}>
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.locationContainer}>
-            <Ionicons name="location" size={80} color="#84CC16" />
+            <Ionicons name="location" size={80} color="#7ED957" />
             <Text style={styles.locationTitle}>Enable Location</Text>
             <Text style={styles.locationSubtitle}>
               Allow GoodRunss to access your location to show nearby trainers, courts, and studios in your area.
@@ -241,7 +241,7 @@ export default function QuestionnaireScreen() {
                 >
                   <Text style={styles.activityText}>{activity}</Text>
                   {selectedActivities.includes(activity) && (
-                    <Ionicons name="checkmark-circle" size={24} color="#84CC16" />
+                    <Ionicons name="checkmark-circle" size={24} color="#7ED957" />
                   )}
                 </TouchableOpacity>
               ))}
@@ -262,7 +262,7 @@ export default function QuestionnaireScreen() {
                 >
                   <Text style={styles.activityText}>{activity}</Text>
                   {selectedActivities.includes(activity) && (
-                    <Ionicons name="checkmark-circle" size={24} color="#84CC16" />
+                    <Ionicons name="checkmark-circle" size={24} color="#7ED957" />
                   )}
                 </TouchableOpacity>
               ))}
@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
   },
   progressText: {
     fontSize: 14,
-    color: "#84CC16",
+    color: "#7ED957",
     marginBottom: 8,
   },
   progressBar: {
@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: "100%",
-    backgroundColor: "#84CC16",
+    backgroundColor: "#7ED957",
     borderRadius: 4,
   },
   title: {
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#84CC16",
+    color: "#7ED957",
     marginBottom: 16,
   },
   optionsList: {
@@ -353,7 +353,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#1A1A1A",
   },
   cardSelected: {
-    borderColor: "#84CC16",
+    borderColor: "#7ED957",
     backgroundColor: "rgba(132, 204, 22, 0.1)",
   },
   activityText: {
@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
   skillValue: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#84CC16",
+    color: "#7ED957",
   },
   skillDescription: {
     fontSize: 14,
@@ -393,7 +393,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   continueButton: {
-    backgroundColor: "#84CC16",
+    backgroundColor: "#7ED957",
     borderRadius: 12,
     paddingVertical: 16,
     marginTop: 24,
@@ -439,7 +439,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   locationButton: {
-    backgroundColor: "#84CC16",
+    backgroundColor: "#7ED957",
     borderRadius: 12,
     paddingVertical: 16,
     paddingHorizontal: 32,
