@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { useState } from "react"
 import { router } from "expo-router"
 import { useAuth } from "@/lib/auth-context"
+import { venueService } from "@/lib/services/venue-service"
 import * as Haptics from "expo-haptics"
 import { ImageService } from "@/lib/image-service"
 
@@ -43,7 +44,7 @@ export default function QuickReportScreen() {
             const imageService = ImageService.getInstance()
             const result = await imageService.pickImage()
             if (result) {
-                setPhotos([...photos, result.uri])
+                setPhotos([...photos, result])
             }
         } catch (error) {
             console.error("Photo error:", error)
@@ -59,14 +60,29 @@ export default function QuickReportScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
         setSubmitting(true)
 
-        // TODO: Submit to backend
-        await new Promise((resolve) => setTimeout(resolve, 1500))
-
-        Alert.alert(
-            "Report Submitted! 🎉",
-            "Thank you for helping the community. You earned $15!",
-            [{ text: "OK", onPress: () => router.back() }]
+        const success = await venueService.submitReport(
+            null, // No specific venue for quick report
+            user.id,
+            "crowd",
+            "good",
+            notes,
+            crowdLevel,
+            ageGroup,
+            skillLevel,
+            photos
         )
+
+        setSubmitting(false)
+
+        if (success) {
+            Alert.alert(
+                "Report Submitted! 🎉",
+                "Thank you for helping the community. You earned $15!",
+                [{ text: "OK", onPress: () => router.back() }]
+            )
+        } else {
+            Alert.alert("Error", "Failed to submit report. Please try again.")
+        }
     }
 
     return (

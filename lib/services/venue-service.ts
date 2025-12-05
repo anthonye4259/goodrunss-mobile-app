@@ -264,6 +264,47 @@ export const venueService = {
             console.error("Error creating player alert:", error)
             return false
         }
+    },
+
+    /**
+     * Submit a facility report
+     */
+    async submitReport(
+        venueId: string | null,
+        userId: string,
+        category: string,
+        condition: string,
+        details: string,
+        crowdLevel?: string,
+        ageGroup?: string,
+        skillLevel?: string,
+        photos?: string[]
+    ): Promise<boolean> {
+        if (!db) return false
+
+        try {
+            const reportsRef = collection(db, "reports")
+
+            await addDoc(reportsRef, {
+                venueId: venueId || null,
+                userId,
+                category,
+                condition,
+                details,
+                crowdLevel: crowdLevel || null,
+                ageGroup: ageGroup || null,
+                skillLevel: skillLevel || null,
+                photos: photos || [],
+                timestamp: serverTimestamp(),
+                status: "pending",
+                verified: false
+            })
+
+            return true
+        } catch (error) {
+            console.error("Error submitting report:", error)
+            return false
+        }
     }
 }
 
