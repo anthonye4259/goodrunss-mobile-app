@@ -43,7 +43,6 @@ export default function RootLayout() {
                 <Stack.Screen name="onboarding" />
                 <Stack.Screen name="(tabs)" />
                 <Stack.Screen name="referrals" />
-                <Stack.Screen name="paywall" />
                 <Stack.Screen name="rating/[sport]" />
                 <Stack.Screen name="venues/[id]" />
                 <Stack.Screen name="trainers/[id]" />

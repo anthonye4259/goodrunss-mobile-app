@@ -57,9 +57,7 @@ export default function ReportsDashboardScreen() {
               <Ionicons name="arrow-back" size={24} color="#FFF" />
             </TouchableOpacity>
             <Text className="text-2xl font-bold text-foreground">Reporting Dashboard</Text>
-            <TouchableOpacity onPress={() => router.push("/ambassador/apply")}>
-              <Ionicons name="star" size={24} color="#7ED957" />
-            </TouchableOpacity>
+            <View style={{ width: 24 }} />
           </View>
 
           <View className="bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/30 rounded-2xl p-6 mb-6">
@@ -123,22 +121,20 @@ export default function ReportsDashboardScreen() {
                     <Text className="text-muted-foreground text-sm">{report.details}</Text>
                   </View>
                   <View
-                    className={`rounded-lg px-3 py-1 ${
-                      report.status === "verified"
+                    className={`rounded-lg px-3 py-1 ${report.status === "verified"
                         ? "bg-primary/20"
                         : report.status === "pending"
                           ? "bg-accent/20"
                           : "bg-destructive/20"
-                    }`}
+                      }`}
                   >
                     <Text
-                      className={`text-xs font-bold ${
-                        report.status === "verified"
+                      className={`text-xs font-bold ${report.status === "verified"
                           ? "text-primary"
                           : report.status === "pending"
                             ? "text-accent"
                             : "text-destructive"
-                      }`}
+                        }`}
                     >
                       {report.status}
                     </Text>
