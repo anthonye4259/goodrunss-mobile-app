@@ -1,18 +1,22 @@
 import React, { ReactNode } from "react"
+import { StripeProvider as StripeProviderNative } from "@stripe/stripe-react-native"
 
 interface StripeProviderProps {
   children: ReactNode
 }
 
-// Stripe provider placeholder - configure with your Stripe keys when ready
+const STRIPE_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || ""
+
+// Stripe provider - now configured with production keys!
 export function StripeProvider({ children }: StripeProviderProps) {
-  // TODO: Add Stripe configuration when ready for payments
-  // import { StripeProvider as StripeProviderNative } from "@stripe/stripe-react-native"
-  // return (
-  //   <StripeProviderNative publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || ""}>
-  //     {children}
-  //   </StripeProviderNative>
-  // )
-  
-  return <>{children}</>
+  if (!STRIPE_PUBLISHABLE_KEY) {
+    console.warn("Stripe publishable key not found. Payment features will be disabled.")
+    return <>{children}</>
+  }
+
+  return (
+    <StripeProviderNative publishableKey={STRIPE_PUBLISHABLE_KEY}>
+      {children}
+    </StripeProviderNative>
+  )
 }
