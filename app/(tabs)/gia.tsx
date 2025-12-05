@@ -68,25 +68,53 @@ export default function GIAScreen() {
     setInput("")
     setIsTyping(true)
 
-    // Simulate AI response
-    setTimeout(() => {
-      const responses = [
-        "I can help you with that! Let me find some options for you.",
-        "Great question! Based on your preferences, here's what I recommend...",
-        "I've found some great options near you. Would you like me to show more details?",
-        "Perfect! I can set that up for you. Just confirm and we'll get started.",
-      ]
+    try {
+      // Get AI response from OpenAI
+      const { giaService } = await import("@/lib/services/gia-service")
+
+      const conversationHistory = messages.map(m => ({
+        role: m.role,
+        content: m.content
+      }))
+
+      const response = await giaService.sendMessage(
+        [...conversationHistory, { role: "user", content: userMessage.content }],
+        {
+          location: preferences.location ? {
+            city: preferences.location.city,
+            state: preferences.location.state
+          } : undefined,
+          sport: preferences.primaryActivity,
+          userType: preferences.userType || "player"
+        }
+      )
+
+      const suggestions = giaService.getSuggestions(userMessage.content, preferences)
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: responses[Math.floor(Math.random() * responses.length)],
+        content: response,
         timestamp: new Date(),
-        suggestions: ["Tell me more", "Find trainers", "Show nearby courts", "Book a session"],
+        suggestions,
+      }
+
+      setMessages((prev) => [...prev, assistantMessage])
+    } catch (error) {
+      console.error("Error getting AI response:", error)
+
+      // Fallback message if API fails
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: "I'm having trouble connecting right now. Please try again in a moment.",
+        timestamp: new Date(),
+        suggestions: ["Find nearby courts", "Book a trainer", "Report conditions", "Find players"],
       }
       setMessages((prev) => [...prev, assistantMessage])
+    } finally {
       setIsTyping(false)
-    }, 1500)
+    }
   }
 
   const handleSuggestionPress = (suggestion: string) => {
