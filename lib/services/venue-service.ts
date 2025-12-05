@@ -303,8 +303,59 @@ export const venueService = {
             return true
         } catch (error) {
             console.error("Error submitting report:", error)
-            return false
         }
+    },
+
+    /**
+     * Get all venues (for global heat map)
+     */
+    async getAllVenues(limitCount: number = 500): Promise<Venue[]> {
+        if (!db) return []
+
+        try {
+            const q = query(
+                collection(db, VENUES_COLLECTION),
+                limit(limitCount)
+            )
+
+            const snapshot = await getDocs(q)
+            const venues: Venue[] = []
+
+            snapshot.forEach((doc) => {
+                venues.push({
+                    id: doc.id,
+                    ...doc.data()
+                } as Venue)
+            })
+
+            return venues
+        } catch (error) {
+            console.error("Error fetching all venues:", error)
+            return []
+        }
+    },
+
+    /**
+     * Get venues with real-time activity data (for heat map)
+     * Uses ActivitySimulator for realistic player counts
+     */
+    async getVenuesWithActivity(): Promise<any[]> {
+        const venues = await this.getAllVenues()
+        const { ActivitySimulator } = await import('./activity-simulator')
+        const simulator = ActivitySimulator.getInstance()
+
+        // Add simulated activity to each venue
+        const venuesWithActivity = venues.map(venue => {
+            const activePlayersNow = simulator.generatePlayerCount(venue)
+
+            return {
+                ...venue,
+                activePlayersNow,
+                crowdLevel: simulator.getCrowdLevel(activePlayersNow),
+            }
+        })
+
+        return venuesWithActivity
     }
 }
 

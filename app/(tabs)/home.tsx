@@ -13,6 +13,8 @@ import { getVenuesForSport } from "@/lib/venue-data"
 import { predictVenueTraffic } from "@/lib/traffic-prediction"
 import { router } from "expo-router"
 import * as Haptics from "expo-haptics"
+import { ActivityHeatMap } from "@/components/ActivityHeatMap"
+
 
 export default function HomeScreen() {
   const { preferences } = useUserPreferences()
@@ -78,6 +80,20 @@ export default function HomeScreen() {
               <Ionicons name="search" size={20} color="#7ED957" />
               <Text className="flex-1 ml-3 text-muted-foreground">Search trainers, venues, activities...</Text>
             </TouchableOpacity>
+          </View>
+
+          {/* Activity Heat Map */}
+          <View className="px-6 mb-6">
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="text-xl font-bold text-foreground">
+                🔥 Live Activity
+              </Text>
+              <TouchableOpacity onPress={() => router.push('/activity-map')}>
+                <Text className="text-primary font-semibold">View All</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ActivityHeatMap height={250} />
           </View>
 
           {/* Featured Trainer */}
