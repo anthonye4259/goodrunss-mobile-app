@@ -1,0 +1,206 @@
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Image, Alert } from "react-native"
+import { LinearGradient } from "expo-linear-gradient"
+import { Ionicons } from "@expo/vector-icons"
+import { useState } from "react"
+import { router } from "expo-router"
+import { useAuth } from "@/lib/auth-context"
+import * as Haptics from "expo-haptics"
+import { ImageService } from "@/lib/image-service"
+
+export default function QuickReportScreen() {
+    const { user } = useAuth()
+    const [crowdLevel, setCrowdLevel] = useState<"empty" | "light" | "moderate" | "busy" | "packed">("moderate")
+    const [ageGroup, setAgeGroup] = useState<"kids" | "teens" | "adults" | "mixed">("adults")
+    const [skillLevel, setSkillLevel] = useState<"beginner" | "intermediate" | "advanced" | "mixed">("intermediate")
+    const [notes, setNotes] = useState("")
+    const [photos, setPhotos] = useState<string[]>([])
+    const [submitting, setSubmitting] = useState(false)
+
+    const crowdLevels = [
+        { key: "empty", label: "Empty", emoji: "😴", players: "0-2" },
+        { key: "light", label: "Light", emoji: "🏃", players: "3-5" },
+        { key: "moderate", label: "Moderate", emoji: "👥", players: "6-10" },
+        { key: "busy", label: "Busy", emoji: "🔥", players: "11-15" },
+        { key: "packed", label: "Packed", emoji: "🚀", players: "16+" },
+    ]
+
+    const ageGroups = [
+        { key: "kids", label: "Kids", emoji: "👶", range: "Under 13" },
+        { key: "teens", label: "Teens", emoji: "🧒", range: "13-17" },
+        { key: "adults", label: "Adults", emoji: "👨", range: "18+" },
+        { key: "mixed", label: "Mixed", emoji: "👨‍👩‍👧", range: "All ages" },
+    ]
+
+    const skillLevels = [
+        { key: "beginner", label: "Beginner", emoji: "🌱" },
+        { key: "intermediate", label: "Intermediate", emoji: "⚡" },
+        { key: "advanced", label: "Advanced", emoji: "🏆" },
+        { key: "mixed", label: "Mixed", emoji: "🎯" },
+    ]
+
+    const handleAddPhoto = async () => {
+        try {
+            const imageService = ImageService.getInstance()
+            const result = await imageService.pickImage()
+            if (result) {
+                setPhotos([...photos, result.uri])
+            }
+        } catch (error) {
+            console.error("Photo error:", error)
+        }
+    }
+
+    const handleSubmit = async () => {
+        if (!user) {
+            Alert.alert("Login Required", "Please log in to submit reports.")
+            return
+        }
+
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+        setSubmitting(true)
+
+        // TODO: Submit to backend
+        await new Promise((resolve) => setTimeout(resolve, 1500))
+
+        Alert.alert(
+            "Report Submitted! 🎉",
+            "Thank you for helping the community. You earned $15!",
+            [{ text: "OK", onPress: () => router.back() }]
+        )
+    }
+
+    return (
+        <LinearGradient colors={["#0A0A0A", "#141414"]} style={{ flex: 1 }}>
+            <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+                <View className="px-6 pt-16 pb-6">
+                    <View className="flex-row items-center mb-6">
+                        <TouchableOpacity
+                            onPress={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                                router.back()
+                            }}
+                        >
+                            <Ionicons name="arrow-back" size={24} color="#FFF" />
+                        </TouchableOpacity>
+                        <Text className="text-2xl font-bold text-foreground ml-4">Quick Report</Text>
+                    </View>
+
+                    {/* Crowd Level */}
+                    <View className="mb-6">
+                        <Text className="text-foreground font-bold text-lg mb-3">Current Traffic</Text>
+                        <View className="flex-row flex-wrap gap-2">
+                            {crowdLevels.map((level) => (
+                                <TouchableOpacity
+                                    key={level.key}
+                                    className={`flex-1 min-w-[30%] rounded-xl p-3 border ${crowdLevel === level.key ? "border-primary bg-primary/10" : "border-border bg-card"
+                                        }`}
+                                    onPress={() => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                                        setCrowdLevel(level.key as any)
+                                    }}
+                                >
+                                    <Text className="text-2xl text-center mb-1">{level.emoji}</Text>
+                                    <Text className={`font-bold text-xs text-center ${crowdLevel === level.key ? "text-primary" : "text-foreground"}`}>
+                                        {level.label}
+                                    </Text>
+                                    <Text className="text-muted-foreground text-xs text-center">{level.players}</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    </View>
+
+                    {/* Age Group */}
+                    <View className="mb-6">
+                        <Text className="text-foreground font-bold text-lg mb-3">Age Group</Text>
+                        <View className="flex-row flex-wrap gap-2">
+                            {ageGroups.map((group) => (
+                                <TouchableOpacity
+                                    key={group.key}
+                                    className={`flex-1 min-w-[45%] rounded-xl p-3 border ${ageGroup === group.key ? "border-primary bg-primary/10" : "border-border bg-card"
+                                        }`}
+                                    onPress={() => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                                        setAgeGroup(group.key as any)
+                                    }}
+                                >
+                                    <Text className="text-2xl text-center mb-1">{group.emoji}</Text>
+                                    <Text className={`font-bold text-xs text-center ${ageGroup === group.key ? "text-primary" : "text-foreground"}`}>
+                                        {group.label}
+                                    </Text>
+                                    <Text className="text-muted-foreground text-xs text-center">{group.range}</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    </View>
+
+                    {/* Skill Level */}
+                    <View className="mb-6">
+                        <Text className="text-foreground font-bold text-lg mb-3">Skill Level</Text>
+                        <View className="flex-row flex-wrap gap-2">
+                            {skillLevels.map((level) => (
+                                <TouchableOpacity
+                                    key={level.key}
+                                    className={`flex-1 min-w-[45%] rounded-xl p-3 border ${skillLevel === level.key ? "border-primary bg-primary/10" : "border-border bg-card"
+                                        }`}
+                                    onPress={() => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                                        setSkillLevel(level.key as any)
+                                    }}
+                                >
+                                    <Text className="text-2xl text-center mb-1">{level.emoji}</Text>
+                                    <Text className={`font-bold text-xs text-center ${skillLevel === level.key ? "text-primary" : "text-foreground"}`}>
+                                        {level.label}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    </View>
+
+                    {/* Notes */}
+                    <View className="mb-6">
+                        <Text className="text-foreground font-bold text-lg mb-3">Additional Notes (Optional)</Text>
+                        <TextInput
+                            className="bg-card border border-border rounded-xl p-4 text-foreground min-h-[100px]"
+                            placeholder="Any other details about the court..."
+                            placeholderTextColor="#666"
+                            multiline
+                            value={notes}
+                            onChangeText={setNotes}
+                            textAlignVertical="top"
+                        />
+                    </View>
+
+                    {/* Photos */}
+                    <View className="mb-6">
+                        <Text className="text-foreground font-bold text-lg mb-3">Photos (Optional)</Text>
+                        <View className="flex-row flex-wrap gap-3">
+                            {photos.map((photo, index) => (
+                                <View key={index} className="w-24 h-24 rounded-xl overflow-hidden">
+                                    <Image source={{ uri: photo }} className="w-full h-full" />
+                                </View>
+                            ))}
+                            <TouchableOpacity
+                                className="w-24 h-24 bg-card border border-border border-dashed rounded-xl items-center justify-center"
+                                onPress={handleAddPhoto}
+                            >
+                                <Ionicons name="camera" size={32} color="#7ED957" />
+                                <Text className="text-primary text-xs mt-1">+$5</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+
+                    {/* Submit Button */}
+                    <TouchableOpacity
+                        className={`rounded-xl py-4 ${submitting ? "bg-muted" : "bg-primary"}`}
+                        onPress={handleSubmit}
+                        disabled={submitting}
+                    >
+                        <Text className="text-background font-bold text-center text-lg">
+                            {submitting ? "Submitting..." : "Submit Report & Earn $15"}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+            </ScrollView>
+        </LinearGradient>
+    )
+}
