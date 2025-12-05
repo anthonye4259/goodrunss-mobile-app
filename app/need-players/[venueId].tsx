@@ -1,20 +1,24 @@
 
-import { View, Text, ScrollView, TouchableOpacity, TextInput } from "react-native"
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { useState } from "react"
 import { router, useLocalSearchParams } from "expo-router"
 import { useUserPreferences } from "@/lib/user-preferences"
 import { getPrimaryActivity } from "@/lib/activity-content"
+import { useAuth } from "@/lib/auth-context"
+import { venueService } from "@/lib/services/venue-service"
 import * as Haptics from "expo-haptics"
 
 export default function NeedPlayersScreen() {
   const { venueId } = useLocalSearchParams()
   const { preferences } = useUserPreferences()
+  const { user } = useAuth()
   const [playersNeeded, setPlayersNeeded] = useState("1")
   const [skillLevel, setSkillLevel] = useState("Any")
   const [duration, setDuration] = useState("1 hour")
   const [notes, setNotes] = useState("")
+  const [loading, setLoading] = useState(false)
 
   const primaryActivity = getPrimaryActivity(preferences.activities)
 
@@ -22,16 +26,37 @@ export default function NeedPlayersScreen() {
   const durations = ["30 min", "1 hour", "2 hours", "3+ hours"]
 
   const handleSendAlert = async () => {
+    if (typeof venueId !== "string") return
+    if (!primaryActivity) return
+
+    setLoading(true)
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
-    // TODO: Call backend API to create player alert
-    console.log("[v0] Sending player alert:", {
+
+    const userId = user?.id || "guest-" + Math.random().toString(36).substr(2, 9)
+    const userName = user?.name || "Anonymous Player"
+    const playersCount = playersNeeded === "4+" ? 4 : parseInt(playersNeeded)
+
+    const success = await venueService.createPlayerAlert(
       venueId,
-      playersNeeded,
+      userId,
+      userName,
+      playersCount,
       skillLevel,
-      duration,
-      notes,
-    })
-    router.back()
+      primaryActivity,
+      notes
+    )
+
+    setLoading(false)
+
+    if (success) {
+      Alert.alert(
+        "Alert Sent! 🏀",
+        "Nearby players will be notified. Your alert will expire in 2 hours.",
+        [{ text: "OK", onPress: () => router.back() }]
+      )
+    } else {
+      Alert.alert("Error", "Failed to send alert. Please try again.")
+    }
   }
 
   return (

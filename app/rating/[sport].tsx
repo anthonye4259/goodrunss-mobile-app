@@ -1,18 +1,22 @@
 
-import { View, Text, ScrollView, TouchableOpacity, TextInput } from "react-native"
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { useState } from "react"
 import { useLocalSearchParams, router } from "expo-router"
 import { RATING_CONFIGS, getRatingLevel, type RatingConfig } from "@/lib/player-rating-types"
+import { useAuth } from "@/lib/auth-context"
+import { userService } from "@/lib/services/user-service"
 import * as Haptics from "expo-haptics"
 
 export default function RatingScreen() {
   const { sport } = useLocalSearchParams<{ sport: string }>()
+  const { user } = useAuth()
   const config: RatingConfig | undefined = sport ? RATING_CONFIGS[sport] : undefined
 
   const [currentRating, setCurrentRating] = useState<number>(config?.range.min || 1)
   const [matchesPlayed, setMatchesPlayed] = useState<string>("0")
+  const [loading, setLoading] = useState(false)
 
   if (!config) {
     return (
@@ -25,11 +29,32 @@ export default function RatingScreen() {
   const currentLevel = getRatingLevel(sport!, currentRating)
   const progress = ((currentRating - config.range.min) / (config.range.max - config.range.min)) * 100
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (!user?.id) {
+      Alert.alert("Error", "You must be logged in to save your rating.")
+      return
+    }
+
+    setLoading(true)
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
-    // TODO: Save to backend
-    console.log("[v0] Saving rating:", { sport, currentRating, matchesPlayed })
-    router.back()
+
+    const success = await userService.updateSkillRating(
+      user.id,
+      sport!,
+      currentLevel?.label || "Beginner"
+    )
+
+    setLoading(false)
+
+    if (success) {
+      Alert.alert(
+        "Rating Saved! ⭐",
+        `Your ${sport} rating has been updated to ${currentLevel?.label}.`,
+        [{ text: "OK", onPress: () => router.back() }]
+      )
+    } else {
+      Alert.alert("Error", "Failed to save rating. Please try again.")
+    }
   }
 
   return (
@@ -104,9 +129,8 @@ export default function RatingScreen() {
             {config.levels.map((level, index) => (
               <View
                 key={index}
-                className={`p-4 flex-row items-center ${
-                  index < config.levels.length - 1 ? "border-b border-border" : ""
-                }`}
+                className={`p-4 flex-row items-center ${index < config.levels.length - 1 ? "border-b border-border" : ""
+                  }`}
               >
                 <View className="w-3 h-3 rounded-full mr-4" style={{ backgroundColor: level.color }} />
                 <View className="flex-1">

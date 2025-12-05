@@ -225,6 +225,45 @@ export const venueService = {
             console.error("Error fetching alerts:", error)
             return []
         }
+    },
+
+    /**
+     * Create a "Need Players" alert for a venue
+     */
+    async createPlayerAlert(
+        venueId: string,
+        userId: string,
+        userName: string,
+        playersNeeded: number,
+        skillLevel: string,
+        sport: string,
+        message?: string
+    ): Promise<boolean> {
+        if (!db) return false
+
+        try {
+            const alertsRef = collection(db, VENUES_COLLECTION, venueId, "alerts")
+
+            // Create alert that expires in 2 hours
+            const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000)
+
+            await addDoc(alertsRef, {
+                userId,
+                userName,
+                playersNeeded,
+                skillLevel,
+                sport,
+                message: message || "",
+                timestamp: serverTimestamp(),
+                expiresAt,
+                status: "active"
+            })
+
+            return true
+        } catch (error) {
+            console.error("Error creating player alert:", error)
+            return false
+        }
     }
 }
 
