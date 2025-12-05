@@ -7,6 +7,7 @@ import { useState, useEffect } from "react"
 import { venueService } from "@/lib/services/venue-service"
 import * as Haptics from "expo-haptics"
 import { SafeAreaView } from "react-native-safe-area-context"
+import { PartnerCityBadge } from "@/components/partner-city-badge"
 
 export default function ReportScreen() {
     const { location, loading: locationLoading } = useUserLocation()
@@ -35,6 +36,9 @@ export default function ReportScreen() {
         <LinearGradient colors={["#0A0A0A", "#141414"]} style={styles.container}>
             <SafeAreaView style={styles.safeArea} edges={["top"]}>
                 <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+                    {/* Partner City Badge */}
+                    <PartnerCityBadge />
+
                     {/* Header */}
                     <View style={styles.header}>
                         <View style={styles.headerIcon}>
