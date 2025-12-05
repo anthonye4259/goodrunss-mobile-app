@@ -203,20 +203,32 @@ export default function ExploreScreen() {
 
                       <View style={styles.venueFooter}>
                         <View style={styles.venueAmenities}>
-                          {venue.amenities?.slice(0, 3).map((amenity, i) => (
+                          {venue.amenities?.slice(0, 2).map((amenity, i) => (
                             <View key={i} style={styles.amenityBadge}>
                               <Text style={styles.amenityText}>{amenity}</Text>
                             </View>
                           ))}
                         </View>
-                        <TouchableOpacity style={styles.viewButton}>
-                          <Text style={styles.viewButtonText}>View</Text>
-                          <Ionicons name="chevron-forward" size={16} color="#84CC16" />
-                        </TouchableOpacity>
+                        <View style={styles.venueActions}>
+                          <TouchableOpacity
+                            style={styles.reportButton}
+                            onPress={(e) => {
+                              e.stopPropagation()
+                              handlePress(() => router.push(`/report-facility/${venue.id}`))
+                            }}
+                          >
+                            <Ionicons name="clipboard-outline" size={16} color="#84CC16" />
+                            <Text style={styles.reportButtonText}>Report</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity style={styles.viewButton}>
+                            <Text style={styles.viewButtonText}>View</Text>
+                            <Ionicons name="chevron-forward" size={16} color="#84CC16" />
+                          </TouchableOpacity>
+                        </View>
                       </View>
                     </TouchableOpacity>
                   )
-                })}
+                })
               )}
             </View>
           )}
@@ -521,6 +533,25 @@ const styles = StyleSheet.create({
     color: "#84CC16",
     fontWeight: "600",
     marginRight: 4,
+  },
+  venueActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  reportButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(132, 204, 22, 0.1)",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    gap: 4,
+  },
+  reportButtonText: {
+    color: "#84CC16",
+    fontWeight: "600",
+    fontSize: 13,
   },
   categoriesGrid: {
     flexDirection: "row",

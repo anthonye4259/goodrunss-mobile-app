@@ -80,10 +80,10 @@ export default function HomeScreen() {
             onPress={() => handlePress(() => router.push("/for-you"))}
             activeOpacity={0.8}
           >
-            <LinearGradient 
-              colors={["#84CC16", "#65A30D"]} 
-              start={{ x: 0, y: 0 }} 
-              end={{ x: 1, y: 1 }} 
+            <LinearGradient
+              colors={["#84CC16", "#65A30D"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
               style={styles.forYouGradient}
             >
               <View style={styles.forYouContent}>
@@ -98,6 +98,26 @@ export default function HomeScreen() {
                 <Ionicons name="chevron-forward" size={28} color="#000" />
               </View>
             </LinearGradient>
+          </TouchableOpacity>
+
+          {/* Quick Report - NEW */}
+          <TouchableOpacity
+            style={styles.reportCard}
+            onPress={() => handlePress(() => router.push("/report-facility/quick"))}
+            activeOpacity={0.8}
+          >
+            <View style={styles.reportCardContent}>
+              <View style={styles.reportIconContainer}>
+                <Ionicons name="clipboard" size={32} color="#84CC16" />
+              </View>
+              <View style={styles.reportTextContainer}>
+                <Text style={styles.reportTitle}>Report Court Condition</Text>
+                <Text style={styles.reportDesc}>Help the community & earn $1-31</Text>
+              </View>
+              <View style={styles.reportBadge}>
+                <Ionicons name="cash" size={16} color="#84CC16" />
+              </View>
+            </View>
           </TouchableOpacity>
 
           {/* Stats Row */}
@@ -511,7 +531,52 @@ const styles = StyleSheet.create({
   },
   quickActionText: {
     color: "#FFFFFF",
-    fontWeight: "500",
+    fontSize: 12,
+    marginTop: 8,
+    textAlign: "center",
+  },
+  reportCard: {
+    marginHorizontal: 24,
+    marginBottom: 24,
+    borderRadius: 16,
+    backgroundColor: "#1A1A1A",
+    borderWidth: 2,
+    borderColor: "#84CC16",
+    overflow: "hidden",
+  },
+  reportCardContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+  },
+  reportIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    backgroundColor: "rgba(132, 204, 22, 0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 16,
+  },
+  reportTextContainer: {
+    flex: 1,
+  },
+  reportTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    marginBottom: 4,
+  },
+  reportDesc: {
     fontSize: 14,
+    color: "#9CA3AF",
+  },
+  reportBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(132, 204, 22, 0.2)",
+    alignItems: "center",
+    justifyContent: "center",
   },
 })
