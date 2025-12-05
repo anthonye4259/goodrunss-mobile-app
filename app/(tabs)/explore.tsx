@@ -11,11 +11,12 @@ import { predictVenueTraffic } from "@/lib/traffic-prediction"
 import { router } from "expo-router"
 import * as Haptics from "expo-haptics"
 import { SafeAreaView } from "react-native-safe-area-context"
+import { QuickSettingsBar } from "@/components/quick-settings-bar"
 
 export default function ExploreScreen() {
   const { preferences } = useUserPreferences()
   const [searchQuery, setSearchQuery] = useState("")
-  const [activeTab, setActiveTab] = useState<"trainers" | "venues">("trainers")
+  const [activeTab, setActiveTab] = useState<"trainers" | "venues">("venues")
   const [venues, setVenues] = useState<Venue[]>([])
   const [loading, setLoading] = useState(false)
   const { location, loading: locationLoading } = useUserLocation()
@@ -64,10 +65,11 @@ export default function ExploreScreen() {
   return (
     <LinearGradient colors={["#0A0A0A", "#141414"]} style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={["top"]}>
+        <QuickSettingsBar />
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>Explore</Text>
+            <Text style={styles.title}>Live Traffic</Text>
 
             {/* Search Bar */}
             <View style={styles.searchContainer}>
