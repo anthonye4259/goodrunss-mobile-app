@@ -1,52 +1,61 @@
+```javascript
 import { useEffect, useState } from "react"
+import { View, Text, ActivityIndicator, Image, StyleSheet } from "react-native"
 import { useRouter } from "expo-router"
-import { View, ActivityIndicator, Text, Image, StyleSheet } from "react-native"
+import { LinearGradient } from "expo-linear-gradient"
 import AsyncStorage from "@react-native-async-storage/async-storage"
+import { useAuth } from "@/lib/auth-context"
 
 export default function Index() {
   const router = useRouter()
-  const [status, setStatus] = useState("Loading...")
+  const { isAuthenticated } = useAuth()
+  const [isReady, setIsReady] = useState(false)
 
   useEffect(() => {
-    checkFirstLaunch()
-  }, [])
+    const checkOnboarding = async () => {
+      try {
+        const hasCompletedOnboarding = await AsyncStorage.getItem("hasCompletedOnboarding")
+        const hasSeenLanguageSelection = await AsyncStorage.getItem("hasSeenLanguageSelection")
 
-  const checkFirstLaunch = async () => {
-    try {
-      setStatus("Checking settings...")
-      const selectedLanguage = await AsyncStorage.getItem("selectedLanguage")
-      const hasSeenIntro = await AsyncStorage.getItem("hasSeenGIAIntro")
+        // Small delay for splash screen
+        await new Promise((resolve) => setTimeout(resolve, 1500))
 
-      setTimeout(() => {
-        if (!selectedLanguage) {
-          setStatus("Going to language selection...")
+        if (!hasSeenLanguageSelection) {
           router.replace("/language-selection")
-        } else if (!hasSeenIntro) {
-          setStatus("Going to intro...")
-          router.replace("/onboarding/gia-intro")
+        } else if (!isAuthenticated) {
+          router.replace("/auth")
+        } else if (!hasCompletedOnboarding) {
+          router.replace("/onboarding/questionnaire")
         } else {
-          setStatus("Going to home...")
           router.replace("/(tabs)")
         }
-      }, 1500)
-    } catch (error) {
-      console.error("[GoodRunss] Error checking first launch:", error)
-      setStatus("Error - redirecting...")
-      router.replace("/language-selection")
+      } catch (error) {
+        console.error("Error checking onboarding:", error)
+        router.replace("/language-selection")
+      }
     }
-  }
+
+    checkOnboarding()
+  }, [isAuthenticated])
 
   return (
-    <View style={styles.container}>
-      <Image 
-        source={require("../assets/icon.png")} 
-        style={styles.logo}
-        resizeMode="contain"
-      />
-      <Text style={styles.title}>GoodRunss</Text>
-      <ActivityIndicator size="large" color="#84CC16" style={styles.loader} />
-      <Text style={styles.status}>{status}</Text>
-    </View>
+    <LinearGradient colors={["#0A0A0A", "#141414", "#0A0A0A"]} style={styles.container}>
+      <View style={styles.content}>
+        <Image
+          source={require("@/assets/images/goodrunss-logo-white.png")}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 }}>
+          <Text style={styles.title}>GoodRunss</Text>
+          <View style={styles.versionBadge}>
+            <Text style={styles.versionText}>g0</Text>
+          </View>
+        </View>
+        <Text style={styles.tagline}>Where the World Plays</Text>
+        <ActivityIndicator size="large" color="#7ED957" style={styles.loader} />
+      </View>
+    </LinearGradient>
   )
 }
 
@@ -68,11 +77,28 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     marginBottom: 24,
   },
+  tagline: {
+    fontSize: 18,
+    color: "#9CA3AF",
+    marginBottom: 48,
+  },
+  versionBadge: {
+    backgroundColor: "rgba(126, 217, 87, 0.2)",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
+  versionText: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#7ED957",
+  },
   loader: {
-    marginBottom: 16,
+    marginTop: 24,
   },
   status: {
     fontSize: 14,
     color: "#888888",
   },
 })
+```

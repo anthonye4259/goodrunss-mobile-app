@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Alert } from "react-native"
+import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Alert, Image } from "react-native"
 import { useRouter } from "expo-router"
 import { LinearGradient } from "expo-linear-gradient"
 import { useAuth } from "@/lib/auth-context"
@@ -48,8 +48,13 @@ export default function AuthScreen() {
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
       <LinearGradient colors={["#0A0A0A", "#141414", "#0A0A0A"]} style={{ flex: 1 }}>
         <ScrollView contentContainerClassName="flex-1 px-6 justify-center">
-          <View className="mb-12">
-            <Text className="text-5xl font-bold text-primary mb-2">GoodRunss</Text>
+          <View className="mb-12 items-center">
+            <Image
+              source={require("@/assets/images/goodrunss-logo-white.png")}
+              style={{ width: 120, height: 120, marginBottom: 16 }}
+              resizeMode="contain"
+            />
+            <Text className="text-3xl font-bold text-foreground mb-2">GoodRunss</Text>
             <Text className="text-lg text-muted-foreground">Where the World Plays</Text>
           </View>
 

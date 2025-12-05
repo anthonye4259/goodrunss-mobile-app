@@ -76,7 +76,7 @@ export default function GIAScreen() {
         "I've found some great options near you. Would you like me to show more details?",
         "Perfect! I can set that up for you. Just confirm and we'll get started.",
       ]
-      
+
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
@@ -109,7 +109,12 @@ export default function GIAScreen() {
                 <Ionicons name="sparkles" size={24} color="#8B5CF6" />
               </View>
               <View>
-                <Text style={styles.headerTitle}>GIA</Text>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <Text style={styles.headerTitle}>GIA</Text>
+                  <View style={styles.versionBadge}>
+                    <Text style={styles.versionText}>g0</Text>
+                  </View>
+                </View>
                 <Text style={styles.headerSubtitle}>Your AI Assistant</Text>
               </View>
             </View>
@@ -245,6 +250,17 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     fontSize: 14,
     color: "#9CA3AF",
+  },
+  versionBadge: {
+    backgroundColor: "rgba(126, 217, 87, 0.2)",
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  versionText: {
+    fontSize: 12,
+    fontWeight: "bold",
+    color: "#7ED957",
   },
   messagesContainer: {
     flex: 1,
