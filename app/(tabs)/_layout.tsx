@@ -1,5 +1,6 @@
 import { Tabs } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
+import { Image } from "react-native"
 import { useUserPreferences } from "@/lib/user-preferences"
 
 export default function TabsLayout() {
@@ -53,7 +54,13 @@ export default function TabsLayout() {
         name="trainers"
         options={{
           title: "Trainers",
-          tabBarIcon: ({ color, size }) => <Ionicons name="people" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Image
+              source={require("@/assets/images/goodrunss-logo-white.png")}
+              style={{ width: size, height: size, tintColor: color }}
+              resizeMode="contain"
+            />
+          ),
         }}
       />
 
