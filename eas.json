@@ -37,6 +37,10 @@
     },
     "production": {
       "channel": "production",
+      "node": "20.11.1",
+      "cache": {
+        "disabled": true
+      },
       "ios": {
         "resourceClass": "m-medium"
       },
@@ -60,4 +64,3 @@
     }
   }
 }
-
