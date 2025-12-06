@@ -1,6 +1,6 @@
 import { View, Text } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { Button } from './Button'
+import { Button } from './button'
 import { colors } from '@/lib/design-tokens'
 
 interface EmptyStateProps {
