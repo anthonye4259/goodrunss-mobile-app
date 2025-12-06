@@ -12,6 +12,9 @@ import { router } from "expo-router"
 import * as Haptics from "expo-haptics"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { QuickSettingsBar } from "@/components/quick-settings-bar"
+import { VenueCardSkeleton } from "@/components/ui/SkeletonLoader"
+import { ErrorState } from "@/components/ui/ErrorState"
+import { EmptyState } from "@/components/ui/EmptyState"
 
 export default function ExploreScreen() {
   const { preferences } = useUserPreferences()
@@ -19,6 +22,7 @@ export default function ExploreScreen() {
   const [activeTab, setActiveTab] = useState<"trainers" | "venues">("venues")
   const [venues, setVenues] = useState<Venue[]>([])
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(false)
   const { location, loading: locationLoading } = useUserLocation()
 
   const primaryActivity = getPrimaryActivity(preferences.activities) as Activity
@@ -33,6 +37,7 @@ export default function ExploreScreen() {
   const loadVenues = async () => {
     if (activeTab === "venues" || true) { // Always load for now to be ready
       setLoading(true)
+      setError(false)
       try {
         // Try fetching from Firestore first
         const remoteVenues = await venueService.getVenuesNearby(
@@ -50,6 +55,8 @@ export default function ExploreScreen() {
         }
       } catch (error) {
         console.error("Failed to load venues:", error)
+        setError(true)
+        // Still set fallback data on error
         setVenues(getVenuesForSport(primaryActivity))
       } finally {
         setLoading(false)
@@ -161,7 +168,19 @@ export default function ExploreScreen() {
 
               <Text style={styles.sectionTitle}>Nearby {content.locationPrefix}s</Text>
               {loading ? (
-                <ActivityIndicator size="large" color="#7ED957" style={{ marginTop: 20 }} />
+                <>
+                  <VenueCardSkeleton />
+                  <VenueCardSkeleton />
+                  <VenueCardSkeleton />
+                </>
+              ) : venues.length === 0 ? (
+                <EmptyState
+                  icon="search-outline"
+                  title="No venues found"
+                  message="We couldn't find any venues nearby. Try adjusting your location or sport preferences."
+                  actionLabel="Refresh"
+                  onAction={loadVenues}
+                />
               ) : (
                 venues.map((venue, index) => {
                   const trafficPrediction = predictVenueTraffic(venue.id, new Date(), venue.activePlayersNow)
