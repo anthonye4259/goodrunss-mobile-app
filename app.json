@@ -78,7 +78,6 @@
       "expo-asset",
       "expo-font",
       "expo-localization",
-      "react-native-health",
       "expo-web-browser"
     ],
     "extra": {
