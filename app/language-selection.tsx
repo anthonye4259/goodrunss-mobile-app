@@ -21,7 +21,7 @@ const LANGUAGES = [
 
 export default function LanguageSelection() {
   const router = useRouter()
-  const { i18n } = useTranslation()
+  const { i18n, t } = useTranslation()
   const [selectedLanguage, setSelectedLanguage] = useState(i18n.language || "en")
   const [searchQuery, setSearchQuery] = useState("")
   const [showDropdown, setShowDropdown] = useState(false)
@@ -56,8 +56,8 @@ export default function LanguageSelection() {
         </View>
 
         {/* Title */}
-        <Text style={styles.title}>Select Your Language</Text>
-        <Text style={styles.subtitle}>Choose your preferred language to continue</Text>
+        <Text style={styles.title}>{t('selectLanguage')}</Text>
+        <Text style={styles.subtitle}>{t('selectLanguage')}</Text>
 
         {/* Language Selector Card */}
         <View style={styles.card}>
@@ -84,7 +84,7 @@ export default function LanguageSelection() {
                 <TextInput
                   value={searchQuery}
                   onChangeText={setSearchQuery}
-                  placeholder="Search..."
+                  placeholder={t('search')}
                   placeholderTextColor="#9CA3AF"
                   style={styles.searchInput}
                 />
@@ -121,11 +121,11 @@ export default function LanguageSelection() {
 
         {/* Continue Button */}
         <TouchableOpacity onPress={handleContinue} style={styles.continueButton}>
-          <Text style={styles.continueText}>Continue</Text>
+          <Text style={styles.continueText}>{t('continue')}</Text>
         </TouchableOpacity>
 
         {/* Footer Text */}
-        <Text style={styles.footer}>You can change this later in settings</Text>
+        <Text style={styles.footer}>{t('selectLanguage')}</Text>
       </View>
     </SafeAreaView>
   )

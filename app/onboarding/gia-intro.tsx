@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { View, Text, TouchableOpacity, Dimensions, StyleSheet, ScrollView } from "react-native"
 import { useRouter } from "expo-router"
+import { useTranslation } from "react-i18next"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import AsyncStorage from "@react-native-async-storage/async-storage"
@@ -46,6 +47,7 @@ const INTRO_STEPS = [
 
 export default function GIAIntroScreen() {
   const router = useRouter()
+  const { t } = useTranslation()
   const [currentStep, setCurrentStep] = useState(0)
   const step = INTRO_STEPS[currentStep]
 
