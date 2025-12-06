@@ -1,12 +1,14 @@
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Image } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
+import { useTranslation } from "react-i18next"
 import { useUserPreferences } from "@/lib/user-preferences"
 import { router } from "expo-router"
 import * as Haptics from "expo-haptics"
 import { SafeAreaView } from "react-native-safe-area-context"
 
 export default function ProfileScreen() {
+  const { t } = useTranslation()
   const { preferences } = useUserPreferences()
 
   const handlePress = (route: string) => {
@@ -31,7 +33,7 @@ export default function ProfileScreen() {
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>Profile</Text>
+            <Text style={styles.title}>{t('profile.title')}</Text>
           </View>
 
           {/* Profile Card */}
@@ -50,7 +52,7 @@ export default function ProfileScreen() {
             <Text style={styles.userType}>
               {preferences.userType === "trainer" ? "Trainer" : "Player"} • {preferences.primaryActivity || "Basketball"}
             </Text>
-            
+
             {/* Stats */}
             <View style={styles.statsRow}>
               <View style={styles.statItem}>

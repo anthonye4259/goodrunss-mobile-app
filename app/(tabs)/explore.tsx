@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator } from "react-native"
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator, RefreshControl } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { useState, useEffect } from "react"
@@ -25,6 +25,7 @@ export default function ExploreScreen() {
   const [venues, setVenues] = useState<Venue[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
   const { location, loading: locationLoading } = useUserLocation()
 
   const primaryActivity = getPrimaryActivity(preferences.activities) as Activity
@@ -71,11 +72,29 @@ export default function ExploreScreen() {
     action()
   }
 
+  const onRefresh = async () => {
+    setRefreshing(true)
+    await loadVenues()
+    setRefreshing(false)
+  }
+
   return (
     <LinearGradient colors={["#0A0A0A", "#141414"]} style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={["top"]}>
         <QuickSettingsBar />
-        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#7ED957"
+              colors={["#7ED957"]}
+            />
+          }
+        >
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.title}>{t('explore.liveTraffic')}</Text>
