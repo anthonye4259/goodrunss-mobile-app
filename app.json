@@ -2,6 +2,7 @@
   "expo": {
     "name": "GoodRunss",
     "slug": "goodrunss-mobile",
+    "owner": "anthonye4258",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
@@ -85,7 +86,7 @@
         "origin": false
       },
       "eas": {
-        "projectId": "1b9c4733-0326-48c5-9993-e793620f5077"
+        "projectId": "54c9b3c6-9f21-44cc-921b-0fa2db35b4a4"
       }
     }
   }
