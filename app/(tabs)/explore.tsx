@@ -2,6 +2,7 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput, Activi
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { useState, useEffect } from "react"
+import { useTranslation } from "react-i18next"
 import { useUserPreferences } from "@/lib/user-preferences"
 import { getActivityContent, getPrimaryActivity, type Activity } from "@/lib/activity-content"
 import { getVenuesForSport, Venue } from "@/lib/venue-data"
@@ -17,6 +18,7 @@ import { ErrorState } from "@/components/ui/ErrorState"
 import { EmptyState } from "@/components/ui/EmptyState"
 
 export default function ExploreScreen() {
+  const { t } = useTranslation()
   const { preferences } = useUserPreferences()
   const [searchQuery, setSearchQuery] = useState("")
   const [activeTab, setActiveTab] = useState<"trainers" | "venues">("venues")
@@ -76,14 +78,14 @@ export default function ExploreScreen() {
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>Live Traffic</Text>
+            <Text style={styles.title}>{t('explore.liveTraffic')}</Text>
 
             {/* Search Bar */}
             <View style={styles.searchContainer}>
               <Ionicons name="search" size={20} color="#9CA3AF" />
               <TextInput
                 style={styles.searchInput}
-                placeholder="Search trainers, venues..."
+                placeholder={t('explore.searchPlaceholder')}
                 placeholderTextColor="#9CA3AF"
                 value={searchQuery}
                 onChangeText={setSearchQuery}

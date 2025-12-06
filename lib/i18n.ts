@@ -46,6 +46,59 @@ const resources = {
       "time.morning": "Morning",
       "time.afternoon": "Afternoon",
       "time.evening": "Evening",
+
+      // Home Screen
+      "home.liveActivity": "Live Activity",
+      "home.findTrainer": "Find a Trainer",
+      "home.bookVenue": "Book a Venue",
+      "home.needPlayers": "Need Players?",
+      "home.activePlayers": "active players",
+      "home.gamesHappening": "games happening",
+
+      // Explore Screen
+      "explore.liveTraffic": "Live Traffic",
+      "explore.searchPlaceholder": "Search trainers, venues...",
+      "explore.nearbyVenues": "Nearby Venues",
+      "explore.topTrainers": "Top Trainers Near You",
+      "explore.checkBeforeGo": "Check Before You Go",
+      "explore.saveGas": "Save gas money, time & reduce CO₂ emissions",
+      "explore.playersActive": "players active now",
+      "explore.minutesAgo": "m ago",
+
+      // Bookings Screen
+      "bookings.title": "My Bookings",
+      "bookings.upcoming": "Upcoming",
+      "bookings.past": "Past",
+      "bookings.noBookings": "No bookings yet",
+      "bookings.startBooking": "Book your first session",
+
+      // Messages Screen
+      "messages.title": "Messages",
+      "messages.noMessages": "No messages yet",
+      "messages.startChat": "Start a conversation",
+
+      // Profile Screen
+      "profile.title": "Profile",
+      "profile.settings": "Settings",
+      "profile.editProfile": "Edit Profile",
+      "profile.stats": "Stats",
+      "profile.achievements": "Achievements",
+
+      // Venue Details
+      "venue.details": "Details",
+      "venue.reviews": "Reviews",
+      "venue.amenities": "Amenities",
+      "venue.hours": "Hours",
+      "venue.getDirections": "Get Directions",
+      "venue.reportIssue": "Report Issue",
+
+      // Errors & Empty States
+      "error.title": "Something went wrong",
+      "error.message": "We couldn't load this content. Please try again.",
+      "error.retry": "Try Again",
+      "empty.noResults": "No results found",
+      "empty.noVenues": "No venues found",
+      "empty.adjustFilters": "Try adjusting your filters",
     },
   },
   es: {
