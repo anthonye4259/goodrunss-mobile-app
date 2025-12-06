@@ -75,11 +75,7 @@
             "minSdkVersion": 23
           }
         }
-      ],
-      "expo-asset",
-      "expo-font",
-      "expo-localization",
-      "expo-web-browser"
+      ]
     ],
     "extra": {
       "router": {
