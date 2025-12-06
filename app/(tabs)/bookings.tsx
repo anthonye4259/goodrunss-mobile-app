@@ -1,6 +1,7 @@
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
+import { useTranslation } from "react-i18next"
 import { useUserPreferences } from "@/lib/user-preferences"
 import { getActivityContent, getPrimaryActivity, type Activity } from "@/lib/activity-content"
 import { router } from "expo-router"
@@ -20,6 +21,7 @@ type Booking = {
 }
 
 export default function BookingsScreen() {
+  const { t } = useTranslation()
   const { preferences } = useUserPreferences()
   const primaryActivity = getPrimaryActivity(preferences.activities) as Activity
   const content = getActivityContent(primaryActivity)
@@ -64,7 +66,7 @@ export default function BookingsScreen() {
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>Bookings</Text>
+            <Text style={styles.title}>{t('bookings.title')}</Text>
           </View>
 
           {/* Tabs */}
@@ -74,7 +76,7 @@ export default function BookingsScreen() {
               onPress={() => setActiveTab("upcoming")}
             >
               <Text style={[styles.tabText, activeTab === "upcoming" && styles.tabTextActive]}>
-                Upcoming
+                {t('bookings.upcoming')}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -82,7 +84,7 @@ export default function BookingsScreen() {
               onPress={() => setActiveTab("past")}
             >
               <Text style={[styles.tabText, activeTab === "past" && styles.tabTextActive]}>
-                Past
+                {t('bookings.past')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -110,7 +112,7 @@ export default function BookingsScreen() {
                       </Text>
                     </View>
                   </View>
-                  
+
                   <View style={styles.bookingDetails}>
                     <View style={styles.detailRow}>
                       <Ionicons name="location-outline" size={16} color="#9CA3AF" />
@@ -139,7 +141,7 @@ export default function BookingsScreen() {
               </View>
               <Text style={styles.emptyTitle}>No {activeTab === "upcoming" ? "Upcoming" : "Past"} Bookings</Text>
               <Text style={styles.emptyDescription}>
-                {activeTab === "upcoming" 
+                {activeTab === "upcoming"
                   ? "Book a session with a trainer to get started on your fitness journey."
                   : "Your completed sessions will appear here."}
               </Text>

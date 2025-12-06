@@ -1,6 +1,7 @@
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
+import { useTranslation } from "react-i18next"
 import { router } from "expo-router"
 import * as Haptics from "expo-haptics"
 import { SafeAreaView } from "react-native-safe-area-context"
@@ -54,6 +55,7 @@ const MOCK_CONVERSATIONS: Conversation[] = [
 ]
 
 export default function MessagesScreen() {
+  const { t } = useTranslation()
   const [conversations] = useState<Conversation[]>(MOCK_CONVERSATIONS)
 
   const handlePress = (id: string) => {
@@ -67,7 +69,7 @@ export default function MessagesScreen() {
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>Messages</Text>
+            <Text style={styles.title}>{t('messages.title')}</Text>
             <TouchableOpacity style={styles.newMessageButton}>
               <Ionicons name="create-outline" size={24} color="#7ED957" />
             </TouchableOpacity>
@@ -88,7 +90,7 @@ export default function MessagesScreen() {
                     </View>
                     {conversation.isOnline && <View style={styles.onlineIndicator} />}
                   </View>
-                  
+
                   <View style={styles.conversationContent}>
                     <View style={styles.conversationHeader}>
                       <Text style={styles.conversationName}>{conversation.name}</Text>

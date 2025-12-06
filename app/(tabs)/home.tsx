@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { View, Text, ScrollView, TouchableOpacity } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
+import { useTranslation } from "react-i18next"
 import { useUserPreferences } from "@/lib/user-preferences"
 import { useLocation } from "@/lib/location-context"
 import { getActivityContent, getPrimaryActivity, type Activity } from "@/lib/activity-content"
@@ -17,6 +18,7 @@ import { ActivityHeatMap } from "@/components/ActivityHeatMap"
 
 
 export default function HomeScreen() {
+  const { t } = useTranslation()
   const { preferences } = useUserPreferences()
   const { location, calculateDistance } = useLocation()
   const [showGlobalSearch, setShowGlobalSearch] = useState(false)
@@ -78,7 +80,7 @@ export default function HomeScreen() {
               onPress={() => setShowGlobalSearch(true)}
             >
               <Ionicons name="search" size={20} color="#7ED957" />
-              <Text className="flex-1 ml-3 text-muted-foreground">Search trainers, venues, activities...</Text>
+              <Text className="flex-1 ml-3 text-muted-foreground">{t('explore.searchPlaceholder')}</Text>
             </TouchableOpacity>
           </View>
 
@@ -86,7 +88,7 @@ export default function HomeScreen() {
           <View className="px-6 mb-6">
             <View className="flex-row items-center justify-between mb-4">
               <Text className="text-xl font-bold text-foreground">
-                🔥 Live Activity
+                🔥 {t('home.liveActivity')}
               </Text>
               <TouchableOpacity onPress={() => router.push('/activity-map')}>
                 <Text className="text-primary font-semibold">View All</Text>
