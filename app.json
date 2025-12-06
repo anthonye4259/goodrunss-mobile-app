@@ -29,7 +29,8 @@
         "NSHealthShareUsageDescription": "GoodRunss needs access to read your workout data to provide personalized recommendations.",
         "NSHealthUpdateUsageDescription": "GoodRunss needs access to save your workout sessions to Apple Health.",
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "newArchEnabled": true
     },
     "android": {
       "adaptiveIcon": {
