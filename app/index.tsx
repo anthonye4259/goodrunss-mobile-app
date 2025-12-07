@@ -1,4 +1,3 @@
-```javascript
 import { useEffect, useState } from "react"
 import { View, Text, ActivityIndicator, Image, StyleSheet } from "react-native"
 import { useRouter } from "expo-router"
@@ -66,6 +65,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  content: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
   logo: {
     width: 120,
     height: 120,
@@ -101,4 +104,3 @@ const styles = StyleSheet.create({
     color: "#888888",
   },
 })
-```

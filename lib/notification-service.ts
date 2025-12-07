@@ -2,13 +2,8 @@ import * as Notifications from "expo-notifications"
 import { Platform } from "react-native"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
-})
+// NOTE: setNotificationHandler is called in _layout.tsx, not at module level
+// Calling it at module load time can crash the app before RN is initialized
 
 export type NotificationType =
   | "booking_confirmed"

@@ -150,21 +150,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return isGuest
   }
 
-  if (loading) {
-    return null // or a loading spinner
+  // CRITICAL: Never return null. Expo Router requires root layout to render children.
+  // During loading, provide default context values
+  const contextValue = {
+    isAuthenticated,
+    isGuest,
+    user,
+    login,
+    signup,
+    logout,
+    continueAsGuest,
+    promptLogin
   }
 
   return (
-    <AuthContext.Provider value={{
-      isAuthenticated,
-      isGuest,
-      user,
-      login,
-      signup,
-      logout,
-      continueAsGuest,
-      promptLogin
-    }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   )
