@@ -13,18 +13,23 @@ import { AuthProvider } from "@/lib/auth-context"
 export default function RootLayout() {
   useEffect(() => {
     const initNotifications = async () => {
-      const notificationService = NotificationService.getInstance()
-      await notificationService.requestPermissions()
-      await notificationService.registerForPushNotifications()
+      try {
+        const notificationService = NotificationService.getInstance()
+        await notificationService.requestPermissions()
+        await notificationService.registerForPushNotifications()
 
-      // Set up notification handlers
-      notificationService.setNotificationHandler({
-        handleNotification: async () => ({
-          shouldShowAlert: true,
-          shouldPlaySound: true,
-          shouldSetBadge: true,
-        }),
-      })
+        // Set up notification handlers
+        notificationService.setNotificationHandler({
+          handleNotification: async () => ({
+            shouldShowAlert: true,
+            shouldPlaySound: true,
+            shouldSetBadge: true,
+          }),
+        })
+      } catch (error) {
+        // Don't crash the app if notifications fail
+        console.warn("Notification initialization failed:", error)
+      }
     }
 
     initNotifications()

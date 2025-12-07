@@ -521,24 +521,54 @@ const resources = {
   },
 }
 
-i18n.use(initReactI18next).init({
-  resources,
-  lng: (Localization.locale || "en-US").split("-")[0],
-  fallbackLng: "en",
-  compatibilityJSON: "v3",
-  interpolation: {
-    escapeValue: false,
-  },
-})
-
-i18n.on("languageChanged", (lng) => {
-  AsyncStorage.setItem("user-language", lng)
-})
-
-AsyncStorage.getItem("user-language").then((savedLang) => {
-  if (savedLang) {
-    i18n.changeLanguage(savedLang)
+// Get locale safely
+function getDeviceLocale(): string {
+  try {
+    const locale = Localization.locale
+    if (locale && typeof locale === 'string') {
+      return locale.split("-")[0]
+    }
+    return "en"
+  } catch (error) {
+    console.warn("Failed to get device locale, using English:", error)
+    return "en"
   }
-})
+}
+
+// Initialize i18n safely
+try {
+  i18n.use(initReactI18next).init({
+    resources,
+    lng: getDeviceLocale(),
+    fallbackLng: "en",
+    compatibilityJSON: "v3",
+    interpolation: {
+      escapeValue: false,
+    },
+  })
+
+  i18n.on("languageChanged", (lng) => {
+    AsyncStorage.setItem("user-language", lng).catch(console.warn)
+  })
+
+  AsyncStorage.getItem("user-language").then((savedLang) => {
+    if (savedLang) {
+      i18n.changeLanguage(savedLang)
+    }
+  }).catch(console.warn)
+} catch (error) {
+  console.error("i18n initialization failed:", error)
+  // Fallback - initialize with minimal config
+  i18n.use(initReactI18next).init({
+    resources,
+    lng: "en",
+    fallbackLng: "en",
+    compatibilityJSON: "v3",
+    interpolation: {
+      escapeValue: false,
+    },
+  })
+}
 
 export default i18n
+
