@@ -146,11 +146,14 @@ export class NotificationService {
 
   async getPushToken(): Promise<string | null> {
     try {
-      const token = (await Notifications.getExpoPushTokenAsync()).data
+      // projectId is required for Expo push tokens in SDK 52+
+      const projectId = "54c9b3c6-9f21-44cc-921b-0fa2db35b4a4"
+      const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data
       console.log("[v0] Push token:", token)
       return token
     } catch (error) {
       console.error("[v0] Error getting push token:", error)
+      // Don't crash the app if push token fails
       return null
     }
   }
