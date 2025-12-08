@@ -167,12 +167,70 @@ export function TeacherDashboard({ userType, name }: TeacherDashboardProps) {
                 </TouchableOpacity>
                 <TouchableOpacity
                     style={[styles.actionButton, styles.actionButtonOutline]}
-                    onPress={() => handlePress(() => router.push("/referrals"))}
+                    onPress={() => handlePress(() => router.push("/invite"))}
                 >
                     <Ionicons name="share-social" size={20} color="#7ED957" />
                     <Text style={[styles.actionButtonText, { color: "#7ED957" }]}>Invite {clientLabel}</Text>
                 </TouchableOpacity>
             </View>
+
+            {/* Pro Dashboard Upgrade CTA */}
+            <TouchableOpacity
+                style={styles.proBanner}
+                onPress={() => handlePress(() => {
+                    // Open web dashboard in browser
+                    // In production: Linking.openURL("https://dashboard.goodrunss.com/pricing")
+                    router.push("/pro-dashboard")
+                })}
+                activeOpacity={0.9}
+            >
+                <LinearGradient
+                    colors={["#0F172A", "#1E293B"]}
+                    style={styles.proBannerGradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                >
+                    <View style={styles.proBannerContent}>
+                        <View style={styles.proBadge}>
+                            <Ionicons name="sparkles" size={12} color="#7ED957" />
+                            <Text style={styles.proBadgeText}>PRO DASHBOARD</Text>
+                        </View>
+
+                        <Text style={styles.proTitle}>Unlock Your Business Potential</Text>
+                        <Text style={styles.proSubtitle}>AI-powered tools to grow your coaching business</Text>
+
+                        <View style={styles.proFeatures}>
+                            <View style={styles.proFeatureRow}>
+                                <Ionicons name="sparkles" size={14} color="#7ED957" />
+                                <Text style={styles.proFeatureText}>GIA AI Assistant - 24/7 business copilot</Text>
+                            </View>
+                            <View style={styles.proFeatureRow}>
+                                <Ionicons name="document-text" size={14} color="#8B5CF6" />
+                                <Text style={styles.proFeatureText}>Auto CRM Parser - Extract client data</Text>
+                            </View>
+                            <View style={styles.proFeatureRow}>
+                                <Ionicons name="people" size={14} color="#06B6D4" />
+                                <Text style={styles.proFeatureText}>Smart Lead Matching - AI finds clients</Text>
+                            </View>
+                            <View style={styles.proFeatureRow}>
+                                <Ionicons name="infinite" size={14} color="#FBBF24" />
+                                <Text style={styles.proFeatureText}>Unlimited Clients & Programs</Text>
+                            </View>
+                        </View>
+
+                        <View style={styles.proPricing}>
+                            <Text style={styles.proPriceStart}>Starting at</Text>
+                            <Text style={styles.proPrice}>$15</Text>
+                            <Text style={styles.proPricePeriod}>/mo</Text>
+                        </View>
+
+                        <View style={styles.proCtaButton}>
+                            <Text style={styles.proCtaText}>Go Pro</Text>
+                            <Ionicons name="arrow-forward" size={16} color="#000" />
+                        </View>
+                    </View>
+                </LinearGradient>
+            </TouchableOpacity>
         </View>
     )
 }
@@ -355,5 +413,90 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: "600",
         color: "#FFF",
+    },
+    // Pro Dashboard Upgrade Banner Styles
+    proBanner: {
+        borderRadius: 16,
+        overflow: "hidden",
+        borderWidth: 1,
+        borderColor: "#334155",
+    },
+    proBannerGradient: {
+        padding: 20,
+    },
+    proBannerContent: {
+        gap: 12,
+    },
+    proBadge: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "rgba(126, 217, 87, 0.15)",
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 12,
+        alignSelf: "flex-start",
+        gap: 4,
+    },
+    proBadgeText: {
+        fontSize: 10,
+        fontWeight: "bold",
+        color: "#7ED957",
+        letterSpacing: 1,
+    },
+    proTitle: {
+        fontSize: 20,
+        fontWeight: "bold",
+        color: "#FFF",
+    },
+    proSubtitle: {
+        fontSize: 14,
+        color: "#9CA3AF",
+    },
+    proFeatures: {
+        gap: 8,
+        marginTop: 8,
+    },
+    proFeatureRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 10,
+    },
+    proFeatureText: {
+        fontSize: 13,
+        color: "#E2E8F0",
+    },
+    proPricing: {
+        flexDirection: "row",
+        alignItems: "baseline",
+        marginTop: 12,
+    },
+    proPriceStart: {
+        fontSize: 13,
+        color: "#9CA3AF",
+        marginRight: 6,
+    },
+    proPrice: {
+        fontSize: 32,
+        fontWeight: "bold",
+        color: "#7ED957",
+    },
+    proPricePeriod: {
+        fontSize: 14,
+        color: "#9CA3AF",
+    },
+    proCtaButton: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "#7ED957",
+        paddingVertical: 14,
+        borderRadius: 12,
+        marginTop: 8,
+        gap: 8,
+    },
+    proCtaText: {
+        fontSize: 16,
+        fontWeight: "bold",
+        color: "#000",
     },
 })
