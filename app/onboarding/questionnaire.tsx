@@ -169,7 +169,8 @@ export default function QuestionnaireScreen() {
         activityType: activityType,
         playerRating: playerRating,
       })
-      router.replace("/(tabs)")
+      // Navigate to feature discovery slides
+      router.replace("/onboarding/features")
     }
   }
 
