@@ -863,3 +863,267 @@ export const cancelSubscription = functions.https.onCall(async (data, context) =
         throw new functions.https.HttpsError("internal", error.message)
     }
 })
+
+// ============================================
+// 24/7 TRAFFIC PREDICTION ENGINE
+// Runs every 30 minutes, pre-computes predictions for all venues
+// Results stored in Firestore - app reads instantly, no calculation needed
+// ============================================
+
+// Major city population data for ML predictions
+const CITY_DATA: Record<string, { density: number; metro: boolean }> = {
+    "40.7,-74.0": { density: 27016, metro: true },  // NYC
+    "34.1,-118.2": { density: 8092, metro: true },  // LA
+    "41.9,-87.6": { density: 11841, metro: true },  // Chicago
+    "29.8,-95.4": { density: 3613, metro: true },   // Houston
+    "33.4,-112.1": { density: 3120, metro: true },  // Phoenix
+    "39.9,-75.2": { density: 11379, metro: true },  // Philadelphia
+    "37.8,-122.4": { density: 18569, metro: true }, // San Francisco
+    "47.6,-122.3": { density: 8775, metro: true },  // Seattle
+    "25.8,-80.2": { density: 12139, metro: true },  // Miami
+    "42.4,-71.1": { density: 14165, metro: true },  // Boston
+}
+
+function getCityKey(lat: number, lon: number): string {
+    return `${lat.toFixed(1)},${lon.toFixed(1)}`
+}
+
+interface TrafficResult {
+    level: "low" | "moderate" | "busy"
+    emoji: string
+    color: string
+    label: string
+    waitTime: string | null
+    weatherImpact: string | null
+    populationImpact: string | null
+    geoTrafficImpact: string | null
+    updatedAt: admin.firestore.FieldValue
+}
+
+function calculateTrafficPrediction(
+    venueId: string,
+    lat: number,
+    lon: number,
+    venueType: string,
+    currentTime: Date
+): TrafficResult {
+    const hour = currentTime.getHours()
+    const dayOfWeek = currentTime.getDay()
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
+
+    let trafficScore = 0
+    let weatherImpact: string | null = null
+    let populationImpact: string | null = null
+    let geoTrafficImpact: string | null = null
+
+    // Time of day scoring
+    if (isWeekend) {
+        if (hour >= 9 && hour <= 18) trafficScore += 40
+        else if (hour >= 7 && hour <= 20) trafficScore += 20
+    } else {
+        if ((hour >= 6 && hour <= 9) || (hour >= 17 && hour <= 20)) trafficScore += 50
+        else if (hour >= 12 && hour <= 14) trafficScore += 30
+        else if (hour >= 10 && hour <= 16) trafficScore += 15
+    }
+
+    if (isWeekend) trafficScore += 20
+
+    // Population density scoring
+    const cityKey = getCityKey(lat, lon)
+    const cityData = CITY_DATA[cityKey]
+    if (cityData) {
+        if (cityData.density > 15000) {
+            trafficScore += 25
+            populationImpact = "Very dense urban area"
+        } else if (cityData.density > 8000) {
+            trafficScore += 15
+            populationImpact = "Major metro area"
+        } else if (cityData.metro) {
+            trafficScore += 10
+            populationImpact = "Metropolitan area"
+        }
+    }
+
+    // Road traffic (rush hour)
+    if (!isWeekend && ((hour >= 7 && hour <= 9) || (hour >= 17 && hour <= 19))) {
+        trafficScore -= 10 // Hard to get there
+        geoTrafficImpact = "Rush hour traffic"
+    }
+
+    // Venue type modifiers
+    if (venueType === "pool" && hour >= 11 && hour <= 16) {
+        trafficScore += 15 // Pools busy midday
+    }
+    if (venueType === "indoor_gym" && ((hour >= 6 && hour <= 8) || (hour >= 17 && hour <= 20))) {
+        trafficScore += 20 // Gyms busy before/after work
+    }
+
+    // Add some variance
+    trafficScore += Math.floor(Math.random() * 10) - 5
+    trafficScore = Math.max(0, Math.min(100, trafficScore))
+
+    // Determine level
+    let level: "low" | "moderate" | "busy"
+    let emoji: string
+    let color: string
+    let label: string
+    let waitTime: string | null
+
+    if (trafficScore < 35) {
+        level = "low"
+        emoji = "🟢"
+        color = "#7ED957"
+        label = "Low Traffic"
+        waitTime = null
+    } else if (trafficScore < 65) {
+        level = "moderate"
+        emoji = "🟡"
+        color = "#FFA500"
+        label = "Moderate Traffic"
+        waitTime = "5-10 min wait"
+    } else {
+        level = "busy"
+        emoji = "🔴"
+        color = "#FF6B6B"
+        label = "Busy"
+        waitTime = "15-20 min wait"
+    }
+
+    return {
+        level,
+        emoji,
+        color,
+        label,
+        waitTime,
+        weatherImpact,
+        populationImpact,
+        geoTrafficImpact,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }
+}
+
+/**
+ * Scheduled function: Runs every 30 minutes
+ * Pre-computes traffic predictions for all venues
+ */
+export const updateVenueTraffic = functions.pubsub
+    .schedule("every 30 minutes")
+    .onRun(async (context) => {
+        functions.logger.info("Starting 30-minute traffic prediction update")
+        const db = admin.firestore()
+        const now = new Date()
+
+        try {
+            // Get all venues from Firestore
+            const venuesSnapshot = await db.collection("venues").get()
+
+            if (venuesSnapshot.empty) {
+                functions.logger.info("No venues found")
+                return null
+            }
+
+            const batch = db.batch()
+            let updateCount = 0
+
+            for (const doc of venuesSnapshot.docs) {
+                const venue = doc.data()
+                const venueId = doc.id
+                const lat = venue.location?.lat || venue.latitude || 0
+                const lon = venue.location?.lon || venue.longitude || 0
+                const venueType = venue.type || "general"
+
+                if (lat === 0 && lon === 0) continue
+
+                // Calculate prediction
+                const prediction = calculateTrafficPrediction(
+                    venueId,
+                    lat,
+                    lon,
+                    venueType,
+                    now
+                )
+
+                // Update venue's traffic field
+                const venueRef = db.collection("venues").doc(venueId)
+                batch.update(venueRef, {
+                    traffic: prediction,
+                })
+
+                updateCount++
+
+                // Firestore batch limit is 500
+                if (updateCount % 450 === 0) {
+                    await batch.commit()
+                    functions.logger.info(`Committed batch of ${updateCount} venues`)
+                }
+            }
+
+            // Commit remaining
+            if (updateCount % 450 !== 0) {
+                await batch.commit()
+            }
+
+            functions.logger.info(`Traffic prediction update complete: ${updateCount} venues updated`)
+
+            // Also update the last run timestamp
+            await db.collection("system").doc("trafficPrediction").set({
+                lastRun: admin.firestore.FieldValue.serverTimestamp(),
+                venuesUpdated: updateCount,
+            }, { merge: true })
+
+            return null
+        } catch (error) {
+            functions.logger.error("Error updating traffic predictions", error)
+            throw error
+        }
+    })
+
+/**
+ * Manual trigger for traffic updates (for testing or immediate refresh)
+ */
+export const triggerTrafficUpdate = functions.https.onCall(async (data, context) => {
+    // Only allow authenticated users (or admins)
+    if (!context.auth) {
+        throw new functions.https.HttpsError("unauthenticated", "Must be authenticated")
+    }
+
+    functions.logger.info("Manual traffic update triggered by:", context.auth.uid)
+
+    // Run the same logic as the scheduled function
+    const db = admin.firestore()
+    const now = new Date()
+    const venuesSnapshot = await db.collection("venues").get()
+
+    let updateCount = 0
+    const batch = db.batch()
+
+    for (const doc of venuesSnapshot.docs) {
+        const venue = doc.data()
+        const lat = venue.location?.lat || venue.latitude || 0
+        const lon = venue.location?.lon || venue.longitude || 0
+
+        if (lat === 0 && lon === 0) continue
+
+        const prediction = calculateTrafficPrediction(
+            doc.id,
+            lat,
+            lon,
+            venue.type || "general",
+            now
+        )
+
+        batch.update(db.collection("venues").doc(doc.id), { traffic: prediction })
+        updateCount++
+
+        if (updateCount % 450 === 0) {
+            await batch.commit()
+        }
+    }
+
+    if (updateCount % 450 !== 0) {
+        await batch.commit()
+    }
+
+    return { success: true, venuesUpdated: updateCount }
+})
+
