@@ -13,6 +13,11 @@ export type NotificationType =
   | "check_in"
   | "referral_reward"
   | "payment_received"
+  | "friend_checkin"
+  | "challenge_received"
+  | "challenge_accepted"
+  | "badge_earned"
+  | "level_up"
 
 export interface NotificationData {
   type: NotificationType
@@ -184,6 +189,11 @@ export class NotificationService {
       check_in: true,
       referral_reward: true,
       payment_received: true,
+      friend_checkin: true,
+      challenge_received: true,
+      challenge_accepted: true,
+      badge_earned: true,
+      level_up: true,
     }
   }
 
