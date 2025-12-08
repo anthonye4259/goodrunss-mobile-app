@@ -15,17 +15,25 @@ export default function Index() {
       try {
         const hasCompletedOnboarding = await AsyncStorage.getItem("hasCompletedOnboarding")
         const hasSeenLanguageSelection = await AsyncStorage.getItem("hasSeenLanguageSelection")
+        const hasSeenGIAIntro = await AsyncStorage.getItem("hasSeenGIAIntro")
 
         // Small delay for splash screen
         await new Promise((resolve) => setTimeout(resolve, 1500))
 
         if (!hasSeenLanguageSelection) {
+          // Step 1: Language selection
           router.replace("/language-selection")
         } else if (!isAuthenticated) {
+          // Step 2: Authentication
           router.replace("/auth")
+        } else if (!hasSeenGIAIntro) {
+          // Step 3: GIA Introduction
+          router.replace("/onboarding/gia-intro")
         } else if (!hasCompletedOnboarding) {
-          router.replace("/onboarding/questionnaire")
+          // Step 4: User type selection → Questionnaire → Features
+          router.replace("/onboarding")
         } else {
+          // All done, go to main app
           router.replace("/(tabs)")
         }
       } catch (error) {
