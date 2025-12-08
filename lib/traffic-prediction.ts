@@ -8,7 +8,9 @@ export interface TrafficPrediction {
     confidence: number
     estimatedWaitTime?: string
     peakHours?: string
-    weatherImpact?: string // New: explains how weather affects traffic
+    weatherImpact?: string
+    populationImpact?: string // New: city population effect
+    geoTrafficImpact?: string // New: road traffic effect
 }
 
 export interface WeatherFactors {
@@ -20,18 +22,35 @@ export interface WeatherFactors {
     windSpeed?: number // mph
 }
 
+export interface PopulationFactors {
+    cityPopulation?: number // Total population
+    populationDensity?: number // People per sq mile
+    metropolitanArea?: boolean // Is it a major metro?
+    nearbyColleges?: number // Number of colleges/universities nearby
+}
+
+export interface GeoTrafficFactors {
+    roadTrafficLevel?: "free" | "light" | "moderate" | "heavy" | "standstill"
+    averageCommute?: number // Minutes
+    nearHighway?: boolean
+    parkingAvailability?: "plenty" | "moderate" | "limited" | "none"
+    transitNearby?: boolean
+}
+
 export type VenueType = "outdoor_court" | "indoor_gym" | "pool" | "field" | "studio" | "general"
 
 /**
  * ML-based traffic prediction algorithm
- * Factors: time of day, day of week, historical patterns, current activity, WEATHER
+ * Factors: time of day, day of week, weather, population, road traffic, current activity
  */
 export function predictVenueTraffic(
     venueId: string,
     currentTime: Date = new Date(),
     activePlayersNow?: number,
     weather?: WeatherFactors,
-    venueType: VenueType = "general"
+    venueType: VenueType = "general",
+    population?: PopulationFactors,
+    geoTraffic?: GeoTrafficFactors
 ): TrafficPrediction {
     const hour = currentTime.getHours()
     const dayOfWeek = currentTime.getDay() // 0 = Sunday, 6 = Saturday
@@ -40,6 +59,8 @@ export function predictVenueTraffic(
     // Base traffic score (0-100)
     let trafficScore = 0
     let weatherImpact: string | undefined
+    let populationImpact: string | undefined
+    let geoTrafficImpact: string | undefined
 
     // Time of day factor (peak hours: 6-9 AM, 5-8 PM on weekdays; 9 AM-6 PM on weekends)
     if (isWeekend) {
@@ -159,6 +180,102 @@ export function predictVenueTraffic(
         }
     }
 
+    // ============================================
+    // POPULATION DENSITY IMPACT
+    // ============================================
+    if (population) {
+        // Major metros have inherently busier venues
+        if (population.metropolitanArea) {
+            trafficScore += 15
+            populationImpact = "Major metro area - expect crowds"
+        }
+
+        // Population density scoring
+        if (population.populationDensity !== undefined) {
+            if (population.populationDensity > 20000) {
+                // Dense urban (NYC, SF level)
+                trafficScore += 25
+                populationImpact = "Very dense area - high demand"
+            } else if (population.populationDensity > 10000) {
+                // Urban
+                trafficScore += 15
+                populationImpact = populationImpact || "Urban area - moderate-high demand"
+            } else if (population.populationDensity > 5000) {
+                // Suburban
+                trafficScore += 8
+            } else if (population.populationDensity < 1000) {
+                // Rural
+                trafficScore -= 10
+                populationImpact = "Lower population - usually quiet"
+            }
+        }
+
+        // College towns spike during school year
+        if (population.nearbyColleges && population.nearbyColleges > 0) {
+            const month = currentTime.getMonth()
+            const isSchoolYear = month >= 8 || month <= 4 // Sept-May
+            if (isSchoolYear) {
+                trafficScore += 10 * Math.min(population.nearbyColleges, 3)
+                populationImpact = populationImpact || "College town - busy during school year"
+            }
+        }
+    }
+
+    // ============================================
+    // GEO-TRAFFIC (ROAD CONDITIONS) IMPACT
+    // ============================================
+    if (geoTraffic) {
+        // Road traffic affects arrival patterns
+        if (geoTraffic.roadTrafficLevel) {
+            switch (geoTraffic.roadTrafficLevel) {
+                case "standstill":
+                    trafficScore -= 20 // People can't get there
+                    geoTrafficImpact = "Traffic jam - people delayed"
+                    break
+                case "heavy":
+                    trafficScore -= 10
+                    geoTrafficImpact = "Heavy traffic - slower arrivals"
+                    break
+                case "moderate":
+                    // Normal, no adjustment
+                    break
+                case "light":
+                case "free":
+                    trafficScore += 5 // Easy to get there
+                    geoTrafficImpact = "Clear roads - easy access"
+                    break
+            }
+        }
+
+        // Parking availability affects willingness to visit
+        if (geoTraffic.parkingAvailability) {
+            switch (geoTraffic.parkingAvailability) {
+                case "none":
+                    trafficScore -= 15
+                    geoTrafficImpact = geoTrafficImpact || "No parking available"
+                    break
+                case "limited":
+                    trafficScore -= 8
+                    geoTrafficImpact = geoTrafficImpact || "Limited parking"
+                    break
+                case "plenty":
+                    trafficScore += 5
+                    break
+            }
+        }
+
+        // Transit nearby increases accessibility
+        if (geoTraffic.transitNearby) {
+            trafficScore += 10
+            geoTrafficImpact = geoTrafficImpact || "Good transit access"
+        }
+
+        // Highway access increases traffic potential
+        if (geoTraffic.nearHighway) {
+            trafficScore += 5
+        }
+    }
+
     // Add some randomness to simulate ML uncertainty (±10 points)
     trafficScore += Math.random() * 20 - 10
 
@@ -208,6 +325,8 @@ export function predictVenueTraffic(
         estimatedWaitTime,
         peakHours,
         weatherImpact,
+        populationImpact,
+        geoTrafficImpact,
     }
 }
 
