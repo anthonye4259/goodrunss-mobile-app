@@ -104,7 +104,7 @@ export const createPaymentIntent = functions.https.onCall(async (data, context) 
 
 /**
  * Stripe Webhook Handler
- * Handles payment success, failure, and other events
+ * Handles payment success, failure, subscription events
  */
 export const stripeWebhook = functions.https.onRequest(async (req, res) => {
     if (!stripe) {
@@ -135,6 +135,29 @@ export const stripeWebhook = functions.https.onRequest(async (req, res) => {
         case "payment_intent.payment_failed": {
             const paymentIntent = event.data.object as Stripe.PaymentIntent
             await handlePaymentFailure(paymentIntent)
+            break
+        }
+        // Subscription events
+        case "checkout.session.completed": {
+            const session = event.data.object as Stripe.Checkout.Session
+            if (session.mode === "subscription") {
+                await handleSubscriptionCheckoutCompleted(session)
+            }
+            break
+        }
+        case "customer.subscription.updated": {
+            const subscription = event.data.object as Stripe.Subscription
+            await handleSubscriptionUpdated(subscription)
+            break
+        }
+        case "customer.subscription.deleted": {
+            const subscription = event.data.object as Stripe.Subscription
+            await handleSubscriptionCanceled(subscription)
+            break
+        }
+        case "invoice.payment_failed": {
+            const invoice = event.data.object as Stripe.Invoice
+            await handleSubscriptionPaymentFailed(invoice)
             break
         }
         default:
@@ -454,6 +477,389 @@ export const registerFCMToken = functions.https.onCall(async (data, context) => 
         return { success: true }
     } catch (error: any) {
         functions.logger.error("Error registering FCM token", error)
+        throw new functions.https.HttpsError("internal", error.message)
+    }
+})
+
+// ============================================
+// PRO SUBSCRIPTION FUNCTIONS
+// ============================================
+
+// Price IDs for Pro Dashboard subscription
+// UPDATE THESE with your actual Stripe price IDs
+const SUBSCRIPTION_PRICES = {
+    monthly: "price_monthly_pro",      // Replace with actual price ID
+    "3months": "price_3months_pro",    // Replace with actual price ID  
+    "6months": "price_6months_pro",    // Replace with actual price ID
+}
+
+/**
+ * Create Subscription Checkout Session
+ * Creates a Stripe Checkout session for Pro Dashboard subscription
+ */
+export const createSubscriptionCheckout = functions.https.onCall(async (data, context) => {
+    try {
+        if (!stripe) {
+            throw new functions.https.HttpsError(
+                "failed-precondition",
+                "Stripe is not configured"
+            )
+        }
+
+        if (!context.auth) {
+            throw new functions.https.HttpsError(
+                "unauthenticated",
+                "User must be authenticated"
+            )
+        }
+
+        const { period, successUrl, cancelUrl } = data
+        const userId = context.auth.uid
+
+        // Validate period
+        if (!period || !["monthly", "3months", "6months"].includes(period)) {
+            throw new functions.https.HttpsError(
+                "invalid-argument",
+                "Invalid subscription period"
+            )
+        }
+
+        // Get or create Stripe customer
+        const userDoc = await admin.firestore().collection("users").doc(userId).get()
+        const userData = userDoc.data()
+
+        let customerId = userData?.stripeCustomerId
+
+        if (!customerId) {
+            // Create new Stripe customer
+            const customer = await stripe.customers.create({
+                email: userData?.email || context.auth.token.email,
+                metadata: { firebaseUserId: userId },
+            })
+            customerId = customer.id
+
+            // Save customer ID to user doc
+            await admin.firestore().collection("users").doc(userId).update({
+                stripeCustomerId: customerId,
+            })
+        }
+
+        // Get price ID for the selected period
+        const priceId = SUBSCRIPTION_PRICES[period as keyof typeof SUBSCRIPTION_PRICES]
+
+        // Create checkout session
+        const session = await stripe.checkout.sessions.create({
+            customer: customerId,
+            mode: "subscription",
+            payment_method_types: ["card"],
+            line_items: [
+                {
+                    price: priceId,
+                    quantity: 1,
+                },
+            ],
+            subscription_data: {
+                trial_period_days: 7, // 7-day free trial
+                metadata: {
+                    firebaseUserId: userId,
+                    period,
+                },
+            },
+            success_url: successUrl || "https://dashboard.goodrunss.com/subscription/success",
+            cancel_url: cancelUrl || "https://dashboard.goodrunss.com/subscription/canceled",
+            metadata: {
+                firebaseUserId: userId,
+                period,
+            },
+        })
+
+        functions.logger.info("Subscription checkout created", {
+            userId,
+            sessionId: session.id,
+            period
+        })
+
+        return {
+            sessionId: session.id,
+            url: session.url,
+        }
+    } catch (error: any) {
+        functions.logger.error("Error creating subscription checkout", error)
+        throw new functions.https.HttpsError("internal", error.message)
+    }
+})
+
+/**
+ * Handle Subscription Checkout Completed
+ * Called when a user completes the subscription checkout
+ */
+async function handleSubscriptionCheckoutCompleted(session: Stripe.Checkout.Session) {
+    const userId = session.metadata?.firebaseUserId
+    const period = session.metadata?.period as "monthly" | "3months" | "6months"
+
+    if (!userId) {
+        functions.logger.error("No userId in session metadata")
+        return
+    }
+
+    try {
+        // Calculate end date based on period
+        const startDate = new Date()
+        const endDate = new Date()
+
+        switch (period) {
+            case "monthly":
+                endDate.setMonth(endDate.getMonth() + 1)
+                break
+            case "3months":
+                endDate.setMonth(endDate.getMonth() + 3)
+                break
+            case "6months":
+                endDate.setMonth(endDate.getMonth() + 6)
+                break
+            default:
+                endDate.setMonth(endDate.getMonth() + 1)
+        }
+
+        // Update subscription doc in Firestore
+        await admin.firestore().collection("subscriptions").doc(userId).set({
+            tier: "pro",
+            status: "active",
+            period,
+            startDate: startDate.toISOString(),
+            endDate: endDate.toISOString(),
+            stripeCustomerId: session.customer as string,
+            stripeSubscriptionId: session.subscription as string,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        })
+
+        // Also update user doc
+        await admin.firestore().collection("users").doc(userId).update({
+            isPro: true,
+            subscriptionStatus: "active",
+        })
+
+        // Send welcome notification
+        await sendSubscriptionPushNotification(userId, "🎉 Welcome to Pro!", "All premium features are now unlocked!")
+
+        functions.logger.info("Subscription activated", { userId, period })
+    } catch (error) {
+        functions.logger.error("Error handling subscription checkout", error)
+    }
+}
+
+/**
+ * Handle Subscription Updated
+ */
+async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
+    const userId = subscription.metadata?.firebaseUserId
+
+    if (!userId) {
+        functions.logger.error("No userId in subscription metadata")
+        return
+    }
+
+    try {
+        const status = subscription.status === "active" || subscription.status === "trialing"
+            ? "active"
+            : subscription.status === "canceled"
+                ? "canceled"
+                : "expired"
+
+        await admin.firestore().collection("subscriptions").doc(userId).update({
+            status,
+            stripeSubscriptionId: subscription.id,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        })
+
+        await admin.firestore().collection("users").doc(userId).update({
+            isPro: status === "active",
+            subscriptionStatus: status,
+        })
+
+        functions.logger.info("Subscription updated", { userId, status })
+    } catch (error) {
+        functions.logger.error("Error handling subscription update", error)
+    }
+}
+
+/**
+ * Handle Subscription Canceled
+ */
+async function handleSubscriptionCanceled(subscription: Stripe.Subscription) {
+    const userId = subscription.metadata?.firebaseUserId
+
+    if (!userId) {
+        functions.logger.error("No userId in subscription metadata")
+        return
+    }
+
+    try {
+        await admin.firestore().collection("subscriptions").doc(userId).update({
+            tier: "free",
+            status: "canceled",
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        })
+
+        await admin.firestore().collection("users").doc(userId).update({
+            isPro: false,
+            subscriptionStatus: "canceled",
+        })
+
+        await sendSubscriptionPushNotification(
+            userId,
+            "Subscription Canceled",
+            "Your Pro subscription has been canceled. You can resubscribe anytime!"
+        )
+
+        functions.logger.info("Subscription canceled", { userId })
+    } catch (error) {
+        functions.logger.error("Error handling subscription cancellation", error)
+    }
+}
+
+/**
+ * Handle Subscription Payment Failed
+ */
+async function handleSubscriptionPaymentFailed(invoice: Stripe.Invoice) {
+    const customerId = invoice.customer as string
+
+    try {
+        // Find user by customer ID
+        const usersSnapshot = await admin.firestore()
+            .collection("users")
+            .where("stripeCustomerId", "==", customerId)
+            .limit(1)
+            .get()
+
+        if (usersSnapshot.empty) {
+            functions.logger.error("User not found for customer", { customerId })
+            return
+        }
+
+        const userId = usersSnapshot.docs[0].id
+
+        await admin.firestore().collection("subscriptions").doc(userId).update({
+            status: "payment_failed",
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        })
+
+        await sendSubscriptionPushNotification(
+            userId,
+            "Payment Failed",
+            "We couldn't process your subscription payment. Please update your payment method."
+        )
+
+        functions.logger.info("Subscription payment failed", { userId })
+    } catch (error) {
+        functions.logger.error("Error handling subscription payment failure", error)
+    }
+}
+
+/**
+ * Helper: Send subscription-related push notification
+ */
+async function sendSubscriptionPushNotification(userId: string, title: string, body: string) {
+    try {
+        const tokensSnapshot = await admin
+            .firestore()
+            .collection("users")
+            .doc(userId)
+            .collection("deviceTokens")
+            .get()
+
+        const tokens = tokensSnapshot.docs.map((doc) => doc.data().token).filter(Boolean)
+
+        if (tokens.length === 0) return
+
+        await admin.messaging().sendEachForMulticast({
+            notification: { title, body },
+            data: { type: "subscription" },
+            tokens,
+        })
+    } catch (error) {
+        functions.logger.error("Error sending subscription push", error)
+    }
+}
+
+/**
+ * Get Subscription Status
+ * Returns current subscription status for the user
+ */
+export const getSubscriptionStatus = functions.https.onCall(async (data, context) => {
+    try {
+        if (!context.auth) {
+            throw new functions.https.HttpsError("unauthenticated", "User must be authenticated")
+        }
+
+        const userId = context.auth.uid
+        const subDoc = await admin.firestore().collection("subscriptions").doc(userId).get()
+
+        if (!subDoc.exists) {
+            return {
+                tier: "free",
+                status: "active",
+                isPro: false,
+            }
+        }
+
+        const subscription = subDoc.data()
+
+        return {
+            tier: subscription?.tier || "free",
+            status: subscription?.status || "active",
+            period: subscription?.period,
+            endDate: subscription?.endDate,
+            isPro: subscription?.tier === "pro" && subscription?.status === "active",
+        }
+    } catch (error: any) {
+        functions.logger.error("Error getting subscription status", error)
+        throw new functions.https.HttpsError("internal", error.message)
+    }
+})
+
+/**
+ * Cancel Subscription
+ * User-initiated subscription cancellation
+ */
+export const cancelSubscription = functions.https.onCall(async (data, context) => {
+    try {
+        if (!stripe) {
+            throw new functions.https.HttpsError("failed-precondition", "Stripe not configured")
+        }
+
+        if (!context.auth) {
+            throw new functions.https.HttpsError("unauthenticated", "User must be authenticated")
+        }
+
+        const userId = context.auth.uid
+        const subDoc = await admin.firestore().collection("subscriptions").doc(userId).get()
+
+        if (!subDoc.exists) {
+            throw new functions.https.HttpsError("not-found", "No subscription found")
+        }
+
+        const subscription = subDoc.data()
+
+        if (!subscription?.stripeSubscriptionId) {
+            throw new functions.https.HttpsError("not-found", "No Stripe subscription found")
+        }
+
+        // Cancel at period end (user keeps access until the end of billing period)
+        await stripe.subscriptions.update(subscription.stripeSubscriptionId, {
+            cancel_at_period_end: true,
+        })
+
+        await admin.firestore().collection("subscriptions").doc(userId).update({
+            cancelAtPeriodEnd: true,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        })
+
+        functions.logger.info("Subscription set to cancel at period end", { userId })
+
+        return { success: true, message: "Subscription will be canceled at the end of the billing period" }
+    } catch (error: any) {
+        functions.logger.error("Error canceling subscription", error)
         throw new functions.https.HttpsError("internal", error.message)
     }
 })

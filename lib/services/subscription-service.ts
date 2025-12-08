@@ -285,45 +285,85 @@ class SubscriptionService {
     }
 
     // ============================================
-    // STRIPE INTEGRATION
+    // STRIPE INTEGRATION VIA FIREBASE FUNCTIONS
     // ============================================
 
-    async createStripeCheckoutSession(period: SubscriptionPeriod): Promise<string | null> {
+    async createStripeCheckoutSession(period: SubscriptionPeriod): Promise<{ sessionId: string; url: string } | null> {
         try {
-            const pricing = PRICING[period]
-            const userId = await this.getCurrentUserId()
+            // Import Firebase functions
+            const { getFunctions, httpsCallable } = await import("firebase/functions")
+            const { app } = await import("@/lib/firebase-config")
 
-            // In production, call your backend to create a Stripe Checkout Session
-            // This returns a session URL or payment sheet params
+            if (!app) {
+                console.warn("[Subscription] Firebase not initialized")
+                return null
+            }
 
-            // For now, simulate the flow
-            console.log(`[Subscription] Creating checkout for ${pricing.price} / ${pricing.period}`)
+            const functions = getFunctions(app)
+            const createCheckout = httpsCallable(functions, "createSubscriptionCheckout")
 
-            // Would call: POST /api/stripe/create-checkout-session
-            // Returns: { sessionId: "cs_xxx", url: "https://checkout.stripe.com/..." }
+            const result = await createCheckout({
+                period,
+                successUrl: "goodrunss://subscription/success",
+                cancelUrl: "goodrunss://subscription/canceled",
+            })
 
-            return null // Replace with actual session URL
+            const data = result.data as { sessionId: string; url: string }
+            console.log(`[Subscription] Checkout session created: ${data.sessionId}`)
+
+            return data
         } catch (error) {
             console.error("Error creating checkout session:", error)
             return null
         }
     }
 
-    async handleStripeWebhook(event: any): Promise<void> {
-        // This would be called when Stripe sends a webhook
-        // Most webhook handling should be on your backend
-        // But you can sync the subscription status here
+    async cancelStripeSubscription(): Promise<boolean> {
+        try {
+            const { getFunctions, httpsCallable } = await import("firebase/functions")
+            const { app } = await import("@/lib/firebase-config")
 
-        switch (event.type) {
-            case "checkout.session.completed":
-                // Payment successful, activate subscription
-                break
-            case "customer.subscription.deleted":
-                // Subscription canceled
-                break
-            case "invoice.payment_failed":
-                // Payment failed
-                break
+            if (!app) {
+                console.warn("[Subscription] Firebase not initialized")
+                return false
+            }
+
+            const functions = getFunctions(app)
+            const cancel = httpsCallable(functions, "cancelSubscription")
+
+            await cancel({})
+            console.log("[Subscription] Cancellation requested")
+
+            return true
+        } catch (error) {
+            console.error("Error canceling subscription:", error)
+            return false
+        }
+    }
+
+    async getSubscriptionStatusFromServer(): Promise<Subscription | null> {
+        try {
+            const { getFunctions, httpsCallable } = await import("firebase/functions")
+            const { app } = await import("@/lib/firebase-config")
+
+            if (!app) {
+                console.warn("[Subscription] Firebase not initialized")
+                return null
+            }
+
+            const functions = getFunctions(app)
+            const getStatus = httpsCallable(functions, "getSubscriptionStatus")
+
+            const result = await getStatus({})
+            const data = result.data as Subscription
+
+            // Cache the result
+            await this.cacheSubscription(data)
+
+            return data
+        } catch (error) {
+            console.error("Error getting subscription status:", error)
+            return null
         }
     }
 
