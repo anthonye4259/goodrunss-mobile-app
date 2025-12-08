@@ -93,7 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const login = async (email: string, password: string) => {
-    if (!auth) throw new Error("Firebase Auth not initialized")
+    if (!auth) throw new Error("Sign in is temporarily unavailable. Please continue as guest or try again later.")
 
     try {
       await signInWithEmailAndPassword(auth, email, password)
@@ -105,7 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signup = async (email: string, password: string, name: string) => {
-    if (!auth || !db) throw new Error("Firebase not initialized")
+    if (!auth || !db) throw new Error("Sign up is temporarily unavailable. Please continue as guest or try again later.")
 
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password)

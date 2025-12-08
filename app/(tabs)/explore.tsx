@@ -119,7 +119,7 @@ export default function ExploreScreen() {
               onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveTab("trainers") }}
             >
               <Text style={[styles.tabText, activeTab === "trainers" && styles.tabTextActive]}>
-                {content.trainerTitle}s
+                {content.trainerTitlePlural}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -135,7 +135,7 @@ export default function ExploreScreen() {
           {/* Content */}
           {activeTab === "trainers" ? (
             <View style={styles.contentSection}>
-              <Text style={styles.sectionTitle}>Top {content.trainerTitle}s Near You</Text>
+              <Text style={styles.sectionTitle}>Top {content.trainerTitlePlural} Near You</Text>
               {content.sampleTrainers.map((trainer, index) => (
                 <TouchableOpacity
                   key={index}

@@ -7,14 +7,59 @@ import { useLocation } from "@/lib/location-context"
 import { Ionicons } from "@expo/vector-icons"
 import { RATING_CONFIGS } from "@/lib/player-rating-types"
 import { SafeAreaView } from "react-native-safe-area-context"
+import * as Haptics from "expo-haptics"
 
 const REC_ACTIVITIES = ["Basketball", "Tennis", "Pickleball", "Padel", "Racquetball", "Volleyball", "Golf", "Soccer", "Swimming"]
 const STUDIO_ACTIVITIES = ["Pilates", "Yoga", "Lagree", "Barre", "Meditation"]
+const ALL_ACTIVITIES = [...REC_ACTIVITIES, ...STUDIO_ACTIVITIES]
+
+type UserType = "player" | "practitioner" | "trainer" | "instructor" | "both"
+
+// Map user types to their relevant activities
+const getActivitiesForUserType = (userType: UserType): string[] => {
+  switch (userType) {
+    case "player":
+      return REC_ACTIVITIES
+    case "practitioner":
+      return STUDIO_ACTIVITIES
+    case "trainer":
+      return REC_ACTIVITIES
+    case "instructor":
+      return STUDIO_ACTIVITIES
+    case "both":
+      return ALL_ACTIVITIES
+    default:
+      return ALL_ACTIVITIES
+  }
+}
+
+// Get the appropriate title based on user type
+const getTitleForUserType = (userType: UserType): { title: string; subtitle: string } => {
+  switch (userType) {
+    case "player":
+      return { title: "What sports do you play?", subtitle: "Select all that apply" }
+    case "practitioner":
+      return { title: "What do you practice?", subtitle: "Select all that apply" }
+    case "trainer":
+      return { title: "What do you teach?", subtitle: "Select your specialty" }
+    case "instructor":
+      return { title: "What do you teach?", subtitle: "Select your specialty" }
+    case "both":
+      return { title: "What activities are you into?", subtitle: "Select all that apply" }
+    default:
+      return { title: "What activities do you enjoy?", subtitle: "Select all that apply" }
+  }
+}
+
+// Check if user type is a teaching role
+const isTeachingRole = (userType: UserType): boolean => {
+  return userType === "trainer" || userType === "instructor"
+}
 
 export default function QuestionnaireScreen() {
   const router = useRouter()
   const params = useLocalSearchParams()
-  const userType = (params.userType as "player" | "trainer") || "player"
+  const userType = (params.userType as UserType) || "player"
 
   const { setPreferences } = useUserPreferences()
   const { requestLocation, loading: locationLoading, error: locationError } = useLocation()
@@ -24,16 +69,21 @@ export default function QuestionnaireScreen() {
   const [activityRatings, setActivityRatings] = useState<Record<string, number>>({})
   const [currentRatingIndex, setCurrentRatingIndex] = useState(0)
 
+  const availableActivities = getActivitiesForUserType(userType)
+  const { title: stepTitle, subtitle: stepSubtitle } = getTitleForUserType(userType)
+  const isSingleSelect = isTeachingRole(userType)
+
   const toggleActivity = (activity: string) => {
-    if (userType === "trainer") {
-      // Single select for trainers
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    if (isSingleSelect) {
+      // Single select for trainers/instructors
       if (selectedActivities.includes(activity)) {
         setSelectedActivities([])
       } else {
         setSelectedActivities([activity])
       }
     } else {
-      // Multi select for players
+      // Multi select for players/practitioners/both
       if (selectedActivities.includes(activity)) {
         setSelectedActivities(prev => prev.filter(a => a !== activity))
       } else {
@@ -44,8 +94,11 @@ export default function QuestionnaireScreen() {
 
   const handleActivityContinue = () => {
     if (selectedActivities.length > 0) {
-      // Find all activities that need rating
-      const activitiesToRate = selectedActivities.filter(a => RATING_CONFIGS[a])
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+      // Find all activities that need rating (only for non-teaching roles)
+      const activitiesToRate = isTeachingRole(userType)
+        ? []
+        : selectedActivities.filter(a => RATING_CONFIGS[a])
 
       if (activitiesToRate.length > 0) {
         setCurrentRatingIndex(0)
@@ -57,6 +110,7 @@ export default function QuestionnaireScreen() {
   }
 
   const handleSkillSelect = (rating: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     const activitiesToRate = selectedActivities.filter(a => RATING_CONFIGS[a])
     const currentActivity = activitiesToRate[currentRatingIndex]
 
@@ -73,11 +127,13 @@ export default function QuestionnaireScreen() {
   }
 
   const handleLocationRequest = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
     await requestLocation()
     handleComplete()
   }
 
   const handleSkipLocation = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     handleComplete()
   }
 
@@ -86,6 +142,14 @@ export default function QuestionnaireScreen() {
       const primaryActivity = selectedActivities[0]
       const isStudio = selectedActivities.some(a => STUDIO_ACTIVITIES.includes(a))
       const isRec = selectedActivities.some(a => REC_ACTIVITIES.includes(a))
+
+      // Determine activityType
+      let activityType: "studio" | "rec" | "both" = "rec"
+      if (isStudio && isRec) {
+        activityType = "both"
+      } else if (isStudio) {
+        activityType = "studio"
+      }
 
       // Use the rating for the primary activity if available
       const playerRating = activityRatings[primaryActivity]
@@ -102,6 +166,7 @@ export default function QuestionnaireScreen() {
         isRecUser: isRec,
         userType: userType,
         primaryActivity: primaryActivity,
+        activityType: activityType,
         playerRating: playerRating,
       })
       router.replace("/(tabs)")
@@ -112,9 +177,9 @@ export default function QuestionnaireScreen() {
   const activitiesToRate = selectedActivities.filter(a => RATING_CONFIGS[a])
   const currentActivityToRate = activitiesToRate[currentRatingIndex]
 
+  // Skill rating step
   if (step === "skill" && currentActivityToRate && RATING_CONFIGS[currentActivityToRate]) {
     const config = RATING_CONFIGS[currentActivityToRate]
-    const currentRating = activityRatings[currentActivityToRate]
 
     return (
       <LinearGradient colors={["#0A0A0A", "#141414"]} style={{ flex: 1 }}>
@@ -147,17 +212,11 @@ export default function QuestionnaireScreen() {
                 <TouchableOpacity
                   key={level.value}
                   onPress={() => handleSkillSelect(level.value)}
-                  style={[
-                    styles.skillCard,
-                    currentRating === level.value && styles.cardSelected
-                  ]}
+                  style={styles.skillCard}
                 >
-                  <View style={styles.skillHeader}>
-                    <View style={styles.skillLabelRow}>
-                      <View style={[styles.skillDot, { backgroundColor: level.color }]} />
-                      <Text style={styles.skillLabel}>{level.label}</Text>
-                    </View>
-                    <Text style={styles.skillValue}>{level.value}</Text>
+                  <View style={styles.skillContent}>
+                    <Text style={styles.skillName}>{level.name}</Text>
+                    <Text style={styles.skillRange}>{level.range}</Text>
                   </View>
                   <Text style={styles.skillDescription}>{level.description}</Text>
                 </TouchableOpacity>
@@ -169,15 +228,28 @@ export default function QuestionnaireScreen() {
     )
   }
 
+  // Location step
   if (step === "location") {
     return (
       <LinearGradient colors={["#0A0A0A", "#141414"]} style={{ flex: 1 }}>
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.locationContainer}>
-            <Ionicons name="location" size={80} color="#7ED957" />
+            <View style={styles.progressContainer}>
+              <Text style={styles.progressText}>Almost Done!</Text>
+              <View style={styles.progressBar}>
+                <View style={[styles.progressFill, { width: "100%" }]} />
+              </View>
+            </View>
+
+            <View style={styles.locationIconContainer}>
+              <Ionicons name="location" size={80} color="#7ED957" />
+            </View>
+
             <Text style={styles.locationTitle}>Enable Location</Text>
-            <Text style={styles.locationSubtitle}>
-              Allow GoodRunss to access your location to show nearby trainers, courts, and studios in your area.
+            <Text style={styles.locationDescription}>
+              {isTeachingRole(userType)
+                ? "Allow location access so clients can find you and you can see nearby venues."
+                : "Allow location access to find nearby courts, studios, and trainers in your area."}
             </Text>
 
             {locationError && (
@@ -207,6 +279,11 @@ export default function QuestionnaireScreen() {
     )
   }
 
+  // Separate activities into REC and STUDIO for display
+  const recActivitiesToShow = availableActivities.filter(a => REC_ACTIVITIES.includes(a))
+  const studioActivitiesToShow = availableActivities.filter(a => STUDIO_ACTIVITIES.includes(a))
+
+  // Activity selection step
   return (
     <LinearGradient colors={["#0A0A0A", "#141414"]} style={{ flex: 1 }}>
       <SafeAreaView style={styles.safeArea}>
@@ -218,62 +295,77 @@ export default function QuestionnaireScreen() {
             </View>
           </View>
 
-          <Text style={styles.title}>
-            {userType === "trainer"
-              ? "What's your primary specialty?"
-              : "What activities do you enjoy?"}
-          </Text>
-          {userType === "player" && (
-            <Text style={styles.subtitle}>Select all that apply</Text>
+          <Text style={styles.title}>{stepTitle}</Text>
+          <Text style={styles.subtitle}>{stepSubtitle}</Text>
+
+          {/* Rec Activities Section */}
+          {recActivitiesToShow.length > 0 && (
+            <View style={styles.sectionContainer}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionEmoji}>🏀</Text>
+                <Text style={styles.sectionTitle}>Sports & Recreation</Text>
+              </View>
+              <View style={styles.activityGrid}>
+                {recActivitiesToShow.map((activity) => (
+                  <TouchableOpacity
+                    key={activity}
+                    onPress={() => toggleActivity(activity)}
+                    style={[
+                      styles.activityCard,
+                      selectedActivities.includes(activity) && styles.cardSelected
+                    ]}
+                  >
+                    <Text style={[
+                      styles.activityText,
+                      selectedActivities.includes(activity) && styles.activityTextSelected
+                    ]}>{activity}</Text>
+                    {selectedActivities.includes(activity) && (
+                      <Ionicons name="checkmark-circle" size={20} color="#7ED957" />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
           )}
 
-          <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>GoodRunss Rec</Text>
-            <View style={styles.optionsList}>
-              {REC_ACTIVITIES.map((activity) => (
-                <TouchableOpacity
-                  key={activity}
-                  onPress={() => toggleActivity(activity)}
-                  style={[
-                    styles.activityCard,
-                    selectedActivities.includes(activity) && styles.cardSelected
-                  ]}
-                >
-                  <Text style={styles.activityText}>{activity}</Text>
-                  {selectedActivities.includes(activity) && (
-                    <Ionicons name="checkmark-circle" size={24} color="#7ED957" />
-                  )}
-                </TouchableOpacity>
-              ))}
+          {/* Studio Activities Section */}
+          {studioActivitiesToShow.length > 0 && (
+            <View style={styles.sectionContainer}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionEmoji}>🧘</Text>
+                <Text style={styles.sectionTitle}>Studio & Wellness</Text>
+              </View>
+              <View style={styles.activityGrid}>
+                {studioActivitiesToShow.map((activity) => (
+                  <TouchableOpacity
+                    key={activity}
+                    onPress={() => toggleActivity(activity)}
+                    style={[
+                      styles.activityCard,
+                      selectedActivities.includes(activity) && styles.cardSelected
+                    ]}
+                  >
+                    <Text style={[
+                      styles.activityText,
+                      selectedActivities.includes(activity) && styles.activityTextSelected
+                    ]}>{activity}</Text>
+                    {selectedActivities.includes(activity) && (
+                      <Ionicons name="checkmark-circle" size={20} color="#7ED957" />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
-          </View>
-
-          <View style={styles.sectionContainer}>
-            <Text style={[styles.sectionTitle, { color: "#8B5CF6" }]}>GoodRunss Studios</Text>
-            <View style={styles.optionsList}>
-              {STUDIO_ACTIVITIES.map((activity) => (
-                <TouchableOpacity
-                  key={activity}
-                  onPress={() => toggleActivity(activity)}
-                  style={[
-                    styles.activityCard,
-                    selectedActivities.includes(activity) && styles.cardSelected
-                  ]}
-                >
-                  <Text style={styles.activityText}>{activity}</Text>
-                  {selectedActivities.includes(activity) && (
-                    <Ionicons name="checkmark-circle" size={24} color="#7ED957" />
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
+          )}
 
           {selectedActivities.length > 0 && (
             <TouchableOpacity onPress={handleActivityContinue} style={styles.continueButton}>
-              <Text style={styles.continueText}>Continue</Text>
+              <Text style={styles.continueButtonText}>Continue</Text>
+              <Ionicons name="arrow-forward" size={20} color="#000" />
             </TouchableOpacity>
           )}
+
+          <View style={{ height: 40 }} />
         </ScrollView>
       </SafeAreaView>
     </LinearGradient>
@@ -281,35 +373,33 @@ export default function QuestionnaireScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   safeArea: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 24,
-    paddingTop: 40,
-    paddingBottom: 40,
+    flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingTop: 20,
   },
   progressContainer: {
     marginBottom: 32,
   },
   progressText: {
+    color: "#9CA3AF",
     fontSize: 14,
-    color: "#7ED957",
-    marginBottom: 8,
+    marginBottom: 12,
+    fontWeight: "500",
   },
   progressBar: {
-    height: 8,
+    height: 4,
     backgroundColor: "#333",
-    borderRadius: 4,
+    borderRadius: 2,
     overflow: "hidden",
   },
   progressFill: {
     height: "100%",
     backgroundColor: "#7ED957",
-    borderRadius: 4,
+    borderRadius: 2,
   },
   title: {
     fontSize: 28,
@@ -321,118 +411,133 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#9CA3AF",
     marginBottom: 24,
-    lineHeight: 24,
   },
   sectionContainer: {
-    marginBottom: 32,
+    marginBottom: 24,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+    gap: 8,
+  },
+  sectionEmoji: {
+    fontSize: 18,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#7ED957",
-    marginBottom: 16,
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#666",
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
   },
-  optionsList: {
-    gap: 12,
+  activityGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
   },
   activityCard: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: "#1A1A1A",
     borderWidth: 2,
     borderColor: "#333",
-    borderRadius: 12,
-    padding: 16,
-    backgroundColor: "#1A1A1A",
-  },
-  skillCard: {
-    borderWidth: 2,
-    borderColor: "#333",
-    borderRadius: 12,
-    padding: 20,
-    backgroundColor: "#1A1A1A",
+    minWidth: "47%",
+    flexGrow: 1,
   },
   cardSelected: {
     borderColor: "#7ED957",
-    backgroundColor: "rgba(132, 204, 22, 0.1)",
+    backgroundColor: "rgba(126, 217, 87, 0.1)",
   },
   activityText: {
-    fontSize: 16,
+    fontSize: 15,
+    color: "#FFFFFF",
     fontWeight: "500",
-    color: "#FFFFFF",
   },
-  skillHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
-  skillLabelRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  skillDot: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    marginRight: 12,
-  },
-  skillLabel: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-  },
-  skillValue: {
-    fontSize: 18,
-    fontWeight: "bold",
+  activityTextSelected: {
     color: "#7ED957",
   },
-  skillDescription: {
-    fontSize: 14,
-    color: "#9CA3AF",
-    lineHeight: 20,
-  },
   continueButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: "#7ED957",
     borderRadius: 12,
     paddingVertical: 16,
-    marginTop: 24,
+    marginTop: 16,
+    gap: 8,
   },
-  continueText: {
-    textAlign: "center",
+  continueButtonText: {
     color: "#000000",
     fontWeight: "bold",
     fontSize: 18,
   },
+  // Skill rating styles
+  optionsList: {
+    gap: 12,
+  },
+  skillCard: {
+    padding: 16,
+    borderRadius: 12,
+    backgroundColor: "#1A1A1A",
+    borderWidth: 2,
+    borderColor: "#333",
+  },
+  skillContent: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  skillName: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+  },
+  skillRange: {
+    fontSize: 14,
+    color: "#7ED957",
+    fontWeight: "600",
+  },
+  skillDescription: {
+    fontSize: 14,
+    color: "#9CA3AF",
+  },
+  // Location styles
   locationContainer: {
     flex: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
+    paddingTop: 20,
     justifyContent: "center",
+  },
+  locationIconContainer: {
     alignItems: "center",
+    marginBottom: 24,
   },
   locationTitle: {
     fontSize: 28,
     fontWeight: "bold",
     color: "#FFFFFF",
-    marginTop: 32,
-    marginBottom: 16,
     textAlign: "center",
+    marginBottom: 12,
   },
-  locationSubtitle: {
+  locationDescription: {
     fontSize: 16,
     color: "#9CA3AF",
     textAlign: "center",
-    marginBottom: 32,
-    paddingHorizontal: 16,
     lineHeight: 24,
+    marginBottom: 32,
+    paddingHorizontal: 20,
   },
   errorContainer: {
-    backgroundColor: "rgba(239, 68, 68, 0.2)",
-    borderWidth: 1,
-    borderColor: "#EF4444",
+    backgroundColor: "rgba(239, 68, 68, 0.1)",
+    padding: 12,
     borderRadius: 8,
-    padding: 16,
-    marginBottom: 24,
+    marginBottom: 16,
   },
   errorText: {
     color: "#EF4444",
@@ -442,16 +547,20 @@ const styles = StyleSheet.create({
     backgroundColor: "#7ED957",
     borderRadius: 12,
     paddingVertical: 16,
-    paddingHorizontal: 32,
-    width: "100%",
-    marginBottom: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  continueText: {
+    color: "#000000",
+    fontWeight: "bold",
+    fontSize: 18,
   },
   skipButton: {
-    paddingVertical: 12,
+    paddingVertical: 16,
+    alignItems: "center",
   },
   skipText: {
     color: "#9CA3AF",
-    textAlign: "center",
     fontSize: 16,
   },
 })

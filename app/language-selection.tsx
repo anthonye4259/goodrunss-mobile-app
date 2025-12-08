@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView, StyleSheet } from "react-native"
+import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView, StyleSheet, Image } from "react-native"
 import { useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 import AsyncStorage from "@react-native-async-storage/async-storage"
@@ -52,7 +52,11 @@ export default function LanguageSelection() {
       <View style={styles.content}>
         {/* GoodRunss Logo/Icon */}
         <View style={styles.logoContainer}>
-          <Ionicons name="fitness" size={32} color="white" />
+          <Image
+            source={require("@/assets/images/goodrunss-logo-white.png")}
+            style={{ width: 48, height: 48 }}
+            resizeMode="contain"
+          />
         </View>
 
         {/* Title */}

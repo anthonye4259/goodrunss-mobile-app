@@ -15,11 +15,101 @@ export default function TrainersScreen() {
     const primaryActivity = getPrimaryActivity(preferences.activities)
     const content = getActivityContent(primaryActivity as any)
 
+    // Check if user is a trainer/instructor
+    const isTrainer = preferences.userType === "trainer" || preferences.userType === "instructor" || preferences.userType === "both"
+
     const handlePress = (action: () => void) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
         action()
     }
 
+    // Trainer/Instructor Dashboard View
+    if (isTrainer) {
+        return (
+            <LinearGradient colors={["#0A0A0A", "#141414"]} style={styles.container}>
+                <SafeAreaView style={styles.safeArea} edges={["top"]}>
+                    <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+                        {/* Header */}
+                        <View style={styles.header}>
+                            <Text style={styles.title}>My Dashboard</Text>
+                            <Text style={styles.subtitle}>Manage your {content.trainerTitle.toLowerCase()} profile</Text>
+                        </View>
+
+                        {/* Stats Overview */}
+                        <View style={styles.section}>
+                            <View style={styles.statsContainer}>
+                                <View style={styles.statCard}>
+                                    <Ionicons name="calendar" size={24} color="#7ED957" />
+                                    <Text style={styles.statNumber}>12</Text>
+                                    <Text style={styles.statLabel}>Upcoming Sessions</Text>
+                                </View>
+                                <View style={styles.statCard}>
+                                    <Ionicons name="star" size={24} color="#7ED957" />
+                                    <Text style={styles.statNumber}>4.9</Text>
+                                    <Text style={styles.statLabel}>Rating</Text>
+                                </View>
+                                <View style={styles.statCard}>
+                                    <Ionicons name="people" size={24} color="#7ED957" />
+                                    <Text style={styles.statNumber}>48</Text>
+                                    <Text style={styles.statLabel}>Total Clients</Text>
+                                </View>
+                            </View>
+                        </View>
+
+                        {/* Quick Actions */}
+                        <View style={styles.section}>
+                            <Text style={styles.sectionTitle}>Quick Actions</Text>
+                            <TouchableOpacity style={styles.actionCard} onPress={() => handlePress(() => router.push("/settings/edit-profile"))}>
+                                <View style={styles.actionIcon}>
+                                    <Ionicons name="person" size={20} color="#7ED957" />
+                                </View>
+                                <Text style={styles.actionText}>Edit My Profile</Text>
+                                <Ionicons name="chevron-forward" size={20} color="#666" />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.actionCard} onPress={() => handlePress(() => { })}>
+                                <View style={styles.actionIcon}>
+                                    <Ionicons name="time" size={20} color="#7ED957" />
+                                </View>
+                                <Text style={styles.actionText}>Set Availability</Text>
+                                <Ionicons name="chevron-forward" size={20} color="#666" />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.actionCard} onPress={() => handlePress(() => router.push("/(tabs)/bookings"))}>
+                                <View style={styles.actionIcon}>
+                                    <Ionicons name="calendar-outline" size={20} color="#7ED957" />
+                                </View>
+                                <Text style={styles.actionText}>View My Bookings</Text>
+                                <Ionicons name="chevron-forward" size={20} color="#666" />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.actionCard} onPress={() => handlePress(() => router.push("/(tabs)/messages"))}>
+                                <View style={styles.actionIcon}>
+                                    <Ionicons name="chatbubbles" size={20} color="#7ED957" />
+                                </View>
+                                <Text style={styles.actionText}>Client Messages</Text>
+                                <Ionicons name="chevron-forward" size={20} color="#666" />
+                            </TouchableOpacity>
+                        </View>
+
+                        {/* Earnings Summary */}
+                        <View style={styles.section}>
+                            <Text style={styles.sectionTitle}>This Month</Text>
+                            <View style={styles.earningsCard}>
+                                <View>
+                                    <Text style={styles.earningsLabel}>Total Earnings</Text>
+                                    <Text style={styles.earningsAmount}>$1,240</Text>
+                                </View>
+                                <View>
+                                    <Text style={styles.earningsLabel}>Sessions Completed</Text>
+                                    <Text style={styles.earningsAmount}>18</Text>
+                                </View>
+                            </View>
+                        </View>
+                    </ScrollView>
+                </SafeAreaView>
+            </LinearGradient>
+        )
+    }
+
+    // Player/Client View - Browse trainers
     return (
         <LinearGradient colors={["#0A0A0A", "#141414"]} style={styles.container}>
             <SafeAreaView style={styles.safeArea} edges={["top"]}>
@@ -46,7 +136,7 @@ export default function TrainersScreen() {
 
                     {/* Trainer Cards */}
                     <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>Top {content.trainerTitle}s</Text>
+                        <Text style={styles.sectionTitle}>Top {content.trainerTitlePlural}</Text>
 
                         {content.sampleTrainers.map((trainer, index) => (
                             <TouchableOpacity
@@ -86,7 +176,7 @@ export default function TrainersScreen() {
                             style={styles.browseButton}
                             onPress={() => handlePress(() => router.push("/(tabs)/trainer"))}
                         >
-                            <Text style={styles.browseButtonText}>Browse All {content.trainerTitle}s</Text>
+                            <Text style={styles.browseButtonText}>Browse All {content.trainerTitlePlural}</Text>
                             <Ionicons name="chevron-forward" size={20} color="#7ED957" />
                         </TouchableOpacity>
                     </View>
@@ -232,5 +322,76 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: "600",
         color: "#FFFFFF",
+    },
+    // Trainer Dashboard Styles
+    statsContainer: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        gap: 12,
+    },
+    statCard: {
+        flex: 1,
+        backgroundColor: "#1A1A1A",
+        borderRadius: 16,
+        padding: 16,
+        alignItems: "center",
+        borderWidth: 1,
+        borderColor: "#252525",
+    },
+    statNumber: {
+        fontSize: 28,
+        fontWeight: "bold",
+        color: "#FFFFFF",
+        marginTop: 8,
+    },
+    statLabel: {
+        fontSize: 12,
+        color: "#9CA3AF",
+        marginTop: 4,
+        textAlign: "center",
+    },
+    actionCard: {
+        backgroundColor: "#1A1A1A",
+        borderRadius: 12,
+        padding: 16,
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 12,
+        borderWidth: 1,
+        borderColor: "#252525",
+    },
+    actionIcon: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: "rgba(126, 217, 87, 0.15)",
+        justifyContent: "center",
+        alignItems: "center",
+        marginRight: 12,
+    },
+    actionText: {
+        flex: 1,
+        fontSize: 16,
+        fontWeight: "500",
+        color: "#FFFFFF",
+    },
+    earningsCard: {
+        backgroundColor: "#1A1A1A",
+        borderRadius: 16,
+        padding: 20,
+        flexDirection: "row",
+        justifyContent: "space-between",
+        borderWidth: 1,
+        borderColor: "#252525",
+    },
+    earningsLabel: {
+        fontSize: 14,
+        color: "#9CA3AF",
+        marginBottom: 4,
+    },
+    earningsAmount: {
+        fontSize: 24,
+        fontWeight: "bold",
+        color: "#7ED957",
     },
 })

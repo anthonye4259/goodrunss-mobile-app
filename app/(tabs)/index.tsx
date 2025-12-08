@@ -9,6 +9,11 @@ import * as Haptics from "expo-haptics"
 import { useAuth } from "@/lib/auth-context"
 import { LoginPromptModal } from "@/components/login-prompt-modal"
 import { SafeAreaView } from "react-native-safe-area-context"
+import { ActivityHeatMap } from "@/components/ActivityHeatMap"
+import { MovementScoreWidget } from "@/components/MovementScoreWidget"
+import { NearestVenueWidget } from "@/components/NearestVenueWidget"
+import { FavoritesWidget } from "@/components/FavoritesWidget"
+import { TeacherDashboard } from "@/components/TeacherDashboard"
 
 export default function HomeScreen() {
   const { preferences } = useUserPreferences()
@@ -18,6 +23,9 @@ export default function HomeScreen() {
   const [loginPromptDescription, setLoginPromptDescription] = useState("")
   const primaryActivity = preferences.primaryActivity || "Basketball"
   const content = getActivityContent(primaryActivity as any)
+
+  // Check if user is a teaching role (trainer or instructor)
+  const isTeachingRole = preferences.userType === "trainer" || preferences.userType === "instructor"
 
   const fadeAnim = useRef(new Animated.Value(0)).current
   const slideAnim = useRef(new Animated.Value(30)).current
@@ -64,41 +72,54 @@ export default function HomeScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Header */}
+          {/* Header with Profile & Notifications */}
           <View style={styles.header}>
-            <Text style={styles.welcomeText}>
-              {isGuest ? "Welcome to GoodRunss!" : "Welcome back!"}
-            </Text>
-            <Text style={styles.subText}>
-              {isGuest ? "Discover trainers and courts near you" : `Ready to play ${primaryActivity.toLowerCase()}?`}
-            </Text>
+            <View style={styles.headerRow}>
+              <View style={styles.headerTextContainer}>
+                <Text style={styles.welcomeText}>
+                  {isGuest ? "Welcome to GoodRunss!" : "Welcome back!"}
+                </Text>
+                <Text style={styles.subText}>
+                  {isGuest ? "Discover trainers and courts near you" : `Ready to play ${primaryActivity.toLowerCase()}?`}
+                </Text>
+              </View>
+              <View style={styles.headerIcons}>
+                <TouchableOpacity
+                  style={styles.headerIconButton}
+                  onPress={() => handlePress(() => router.push("/(tabs)/activity"))}
+                >
+                  <Ionicons name="notifications-outline" size={24} color="#FFFFFF" />
+                  <View style={styles.notificationBadge} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.headerIconButton}
+                  onPress={() => handlePress(() => router.push("/(tabs)/profile"))}
+                >
+                  <View style={styles.profileAvatar}>
+                    <Text style={styles.profileInitial}>
+                      {isGuest ? "G" : "U"}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
 
-          {/* For You Card */}
-          <TouchableOpacity
-            style={styles.forYouCard}
-            onPress={() => handlePress(() => router.push("/for-you"))}
-            activeOpacity={0.8}
-          >
-            <LinearGradient
-              colors={["#7ED957", "#65A30D"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.forYouGradient}
-            >
-              <View style={styles.forYouContent}>
-                <View style={styles.forYouTextContainer}>
-                  <View style={styles.aiLabel}>
-                    <Ionicons name="sparkles" size={20} color="#000" />
-                    <Text style={styles.aiLabelText}>AI POWERED</Text>
-                  </View>
-                  <Text style={styles.forYouTitle}>For You Feed</Text>
-                  <Text style={styles.forYouDesc}>Personalized trainers based on your preferences</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={28} color="#000" />
-              </View>
-            </LinearGradient>
-          </TouchableOpacity>
+          {/* Show Teacher Dashboard for trainers/instructors, otherwise show player widgets */}
+          {isTeachingRole && !isGuest ? (
+            <TeacherDashboard userType={preferences.userType as "trainer" | "instructor"} />
+          ) : (
+            <>
+              {/* Movement Score Widget - Daily Check-in */}
+              {!isGuest && <MovementScoreWidget />}
+
+              {/* Nearest Venue with Live Traffic + GR Predict */}
+              <NearestVenueWidget />
+
+              {/* Favorites */}
+              {!isGuest && <FavoritesWidget />}
+            </>
+          )}
 
           {/* Quick Report - Environmental Impact */}
           <TouchableOpacity
@@ -121,25 +142,18 @@ export default function HomeScreen() {
             </View>
           </TouchableOpacity>
 
-          {/* Stats Row */}
-          {!isGuest && (
-            <View style={styles.statsContainer}>
-              <View style={styles.statsCard}>
-                <View style={styles.statItem}>
-                  <Text style={styles.statNumber}>12</Text>
-                  <Text style={styles.statLabel}>Sessions</Text>
-                </View>
-                <View style={[styles.statItem, styles.statItemBorder]}>
-                  <Text style={[styles.statNumber, { color: "#6DD5C3" }]}>5</Text>
-                  <Text style={styles.statLabel}>Streak</Text>
-                </View>
-                <View style={styles.statItem}>
-                  <Text style={[styles.statNumber, { color: "#FFF" }]}>8</Text>
-                  <Text style={styles.statLabel}>Friends</Text>
-                </View>
-              </View>
+          {/* 🔥 Live Activity Heat Map */}
+          <View style={styles.sectionContainer}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>🔥 Live Activity</Text>
+              <TouchableOpacity onPress={() => handlePress(() => router.push("/activity-map"))}>
+                <Text style={styles.seeAllText}>View Map</Text>
+              </TouchableOpacity>
             </View>
-          )}
+            <View style={styles.heatMapContainer}>
+              <ActivityHeatMap height={200} />
+            </View>
+          </View>
 
           {/* Upcoming Session */}
           <View style={styles.sectionContainer}>
@@ -167,63 +181,21 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Find Trainers */}
-          <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>Find {content.trainerTitle}s</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              decelerationRate="fast"
-              snapToInterval={272}
-            >
-              {content.sampleTrainers.map((trainer, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.trainerCard}
-                  activeOpacity={0.8}
-                  onPress={() => handlePress(() => router.push(`/trainers/${index}`))}
-                >
-                  <View style={styles.trainerHeader}>
-                    <View style={styles.trainerAvatar}>
-                      <Text style={styles.trainerInitial}>{trainer.name.charAt(0)}</Text>
-                    </View>
-                    <View style={styles.trainerInfo}>
-                      <Text style={styles.trainerName}>{trainer.name}</Text>
-                      <View style={styles.trainerRating}>
-                        <Ionicons name="star" size={14} color="#7ED957" />
-                        <Text style={styles.trainerRatingText}>
-                          {trainer.rating} ({trainer.reviews})
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                  <Text style={styles.trainerLocation}>{trainer.location}</Text>
-                  <View style={styles.trainerFooter}>
-                    <Text style={styles.trainerPrice}>${trainer.price}/hr</Text>
-                    <TouchableOpacity style={styles.bookButton} onPress={() => router.push(`/trainers/${index}`)}>
-                      <Text style={styles.bookButtonText}>Book</Text>
-                    </TouchableOpacity>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-
           {/* Quick Actions */}
           <View style={styles.sectionContainer}>
             <Text style={styles.sectionTitle}>Quick Actions</Text>
             <View style={styles.quickActionsGrid}>
               <TouchableOpacity style={styles.quickAction} onPress={() => router.push("/(tabs)/explore")}>
                 <View style={[styles.quickActionIcon, { backgroundColor: "rgba(132, 204, 22, 0.2)" }]}>
-                  <Ionicons name="search" size={24} color="#7ED957" />
+                  <Ionicons name="map" size={24} color="#7ED957" />
                 </View>
                 <Text style={styles.quickActionText}>Find Courts</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.quickAction} onPress={() => router.push("/(tabs)/gia")}>
-                <View style={[styles.quickActionIcon, { backgroundColor: "rgba(139, 92, 246, 0.2)" }]}>
-                  <Ionicons name="sparkles" size={24} color="#8B5CF6" />
+              <TouchableOpacity style={styles.quickAction} onPress={() => router.push("/(tabs)/bookings")}>
+                <View style={[styles.quickActionIcon, { backgroundColor: "rgba(251, 191, 36, 0.2)" }]}>
+                  <Ionicons name="calendar" size={24} color="#FBBF24" />
                 </View>
-                <Text style={styles.quickActionText}>Ask GIA</Text>
+                <Text style={styles.quickActionText}>Bookings</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.quickAction} onPress={() => router.push("/(tabs)/messages")}>
                 <View style={[styles.quickActionIcon, { backgroundColor: "rgba(14, 165, 233, 0.2)" }]}>
@@ -231,14 +203,32 @@ export default function HomeScreen() {
                 </View>
                 <Text style={styles.quickActionText}>Messages</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.quickAction} onPress={() => router.push("/(tabs)/profile")}>
-                <View style={[styles.quickActionIcon, { backgroundColor: "rgba(249, 115, 22, 0.2)" }]}>
-                  <Ionicons name="person" size={24} color="#F97316" />
+              <TouchableOpacity style={styles.quickAction} onPress={() => router.push("/leagues")}>
+                <View style={[styles.quickActionIcon, { backgroundColor: "rgba(239, 68, 68, 0.2)" }]}>
+                  <Ionicons name="trophy" size={24} color="#EF4444" />
                 </View>
-                <Text style={styles.quickActionText}>Profile</Text>
+                <Text style={styles.quickActionText}>Leagues</Text>
               </TouchableOpacity>
             </View>
           </View>
+
+          {/* Find Leagues Banner */}
+          <TouchableOpacity
+            style={styles.leaguesBanner}
+            onPress={() => handlePress(() => router.push("/leagues"))}
+            activeOpacity={0.8}
+          >
+            <View style={styles.leaguesBannerContent}>
+              <View style={styles.leaguesBannerIcon}>
+                <Ionicons name="trophy" size={28} color="#EF4444" />
+              </View>
+              <View style={styles.leaguesBannerText}>
+                <Text style={styles.leaguesBannerTitle}>Join a League</Text>
+                <Text style={styles.leaguesBannerDesc}>Find competitive & rec leagues near you</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={24} color="#666" />
+            </View>
+          </TouchableOpacity>
         </Animated.ScrollView>
       </SafeAreaView>
 
@@ -305,6 +295,54 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 24,
   },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+  },
+  headerTextContainer: {
+    flex: 1,
+  },
+  headerIcons: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  headerIconButton: {
+    position: "relative",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#1A1A1A",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  notificationBadge: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "#EF4444",
+    borderWidth: 2,
+    borderColor: "#0A0A0A",
+  },
+  profileAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(126, 217, 87, 0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "#7ED957",
+  },
+  profileInitial: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#7ED957",
+  },
   welcomeText: {
     fontSize: 28,
     fontWeight: "bold",
@@ -314,6 +352,18 @@ const styles = StyleSheet.create({
   subText: {
     fontSize: 16,
     color: "#9CA3AF",
+  },
+  viewStatsLink: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingTop: 12,
+    gap: 4,
+  },
+  viewStatsText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#7ED957",
   },
   forYouCard: {
     marginHorizontal: 24,
@@ -387,11 +437,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     marginBottom: 24,
   },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
   sectionTitle: {
     fontSize: 20,
     fontWeight: "bold",
     color: "#FFFFFF",
-    marginBottom: 16,
+  },
+  seeAllText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#7ED957",
+  },
+  heatMapContainer: {
+    backgroundColor: "#1A1A1A",
+    borderRadius: 16,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#252525",
   },
   upcomingCard: {
     backgroundColor: "#1A1A1A",
@@ -585,5 +652,40 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(132, 204, 22, 0.2)",
     alignItems: "center",
     justifyContent: "center",
+  },
+  leaguesBanner: {
+    marginHorizontal: 24,
+    marginBottom: 24,
+    backgroundColor: "#1A1A1A",
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#252525",
+  },
+  leaguesBannerContent: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  leaguesBannerIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "rgba(239, 68, 68, 0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  leaguesBannerText: {
+    flex: 1,
+  },
+  leaguesBannerTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    marginBottom: 4,
+  },
+  leaguesBannerDesc: {
+    fontSize: 14,
+    color: "#9CA3AF",
   },
 })

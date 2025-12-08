@@ -147,7 +147,7 @@ export default function BookingsScreen() {
               </Text>
               {activeTab === "upcoming" && (
                 <TouchableOpacity style={styles.findButton} onPress={() => router.push("/(tabs)/explore")}>
-                  <Text style={styles.findButtonText}>Find {content.trainerTitle}s</Text>
+                  <Text style={styles.findButtonText}>Find {content.trainerTitlePlural}</Text>
                 </TouchableOpacity>
               )}
             </View>

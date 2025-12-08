@@ -17,6 +17,7 @@ export default function ProfileScreen() {
   }
 
   const menuItems = [
+    { icon: "options-outline", label: "My Preferences", route: "/settings/preferences", highlight: true },
     { icon: "person-outline", label: "Edit Profile", route: "/settings/edit-profile" },
     { icon: "card-outline", label: "Payment Methods", route: "/settings/payment-methods" },
     { icon: "notifications-outline", label: "Notifications", route: "/settings/notifications/friends" },

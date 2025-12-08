@@ -27,16 +27,49 @@ type Message = {
 export default function GIAScreen() {
   const { preferences } = useUserPreferences()
   const activityType = preferences.activityType || "rec"
+  const userType = preferences.userType || "player"
+
+  // Get personalized greeting based on user type
+  const getGreeting = () => {
+    switch (userType) {
+      case "trainer":
+        return "Hey Coach! I'm GIA, your coaching assistant. How can I help you grow your business today?"
+      case "instructor":
+        return "Hey! I'm GIA, your teaching assistant. How can I help you manage your practice today?"
+      case "practitioner":
+        return "Hey! I'm GIA, your wellness AI assistant. How can I help you today?"
+      case "both":
+        return "Hey! I'm GIA, your personal assistant. Whether you're training or teaching, I'm here to help!"
+      default:
+        return `Hey! I'm GIA, your ${activityType === "studio" ? "wellness" : "fitness"} AI assistant. How can I help you today?`
+    }
+  }
+
+  // Get personalized suggestions based on user type
+  const getSuggestions = () => {
+    switch (userType) {
+      case "trainer":
+        return ["View my schedule", "Message clients", "Track earnings", "Find training venues"]
+      case "instructor":
+        return ["View my classes", "Message students", "Track earnings", "Set availability"]
+      case "practitioner":
+        return ["Find a yoga studio", "Generate home workout", "Book a class", "Track my progress"]
+      case "both":
+        return ["Find a court", "View my bookings", "Check client messages", "Track my stats"]
+      default:
+        return activityType === "studio"
+          ? ["Find a yoga studio", "Generate home workout", "Book a class", "Track my progress"]
+          : ["Find a court nearby", "Get a workout plan", "Find pickup games", "Track my stats"]
+    }
+  }
+
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
       role: "assistant",
-      content: `Hey! I'm GIA, your ${activityType === "studio" ? "wellness" : "fitness"} AI assistant. How can I help you today?`,
+      content: getGreeting(),
       timestamp: new Date(),
-      suggestions:
-        activityType === "studio"
-          ? ["Find a yoga studio", "Generate home workout", "Book a class", "Track my progress"]
-          : ["Find a court nearby", "Get a workout plan", "Find pickup games", "Track my stats"],
+      suggestions: getSuggestions(),
     },
   ])
   const [input, setInput] = useState("")
