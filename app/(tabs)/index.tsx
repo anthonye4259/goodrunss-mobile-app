@@ -203,11 +203,11 @@ export default function HomeScreen() {
                 </View>
                 <Text style={styles.quickActionText}>Messages</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.quickAction} onPress={() => router.push("/leagues")}>
-                <View style={[styles.quickActionIcon, { backgroundColor: "rgba(239, 68, 68, 0.2)" }]}>
-                  <Ionicons name="trophy" size={24} color="#EF4444" />
+              <TouchableOpacity style={styles.quickAction} onPress={() => router.push("/invite")}>
+                <View style={[styles.quickActionIcon, { backgroundColor: "rgba(236, 72, 153, 0.2)" }]}>
+                  <Ionicons name="person-add" size={24} color="#EC4899" />
                 </View>
-                <Text style={styles.quickActionText}>Leagues</Text>
+                <Text style={styles.quickActionText}>Invite</Text>
               </TouchableOpacity>
             </View>
           </View>
