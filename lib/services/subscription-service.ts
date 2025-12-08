@@ -96,9 +96,9 @@ export const PRO_FEATURES: ProFeature[] = [
 // ============================================
 
 export const PRICING = {
-    monthly: { price: 15, period: "month", stripePriceId: "price_monthly" },
-    "3months": { price: 40, period: "3 months", stripePriceId: "price_3months", savings: "11%" },
-    "6months": { price: 75, period: "6 months", stripePriceId: "price_6months", savings: "17%" },
+    monthly: { price: 15, period: "month", stripePriceId: "price_1Sbzhb06I3eFkRUmi5i8z4V8" },
+    "3months": { price: 40, period: "3 months", stripePriceId: "price_1SSrP106I3eFkRUm9qZHlG8K", savings: "11%" },
+    "6months": { price: 75, period: "6 months", stripePriceId: "price_1SSrQ706I3eFkRUmALT3M9tM", savings: "17%" },
 }
 
 // ============================================

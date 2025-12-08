@@ -488,9 +488,9 @@ export const registerFCMToken = functions.https.onCall(async (data, context) => 
 // Price IDs for Pro Dashboard subscription
 // UPDATE THESE with your actual Stripe price IDs
 const SUBSCRIPTION_PRICES = {
-    monthly: "price_monthly_pro",      // Replace with actual price ID
-    "3months": "price_3months_pro",    // Replace with actual price ID  
-    "6months": "price_6months_pro",    // Replace with actual price ID
+    monthly: "price_1Sbzhb06I3eFkRUmi5i8z4V8",
+    "3months": "price_1SSrP106I3eFkRUm9qZHlG8K",
+    "6months": "price_1SSrQ706I3eFkRUmALT3M9tM",
 }
 
 /**
