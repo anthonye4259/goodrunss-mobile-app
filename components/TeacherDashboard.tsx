@@ -1,34 +1,31 @@
-import React from "react"
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native"
+import React, { useEffect } from "react"
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { router } from "expo-router"
 import * as Haptics from "expo-haptics"
 import { LinearGradient } from "expo-linear-gradient"
+import { useTrainerDashboard } from "@/lib/hooks/useTrainerDashboard"
 
 interface TeacherDashboardProps {
     userType: "trainer" | "instructor"
     name?: string
 }
 
-// Mock data - in production, this would come from backend
-const MOCK_DATA = {
-    earnings: {
-        today: 145,
-        thisWeek: 892,
-        thisMonth: 3420,
-    },
-    upcomingSessions: [
-        { id: "1", clientName: "Sarah M.", time: "2:00 PM", activity: "Tennis", duration: "1 hr" },
-        { id: "2", clientName: "Mike J.", time: "4:30 PM", activity: "Basketball", duration: "1.5 hr" },
-        { id: "3", clientName: "Emily R.", time: "6:00 PM", activity: "Yoga", duration: "1 hr" },
-    ],
-    pendingRequests: 3,
-    unreadMessages: 5,
-    rating: 4.9,
-    totalClients: 28,
-}
-
 export function TeacherDashboard({ userType, name }: TeacherDashboardProps) {
+    // Use real synced data from Firebase
+    const {
+        clients,
+        totalClients,
+        activeClients,
+        upcomingBookings,
+        todayBookings,
+        pendingCount,
+        earnings,
+        profile,
+        isLoading,
+        refreshAll,
+    } = useTrainerDashboard()
+
     const handlePress = (action: () => void) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
         action()
@@ -37,6 +34,9 @@ export function TeacherDashboard({ userType, name }: TeacherDashboardProps) {
     const isInstructor = userType === "instructor"
     const roleTitle = isInstructor ? "Instructor" : "Coach"
     const clientLabel = isInstructor ? "Students" : "Clients"
+
+    // Mock unread messages count (would come from messaging service)
+    const unreadMessages = 0 // TODO: Hook up messaging service
 
     return (
         <View style={styles.container}>
@@ -50,11 +50,11 @@ export function TeacherDashboard({ userType, name }: TeacherDashboardProps) {
                 <View style={styles.welcomeContent}>
                     <View>
                         <Text style={styles.welcomeText}>Welcome back, {roleTitle}!</Text>
-                        <Text style={styles.welcomeSubtext}>You have {MOCK_DATA.pendingRequests} pending requests</Text>
+                        <Text style={styles.welcomeSubtext}>You have {pendingCount} pending requests</Text>
                     </View>
                     <View style={styles.ratingBadge}>
                         <Ionicons name="star" size={16} color="#FFD700" />
-                        <Text style={styles.ratingText}>{MOCK_DATA.rating}</Text>
+                        <Text style={styles.ratingText}>{profile?.rating?.toFixed(1) || "5.0"}</Text>
                     </View>
                 </View>
             </LinearGradient>
@@ -63,15 +63,15 @@ export function TeacherDashboard({ userType, name }: TeacherDashboardProps) {
             <View style={styles.earningsContainer}>
                 <View style={styles.earningsCard}>
                     <Text style={styles.earningsLabel}>Today</Text>
-                    <Text style={styles.earningsAmount}>${MOCK_DATA.earnings.today}</Text>
+                    <Text style={styles.earningsAmount}>${earnings.today}</Text>
                 </View>
                 <View style={[styles.earningsCard, styles.earningsCardMiddle]}>
                     <Text style={styles.earningsLabel}>This Week</Text>
-                    <Text style={styles.earningsAmount}>${MOCK_DATA.earnings.thisWeek}</Text>
+                    <Text style={styles.earningsAmount}>${earnings.thisWeek}</Text>
                 </View>
                 <View style={styles.earningsCard}>
                     <Text style={styles.earningsLabel}>This Month</Text>
-                    <Text style={styles.earningsAmount}>${MOCK_DATA.earnings.thisMonth.toLocaleString()}</Text>
+                    <Text style={styles.earningsAmount}>${earnings.thisMonth.toLocaleString()}</Text>
                 </View>
             </View>
 
@@ -83,9 +83,9 @@ export function TeacherDashboard({ userType, name }: TeacherDashboardProps) {
                 >
                     <View style={[styles.statIconContainer, { backgroundColor: "rgba(239, 68, 68, 0.1)" }]}>
                         <Ionicons name="chatbubbles" size={20} color="#EF4444" />
-                        {MOCK_DATA.unreadMessages > 0 && (
+                        {unreadMessages > 0 && (
                             <View style={styles.badge}>
-                                <Text style={styles.badgeText}>{MOCK_DATA.unreadMessages}</Text>
+                                <Text style={styles.badgeText}>{unreadMessages}</Text>
                             </View>
                         )}
                     </View>
@@ -98,9 +98,9 @@ export function TeacherDashboard({ userType, name }: TeacherDashboardProps) {
                 >
                     <View style={[styles.statIconContainer, { backgroundColor: "rgba(126, 217, 87, 0.1)" }]}>
                         <Ionicons name="calendar" size={20} color="#7ED957" />
-                        {MOCK_DATA.pendingRequests > 0 && (
+                        {pendingCount > 0 && (
                             <View style={styles.badge}>
-                                <Text style={styles.badgeText}>{MOCK_DATA.pendingRequests}</Text>
+                                <Text style={styles.badgeText}>{pendingCount}</Text>
                             </View>
                         )}
                     </View>
@@ -114,7 +114,7 @@ export function TeacherDashboard({ userType, name }: TeacherDashboardProps) {
                     <View style={[styles.statIconContainer, { backgroundColor: "rgba(139, 92, 246, 0.1)" }]}>
                         <Ionicons name="people" size={20} color="#8B5CF6" />
                     </View>
-                    <Text style={styles.statLabel}>{MOCK_DATA.totalClients} {clientLabel}</Text>
+                    <Text style={styles.statLabel}>{totalClients} {clientLabel}</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -137,23 +137,47 @@ export function TeacherDashboard({ userType, name }: TeacherDashboardProps) {
                     </TouchableOpacity>
                 </View>
 
-                {MOCK_DATA.upcomingSessions.map((session) => (
-                    <TouchableOpacity
-                        key={session.id}
-                        style={styles.sessionCard}
-                        onPress={() => handlePress(() => router.push(`/booking/${session.id}`))}
-                    >
-                        <View style={styles.sessionTime}>
-                            <Text style={styles.sessionTimeText}>{session.time}</Text>
-                            <Text style={styles.sessionDuration}>{session.duration}</Text>
-                        </View>
-                        <View style={styles.sessionDetails}>
-                            <Text style={styles.sessionClient}>{session.clientName}</Text>
-                            <Text style={styles.sessionActivity}>{session.activity}</Text>
-                        </View>
-                        <Ionicons name="chevron-forward" size={20} color="#666" />
-                    </TouchableOpacity>
-                ))}
+                {isLoading ? (
+                    <View style={styles.loadingContainer}>
+                        <ActivityIndicator size="small" color="#7ED957" />
+                        <Text style={styles.loadingText}>Loading schedule...</Text>
+                    </View>
+                ) : todayBookings.length === 0 ? (
+                    <View style={styles.emptyState}>
+                        <Ionicons name="calendar-outline" size={32} color="#666" />
+                        <Text style={styles.emptyStateText}>No sessions scheduled for today</Text>
+                        <TouchableOpacity
+                            style={styles.emptyStateButton}
+                            onPress={() => handlePress(() => router.push("/(tabs)/trainer"))}
+                        >
+                            <Text style={styles.emptyStateButtonText}>Set Availability</Text>
+                        </TouchableOpacity>
+                    </View>
+                ) : (
+                    todayBookings.map((booking) => (
+                        <TouchableOpacity
+                            key={booking.id}
+                            style={styles.sessionCard}
+                            onPress={() => handlePress(() => router.push(`/booking/${booking.id}`))}
+                        >
+                            <View style={styles.sessionTime}>
+                                <Text style={styles.sessionTimeText}>{booking.time}</Text>
+                                <Text style={styles.sessionDuration}>{booking.duration} min</Text>
+                            </View>
+                            <View style={styles.sessionDetails}>
+                                <Text style={styles.sessionClient}>{booking.clientName}</Text>
+                                <Text style={styles.sessionActivity}>{booking.activity}</Text>
+                            </View>
+                            <View style={styles.bookingStatus}>
+                                <View style={[
+                                    styles.statusDot,
+                                    { backgroundColor: booking.status === "confirmed" ? "#7ED957" : "#FBBF24" }
+                                ]} />
+                            </View>
+                            <Ionicons name="chevron-forward" size={20} color="#666" />
+                        </TouchableOpacity>
+                    ))
+                )}
             </View>
 
             {/* Quick Actions */}
@@ -498,5 +522,48 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: "bold",
         color: "#000",
+    },
+    // Loading and empty states
+    loadingContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        paddingVertical: 24,
+        gap: 10,
+    },
+    loadingText: {
+        fontSize: 14,
+        color: "#9CA3AF",
+    },
+    emptyState: {
+        alignItems: "center",
+        justifyContent: "center",
+        paddingVertical: 32,
+        gap: 12,
+    },
+    emptyStateText: {
+        fontSize: 14,
+        color: "#9CA3AF",
+        textAlign: "center",
+    },
+    emptyStateButton: {
+        backgroundColor: "#1A1A1A",
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 8,
+        marginTop: 8,
+    },
+    emptyStateButtonText: {
+        fontSize: 13,
+        color: "#7ED957",
+        fontWeight: "600",
+    },
+    bookingStatus: {
+        marginRight: 8,
+    },
+    statusDot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
     },
 })
