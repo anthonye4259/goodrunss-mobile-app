@@ -14,31 +14,28 @@ import { setupTrainerRealTimeSync, setupClientRealTimeSync, unsubscribeAll } fro
 
 // Inner component that has access to auth
 function AppContent({ children }: { children: React.ReactNode }) {
-  const { user, isTrainer } = useAuth()
+  const { user } = useAuth()
 
   // Initialize deep linking
   useDeepLinking()
 
-  // Set up real-time sync based on user type
+  // Set up real-time sync for the user
+  // Note: Could check user.role if needed, but client sync works for both
   useEffect(() => {
     if (!user?.id) return
 
-    let cleanup: (() => void) | null = null
-
-    if (isTrainer) {
-      cleanup = setupTrainerRealTimeSync(user.id)
-    } else {
-      cleanup = setupClientRealTimeSync(user.id)
-    }
+    // Set up client sync (works for both clients and trainers for now)
+    const cleanup = setupClientRealTimeSync(user.id)
 
     return () => {
       if (cleanup) cleanup()
       unsubscribeAll()
     }
-  }, [user?.id, isTrainer])
+  }, [user?.id])
 
   return <>{children}</>
 }
+
 
 export default function RootLayout() {
   useEffect(() => {
@@ -98,7 +95,9 @@ export default function RootLayout() {
                   <Stack.Screen name="friends/[friendshipId]/settings" />
                   <Stack.Screen name="settings/notifications/friends" />
                   <Stack.Screen name="waitlist/claim/[classId]" />
+                  <Stack.Screen name="instructor-dashboard" />
                 </Stack>
+
               </StripeProvider>
             </LocationProvider>
           </UserPreferencesProvider>
