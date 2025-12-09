@@ -184,10 +184,22 @@ export function NearestVenueWidget() {
                         </View>
                     </View>
 
-                    {/* Live Traffic */}
+                    {/* Live Traffic + Weather */}
                     <View style={styles.trafficSection}>
                         <View style={styles.trafficHeader}>
-                            <Text style={styles.trafficLabel}>Right Now</Text>
+                            <View style={styles.weatherRow}>
+                                <Text style={styles.trafficLabel}>Right Now</Text>
+                                {nearestVenue.traffic?.weatherImpact && (
+                                    <View style={styles.weatherBadge}>
+                                        <Ionicons name="partly-sunny" size={14} color="#FBBF24" />
+                                        <Text style={styles.weatherText}>
+                                            {nearestVenue.traffic.weatherImpact.includes("rain") ? "🌧️" :
+                                                nearestVenue.traffic.weatherImpact.includes("hot") ? "☀️" :
+                                                    nearestVenue.traffic.weatherImpact.includes("cold") ? "❄️" : "🌤️"}
+                                        </Text>
+                                    </View>
+                                )}
+                            </View>
                             <View style={styles.playerCount}>
                                 <Ionicons name="people" size={16} color="#7ED957" />
                                 <Text style={styles.playerCountText}>{playerCount} players</Text>
@@ -455,6 +467,23 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: "#7ED957",
         fontWeight: "600",
+    },
+    weatherRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+    },
+    weatherBadge: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "rgba(251, 191, 36, 0.15)",
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 12,
+        gap: 4,
+    },
+    weatherText: {
+        fontSize: 14,
     },
 })
 

@@ -21,6 +21,7 @@ import { ReviewModal } from "@/components/review-modal"
 import { venueService } from "@/lib/services/venue-service"
 import { Venue } from "@/lib/venue-data"
 import { MapsService } from "@/lib/services/maps-service"
+import { PoolConditionsBadge } from "@/components/PoolConditionsBadge"
 
 export default function VenueDetailScreen() {
   const { id } = useLocalSearchParams()
@@ -362,6 +363,22 @@ export default function VenueDetailScreen() {
                 accurate rating.
               </Text>
             </View>
+
+            {/* Pool Conditions - Only for pool/swimming venues */}
+            {(venue.type === "Pool" || venue.type === "Swimming" || primaryActivity === "Swimming") && (
+              <View className="bg-card border border-border rounded-2xl p-4 mb-6">
+                <View className="flex-row items-center mb-4">
+                  <Ionicons name="water" size={24} color="#3B82F6" />
+                  <Text className="text-xl font-bold text-foreground ml-2">Pool Conditions</Text>
+                </View>
+                <PoolConditionsBadge
+                  lat={venue.lat || venue.coordinates?.lat || 40.7}
+                  lon={venue.lng || venue.coordinates?.lon || -74.0}
+                  isHeated={venue.isHeated || false}
+                  isOutdoor={venue.isOutdoor !== false}
+                />
+              </View>
+            )}
 
             {activePlayers.length > 0 && (
               <View className="bg-card border border-primary/50 rounded-2xl p-4 mb-6">

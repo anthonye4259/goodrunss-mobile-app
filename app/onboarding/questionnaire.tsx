@@ -8,6 +8,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { RATING_CONFIGS } from "@/lib/player-rating-types"
 import { SafeAreaView } from "react-native-safe-area-context"
 import * as Haptics from "expo-haptics"
+import { TrainerTaglineSelector } from "@/components/TrainerTaglineSelector"
 
 const REC_ACTIVITIES = ["Basketball", "Tennis", "Pickleball", "Padel", "Racquetball", "Volleyball", "Golf", "Soccer", "Swimming"]
 const STUDIO_ACTIVITIES = ["Pilates", "Yoga", "Lagree", "Barre", "Meditation"]
@@ -65,9 +66,10 @@ export default function QuestionnaireScreen() {
   const { requestLocation, loading: locationLoading, error: locationError } = useLocation()
 
   const [selectedActivities, setSelectedActivities] = useState<string[]>([])
-  const [step, setStep] = useState<"activity" | "skill" | "location">("activity")
+  const [step, setStep] = useState<"activity" | "skill" | "tagline" | "location">("activity")
   const [activityRatings, setActivityRatings] = useState<Record<string, number>>({})
   const [currentRatingIndex, setCurrentRatingIndex] = useState(0)
+  const [trainerTagline, setTrainerTagline] = useState<string>("")
 
   const availableActivities = getActivitiesForUserType(userType)
   const { title: stepTitle, subtitle: stepSubtitle } = getTitleForUserType(userType)
@@ -103,10 +105,24 @@ export default function QuestionnaireScreen() {
       if (activitiesToRate.length > 0) {
         setCurrentRatingIndex(0)
         setStep("skill")
+      } else if (isTeachingRole(userType)) {
+        // Trainers go to tagline selection
+        setStep("tagline")
       } else {
         setStep("location")
       }
     }
+  }
+
+  const handleTaglineSelect = (tagline: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+    setTrainerTagline(tagline)
+    setStep("location")
+  }
+
+  const handleSkipTagline = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    setStep("location")
   }
 
   const handleSkillSelect = (rating: number) => {
@@ -168,6 +184,7 @@ export default function QuestionnaireScreen() {
         primaryActivity: primaryActivity,
         activityType: activityType,
         playerRating: playerRating,
+        trainerTagline: trainerTagline || undefined, // Save tagline for trainers
       })
       // Navigate to feature discovery slides
       router.replace("/onboarding/features")
@@ -223,6 +240,31 @@ export default function QuestionnaireScreen() {
                 </TouchableOpacity>
               ))}
             </View>
+          </ScrollView>
+        </SafeAreaView>
+      </LinearGradient>
+    )
+  }
+
+  // Tagline step (for trainers/instructors only)
+  if (step === "tagline" && isTeachingRole(userType)) {
+    return (
+      <LinearGradient colors={["#0A0A0A", "#141414"]} style={{ flex: 1 }}>
+        <SafeAreaView style={styles.safeArea}>
+          <ScrollView contentContainerStyle={styles.scrollContent}>
+            <View style={styles.progressContainer}>
+              <Text style={styles.progressText}>Question 2 of 3</Text>
+              <View style={styles.progressBar}>
+                <View style={[styles.progressFill, { width: "66%" }]} />
+              </View>
+            </View>
+
+            <TrainerTaglineSelector
+              activity={selectedActivities[0] || "Training"}
+              currentTagline={trainerTagline}
+              onSelect={handleTaglineSelect}
+              onSkip={handleSkipTagline}
+            />
           </ScrollView>
         </SafeAreaView>
       </LinearGradient>
