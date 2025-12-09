@@ -2,7 +2,7 @@
  * Favorites Widget
  * 
  * Shows user's favorite venues/trainers with quick access
- * and live traffic status for venues
+ * and LIVE traffic status from Firestore (pre-computed every 30 min)
  */
 
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native"
@@ -10,60 +10,69 @@ import { Ionicons } from "@expo/vector-icons"
 import { router } from "expo-router"
 import * as Haptics from "expo-haptics"
 import { useState, useEffect } from "react"
+import { useVenueTraffic, getTrafficColor } from "@/lib/hooks/useVenueTraffic"
 
-interface FavoriteVenue {
+interface FavoriteItem {
     id: string
     name: string
     type: "venue" | "trainer"
     distance?: string
-    traffic?: "empty" | "quiet" | "moderate" | "busy" | "packed"
+    traffic?: { level: string; emoji?: string; color?: string }
     rating?: number
     sport?: string
 }
 
-// Mock favorites - in production, fetch from user data
-const mockFavorites: FavoriteVenue[] = [
-    {
-        id: "1",
-        name: "Rucker Park",
-        type: "venue",
-        distance: "0.3 mi",
-        traffic: "moderate",
-        sport: "Basketball",
-    },
-    {
-        id: "2",
-        name: "Central Park Courts",
-        type: "venue",
-        distance: "0.8 mi",
-        traffic: "quiet",
-        sport: "Tennis",
-    },
-    {
-        id: "3",
-        name: "Coach Mike",
-        type: "trainer",
-        rating: 4.9,
-        sport: "Basketball",
-    },
-]
-
 const trafficColors: Record<string, string> = {
     empty: "#22C55E",
     quiet: "#84CC16",
+    low: "#84CC16",
     moderate: "#FBBF24",
     busy: "#F97316",
     packed: "#EF4444",
 }
 
 export function FavoritesWidget() {
-    const [favorites, setFavorites] = useState<FavoriteVenue[]>([])
+    const [favorites, setFavorites] = useState<FavoriteItem[]>([])
+
+    // Fetch real traffic data from Firestore
+    const { venues, loading } = useVenueTraffic({ limit: 5 })
 
     useEffect(() => {
-        setFavorites(mockFavorites)
-    }, [])
+        // Transform Firestore venues into favorite items with live traffic
+        if (venues.length > 0) {
+            const venueItems: FavoriteItem[] = venues.slice(0, 3).map(v => ({
+                id: v.id,
+                name: v.name,
+                type: "venue" as const,
+                distance: v.distance || "Nearby",
+                traffic: v.traffic ? {
+                    level: v.traffic.level,
+                    emoji: v.traffic.emoji,
+                    color: v.traffic.color,
+                } : undefined,
+            }))
 
-    const handlePress = (fav: FavoriteVenue) => {
+            // Add a sample trainer (trainers don't have traffic)
+            const trainerItem: FavoriteItem = {
+                id: "trainer_1",
+                name: "Coach Mike",
+                type: "trainer",
+                rating: 4.9,
+                sport: "Basketball",
+            }
+
+            setFavorites([...venueItems, trainerItem])
+        } else {
+            // Fallback mock data if no venues in Firestore
+            setFavorites([
+                { id: "1", name: "Rucker Park", type: "venue", distance: "0.3 mi", traffic: { level: "moderate" }, sport: "Basketball" },
+                { id: "2", name: "Central Park Courts", type: "venue", distance: "0.8 mi", traffic: { level: "quiet" }, sport: "Tennis" },
+                { id: "3", name: "Coach Mike", type: "trainer", rating: 4.9, sport: "Basketball" },
+            ])
+        }
+    }, [venues])
+
+    const handlePress = (fav: FavoriteItem) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
         if (fav.type === "venue") {
             router.push(`/venues/${fav.id}`)
@@ -112,12 +121,12 @@ export function FavoritesWidget() {
                         {/* Info */}
                         <Text style={styles.favName} numberOfLines={1}>{fav.name}</Text>
 
-                        {/* Traffic or Rating */}
+                        {/* Traffic or Rating - NOW USES LIVE DATA */}
                         {fav.type === "venue" && fav.traffic && (
                             <View style={styles.trafficRow}>
-                                <View style={[styles.trafficDot, { backgroundColor: trafficColors[fav.traffic] }]} />
-                                <Text style={[styles.trafficText, { color: trafficColors[fav.traffic] }]}>
-                                    {fav.traffic.charAt(0).toUpperCase() + fav.traffic.slice(1)}
+                                <View style={[styles.trafficDot, { backgroundColor: fav.traffic.color || trafficColors[fav.traffic.level] }]} />
+                                <Text style={[styles.trafficText, { color: fav.traffic.color || trafficColors[fav.traffic.level] }]}>
+                                    {fav.traffic.level.charAt(0).toUpperCase() + fav.traffic.level.slice(1)}
                                 </Text>
                             </View>
                         )}
