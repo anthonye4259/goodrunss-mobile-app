@@ -8,7 +8,37 @@ import { NotificationService } from "@/lib/notification-service"
 import { useEffect } from "react"
 import "@/lib/i18n"
 import "../global.css"
-import { AuthProvider } from "@/lib/auth-context"
+import { AuthProvider, useAuth } from "@/lib/auth-context"
+import { useDeepLinking } from "@/lib/services/deep-linking"
+import { setupTrainerRealTimeSync, setupClientRealTimeSync, unsubscribeAll } from "@/lib/services/realtime-sync"
+
+// Inner component that has access to auth
+function AppContent({ children }: { children: React.ReactNode }) {
+  const { user, isTrainer } = useAuth()
+
+  // Initialize deep linking
+  useDeepLinking()
+
+  // Set up real-time sync based on user type
+  useEffect(() => {
+    if (!user?.id) return
+
+    let cleanup: (() => void) | null = null
+
+    if (isTrainer) {
+      cleanup = setupTrainerRealTimeSync(user.id)
+    } else {
+      cleanup = setupClientRealTimeSync(user.id)
+    }
+
+    return () => {
+      if (cleanup) cleanup()
+      unsubscribeAll()
+    }
+  }, [user?.id, isTrainer])
+
+  return <>{children}</>
+}
 
 export default function RootLayout() {
   useEffect(() => {
@@ -35,39 +65,46 @@ export default function RootLayout() {
     initNotifications()
   }, [])
 
+
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider>
-        <UserPreferencesProvider>
-          <LocationProvider>
-            <StripeProvider>
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="index" />
-                <Stack.Screen name="language-selection" />
-                <Stack.Screen name="auth" />
-                <Stack.Screen name="onboarding" />
-                <Stack.Screen name="(tabs)" />
-                <Stack.Screen name="referrals" />
-                <Stack.Screen name="rating/[sport]" />
-                <Stack.Screen name="venues/[id]" />
-                <Stack.Screen name="trainers/[id]" />
-                <Stack.Screen name="chat/[id]" />
-                <Stack.Screen name="need-players/[venueId]" />
-                <Stack.Screen name="alerts/index" />
-                <Stack.Screen name="settings/edit-profile" />
-                <Stack.Screen name="settings/payment-methods" />
-                <Stack.Screen name="settings/privacy" />
-                <Stack.Screen name="settings/help" />
-                <Stack.Screen name="settings/terms" />
-                <Stack.Screen name="booking/[id]" />
-                <Stack.Screen name="review/[id]" />
-                <Stack.Screen name="friends/[friendshipId]/settings" />
-                <Stack.Screen name="settings/notifications/friends" />
-              </Stack>
-            </StripeProvider>
-          </LocationProvider>
-        </UserPreferencesProvider>
+        <AppContent>
+          <UserPreferencesProvider>
+            <LocationProvider>
+              <StripeProvider>
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="index" />
+                  <Stack.Screen name="language-selection" />
+                  <Stack.Screen name="auth" />
+                  <Stack.Screen name="onboarding" />
+                  <Stack.Screen name="(tabs)" />
+                  <Stack.Screen name="referrals" />
+                  <Stack.Screen name="rating/[sport]" />
+                  <Stack.Screen name="venues/[id]" />
+                  <Stack.Screen name="trainers/[id]" />
+                  <Stack.Screen name="instructors/[id]" />
+                  <Stack.Screen name="chat/[id]" />
+                  <Stack.Screen name="need-players/[venueId]" />
+                  <Stack.Screen name="alerts/index" />
+                  <Stack.Screen name="settings/edit-profile" />
+                  <Stack.Screen name="settings/payment-methods" />
+                  <Stack.Screen name="settings/privacy" />
+                  <Stack.Screen name="settings/help" />
+                  <Stack.Screen name="settings/terms" />
+                  <Stack.Screen name="booking/[id]" />
+                  <Stack.Screen name="review/[id]" />
+                  <Stack.Screen name="friends/[friendshipId]/settings" />
+                  <Stack.Screen name="settings/notifications/friends" />
+                  <Stack.Screen name="waitlist/claim/[classId]" />
+                </Stack>
+              </StripeProvider>
+            </LocationProvider>
+          </UserPreferencesProvider>
+        </AppContent>
       </AuthProvider>
     </GestureHandlerRootView>
   )
 }
+

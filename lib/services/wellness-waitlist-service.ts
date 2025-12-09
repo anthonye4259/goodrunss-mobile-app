@@ -3,7 +3,7 @@
  * 
  * Smart waitlist system for wellness classes:
  * - Auto-book: Automatically confirm when spot opens
- * - Priority: Pro members get bumped up in queue
+ * - Priority: Pro members get bumped up in queue (if instructor allows)
  * - Flash booking: 5-min exclusive window before next person
  * - Instant notifications: Push the moment a spot opens
  */
@@ -12,6 +12,7 @@ import { db } from "@/lib/firebase-config"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { NotificationService } from "@/lib/notification-service"
 import type { WaitlistEntry, WellnessClass } from "@/lib/types/wellness-instructor"
+import { isProPriorityAllowed } from "@/components/ProPrioritySettings"
 
 // Cache key for user's waitlists
 const MY_WAITLISTS_CACHE = "@my_waitlists"
@@ -21,7 +22,7 @@ const FLASH_WINDOW_MS = 5 * 60 * 1000 // 5 minutes
 
 export interface JoinWaitlistOptions {
     autoBook: boolean // Auto-confirm when spot opens
-    isPro: boolean // Pro members get priority
+    isPro: boolean // Pro members get priority (if instructor allows)
 }
 
 export interface WaitlistResult {
@@ -41,14 +42,15 @@ export interface WaitlistResult {
 export async function joinWaitlist(
     classId: string,
     clientId: string,
-    options: JoinWaitlistOptions
+    options: JoinWaitlistOptions,
+    instructorId?: string // Need to check instructor's Pro priority setting
 ): Promise<WaitlistResult> {
     if (!db) {
         return { success: false, position: 0, message: "Database not available" }
     }
 
     try {
-        const { collection, addDoc, query, where, getDocs, orderBy, serverTimestamp } = await import("firebase/firestore")
+        const { collection, addDoc, query, where, getDocs, orderBy, serverTimestamp, doc, getDoc } = await import("firebase/firestore")
 
         // Check if already on waitlist
         const existingEntry = await getWaitlistEntry(classId, clientId)
@@ -60,6 +62,21 @@ export async function joinWaitlist(
             }
         }
 
+        // Get instructor ID from class if not provided
+        let actualInstructorId = instructorId
+        if (!actualInstructorId) {
+            const classDoc = await getDoc(doc(db, "wellnessClasses", classId))
+            if (classDoc.exists()) {
+                actualInstructorId = classDoc.data().instructorId
+            }
+        }
+
+        // Check if instructor allows Pro priority
+        let allowProPriority = false
+        if (options.isPro && actualInstructorId) {
+            allowProPriority = await isProPriorityAllowed(actualInstructorId, classId)
+        }
+
         // Get current waitlist size to determine position
         const waitlistQuery = query(
             collection(db, "classWaitlists"),
@@ -68,15 +85,16 @@ export async function joinWaitlist(
         )
         const snapshot = await getDocs(waitlistQuery)
 
-        // Calculate position (Pro members get inserted higher)
+        // Calculate position (Pro members get priority only if instructor allows)
         let position: number
-        if (options.isPro && snapshot.size > 0) {
+        if (options.isPro && allowProPriority && snapshot.size > 0) {
             // Pro gets position after other Pro members but before regular
             const proCount = snapshot.docs.filter(d => d.data().isPro).length
             position = proCount + 1
         } else {
             position = snapshot.size + 1
         }
+
 
         // Create waitlist entry
         await addDoc(collection(db, "classWaitlists"), {
