@@ -1666,3 +1666,278 @@ export const cleanupExpiredFlashWindows = functions.pubsub
         }
     })
 
+
+// ============================================
+// PRIVATE SESSION BOOKING (Stripe Connect)
+// ============================================
+
+// Platform fee: 6% (instructor keeps 94%)
+const PLATFORM_FEE_PERCENT = 6
+
+/**
+ * Create Payment Intent for Private Session with Stripe Connect
+ * 
+ * Uses destination charges to split payment:
+ * - 94% goes to instructor's connected Stripe account
+ * - 6% goes to platform (us)
+ */
+export const createPaymentForPrivateSession = functions.https.onCall(async (data, context) => {
+    try {
+        if (!stripe) {
+            throw new functions.https.HttpsError(
+                "failed-precondition",
+                "Stripe is not configured"
+            )
+        }
+
+        if (!context.auth) {
+            throw new functions.https.HttpsError(
+                "unauthenticated",
+                "User must be authenticated"
+            )
+        }
+
+        const {
+            amount, // in cents
+            instructorStripeAccountId,
+            platformFee,
+            metadata
+        } = data
+
+        if (!amount || !instructorStripeAccountId) {
+            throw new functions.https.HttpsError(
+                "invalid-argument",
+                "Missing required fields: amount, instructorStripeAccountId"
+            )
+        }
+
+        // Calculate platform fee (6%)
+        const calculatedPlatformFee = platformFee || Math.round(amount * (PLATFORM_FEE_PERCENT / 100))
+
+        // Create payment intent with destination charge
+        // This automatically splits the payment
+        const paymentIntent = await stripe.paymentIntents.create({
+            amount,
+            currency: "usd",
+            // Destination charge: instructor gets payment minus our fee
+            transfer_data: {
+                destination: instructorStripeAccountId,
+                // Instructor receives: amount - platform fee
+            },
+            application_fee_amount: calculatedPlatformFee,
+            metadata: {
+                ...metadata,
+                type: "private_session",
+                platformFeePercent: PLATFORM_FEE_PERCENT.toString(),
+            },
+            automatic_payment_methods: {
+                enabled: true,
+            },
+        })
+
+        functions.logger.info("Private session payment intent created", {
+            paymentIntentId: paymentIntent.id,
+            amount,
+            platformFee: calculatedPlatformFee,
+            instructorStripeAccountId,
+        })
+
+        return {
+            clientSecret: paymentIntent.client_secret,
+            paymentIntentId: paymentIntent.id,
+        }
+    } catch (error: any) {
+        functions.logger.error("Error creating private session payment:", error)
+        throw new functions.https.HttpsError(
+            "internal",
+            error.message || "Failed to create payment"
+        )
+    }
+})
+
+/**
+ * Process refund for cancelled private session
+ */
+export const processPrivateSessionRefund = functions.https.onCall(async (data, context) => {
+    try {
+        if (!stripe) {
+            throw new functions.https.HttpsError(
+                "failed-precondition",
+                "Stripe is not configured"
+            )
+        }
+
+        if (!context.auth) {
+            throw new functions.https.HttpsError(
+                "unauthenticated",
+                "User must be authenticated"
+            )
+        }
+
+        const { paymentIntentId, refundAmount } = data
+
+        if (!paymentIntentId) {
+            throw new functions.https.HttpsError(
+                "invalid-argument",
+                "Missing paymentIntentId"
+            )
+        }
+
+        // Get the payment intent to find the charge
+        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId)
+
+        if (!paymentIntent.latest_charge) {
+            throw new functions.https.HttpsError(
+                "failed-precondition",
+                "No charge found for this payment"
+            )
+        }
+
+        // Create refund
+        const refund = await stripe.refunds.create({
+            charge: paymentIntent.latest_charge as string,
+            amount: refundAmount, // Partial or full refund in cents
+            reason: "requested_by_customer",
+            // Reverse the transfer to instructor's account proportionally
+            reverse_transfer: true,
+            // Refund the application fee proportionally
+            refund_application_fee: true,
+        })
+
+        functions.logger.info("Private session refund processed", {
+            refundId: refund.id,
+            paymentIntentId,
+            refundAmount,
+        })
+
+        return {
+            refundId: refund.id,
+            status: refund.status,
+            amount: refund.amount,
+        }
+    } catch (error: any) {
+        functions.logger.error("Error processing refund:", error)
+        throw new functions.https.HttpsError(
+            "internal",
+            error.message || "Failed to process refund"
+        )
+    }
+})
+
+/**
+ * Create Stripe Connect Account for Instructor
+ * (Onboarding link for instructor to set up their account)
+ */
+export const createInstructorStripeAccount = functions.https.onCall(async (data, context) => {
+    try {
+        if (!stripe) {
+            throw new functions.https.HttpsError(
+                "failed-precondition",
+                "Stripe is not configured"
+            )
+        }
+
+        if (!context.auth) {
+            throw new functions.https.HttpsError(
+                "unauthenticated",
+                "User must be authenticated"
+            )
+        }
+
+        const { instructorId, email, returnUrl, refreshUrl } = data
+
+        if (!instructorId || !email) {
+            throw new functions.https.HttpsError(
+                "invalid-argument",
+                "Missing instructorId or email"
+            )
+        }
+
+        // Create a Stripe Connect Express account
+        const account = await stripe.accounts.create({
+            type: "express",
+            country: "US",
+            email,
+            capabilities: {
+                card_payments: { requested: true },
+                transfers: { requested: true },
+            },
+            business_type: "individual",
+            metadata: {
+                instructorId,
+                platform: "goodrunss",
+            },
+        })
+
+        // Save account ID to instructor record
+        const db = admin.firestore()
+        await db.collection("instructors").doc(instructorId).update({
+            stripeAccountId: account.id,
+            stripeAccountStatus: "pending",
+            stripeAccountCreatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        })
+
+        // Create onboarding link
+        const accountLink = await stripe.accountLinks.create({
+            account: account.id,
+            refresh_url: refreshUrl || "https://goodrunss.com/stripe/refresh",
+            return_url: returnUrl || "https://goodrunss.com/stripe/return",
+            type: "account_onboarding",
+        })
+
+        functions.logger.info("Stripe Connect account created for instructor", {
+            accountId: account.id,
+            instructorId,
+        })
+
+        return {
+            accountId: account.id,
+            onboardingUrl: accountLink.url,
+        }
+    } catch (error: any) {
+        functions.logger.error("Error creating Stripe Connect account:", error)
+        throw new functions.https.HttpsError(
+            "internal",
+            error.message || "Failed to create account"
+        )
+    }
+})
+
+/**
+ * Check Stripe Connect account status
+ */
+export const checkStripeAccountStatus = functions.https.onCall(async (data, context) => {
+    try {
+        if (!stripe) {
+            throw new functions.https.HttpsError(
+                "failed-precondition",
+                "Stripe is not configured"
+            )
+        }
+
+        const { stripeAccountId } = data
+
+        if (!stripeAccountId) {
+            throw new functions.https.HttpsError(
+                "invalid-argument",
+                "Missing stripeAccountId"
+            )
+        }
+
+        const account = await stripe.accounts.retrieve(stripeAccountId)
+
+        return {
+            chargesEnabled: account.charges_enabled,
+            payoutsEnabled: account.payouts_enabled,
+            detailsSubmitted: account.details_submitted,
+            requirements: account.requirements,
+        }
+    } catch (error: any) {
+        functions.logger.error("Error checking Stripe account status:", error)
+        throw new functions.https.HttpsError(
+            "internal",
+            error.message || "Failed to check account"
+        )
+    }
+})
+
