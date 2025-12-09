@@ -948,44 +948,8 @@ const GLOBAL_CITIES: Record<string, { name: string; density: number; population:
     "-1.3,36.8": { name: "Nairobi", density: 4500, population: 4700000, country: "KE" },
 }
 
-// Holiday cache (refreshed daily via external API)
-let holidayCache: Record<string, { date: string; name: string }[]> = {}
-let holidayCacheDate: string = ""
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function _fetchHolidays(countryCode: string): Promise<{ date: string; name: string }[]> {
-    const today = new Date().toISOString().split("T")[0]
-
-    // Return cached if same day
-    if (holidayCacheDate === today && holidayCache[countryCode]) {
-        return holidayCache[countryCode]
-    }
-
-    try {
-        const year = new Date().getFullYear()
-        const response = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/${countryCode}`)
-
-        if (!response.ok) return []
-
-        const data = await response.json()
-        const holidays = data.map((h: any) => ({ date: h.date, name: h.name }))
-
-        // Cache
-        holidayCache[countryCode] = holidays
-        holidayCacheDate = today
-
-        return holidays
-    } catch (e) {
-        return []
-    }
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function _isHolidayToday(holidays: { date: string; name: string }[]): { isHoliday: boolean; holidayName: string | null } {
-    const today = new Date().toISOString().split("T")[0]
-    const holiday = holidays.find(h => h.date === today)
-    return { isHoliday: !!holiday, holidayName: holiday?.name || null }
-}
+// Note: Holiday detection is handled in client-side global-prediction-enhancers.ts
+// For now, we use school session which is synchronous
 
 function isSchoolInSession(countryCode: string): boolean {
     const now = new Date()
