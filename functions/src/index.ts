@@ -952,7 +952,8 @@ const GLOBAL_CITIES: Record<string, { name: string; density: number; population:
 let holidayCache: Record<string, { date: string; name: string }[]> = {}
 let holidayCacheDate: string = ""
 
-async function fetchHolidays(countryCode: string): Promise<{ date: string; name: string }[]> {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function _fetchHolidays(countryCode: string): Promise<{ date: string; name: string }[]> {
     const today = new Date().toISOString().split("T")[0]
 
     // Return cached if same day
@@ -979,7 +980,8 @@ async function fetchHolidays(countryCode: string): Promise<{ date: string; name:
     }
 }
 
-function isHolidayToday(holidays: { date: string; name: string }[]): { isHoliday: boolean; holidayName: string | null } {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function _isHolidayToday(holidays: { date: string; name: string }[]): { isHoliday: boolean; holidayName: string | null } {
     const today = new Date().toISOString().split("T")[0]
     const holiday = holidays.find(h => h.date === today)
     return { isHoliday: !!holiday, holidayName: holiday?.name || null }
@@ -1076,6 +1078,12 @@ function calculateTrafficPrediction(
     }
     if (venueType === "indoor_gym" && ((hour >= 6 && hour <= 8) || (hour >= 17 && hour <= 20))) {
         trafficScore += 20 // Gyms busy before/after work
+    }
+
+    // School session impact (after-school rush at sports venues)
+    const countryCode = cityData?.country || "US"
+    if (isSchoolInSession(countryCode) && hour >= 15 && hour <= 18) {
+        trafficScore += 10 // After-school rush
     }
 
     // Add some variance
