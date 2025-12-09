@@ -96,7 +96,9 @@ export default function RootLayout() {
                   <Stack.Screen name="settings/notifications/friends" />
                   <Stack.Screen name="waitlist/claim/[classId]" />
                   <Stack.Screen name="instructor-dashboard" />
+                  <Stack.Screen name="trainer-dashboard" />
                 </Stack>
+
 
               </StripeProvider>
             </LocationProvider>
