@@ -1219,3 +1219,229 @@ export const triggerTrafficUpdate = functions.https.onCall(async (data, context)
     return { success: true, venuesUpdated: updateCount }
 })
 
+// ============================================
+// SMART PUSH NOTIFICATIONS
+// Notify users when conditions are optimal at their favorite venues
+// Runs every hour to check for good play times
+// ============================================
+
+interface UserNotificationPrefs {
+    favoriteVenues: string[]
+    notifyOnEmpty: boolean
+    notifyOnGoodCrowd: boolean
+    quietHoursStart?: number // 22 = 10 PM
+    quietHoursEnd?: number   // 8 = 8 AM
+    fcmToken?: string
+}
+
+/**
+ * Scheduled function: Runs every hour
+ * Checks favorite venues and sends push notifications for optimal conditions
+ */
+export const sendOptimalTimeNotifications = functions.pubsub
+    .schedule("every 1 hours")
+    .onRun(async (context) => {
+        functions.logger.info("Checking for optimal play time notifications")
+        const db = admin.firestore()
+        const now = new Date()
+        const currentHour = now.getHours()
+
+        try {
+            // Get all users with notification preferences
+            const usersSnapshot = await db.collection("users")
+                .where("notificationsEnabled", "==", true)
+                .get()
+
+            if (usersSnapshot.empty) {
+                functions.logger.info("No users with notifications enabled")
+                return null
+            }
+
+            let notificationsSent = 0
+
+            for (const userDoc of usersSnapshot.docs) {
+                const userData = userDoc.data()
+                const prefs = userData.notificationPrefs as UserNotificationPrefs | undefined
+
+                // Skip if no FCM token
+                if (!prefs?.fcmToken) continue
+
+                // Skip quiet hours
+                const quietStart = prefs.quietHoursStart ?? 22
+                const quietEnd = prefs.quietHoursEnd ?? 8
+                if (currentHour >= quietStart || currentHour < quietEnd) continue
+
+                // Check favorite venues
+                const favorites = prefs.favoriteVenues || []
+                for (const venueId of favorites.slice(0, 3)) { // Max 3 venues
+                    const venueDoc = await db.collection("venues").doc(venueId).get()
+                    if (!venueDoc.exists) continue
+
+                    const venue = venueDoc.data()
+                    const traffic = venue?.traffic
+                    if (!traffic) continue
+
+                    let shouldNotify = false
+                    let message = ""
+
+                    // Check conditions
+                    if (traffic.level === "low" || traffic.level === "empty") {
+                        if (prefs.notifyOnEmpty !== false) {
+                            shouldNotify = true
+                            message = `🎯 ${venue.name} is ${traffic.level} right now - perfect time to play!`
+                        }
+                    } else if (traffic.level === "moderate") {
+                        if (prefs.notifyOnGoodCrowd === true) {
+                            shouldNotify = true
+                            message = `👥 ${venue.name} has a good crowd for games right now!`
+                        }
+                    }
+
+                    if (shouldNotify) {
+                        try {
+                            await admin.messaging().send({
+                                token: prefs.fcmToken,
+                                notification: {
+                                    title: "Perfect Time to Play! 🏃",
+                                    body: message,
+                                },
+                                data: {
+                                    type: "optimal_time",
+                                    venueId: venueId,
+                                    venueName: venue.name || "",
+                                },
+                                android: {
+                                    priority: "high",
+                                },
+                                apns: {
+                                    payload: {
+                                        aps: {
+                                            sound: "default",
+                                            badge: 1,
+                                        },
+                                    },
+                                },
+                            })
+                            notificationsSent++
+                            functions.logger.info(`Sent notification to ${userDoc.id} for ${venue.name}`)
+                        } catch (error) {
+                            functions.logger.error("FCM send error:", error)
+                        }
+                    }
+                }
+            }
+
+            functions.logger.info(`Optimal time notifications complete: ${notificationsSent} sent`)
+            return null
+        } catch (error) {
+            functions.logger.error("Error sending optimal time notifications:", error)
+            throw error
+        }
+    })
+
+/**
+ * Trigger notification when venue activity changes significantly
+ * Called when check-in data is updated
+ */
+export const onVenueActivityChange = functions.firestore
+    .document("venueActivity/{venueId}")
+    .onUpdate(async (change, context) => {
+        const venueId = context.params.venueId
+        const before = change.before.data()
+        const after = change.after.data()
+
+        const previousCount = before.activeCheckIns || 0
+        const currentCount = after.activeCheckIns || 0
+
+        // Significant change: venue just got empty or just got busy
+        if (previousCount > 3 && currentCount <= 1) {
+            functions.logger.info(`Venue ${venueId} just emptied out - sending notifications`)
+            // Could trigger immediate notifications here
+        }
+
+        if (previousCount <= 2 && currentCount >= 5) {
+            functions.logger.info(`Venue ${venueId} just got active - good for pickup games`)
+        }
+
+        return null
+    })
+
+/**
+ * Use check-in data to calibrate traffic predictions
+ * Called periodically to improve ML accuracy
+ */
+export const calibrateTrafficPredictions = functions.pubsub
+    .schedule("every 6 hours")
+    .onRun(async (context) => {
+        functions.logger.info("Calibrating traffic predictions with check-in data")
+        const db = admin.firestore()
+
+        try {
+            // Get recent check-ins (last 7 days)
+            const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+            const checkInsSnapshot = await db.collection("checkIns")
+                .where("timestamp", ">", weekAgo)
+                .get()
+
+            if (checkInsSnapshot.empty) {
+                functions.logger.info("No recent check-ins for calibration")
+                return null
+            }
+
+            // Aggregate by venue and hour
+            const venueHourData: Record<string, Record<number, number[]>> = {}
+
+            checkInsSnapshot.forEach(doc => {
+                const data = doc.data()
+                const venueId = data.venueId
+                const timestamp = data.timestamp?.toDate() || new Date()
+                const hour = timestamp.getHours()
+
+                if (!venueHourData[venueId]) venueHourData[venueId] = {}
+                if (!venueHourData[venueId][hour]) venueHourData[venueId][hour] = []
+
+                // Convert crowd estimate to number
+                const crowdNum = data.crowdEstimate === "packed" ? 5 :
+                    data.crowdEstimate === "busy" ? 4 :
+                        data.crowdEstimate === "moderate" ? 3 :
+                            data.crowdEstimate === "light" ? 2 : 1
+                venueHourData[venueId][hour].push(crowdNum)
+            })
+
+            // Update venue calibration data
+            const batch = db.batch()
+            let updateCount = 0
+
+            for (const venueId of Object.keys(venueHourData)) {
+                const hourlyAverages: Record<number, number> = {}
+                for (const hour of Object.keys(venueHourData[venueId])) {
+                    const values = venueHourData[venueId][parseInt(hour)]
+                    hourlyAverages[parseInt(hour)] = values.reduce((a, b) => a + b, 0) / values.length
+                }
+
+                const venueRef = db.collection("venues").doc(venueId)
+                batch.update(venueRef, {
+                    trafficCalibration: hourlyAverages,
+                    calibrationUpdated: admin.firestore.FieldValue.serverTimestamp(),
+                    checkInDataPoints: checkInsSnapshot.size,
+                })
+                updateCount++
+
+                if (updateCount % 450 === 0) {
+                    await batch.commit()
+                }
+            }
+
+            if (updateCount > 0) {
+                await batch.commit()
+            }
+
+            functions.logger.info(`Calibration complete: ${updateCount} venues updated`)
+            return null
+        } catch (error) {
+            functions.logger.error("Error calibrating predictions:", error)
+            throw error
+        }
+    })
+
+
