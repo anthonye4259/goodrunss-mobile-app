@@ -156,14 +156,6 @@ export default function QuestionnaireScreen() {
       const isStudio = selectedActivities.some(a => STUDIO_ACTIVITIES.includes(a))
       const isRec = selectedActivities.some(a => REC_ACTIVITIES.includes(a))
 
-      // Determine activityType
-      let activityType: "studio" | "rec" | "both" = "rec"
-      if (isStudio && isRec) {
-        activityType = "both"
-      } else if (isStudio) {
-        activityType = "studio"
-      }
-
       // Use the rating for the primary activity if available
       const playerRating = activityRatings[primaryActivity]
         ? {
@@ -179,7 +171,6 @@ export default function QuestionnaireScreen() {
         isRecUser: isRec,
         userType: userType,
         primaryActivity: primaryActivity,
-        activityType: activityType,
         playerRating: playerRating,
         trainerTagline: trainerTagline || undefined, // Save tagline for trainers
       })
