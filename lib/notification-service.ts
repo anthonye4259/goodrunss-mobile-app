@@ -8,6 +8,9 @@ import AsyncStorage from "@react-native-async-storage/async-storage"
 export type NotificationType =
   | "booking_confirmed"
   | "booking_reminder"
+  | "booking_request"      // New: for trainers when client requests booking
+  | "session_reminder"     // New: reminder X mins before session
+  | "new_client"           // New: new client booked with you
   | "message_received"
   | "need_players"
   | "check_in"
@@ -18,6 +21,9 @@ export type NotificationType =
   | "challenge_accepted"
   | "badge_earned"
   | "level_up"
+  | "waitlist_spot"        // New: spot opened on waitlist
+  | "availability_reminder" // New: remind trainer to update availability
+
 
 export interface NotificationData {
   type: NotificationType
@@ -184,6 +190,9 @@ export class NotificationService {
     return {
       booking_confirmed: true,
       booking_reminder: true,
+      booking_request: true,     // Trainer: new booking request
+      session_reminder: true,    // Trainer: reminder before session
+      new_client: true,          // Trainer: new client
       message_received: true,
       need_players: true,
       check_in: true,
@@ -194,6 +203,8 @@ export class NotificationService {
       challenge_accepted: true,
       badge_earned: true,
       level_up: true,
+      waitlist_spot: true,       // Client: spot opened
+      availability_reminder: true, // Trainer: update availability
     }
   }
 

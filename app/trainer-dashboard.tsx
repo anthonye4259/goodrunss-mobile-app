@@ -27,6 +27,7 @@ import * as Haptics from "expo-haptics"
 import { useTrainerSessions, useTrainerAnalytics, useTrainerWaitlist } from "@/lib/hooks/useDashboard"
 import { useInstructorRevenueShare, TRAINER_PRICING } from "@/lib/services/pro-revenue-share"
 import { ProPriorityToggle } from "@/components/ProPrioritySettings"
+import { AvailabilityToggle } from "@/components/AvailabilityToggle"
 import { useAuth } from "@/lib/auth-context"
 
 import { useUserPreferences } from "@/lib/user-preferences"
@@ -115,9 +116,12 @@ export default function TrainerDashboardScreen() {
                         <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>Your Business</Text>
-                    <TouchableOpacity onPress={openWebDashboard}>
-                        <Ionicons name="open-outline" size={22} color="#7ED957" />
-                    </TouchableOpacity>
+                    <View style={styles.headerRight}>
+                        <AvailabilityToggle compact />
+                        <TouchableOpacity onPress={openWebDashboard} style={{ marginLeft: 8 }}>
+                            <Ionicons name="open-outline" size={22} color="#7ED957" />
+                        </TouchableOpacity>
+                    </View>
                 </View>
 
                 {/* Quick Stats */}
@@ -183,11 +187,14 @@ export default function TrainerDashboardScreen() {
                     </View>
                 )}
 
-                {/* Pro Priority Settings */}
+                {/* Settings */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Settings</Text>
+                    <AvailabilityToggle />
+                    <View style={{ height: 12 }} />
                     {user?.id && <ProPriorityToggle instructorId={user.id} />}
                 </View>
+
 
                 {/* Earnings Breakdown */}
                 <View style={styles.section}>
@@ -388,6 +395,10 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: "700",
         color: "#FFFFFF",
+    },
+    headerRight: {
+        flexDirection: "row",
+        alignItems: "center",
     },
     statsGrid: {
         flexDirection: "row",
