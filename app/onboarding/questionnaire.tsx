@@ -82,7 +82,7 @@ export default function QuestionnaireScreen() {
         setSelectedActivities([activity])
       }
     } else {
-      // Multi select for players/practitioners/both
+      // Multi select for players/both
       if (selectedActivities.includes(activity)) {
         setSelectedActivities(prev => prev.filter(a => a !== activity))
       } else {

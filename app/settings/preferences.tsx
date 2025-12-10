@@ -12,11 +12,10 @@ const REC_ACTIVITIES = ["Basketball", "Tennis", "Pickleball", "Padel", "Racquetb
 const STUDIO_ACTIVITIES = ["Pilates", "Yoga", "Lagree", "Barre", "Meditation"]
 const ALL_ACTIVITIES = [...REC_ACTIVITIES, ...STUDIO_ACTIVITIES]
 
-type UserType = "player" | "practitioner" | "trainer" | "instructor" | "both"
+type UserType = "player" | "trainer" | "instructor" | "both"
 
 const USER_TYPE_OPTIONS: { id: UserType; label: string; icon: string; color: string }[] = [
     { id: "player", label: "Player", icon: "basketball", color: "#FF6B35" },
-    { id: "practitioner", label: "Practitioner", icon: "leaf", color: "#8B5CF6" },
     { id: "trainer", label: "Trainer", icon: "fitness", color: "#7ED957" },
     { id: "instructor", label: "Instructor", icon: "sparkles", color: "#EC4899" },
     { id: "both", label: "Both", icon: "sync", color: "#06B6D4" },
@@ -83,22 +82,15 @@ export default function PreferencesScreen() {
         const isStudio = selectedActivities.some(a => STUDIO_ACTIVITIES.includes(a))
         const isRec = selectedActivities.some(a => REC_ACTIVITIES.includes(a))
 
-        let activityType: "studio" | "rec" | "both" = "rec"
-        if (isStudio && isRec) {
-            activityType = "both"
-        } else if (isStudio) {
-            activityType = "studio"
-        }
-
         setPreferences({
             ...preferences,
             userType: selectedUserType,
             activities: selectedActivities,
             primaryActivity: primaryActivity || selectedActivities[0],
-            activityType: activityType,
             isStudioUser: isStudio,
             isRecUser: isRec,
         })
+
 
         Alert.alert(
             "Preferences Saved",
@@ -111,8 +103,6 @@ export default function PreferencesScreen() {
         switch (selectedUserType) {
             case "player":
                 return { rec: REC_ACTIVITIES, studio: [] }
-            case "practitioner":
-                return { rec: [], studio: STUDIO_ACTIVITIES }
             case "trainer":
                 return { rec: REC_ACTIVITIES, studio: [] }
             case "instructor":
@@ -303,8 +293,7 @@ export default function PreferencesScreen() {
                                 <Text style={styles.previewValue}>
                                     {selectedUserType === "trainer" ? "Coach Mode"
                                         : selectedUserType === "instructor" ? "Teaching Mode"
-                                            : selectedUserType === "practitioner" ? "Wellness Mode"
-                                                : "Player Mode"}
+                                            : "Player Mode"}
                                 </Text>
                             </View>
                             <View style={styles.previewRow}>

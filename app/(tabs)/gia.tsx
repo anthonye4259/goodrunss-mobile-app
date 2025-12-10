@@ -36,12 +36,10 @@ export default function GIAScreen() {
         return "Hey Coach! I'm GIA, your coaching assistant. How can I help you grow your business today?"
       case "instructor":
         return "Hey! I'm GIA, your teaching assistant. How can I help you manage your practice today?"
-      case "practitioner":
-        return "Hey! I'm GIA, your wellness AI assistant. How can I help you today?"
       case "both":
         return "Hey! I'm GIA, your personal assistant. Whether you're training or teaching, I'm here to help!"
       default:
-        return `Hey! I'm GIA, your ${activityType === "studio" ? "wellness" : "fitness"} AI assistant. How can I help you today?`
+        return "Hey! I'm GIA, your sports AI assistant. How can I help you today?"
     }
   }
 
@@ -52,14 +50,10 @@ export default function GIAScreen() {
         return ["View my schedule", "Message clients", "Track earnings", "Find training venues"]
       case "instructor":
         return ["View my classes", "Message students", "Track earnings", "Set availability"]
-      case "practitioner":
-        return ["Find a yoga studio", "Generate home workout", "Book a class", "Track my progress"]
       case "both":
         return ["Find a court", "View my bookings", "Check client messages", "Track my stats"]
       default:
-        return activityType === "studio"
-          ? ["Find a yoga studio", "Generate home workout", "Book a class", "Track my progress"]
-          : ["Find a court nearby", "Get a workout plan", "Find pickup games", "Track my stats"]
+        return ["Find a court nearby", "Get a workout plan", "Find pickup games", "Track my stats"]
     }
   }
 

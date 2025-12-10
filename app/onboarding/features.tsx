@@ -454,8 +454,6 @@ export default function FeaturesScreen() {
                 return "Your Coaching Toolkit"
             case "instructor":
                 return "Your Teaching Toolkit"
-            case "practitioner":
-                return "Your Wellness Toolkit"
             case "both":
                 return "Your Complete Toolkit"
             default:

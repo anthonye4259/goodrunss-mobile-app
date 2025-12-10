@@ -37,7 +37,7 @@ export default function TrainerDashboardScreen() {
     const [refreshing, setRefreshing] = useState(false)
 
     // Determine user type for contextual display
-    const isInstructor = preferences.userType === "instructor" || preferences.userType === "practitioner"
+    const isInstructor = preferences.userType === "instructor"
     const userTypeLabel = isInstructor ? "Instructor" : "Trainer"
 
     const {

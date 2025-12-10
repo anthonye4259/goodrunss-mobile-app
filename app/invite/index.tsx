@@ -69,22 +69,6 @@ const getInviteConfig = (userType: string | null): InviteConfig => {
                 color: "#8B5CF6",
                 icon: "sparkles",
             }
-        case "practitioner":
-            return {
-                mode: "friends",
-                title: "Practice With Friends",
-                subtitle: "Invite friends to join your wellness journey",
-                linkType: "wellness",
-                benefits: [
-                    "👀 See when friends are at studios",
-                    "🔔 Get notified when they check in",
-                    "🏆 Challenge each other's streaks",
-                    "🧘 Book classes together",
-                ],
-                ctaText: "Invite Friends",
-                color: "#8B5CF6",
-                icon: "leaf",
-            }
         case "both":
             return {
                 mode: "both",
