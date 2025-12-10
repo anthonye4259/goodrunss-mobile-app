@@ -26,7 +26,6 @@ type Message = {
 
 export default function GIAScreen() {
   const { preferences } = useUserPreferences()
-  const activityType = preferences.activityType || "rec"
   const userType = preferences.userType || "player"
 
   // Get personalized greeting based on user type

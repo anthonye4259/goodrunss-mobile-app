@@ -31,9 +31,8 @@ export default function TrainersScreen() {
     // Check if user is a trainer/instructor
     const isTrainer = preferences.userType === "trainer" || preferences.userType === "instructor" || preferences.userType === "both"
 
-    // Check if on wellness side
-    const isWellness = preferences.activityType === "studios" ||
-        ["Yoga", "Pilates", "Meditation", "Barre", "Dance"].includes(primaryActivity)
+    // Only instructors see wellness instructor browse
+    const isInstructor = preferences.userType === "instructor"
 
     const handlePress = (action: () => void) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
@@ -45,14 +44,15 @@ export default function TrainersScreen() {
         return <TrainerDashboardView content={content} handlePress={handlePress} />
     }
 
-    // Client View - Browse Trainers/Instructors
-    if (isWellness) {
+    // Instructor sees wellness browse (for viewing other instructors)
+    if (isInstructor) {
         return <InstructorBrowseView content={content} handlePress={handlePress} />
     }
 
-    // Rec Side - Browse Trainers
+    // Players always see Rec Trainers (sports coaches)
     return <RecTrainerBrowseView content={content} handlePress={handlePress} />
 }
+
 
 // ============================================
 // INSTRUCTOR BROWSE (WELLNESS)
