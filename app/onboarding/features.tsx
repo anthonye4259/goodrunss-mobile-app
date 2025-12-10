@@ -357,8 +357,6 @@ const getFeaturesForUserType = (userType: string | null): FeatureSlide[] => {
     switch (userType) {
         case "player":
             return PLAYER_FEATURES
-        case "practitioner":
-            return PRACTITIONER_FEATURES
         case "trainer":
             return TRAINER_FEATURES
         case "instructor":
@@ -369,6 +367,7 @@ const getFeaturesForUserType = (userType: string | null): FeatureSlide[] => {
             return PLAYER_FEATURES
     }
 }
+
 
 export default function FeaturesScreen() {
     const { preferences } = useUserPreferences()

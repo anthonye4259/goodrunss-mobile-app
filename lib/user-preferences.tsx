@@ -7,9 +7,9 @@ type UserPreferences = {
   activities: string[]
   isStudioUser: boolean
   isRecUser: boolean
-  userType: "player" | "practitioner" | "trainer" | "instructor" | "both" | null
+  userType: "player" | "trainer" | "instructor" | "both" | null
   primaryActivity?: string
-  activityType?: "studio" | "rec" | "both"
+
   userId?: string
   location?: {
     latitude: number

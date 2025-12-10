@@ -6,25 +6,16 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
 import * as Haptics from "expo-haptics"
 
-type UserTypeOption = "player" | "practitioner" | "trainer" | "instructor" | "both"
+type UserTypeOption = "player" | "trainer" | "instructor" | "both"
 
 const USER_TYPE_OPTIONS = [
   {
     id: "player" as UserTypeOption,
     title: "Player",
-    subtitle: "Sports & Recreation",
-    description: "Find courts, join games, compete",
+    subtitle: "Find Games & Courts",
+    description: "Check conditions, join games, compete",
     icon: "basketball" as const,
     color: "#FF6B35",
-    category: "play",
-  },
-  {
-    id: "practitioner" as UserTypeOption,
-    title: "Practitioner",
-    subtitle: "Studio & Wellness",
-    description: "Find studios, book classes, practice",
-    icon: "leaf" as const,
-    color: "#8B5CF6",
     category: "play",
   },
   {
@@ -49,12 +40,13 @@ const USER_TYPE_OPTIONS = [
     id: "both" as UserTypeOption,
     title: "I Do Both",
     subtitle: "Play & Teach",
-    description: "I both practice AND teach",
+    description: "I both play AND teach",
     icon: "sync" as const,
     color: "#06B6D4",
     category: "both",
   },
 ]
+
 
 export default function OnboardingScreen() {
   const router = useRouter()

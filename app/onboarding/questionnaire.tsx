@@ -14,15 +14,13 @@ const REC_ACTIVITIES = ["Basketball", "Tennis", "Pickleball", "Padel", "Racquetb
 const STUDIO_ACTIVITIES = ["Pilates", "Yoga", "Lagree", "Barre", "Meditation"]
 const ALL_ACTIVITIES = [...REC_ACTIVITIES, ...STUDIO_ACTIVITIES]
 
-type UserType = "player" | "practitioner" | "trainer" | "instructor" | "both"
+type UserType = "player" | "trainer" | "instructor" | "both"
 
 // Map user types to their relevant activities
 const getActivitiesForUserType = (userType: UserType): string[] => {
   switch (userType) {
     case "player":
       return REC_ACTIVITIES
-    case "practitioner":
-      return STUDIO_ACTIVITIES
     case "trainer":
       return REC_ACTIVITIES
     case "instructor":
@@ -30,7 +28,7 @@ const getActivitiesForUserType = (userType: UserType): string[] => {
     case "both":
       return ALL_ACTIVITIES
     default:
-      return ALL_ACTIVITIES
+      return REC_ACTIVITIES
   }
 }
 
@@ -39,8 +37,6 @@ const getTitleForUserType = (userType: UserType): { title: string; subtitle: str
   switch (userType) {
     case "player":
       return { title: "What sports do you play?", subtitle: "Select all that apply" }
-    case "practitioner":
-      return { title: "What do you practice?", subtitle: "Select all that apply" }
     case "trainer":
       return { title: "What do you teach?", subtitle: "Select your specialty" }
     case "instructor":
@@ -48,7 +44,7 @@ const getTitleForUserType = (userType: UserType): { title: string; subtitle: str
     case "both":
       return { title: "What activities are you into?", subtitle: "Select all that apply" }
     default:
-      return { title: "What activities do you enjoy?", subtitle: "Select all that apply" }
+      return { title: "What sports do you play?", subtitle: "Select all that apply" }
   }
 }
 
@@ -56,6 +52,7 @@ const getTitleForUserType = (userType: UserType): { title: string; subtitle: str
 const isTeachingRole = (userType: UserType): boolean => {
   return userType === "trainer" || userType === "instructor"
 }
+
 
 export default function QuestionnaireScreen() {
   const router = useRouter()
