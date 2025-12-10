@@ -3,10 +3,14 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingVi
 import { useRouter } from "expo-router"
 import { LinearGradient } from "expo-linear-gradient"
 import { useAuth } from "@/lib/auth-context"
+import { useUserPreferences } from "@/lib/user-preferences"
+import { doc, getDoc } from "firebase/firestore"
+import { db } from "@/lib/firebase-config"
 
 export default function AuthScreen() {
   const router = useRouter()
   const { login, signup, continueAsGuest } = useAuth()
+  const { setPreferences } = useUserPreferences()
   const [isLogin, setIsLogin] = useState(true)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -28,10 +32,46 @@ export default function AuthScreen() {
     try {
       if (isLogin) {
         await login(email, password)
+
+        // Check if user already has preferences (from dashboard signup)
+        if (db) {
+          try {
+            const auth = await import("firebase/auth")
+            const currentUser = auth.getAuth().currentUser
+            if (currentUser) {
+              const userDoc = await getDoc(doc(db, "users", currentUser.uid))
+              if (userDoc.exists()) {
+                const userData = userDoc.data()
+
+                // If user has userType set (trainer/instructor from dashboard), sync and skip onboarding
+                if (userData.userType) {
+                  setPreferences({
+                    userType: userData.userType,
+                    activities: userData.activities || [],
+                    primaryActivity: userData.primaryActivity,
+                    isStudioUser: userData.userType === "instructor",
+                    isRecUser: userData.userType === "trainer",
+                    name: userData.name,
+                  })
+
+                  // Skip to main app - they're a returning trainer/instructor
+                  router.replace("/(tabs)")
+                  return
+                }
+              }
+            }
+          } catch (e) {
+            console.log("Could not check for existing preferences:", e)
+          }
+        }
+
+        // New user or no preferences - go through onboarding
+        router.replace("/onboarding")
       } else {
         await signup(email, password, name)
+        // New signup always goes to onboarding
+        router.replace("/onboarding")
       }
-      router.replace("/(tabs)")
     } catch (error: any) {
       Alert.alert("Error", error.message || "Authentication failed")
     } finally {
@@ -41,8 +81,9 @@ export default function AuthScreen() {
 
   const handleGuestMode = () => {
     continueAsGuest()
-    router.replace("/(tabs)")
+    router.replace("/onboarding")
   }
+
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
@@ -57,6 +98,21 @@ export default function AuthScreen() {
             <Text className="text-3xl font-bold text-foreground mb-2">GoodRunss</Text>
             <Text className="text-lg text-muted-foreground">Where the World Plays</Text>
           </View>
+
+          {/* Dashboard User Callout */}
+          {!isLogin && (
+            <TouchableOpacity
+              onPress={() => setIsLogin(true)}
+              className="bg-primary/10 border border-primary/30 rounded-xl p-4 mb-6"
+            >
+              <Text className="text-primary font-semibold text-center">
+                👋 Already have a Dashboard account?
+              </Text>
+              <Text className="text-muted-foreground text-center text-sm mt-1">
+                Tap here to sign in and sync your data
+              </Text>
+            </TouchableOpacity>
+          )}
 
           <View className="space-y-4">
             {!isLogin && (
