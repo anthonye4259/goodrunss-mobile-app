@@ -1,8 +1,9 @@
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Image } from "react-native"
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Image, Share, Alert } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
 import { useUserPreferences } from "@/lib/user-preferences"
+import { useAuth } from "@/lib/auth-context"
 import { router } from "expo-router"
 import * as Haptics from "expo-haptics"
 import { SafeAreaView } from "react-native-safe-area-context"
@@ -10,10 +11,27 @@ import { SafeAreaView } from "react-native-safe-area-context"
 export default function ProfileScreen() {
   const { t } = useTranslation()
   const { preferences } = useUserPreferences()
+  const { user } = useAuth()
+
+  const isTeachingRole = preferences.userType === "trainer" || preferences.userType === "instructor"
 
   const handlePress = (route: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     router.push(route as any)
+  }
+
+  const handleShareProfile = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+    const profileUrl = `https://goodrunss.com/coach/${user?.id || "me"}`
+    try {
+      await Share.share({
+        message: `Book a session with me on GoodRunss! 🏀\n\n${profileUrl}`,
+        url: profileUrl,
+        title: "My GoodRunss Profile",
+      })
+    } catch (error) {
+      console.error("Share error:", error)
+    }
   }
 
   const menuItems = [
@@ -69,6 +87,14 @@ export default function ProfileScreen() {
                 <Text style={styles.statLabel}>Friends</Text>
               </View>
             </View>
+
+            {/* Share Profile Button - For Trainers/Instructors */}
+            {isTeachingRole && (
+              <TouchableOpacity style={styles.shareProfileButton} onPress={handleShareProfile}>
+                <Ionicons name="share-social" size={18} color="#7ED957" />
+                <Text style={styles.shareProfileText}>Share Booking Link</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Menu Items */}
@@ -250,5 +276,22 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 14,
     color: "#666",
+  },
+  shareProfileButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(126, 217, 87, 0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(126, 217, 87, 0.3)",
+    borderRadius: 10,
+    paddingVertical: 12,
+    marginTop: 16,
+    gap: 8,
+  },
+  shareProfileText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#7ED957",
   },
 })
