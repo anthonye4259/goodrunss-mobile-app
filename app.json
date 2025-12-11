@@ -16,7 +16,6 @@
     "assetBundlePatterns": [
       "**/*"
     ],
-
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.goodrunss.app",
@@ -115,6 +114,12 @@
       "eas": {
         "projectId": "54c9b3c6-9f21-44cc-921b-0fa2db35b4a4"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/54c9b3c6-9f21-44cc-921b-0fa2db35b4a4"
     }
   }
 }
