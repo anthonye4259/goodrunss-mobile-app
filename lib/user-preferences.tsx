@@ -9,6 +9,7 @@ type UserPreferences = {
   isRecUser: boolean
   userType: "player" | "trainer" | "instructor" | "both" | null
   primaryActivity?: string
+  onboardingComplete?: boolean // True if setup completed, false if skipped
 
   userId?: string
   location?: {

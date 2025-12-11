@@ -105,17 +105,17 @@ export default function TabsLayout() {
         }}
       />
 
-      {/* Tab 5: Trainers */}
+      {/* Tab 5: Contextual - Dashboard for trainers, Find Coach for players */}
       <Tabs.Screen
         name="trainers"
         options={{
-          title: "Trainers",
+          title: preferences.userType === "trainer" || preferences.userType === "instructor" || preferences.userType === "both"
+            ? "Dashboard"
+            : "Coaches",
           tabBarIcon: ({ color, size }) => (
-            <Image
-              source={require("@/assets/images/goodrunss-logo-white.png")}
-              style={{ width: size, height: size, tintColor: color }}
-              resizeMode="contain"
-            />
+            preferences.userType === "trainer" || preferences.userType === "instructor" || preferences.userType === "both"
+              ? <Ionicons name="stats-chart" size={size} color={color} />
+              : <Ionicons name="fitness" size={size} color={color} />
           ),
         }}
       />

@@ -14,6 +14,7 @@ import { MovementScoreWidget } from "@/components/MovementScoreWidget"
 import { NearestVenueWidget } from "@/components/NearestVenueWidget"
 import { FavoritesWidget } from "@/components/FavoritesWidget"
 import { TeacherDashboard } from "@/components/TeacherDashboard"
+import { PartnerCityBadge } from "@/components/partner-city-badge"
 
 export default function HomeScreen() {
   const { preferences } = useUserPreferences()
@@ -72,6 +73,9 @@ export default function HomeScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
+          {/* Partner City Badge - Shows for Myrtle Beach users */}
+          <PartnerCityBadge />
+
           {/* Header with Profile & Notifications */}
           <View style={styles.header}>
             <View style={styles.headerRow}>
@@ -134,7 +138,7 @@ export default function HomeScreen() {
               <View style={styles.reportTextContainer}>
                 <Text style={styles.reportTitle}>Report Court Condition</Text>
                 <Text style={styles.reportDesc}>Save gas, time & help the planet 🌍</Text>
-                <Text style={styles.reportEarnings}>Earn $1-31 per report</Text>
+                <Text style={styles.reportEarnings}>💰 Earn $5 per report!</Text>
               </View>
               <View style={styles.reportBadge}>
                 <Ionicons name="cash" size={16} color="#7ED957" />

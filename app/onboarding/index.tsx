@@ -5,6 +5,7 @@ import { LinearGradient } from "expo-linear-gradient"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
 import * as Haptics from "expo-haptics"
+import { useUserPreferences } from "@/lib/user-preferences"
 
 type UserTypeOption = "player" | "trainer" | "instructor" | "both"
 
@@ -50,6 +51,7 @@ const USER_TYPE_OPTIONS = [
 
 export default function OnboardingScreen() {
   const router = useRouter()
+  const { setPreferences } = useUserPreferences()
   const [userType, setUserType] = useState<UserTypeOption | null>(null)
 
   const handleSelect = (type: UserTypeOption) => {
@@ -67,6 +69,20 @@ export default function OnboardingScreen() {
     }
   }
 
+  const handleSkip = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    // Set minimal defaults and mark as incomplete
+    setPreferences({
+      userType: "player",
+      activities: ["Basketball"],
+      primaryActivity: "Basketball",
+      isStudioUser: false,
+      isRecUser: true,
+      onboardingComplete: false, // Will prompt to complete later
+    })
+    router.replace("/(tabs)")
+  }
+
   const playOptions = USER_TYPE_OPTIONS.filter(o => o.category === "play")
   const teachOptions = USER_TYPE_OPTIONS.filter(o => o.category === "teach")
   const bothOption = USER_TYPE_OPTIONS.find(o => o.category === "both")!
@@ -75,6 +91,11 @@ export default function OnboardingScreen() {
     <LinearGradient colors={["#0A0A0A", "#141414"]} style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          {/* Skip Button in Top Right */}
+          <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
+            <Text style={styles.skipText}>Skip for now</Text>
+          </TouchableOpacity>
+
           <View style={styles.header}>
             <Text style={styles.title}>Welcome to GoodRunss</Text>
             <Text style={styles.subtitle}>What brings you here?</Text>
@@ -325,5 +346,15 @@ const styles = StyleSheet.create({
     color: "#000000",
     fontWeight: "bold",
     fontSize: 18,
+  },
+  skipButton: {
+    alignSelf: "flex-end",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  skipText: {
+    color: "#6B7280",
+    fontSize: 14,
+    fontWeight: "500",
   },
 })
