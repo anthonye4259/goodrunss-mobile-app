@@ -15,6 +15,8 @@ import { NearestVenueWidget } from "@/components/NearestVenueWidget"
 import { FavoritesWidget } from "@/components/FavoritesWidget"
 import { TeacherDashboard } from "@/components/TeacherDashboard"
 import { PartnerCityBadge } from "@/components/partner-city-badge"
+import { NearMeBadge } from "@/components/NearMeBadge"
+import { ProactiveGIA } from "@/components/ProactiveGIA"
 
 export default function HomeScreen() {
   const { preferences } = useUserPreferences()
@@ -114,6 +116,12 @@ export default function HomeScreen() {
             <TeacherDashboard userType={preferences.userType as "trainer" | "instructor"} />
           ) : (
             <>
+              {/* Proactive GIA Suggestions */}
+              <ProactiveGIA compact />
+
+              {/* Near Me Badge - Courts within 1 mile */}
+              <NearMeBadge />
+
               {/* Movement Score Widget - Daily Check-in */}
               {!isGuest && <MovementScoreWidget />}
 
