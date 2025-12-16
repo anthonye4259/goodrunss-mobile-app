@@ -1,19 +1,18 @@
 /**
  * Daily Engagement Notifications Service
  * 
- * Duolingo-style notifications to keep users active and engaged.
- * Sends contextual notifications based on:
- * - Time of day
- * - User type (player/trainer)
- * - Activity history
- * - Local court activity
- * - Streak status
+ * Duolingo-style notifications - motivational, sport-specific, personalized.
+ * Key psychology:
+ * - Loss aversion (streaks, FOMO)
+ * - Social proof (others are playing)
+ * - Progress tracking (you're improving)
+ * - Variable rewards (randomized messages)
  */
 
 import * as Notifications from "expo-notifications"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 
-// Notification types for engagement
+// Notification types
 export type EngagementNotificationType =
     | "morning_motivation"
     | "lunch_reminder"
@@ -24,6 +23,8 @@ export type EngagementNotificationType =
     | "report_reminder"
     | "social_nudge"
     | "weekly_recap"
+    | "progress_update"
+    | "challenge"
 
 interface ScheduledNotification {
     id: string
@@ -32,173 +33,249 @@ interface ScheduledNotification {
     body: string
     hour: number
     minute: number
-    weekdays?: number[] // 1-7 for Sun-Sat
+    weekdays?: number[]
     userType?: "player" | "trainer" | "instructor" | "all"
 }
 
-// Player notification templates
+// ============================================
+// PLAYER NOTIFICATIONS - SPORT SPECIFIC 🏀🎾
+// ============================================
 const PLAYER_NOTIFICATIONS: ScheduledNotification[] = [
-    // Morning (7-9 AM)
+    // Morning - 7:30 AM
     {
         id: "morning-1",
         type: "morning_motivation",
-        title: "🌅 Rise and Run!",
-        body: "Courts are quiet this morning. Perfect time to get some shots up!",
+        title: "🌅 Rise and Grind",
+        body: "Champions train before the world wakes up. Courts are empty - your time to shine.",
         hour: 7,
         minute: 30,
         userType: "player",
     },
-    // Lunch (12 PM)
+    // Lunch - 12:00 PM
     {
         id: "lunch-1",
         type: "lunch_reminder",
-        title: "🏀 Lunch Run?",
-        body: "Take a break and get some runs in. Courts are active near you!",
+        title: "⏰ Lunch Break = Level Up",
+        body: "30 minutes of play > 30 minutes of scrolling. Courts near you are active!",
         hour: 12,
         minute: 0,
         userType: "player",
     },
-    // Afternoon (4 PM)
+    // Afternoon - 4:00 PM
     {
         id: "afternoon-1",
         type: "nearby_activity",
-        title: "⚡ Courts are heating up!",
-        body: "After-school crowd is out. Players looking for runs near you.",
+        title: "🔥 The Crowd's Showing Up",
+        body: "Games are forming. Get there before the good spots are taken!",
         hour: 16,
         minute: 0,
         userType: "player",
     },
-    // Evening Peak (6 PM)
-    {
-        id: "evening-1",
-        type: "evening_peak",
-        title: "🔥 Peak hours! Games happening now",
-        body: "This is when the action happens. Check live court activity!",
-        hour: 18,
-        minute: 0,
-        userType: "player",
-    },
-    // Social nudge (6:30 PM)
-    {
-        id: "evening-2",
-        type: "social_nudge",
-        title: "👋 Your crew is playing!",
-        body: "Friends checked in nearby. Join them before spots fill up!",
-        hour: 18,
-        minute: 30,
-        userType: "player",
-    },
-    // Streak reminder (8 PM)
-    {
-        id: "night-1",
-        type: "streak_reminder",
-        title: "🏆 Don't break your streak!",
-        body: "You haven't checked in today. One quick report saves it!",
-        hour: 20,
-        minute: 0,
-        userType: "player",
-    },
-    // Report reminder (5:30 PM)
+    // Report Incentive - 5:30 PM
     {
         id: "report-1",
         type: "report_reminder",
-        title: "💰 Earn $5 in 30 seconds",
-        body: "At a court? Quick report = instant rewards!",
+        title: "💰 Quick $5: 30 Seconds",
+        body: "Report court conditions. Get paid. Help your community. Win-win-win.",
         hour: 17,
         minute: 30,
         userType: "player",
     },
+    // Evening Peak - 6:00 PM
+    {
+        id: "evening-1",
+        type: "evening_peak",
+        title: "⚡ PRIME TIME",
+        body: "This is THE hour. Courts are live. Games are running. You in?",
+        hour: 18,
+        minute: 0,
+        userType: "player",
+    },
+    // Social - 6:30 PM
+    {
+        id: "evening-2",
+        type: "social_nudge",
+        title: "👥 Games Need Players",
+        body: "Don't let them play without you. Jump in!",
+        hour: 18,
+        minute: 30,
+        userType: "player",
+    },
+    // Streak Reminder - 8:00 PM
+    {
+        id: "night-1",
+        type: "streak_reminder",
+        title: "🔥 Your Streak!",
+        body: "You've been consistent. Don't break it now. One quick check-in.",
+        hour: 20,
+        minute: 0,
+        userType: "player",
+    },
 ]
 
-// Trainer notification templates
+// ============================================
+// TRAINER NOTIFICATIONS - BUSINESS FOCUSED 📈
+// ============================================
 const TRAINER_NOTIFICATIONS: ScheduledNotification[] = [
-    // Morning
+    // Morning - 8:00 AM
     {
         id: "trainer-morning-1",
         type: "trainer_check_in",
-        title: "🌟 Good morning, Coach!",
-        body: "Check your bookings for today. Clients are waiting!",
+        title: "☀️ Good Morning, Coach",
+        body: "Your clients are counting on you. Check today's schedule and show up strong.",
         hour: 8,
         minute: 0,
         userType: "trainer",
     },
-    // Midday
+    // Midday - 12:30 PM
     {
         id: "trainer-midday-1",
         type: "trainer_check_in",
-        title: "📊 Midday check-in",
-        body: "Update your availability. Open slots = more bookings!",
+        title: "📅 Fill Your Calendar",
+        body: "Empty slots = lost income. Update your availability and get booked.",
         hour: 12,
         minute: 30,
         userType: "trainer",
     },
-    // Afternoon
+    // Afternoon - 4:30 PM
     {
         id: "trainer-afternoon-1",
         type: "nearby_activity",
-        title: "📍 Courts are busy near you!",
-        body: "Players looking for training. Promote your sessions.",
+        title: "📍 Players Looking for You",
+        body: "Courts are busy. People want to learn. Time to grow your client base.",
         hour: 16,
         minute: 30,
         userType: "trainer",
     },
-    // Evening
+    // Evening - 7:00 PM
     {
         id: "trainer-evening-1",
         type: "social_nudge",
-        title: "💪 How was your session?",
-        body: "Log your training and build your reputation!",
+        title: "✍️ Session Complete?",
+        body: "Log it. Get reviews. Build your reputation. Future you says thanks.",
         hour: 19,
         minute: 0,
         userType: "trainer",
     },
-    // Weekly recap (Sunday)
+    // Sunday Weekly Recap - 10:00 AM
     {
         id: "trainer-weekly-1",
         type: "weekly_recap",
-        title: "📈 Your weekly stats are in!",
-        body: "See your views, bookings, and earnings this week!",
+        title: "📊 Your Weekly Numbers",
+        body: "See what you earned, who you helped, and where to grow next week.",
         hour: 10,
         minute: 0,
-        weekdays: [1], // Sunday
+        weekdays: [1],
         userType: "trainer",
     },
 ]
 
-// Varied messages for freshness (like Duolingo!)
-const VARIED_MESSAGES = {
-    morning_motivation: [
-        { title: "🌅 Early bird gets the court!", body: "Beat the crowd. Check which courts are empty." },
-        { title: "☀️ New day, new gains!", body: "Start your day with movement." },
-        { title: "🔥 Let's get this bread!", body: "Morning workouts hit different." },
-        { title: "💪 Champions train early", body: "The greats are up. Are you?" },
+// ============================================
+// SPORT-SPECIFIC VARIED MESSAGES
+// (Randomized for freshness - Duolingo style)
+// ============================================
+const SPORT_MESSAGES = {
+    basketball: [
+        { title: "🏀 Time to Ball", body: "Courts are calling. Get your shots up." },
+        { title: "🏀 Hoopers Unite", body: "Runs are forming. Don't miss out." },
+        { title: "🏀 Buckets Await", body: "The rim won't score itself. Let's go." },
     ],
-    streak_reminder: [
-        { title: "😱 Your streak is in danger!", body: "Don't let it end! One check-in saves it." },
-        { title: "🔥 Keep the fire burning!", body: "Check in today to continue your streak!" },
-        { title: "💪 Champions show up daily", body: "Your streak proves you're committed." },
-        { title: "🏆 Almost there!", body: "One activity keeps your streak alive!" },
+    tennis: [
+        { title: "🎾 Court Time", body: "Serve. Rally. Win. Courts are open." },
+        { title: "🎾 Match Point", body: "Find a partner. Get on the court." },
+        { title: "🎾 Ace the Day", body: "Tennis courts near you are waiting." },
     ],
-    social_nudge: [
-        { title: "👀 Someone's looking for players", body: "A game near you needs one more!" },
-        { title: "🤝 Make a new hoops friend", body: "Players at your skill level nearby." },
-        { title: "🏀 Squad up?", body: "Check who's at the court!" },
-        { title: "🎯 Your turn!", body: "Games happening. Will you show up?" },
+    pickleball: [
+        { title: "🏓 Dink & Drive", body: "Pickleball courts are filling up. Join the fun!" },
+        { title: "🏓 Pickle Power", body: "Fast-growing sport. Growing skills. Let's play." },
+        { title: "🏓 Kitchen Ready?", body: "Get to the court and dominate the kitchen." },
     ],
-    evening_peak: [
-        { title: "🔥 It's game time!", body: "Peak hours are here. Courts are LIT!" },
-        { title: "⚡ The runs are starting", body: "Best time to play. Get there!" },
-        { title: "🏀 Prime time hoops", body: "This is when legends are made." },
+    soccer: [
+        { title: "⚽ Goal Time", body: "Fields are active. Find a pickup game." },
+        { title: "⚽ Beautiful Game", body: "There's always room for one more on the pitch." },
     ],
-    lunch_reminder: [
-        { title: "🏀 Lunch break = ball time", body: "Get out of the office. Courts are waiting." },
-        { title: "🍽️ Feed your game", body: "Lunchtime runs hit different." },
-        { title: "⏰ Time for a quick session", body: "30 mins is all you need!" },
+    volleyball: [
+        { title: "🏐 Bump. Set. Spike.", body: "Courts are filling. Get in the rotation." },
+        { title: "🏐 Sand or Indoor?", body: "Volleyball games forming near you." },
     ],
 }
 
+// Generic motivational messages (Duolingo psychology)
+const MOTIVATIONAL_MESSAGES = {
+    morning_motivation: [
+        { title: "🌅 The Early Grind", body: "While others sleep, you improve. Courts are empty." },
+        { title: "💪 Earn Your Day", body: "Start with movement. Win at everything else." },
+        { title: "🔥 Morning Reps", body: "The version of you from yesterday is watching. Level up." },
+        { title: "☀️ New Day, New PR", body: "What will you accomplish before noon?" },
+        { title: "⚡ Built Different", body: "You're up early. That already sets you apart." },
+    ],
+    streak_reminder: [
+        { title: "😱 Streak in Danger!", body: "You've come too far to quit now. One quick check-in!" },
+        { title: "🔥 DON'T LET IT DIE", body: "Your streak survives with one action. Do it now." },
+        { title: "🏆 Consistency = Greatness", body: "The greats never skip. Will you?" },
+        { title: "⏰ Time's Running Out", body: "Your streak ends at midnight. Save it!" },
+        { title: "💔 Break the Streak?", body: "After all that progress? Nah. Check in." },
+    ],
+    social_nudge: [
+        { title: "👀 They Started Without You", body: "Games are happening. Get there!" },
+        { title: "🤝 Your Crew is Playing", body: "Friends are at the court. Don't miss out." },
+        { title: "👥 1 Spot Left", body: "Game needs one more. Could be you." },
+        { title: "🎯 Prove Yourself", body: "New players to compete with. Show them what you've got." },
+    ],
+    evening_peak: [
+        { title: "🔥 IT'S GO TIME", body: "Peak hours. Full courts. Maximum energy." },
+        { title: "⚡ Prime Time", body: "This is when legends play. Are you one?" },
+        { title: "🌙 Golden Hour", body: "Best games of the day are happening right now." },
+        { title: "🏀 The Runs Are Hot", body: "Courts are packed and competitive. Join up." },
+    ],
+    lunch_reminder: [
+        { title: "🍽️ Lunch Sweat", body: "Skip the extra scroll. Get a quick session in." },
+        { title: "⏰ 30 Min to Change", body: "Lunch break = self-improvement time." },
+        { title: "💪 Midday Movement", body: "Your afternoon self will thank you. Move!" },
+    ],
+    report_reminder: [
+        { title: "💰 Easiest $5 Ever", body: "30 seconds. Snap. Report. Get paid." },
+        { title: "📸 Help the Community", body: "Report conditions. Earn rewards. Be a hero." },
+        { title: "🤑 Stack That Cash", body: "You're at a court anyway. Why not get paid?" },
+    ],
+    nearby_activity: [
+        { title: "📍 Activity Alert", body: "Courts near you are popping off right now." },
+        { title: "🔔 Players Nearby", body: "People are playing. Go be one of them." },
+        { title: "🗺️ Close to Action", body: "Great games within a mile. Check it out." },
+    ],
+    challenge: [
+        { title: "🎯 Daily Challenge", body: "Play one game today. Can you do it?" },
+        { title: "💪 Push Yourself", body: "One more session than last week. You got this." },
+        { title: "🏆 Beat Your Best", body: "Last week you played 3x. Can you hit 4?" },
+    ],
+    progress_update: [
+        { title: "📈 You're Improving!", body: "More check-ins this week. Keep it up!" },
+        { title: "🌟 On a Roll", body: "Your activity is trending up. Don't stop now." },
+        { title: "💎 Rare Player", body: "Top 10% most active in your area. Nice." },
+    ],
+}
+
+// Trainer-specific motivational messages
+const TRAINER_MESSAGES = {
+    trainer_check_in: [
+        { title: "💼 Business Time", body: "Every session is a chance to change a life. Let's go." },
+        { title: "🌟 Impact Day", body: "Your clients believe in you. Deliver greatness." },
+        { title: "📈 Build the Empire", body: "Today's sessions = tomorrow's referrals." },
+        { title: "🎯 Coach Mode: ON", body: "Time to transform some athletes." },
+    ],
+    weekly_recap: [
+        { title: "📊 Week in Review", body: "See your earnings, sessions, and growth." },
+        { title: "💰 Payday Check", body: "How much did you earn this week? Let's see." },
+        { title: "📈 The Numbers Are In", body: "Your weekly performance report is ready." },
+    ],
+}
+
+// ============================================
+// SERVICE CLASS
+// ============================================
 class DailyEngagementService {
     private static instance: DailyEngagementService
+    private userSport: string = "basketball" // Default
 
     static getInstance(): DailyEngagementService {
         if (!DailyEngagementService.instance) {
@@ -208,18 +285,33 @@ class DailyEngagementService {
     }
 
     /**
+     * Set user's primary sport for personalized messages
+     */
+    async setUserSport(sport: string) {
+        this.userSport = sport.toLowerCase()
+        await AsyncStorage.setItem("user_primary_sport", sport.toLowerCase())
+    }
+
+    /**
      * Schedule all daily engagement notifications
      */
-    async scheduleAllNotifications(userType: "player" | "trainer" | "instructor" = "player") {
-        // Cancel existing scheduled notifications
+    async scheduleAllNotifications(
+        userType: "player" | "trainer" | "instructor" = "player",
+        primarySport?: string
+    ) {
+        // Cancel existing
         await Notifications.cancelAllScheduledNotificationsAsync()
+
+        if (primarySport) {
+            await this.setUserSport(primarySport)
+        }
 
         const notifications = userType === "player"
             ? PLAYER_NOTIFICATIONS
             : TRAINER_NOTIFICATIONS
 
         for (const notification of notifications) {
-            await this.scheduleNotification(notification)
+            await this.scheduleNotification(notification, userType)
         }
 
         await AsyncStorage.setItem("engagement_notifications_enabled", "true")
@@ -229,14 +321,14 @@ class DailyEngagementService {
     }
 
     /**
-     * Schedule a single notification
+     * Schedule a single notification with personalized content
      */
-    private async scheduleNotification(notification: ScheduledNotification) {
+    private async scheduleNotification(
+        notification: ScheduledNotification,
+        userType: "player" | "trainer"
+    ) {
         try {
-            const message = this.getVariedMessage(notification.type) || {
-                title: notification.title,
-                body: notification.body,
-            }
+            const message = await this.getPersonalizedMessage(notification.type, userType)
 
             const trigger: any = {
                 hour: notification.hour,
@@ -261,17 +353,44 @@ class DailyEngagementService {
                 trigger,
             })
         } catch (error) {
-            console.error(`Failed to schedule notification ${notification.id}:`, error)
+            console.error(`Failed to schedule ${notification.id}:`, error)
         }
     }
 
     /**
-     * Get a random varied message
+     * Get personalized message based on sport and randomization
      */
-    private getVariedMessage(type: EngagementNotificationType): { title: string; body: string } | null {
-        const messages = VARIED_MESSAGES[type as keyof typeof VARIED_MESSAGES]
-        if (!messages) return null
-        return messages[Math.floor(Math.random() * messages.length)]
+    private async getPersonalizedMessage(
+        type: EngagementNotificationType,
+        userType: "player" | "trainer"
+    ): Promise<{ title: string; body: string }> {
+        const storedSport = await AsyncStorage.getItem("user_primary_sport")
+        const sport = storedSport || this.userSport
+
+        // 30% chance to use sport-specific message
+        if (userType === "player" && Math.random() < 0.3) {
+            const sportMessages = SPORT_MESSAGES[sport as keyof typeof SPORT_MESSAGES]
+            if (sportMessages && sportMessages.length > 0) {
+                return sportMessages[Math.floor(Math.random() * sportMessages.length)]
+            }
+        }
+
+        // Use trainer messages for trainers
+        if (userType === "trainer") {
+            const trainerMsgs = TRAINER_MESSAGES[type as keyof typeof TRAINER_MESSAGES]
+            if (trainerMsgs && trainerMsgs.length > 0) {
+                return trainerMsgs[Math.floor(Math.random() * trainerMsgs.length)]
+            }
+        }
+
+        // Use motivational messages
+        const messages = MOTIVATIONAL_MESSAGES[type as keyof typeof MOTIVATIONAL_MESSAGES]
+        if (messages && messages.length > 0) {
+            return messages[Math.floor(Math.random() * messages.length)]
+        }
+
+        // Fallback
+        return { title: "🏀 GoodRunss", body: "Time to get active!" }
     }
 
     /**
@@ -291,7 +410,10 @@ class DailyEngagementService {
             case "trainer_check_in":
                 return "/trainer-dashboard"
             case "weekly_recap":
+            case "progress_update":
                 return "/stats/detailed"
+            case "challenge":
+                return "/(tabs)"
             default:
                 return "/(tabs)"
         }
@@ -305,10 +427,9 @@ class DailyEngagementService {
         customTitle?: string,
         customBody?: string
     ) {
-        const message = this.getVariedMessage(type) || {
-            title: customTitle || "GoodRunss",
-            body: customBody || "Check out what's happening!",
-        }
+        const message = customTitle && customBody
+            ? { title: customTitle, body: customBody }
+            : await this.getPersonalizedMessage(type, "player")
 
         await Notifications.scheduleNotificationAsync({
             content: {
@@ -338,7 +459,7 @@ class DailyEngagementService {
     }
 
     /**
-     * Set frequency (high/medium/low)
+     * Set notification frequency
      */
     async setFrequency(frequency: "high" | "medium" | "low") {
         await AsyncStorage.setItem("notification_frequency", frequency)
