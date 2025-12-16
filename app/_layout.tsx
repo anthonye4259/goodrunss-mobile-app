@@ -1,16 +1,18 @@
 
 import { Stack } from "expo-router"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
-import { UserPreferencesProvider } from "@/lib/user-preferences"
+import { UserPreferencesProvider, useUserPreferences } from "@/lib/user-preferences"
 import { LocationProvider } from "@/lib/location-context"
 import { StripeProvider } from "@/lib/stripe-provider"
 import { NotificationService } from "@/lib/notification-service"
+import { dailyEngagementService } from "@/lib/services/daily-engagement-service"
 import { useEffect } from "react"
 import "@/lib/i18n"
 import "../global.css"
 import { AuthProvider, useAuth } from "@/lib/auth-context"
 import { useDeepLinking } from "@/lib/services/deep-linking"
 import { setupTrainerRealTimeSync, setupClientRealTimeSync, unsubscribeAll } from "@/lib/services/realtime-sync"
+
 
 // Inner component that has access to auth
 function AppContent({ children }: { children: React.ReactNode }) {

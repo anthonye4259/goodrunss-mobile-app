@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react"
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert } from "react-native"
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert, Switch } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
 import { router } from "expo-router"
 import { useUserPreferences } from "@/lib/user-preferences"
 import { useLocation } from "@/lib/location-context"
+import { useEngagementNotifications } from "@/lib/hooks/useEngagementNotifications"
 import * as Haptics from "expo-haptics"
 
 const REC_ACTIVITIES = ["Basketball", "Tennis", "Pickleball", "Padel", "Racquetball", "Volleyball", "Golf", "Soccer", "Swimming"]
@@ -34,7 +35,16 @@ export default function PreferencesScreen() {
     const [primaryActivity, setPrimaryActivity] = useState<string>(
         preferences.primaryActivity || ""
     )
+    const [dailyNotifications, setDailyNotifications] = useState(true)
     const [hasChanges, setHasChanges] = useState(false)
+
+    // Engagement notifications
+    const { enableNotifications, disableNotifications, isEnabled } = useEngagementNotifications()
+
+    // Load notification preference
+    useEffect(() => {
+        isEnabled().then(setDailyNotifications)
+    }, [])
 
     // Check for changes
     useEffect(() => {
@@ -274,6 +284,41 @@ export default function PreferencesScreen() {
                                 {locationLoading ? "Updating..." : "Update My Location"}
                             </Text>
                         </TouchableOpacity>
+                    </View>
+
+                    {/* Daily Notifications */}
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>DAILY REMINDERS</Text>
+                        <Text style={styles.sectionSubtitle}>
+                            Get motivated throughout the day
+                        </Text>
+                        <View style={styles.notificationRow}>
+                            <View style={styles.notificationInfo}>
+                                <Ionicons name="notifications" size={24} color="#7ED957" />
+                                <View style={styles.notificationText}>
+                                    <Text style={styles.notificationTitle}>Daily Motivation</Text>
+                                    <Text style={styles.notificationDesc}>
+                                        {dailyNotifications
+                                            ? "Peak hours, streak reminders, nearby activity"
+                                            : "Turn on to stay active"}
+                                    </Text>
+                                </View>
+                            </View>
+                            <Switch
+                                value={dailyNotifications}
+                                onValueChange={async (value) => {
+                                    setDailyNotifications(value)
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                                    if (value) {
+                                        await enableNotifications()
+                                    } else {
+                                        await disableNotifications()
+                                    }
+                                }}
+                                trackColor={{ false: "#333", true: "#7ED95740" }}
+                                thumbColor={dailyNotifications ? "#7ED957" : "#666"}
+                            />
+                        </View>
                     </View>
 
                     {/* Experience Preview */}
@@ -554,5 +599,34 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: "bold",
         color: "#000",
+    },
+    notificationRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        backgroundColor: "#1A1A1A",
+        borderRadius: 12,
+        padding: 16,
+        borderWidth: 1,
+        borderColor: "#333",
+    },
+    notificationInfo: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        flex: 1,
+    },
+    notificationText: {
+        flex: 1,
+    },
+    notificationTitle: {
+        fontSize: 16,
+        fontWeight: "600",
+        color: "#FFF",
+        marginBottom: 2,
+    },
+    notificationDesc: {
+        fontSize: 13,
+        color: "#9CA3AF",
     },
 })
