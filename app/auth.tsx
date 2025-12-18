@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Alert, Image } from "react-native"
 import { useRouter } from "expo-router"
 import { LinearGradient } from "expo-linear-gradient"
@@ -6,6 +6,8 @@ import { useAuth } from "@/lib/auth-context"
 import { useUserPreferences } from "@/lib/user-preferences"
 import { doc, getDoc } from "firebase/firestore"
 import { db } from "@/lib/firebase-config"
+import * as AppleAuthentication from "expo-apple-authentication"
+import { OAuthProvider, signInWithCredential, getAuth } from "firebase/auth"
 
 export default function AuthScreen() {
   const router = useRouter()
@@ -16,6 +18,12 @@ export default function AuthScreen() {
   const [password, setPassword] = useState("")
   const [name, setName] = useState("")
   const [loading, setLoading] = useState(false)
+  const [appleAuthAvailable, setAppleAuthAvailable] = useState(false)
+
+  useEffect(() => {
+    // Check if Apple Sign In is available (iOS 13+)
+    AppleAuthentication.isAvailableAsync().then(setAppleAuthAvailable)
+  }, [])
 
   const handleAuth = async () => {
     if (!email || !password) {
@@ -36,8 +44,8 @@ export default function AuthScreen() {
         // Check if user already has preferences (from dashboard signup)
         if (db) {
           try {
-            const auth = await import("firebase/auth")
-            const currentUser = auth.getAuth().currentUser
+            const auth = getAuth()
+            const currentUser = auth.currentUser
             if (currentUser) {
               const userDoc = await getDoc(doc(db, "users", currentUser.uid))
               if (userDoc.exists()) {
@@ -79,6 +87,78 @@ export default function AuthScreen() {
     }
   }
 
+  const handleAppleSignIn = async () => {
+    try {
+      setLoading(true)
+
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      })
+
+      // Create Firebase credential from Apple credential
+      const { identityToken } = credential
+      if (!identityToken) {
+        throw new Error("No identity token received from Apple")
+      }
+
+      const provider = new OAuthProvider("apple.com")
+      const oAuthCredential = provider.credential({
+        idToken: identityToken,
+      })
+
+      // Sign in with Firebase
+      const auth = getAuth()
+      const userCredential = await signInWithCredential(auth, oAuthCredential)
+      const user = userCredential.user
+
+      // Check if user already has preferences
+      if (db) {
+        try {
+          const userDoc = await getDoc(doc(db, "users", user.uid))
+          if (userDoc.exists()) {
+            const userData = userDoc.data()
+            if (userData.userType) {
+              setPreferences({
+                userType: userData.userType,
+                activities: userData.activities || [],
+                primaryActivity: userData.primaryActivity,
+                isStudioUser: userData.userType === "instructor",
+                isRecUser: userData.userType === "trainer",
+                name: userData.name || credential.fullName?.givenName || "User",
+              })
+              router.replace("/(tabs)")
+              return
+            }
+          }
+        } catch (e) {
+          console.log("Could not check for existing preferences:", e)
+        }
+      }
+
+      // Store name from Apple if available (only provided on first sign in)
+      if (credential.fullName?.givenName) {
+        setPreferences({
+          name: `${credential.fullName.givenName} ${credential.fullName.familyName || ""}`.trim(),
+        })
+      }
+
+      // New Apple user - go to onboarding
+      router.replace("/onboarding")
+    } catch (error: any) {
+      if (error.code === "ERR_REQUEST_CANCELED") {
+        // User cancelled, do nothing
+        return
+      }
+      console.error("Apple Sign In error:", error)
+      Alert.alert("Error", "Apple Sign In failed. Please try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleGuestMode = () => {
     continueAsGuest()
     router.replace("/onboarding")
@@ -115,6 +195,25 @@ export default function AuthScreen() {
           )}
 
           <View className="space-y-4">
+            {/* Sign in with Apple - Required by Apple for apps with third-party login */}
+            {appleAuthAvailable && (
+              <AppleAuthentication.AppleAuthenticationButton
+                buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+                buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
+                cornerRadius={12}
+                style={{ height: 54, width: "100%" }}
+                onPress={handleAppleSignIn}
+              />
+            )}
+
+            {appleAuthAvailable && (
+              <View className="flex-row items-center my-4">
+                <View className="flex-1 h-px bg-border" />
+                <Text className="text-muted-foreground mx-4">or</Text>
+                <View className="flex-1 h-px bg-border" />
+              </View>
+            )}
+
             {!isLogin && (
               <View>
                 <Text className="text-foreground mb-2 font-medium">Name</Text>

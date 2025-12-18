@@ -19,22 +19,23 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.goodrunss.app",
-      "buildNumber": "110",
+      "buildNumber": "111",
       "deploymentTarget": "15.1",
       "associatedDomains": [
         "applinks:goodrunss.com",
         "applinks:studios.goodrunss.com"
       ],
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "GoodRunss needs your location to show nearby trainers, courts, and studios.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "GoodRunss needs your location to show nearby trainers, courts, and studios.",
-        "NSCameraUsageDescription": "GoodRunss needs camera access to upload profile pictures and venue photos.",
-        "NSPhotoLibraryUsageDescription": "GoodRunss needs photo library access to upload pictures.",
-        "NSMicrophoneUsageDescription": "GoodRunss needs microphone access for voice messages.",
-        "NSHealthShareUsageDescription": "GoodRunss needs access to read your workout data to provide personalized recommendations.",
-        "NSHealthUpdateUsageDescription": "GoodRunss needs access to save your workout sessions to Apple Health.",
+        "NSLocationWhenInUseUsageDescription": "GoodRunss uses your location to find basketball courts, tennis courts, and trainers near you. For example, when you open the map, we show courts within 10 miles of your current location so you can see which ones are active.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "GoodRunss uses your location to find nearby courts and trainers, and to send you notifications when courts near you become active. For example, we'll alert you when a basketball court within 5 miles has players looking for games.",
+        "NSCameraUsageDescription": "GoodRunss uses your camera to take profile photos and report court conditions. For example, you can snap a photo of a court to share its current status with other players.",
+        "NSPhotoLibraryUsageDescription": "GoodRunss accesses your photo library to let you upload profile pictures and court condition photos. For example, you can select an existing photo to use as your profile picture.",
+        "NSMicrophoneUsageDescription": "GoodRunss uses your microphone to record voice messages when chatting with trainers or other players.",
+        "NSHealthShareUsageDescription": "GoodRunss reads your workout data from Apple Health to track your activity history and provide personalized court recommendations based on your fitness level.",
+        "NSHealthUpdateUsageDescription": "GoodRunss saves your court sessions and training activities to Apple Health so you can track your fitness progress across all your apps.",
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {
@@ -93,6 +94,7 @@
         }
       ],
       "expo-notifications",
+      "expo-apple-authentication",
       [
         "expo-build-properties",
         {
