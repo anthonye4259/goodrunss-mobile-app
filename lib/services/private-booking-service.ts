@@ -2,7 +2,9 @@
  * Private Session Booking Service
  * 
  * Complete booking system for 1-on-1 sessions:
- * - Stripe Connect for instructor payouts (94% to instructor, 6% platform)
+ * - Dynamic platform fees based on client relationship (0%, 5%, or 15%)
+ * - Booking fees ($1 for existing/repeat, $3 for marketplace)
+ * - Stripe Connect for instructor payouts
  * - Availability management
  * - Booking creation and confirmation
  * - Cancellation with refund policies
@@ -11,8 +13,10 @@
 import { db } from "@/lib/firebase-config"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import type { PrivateBooking, AvailabilitySlot, Instructor } from "@/lib/types/wellness-instructor"
+import { calculateBookingFees, FeeCalculation } from "./fee-calculation-service"
+import { recordMarketplaceBooking, markAsRepeatClient, BookingFeeType } from "./client-relationship-service"
 
-// Platform fee: 6% (instructor keeps 94%)
+// Legacy constants (kept for backwards compatibility)
 export const PLATFORM_FEE_PERCENT = 6
 export const INSTRUCTOR_PAYOUT_PERCENT = 94
 
@@ -59,6 +63,8 @@ export interface CreateBookingParams {
     locationAddress?: string
     notes?: string
     price: number // in cents
+    // Optional: pre-calculated fees (if not provided, will be calculated)
+    preCalculatedFees?: FeeCalculation
 }
 
 export interface BookingResult {
@@ -66,6 +72,7 @@ export interface BookingResult {
     bookingId?: string
     paymentIntentClientSecret?: string
     message: string
+    feeCalculation?: FeeCalculation // Return fee info to UI
 }
 
 // ============================================
@@ -94,7 +101,7 @@ export async function getInstructorAvailability(
         )
 
         const snapshot = await getDocs(q)
-        
+
         return snapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data(),
@@ -147,10 +154,10 @@ export async function removeAvailabilitySlot(slotId: string): Promise<boolean> {
 
     try {
         const { doc, deleteDoc, getDoc } = await import("firebase/firestore")
-        
+
         const slotRef = doc(db, "instructorAvailability", slotId)
         const slotDoc = await getDoc(slotRef)
-        
+
         if (!slotDoc.exists() || slotDoc.data().isBooked) {
             return false // Can't delete booked slots
         }
@@ -184,7 +191,7 @@ export async function createPrivateBooking(
         // Verify the slot is still available
         const slotRef = doc(db, "instructorAvailability", params.slotId)
         const slotDoc = await getDoc(slotRef)
-        
+
         if (!slotDoc.exists()) {
             return { success: false, message: "This time slot is no longer available" }
         }
@@ -196,25 +203,33 @@ export async function createPrivateBooking(
         // Get instructor for Stripe account
         const instructorRef = doc(db, "instructors", params.instructorId)
         const instructorDoc = await getDoc(instructorRef)
-        
+
         if (!instructorDoc.exists()) {
             return { success: false, message: "Instructor not found" }
         }
 
         const instructor = instructorDoc.data() as Instructor
-        
+
         if (!instructor.stripeAccountId) {
             return { success: false, message: "Instructor hasn't set up payments yet" }
         }
 
-        // Calculate fees
-        const platformFee = Math.round(params.price * (PLATFORM_FEE_PERCENT / 100))
-        const instructorPayout = params.price - platformFee
+        // Calculate fees dynamically based on client-trainer relationship
+        const feeCalc = params.preCalculatedFees || await calculateBookingFees(
+            params.instructorId,
+            params.clientId,
+            params.price
+        )
+
+        const platformFee = feeCalc.platformFeeAmount
+        const bookingFee = feeCalc.playerBookingFee
+        const instructorPayout = feeCalc.trainerPayout
+        const totalCharge = feeCalc.totalCharge
 
         // Create payment intent with Stripe Connect
         const { getFunctions, httpsCallable } = await import("firebase/functions")
         const { app } = await import("@/lib/firebase-config")
-        
+
         if (!app) {
             return { success: false, message: "Firebase not configured" }
         }
@@ -223,19 +238,23 @@ export async function createPrivateBooking(
         const createPaymentForPrivateSession = httpsCallable(functions, "createPaymentForPrivateSession")
 
         const paymentResult = await createPaymentForPrivateSession({
-            amount: params.price,
+            amount: totalCharge,  // Total including booking fee
+            sessionPrice: params.price,
+            bookingFee: bookingFee,
             instructorStripeAccountId: instructor.stripeAccountId,
             platformFee,
             metadata: {
                 instructorId: params.instructorId,
                 clientId: params.clientId,
                 duration: params.duration,
+                feeType: feeCalc.feeType,
+                platformFeePercent: feeCalc.platformFeePercent,
             },
         })
 
-        const { clientSecret, paymentIntentId } = paymentResult.data as { 
+        const { clientSecret, paymentIntentId } = paymentResult.data as {
             clientSecret: string
-            paymentIntentId: string 
+            paymentIntentId: string
         }
 
         // Create pending booking
@@ -244,24 +263,44 @@ export async function createPrivateBooking(
             clientId: params.clientId,
             clientName: params.clientName,
             clientEmail: params.clientEmail,
-            
+
             startTime: Timestamp.fromDate(params.startTime),
             duration: params.duration,
-            
+
             locationType: params.locationType,
             locationAddress: params.locationAddress || null,
             notes: params.notes || null,
-            
-            price: params.price,
+
+            // Pricing - session price (what trainer charges)
+            sessionPrice: params.price,
+
+            // Fees - dynamic based on client relationship
+            clientSource: feeCalc.feeType,  // "existing" | "marketplace" | "repeat"
+            platformFeePercent: feeCalc.platformFeePercent,
             platformFee,
-            instructorPayout,
-            
+            playerBookingFee: bookingFee,
+
+            // Payouts
+            totalCharge,  // What player pays
+            instructorPayout,  // What trainer receives
+
             paymentIntentId,
             paymentStatus: "pending",
-            
+
             status: "pending_payment",
             createdAt: Timestamp.now(),
         })
+
+        // Record the client relationship for future bookings
+        if (feeCalc.feeType === "marketplace") {
+            await recordMarketplaceBooking(
+                params.instructorId,
+                params.clientId,
+                bookingRef.id,
+                params.clientEmail,
+                params.clientName
+            )
+        }
 
         // Mark slot as booked (pending)
         await updateDoc(slotRef, {
@@ -276,6 +315,7 @@ export async function createPrivateBooking(
             bookingId: bookingRef.id,
             paymentIntentClientSecret: clientSecret,
             message: "Booking created! Complete payment to confirm.",
+            feeCalculation: feeCalc,
         }
     } catch (error: any) {
         console.error("[PrivateBookingService] createPrivateBooking error:", error)
@@ -303,12 +343,19 @@ export async function confirmBookingPayment(bookingId: string): Promise<boolean>
         const bookingDoc = await getDoc(bookingRef)
         if (bookingDoc.exists()) {
             const booking = bookingDoc.data()
-            
+
             // Notify instructor
             await sendBookingNotification(booking.instructorId, "instructor", bookingId)
-            
+
             // Notify client
             await sendBookingNotification(booking.clientId, "client", bookingId)
+
+            // If this was a marketplace booking, mark client as repeat for future bookings
+            // This enables the 5% rate instead of 15% for subsequent bookings
+            if (booking.clientSource === "marketplace") {
+                await markAsRepeatClient(booking.instructorId, booking.clientId)
+                console.log(`[PrivateBookingService] Marked ${booking.clientId} as repeat client for ${booking.instructorId}`)
+            }
         }
 
         console.log(`[PrivateBookingService] Confirmed booking ${bookingId}`)
@@ -356,10 +403,10 @@ export async function cancelBooking(
         }
 
         // Calculate refund based on cancellation policy
-        const startTime = booking.startTime instanceof Date 
-            ? booking.startTime 
+        const startTime = booking.startTime instanceof Date
+            ? booking.startTime
             : (booking.startTime as any)?.toDate?.()
-        
+
         const hoursUntilSession = (startTime.getTime() - Date.now()) / (1000 * 60 * 60)
 
         // For now, use simple refund logic
@@ -387,7 +434,7 @@ export async function cancelBooking(
         if (refundAmount > 0 && booking.paymentIntentId) {
             const { getFunctions, httpsCallable } = await import("firebase/functions")
             const { app } = await import("@/lib/firebase-config")
-            
+
             if (app) {
                 const functions = getFunctions(app)
                 const processRefund = httpsCallable(functions, "processPrivateSessionRefund")
@@ -415,7 +462,7 @@ export async function cancelBooking(
             where("bookingId", "==", bookingId)
         )
         const slotSnapshot = await getDocs(slotQuery)
-        
+
         for (const slotDoc of slotSnapshot.docs) {
             await updateDoc(slotDoc.ref, {
                 isBooked: false,
@@ -428,7 +475,7 @@ export async function cancelBooking(
         return {
             success: true,
             refundAmount,
-            message: refundAmount > 0 
+            message: refundAmount > 0
                 ? `Cancelled. $${(refundAmount / 100).toFixed(2)} will be refunded.`
                 : "Cancelled. No refund due to late cancellation.",
         }
@@ -524,7 +571,7 @@ export async function getBookingById(bookingId: string): Promise<PrivateBooking 
         const { doc, getDoc } = await import("firebase/firestore")
 
         const bookingDoc = await getDoc(doc(db, "privateBookings", bookingId))
-        
+
         if (!bookingDoc.exists()) return null
 
         return {
@@ -552,10 +599,10 @@ async function sendBookingNotification(
         const { NotificationService } = await import("@/lib/notification-service")
         const notificationService = NotificationService.getInstance()
 
-        const title = userType === "instructor" 
-            ? "New Booking! 🎉" 
+        const title = userType === "instructor"
+            ? "New Booking! 🎉"
             : "Booking Confirmed! ✓"
-        
+
         const body = userType === "instructor"
             ? "You have a new private session booking!"
             : "Your private session is confirmed."
@@ -597,7 +644,7 @@ export async function getInstructorEarnings(instructorId: string): Promise<{
         )
 
         const snapshot = await getDocs(q)
-        
+
         let totalEarnings = 0
         let pendingPayouts = 0
         let completedPayouts = 0
@@ -605,7 +652,7 @@ export async function getInstructorEarnings(instructorId: string): Promise<{
         snapshot.docs.forEach(doc => {
             const booking = doc.data()
             totalEarnings += booking.instructorPayout || 0
-            
+
             if (booking.payoutStatus === "paid") {
                 completedPayouts += booking.instructorPayout || 0
             } else {

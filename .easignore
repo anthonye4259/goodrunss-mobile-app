@@ -1,0 +1,12 @@
+# EAS Ignore - reduce upload size
+# Only exclude files that are definitely not needed for builds
+
+# Screenshots (large files, not needed for build)
+app-store-screenshots/
+
+# IDE
+.idea/
+.vscode/
+
+# Git
+.git/

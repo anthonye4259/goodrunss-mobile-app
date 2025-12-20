@@ -19,7 +19,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.goodrunss.app",
-      "buildNumber": "111",
+      "buildNumber": "112",
       "deploymentTarget": "15.1",
       "associatedDomains": [
         "applinks:goodrunss.com",

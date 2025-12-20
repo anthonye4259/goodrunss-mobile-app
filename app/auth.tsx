@@ -91,6 +91,13 @@ export default function AuthScreen() {
     try {
       setLoading(true)
 
+      // Check if Apple auth is available first
+      const isAvailable = await AppleAuthentication.isAvailableAsync()
+      if (!isAvailable) {
+        Alert.alert("Error", "Apple Sign In is not available on this device. Please use email/password instead.")
+        return
+      }
+
       const credential = await AppleAuthentication.signInAsync({
         requestedScopes: [
           AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
@@ -111,6 +118,10 @@ export default function AuthScreen() {
 
       // Sign in with Firebase
       const auth = getAuth()
+      if (!auth) {
+        throw new Error("Authentication service is not available")
+      }
+
       const userCredential = await signInWithCredential(auth, oAuthCredential)
       const user = userCredential.user
 
@@ -148,12 +159,25 @@ export default function AuthScreen() {
       // New Apple user - go to onboarding
       router.replace("/onboarding")
     } catch (error: any) {
-      if (error.code === "ERR_REQUEST_CANCELED") {
+      console.error("Apple Sign In error:", error)
+
+      if (error.code === "ERR_REQUEST_CANCELED" || error.code === "ERR_CANCELED") {
         // User cancelled, do nothing
         return
       }
-      console.error("Apple Sign In error:", error)
-      Alert.alert("Error", "Apple Sign In failed. Please try again.")
+
+      // Handle specific Firebase errors
+      if (error.code === "auth/invalid-credential") {
+        Alert.alert("Sign In Error", "Could not verify your Apple ID. Please try again.")
+      } else if (error.code === "auth/network-request-failed") {
+        Alert.alert("Network Error", "Please check your internet connection and try again.")
+      } else if (error.code === "auth/user-disabled") {
+        Alert.alert("Account Disabled", "This account has been disabled. Please contact support.")
+      } else if (error.message?.includes("identity token")) {
+        Alert.alert("Sign In Error", "Could not get authentication from Apple. Please try again.")
+      } else {
+        Alert.alert("Sign In Error", "Apple Sign In failed. Please try again or use email/password instead.")
+      }
     } finally {
       setLoading(false)
     }

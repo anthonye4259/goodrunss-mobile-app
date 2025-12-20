@@ -6,6 +6,7 @@ import { useUserPreferences } from "@/lib/user-preferences"
 import { useEffect, useRef } from "react"
 import * as Haptics from "expo-haptics"
 import { useRouter } from "expo-router"
+import { useTodayStats, useCourtTracking } from "@/lib/hooks/useHealthData"
 
 export default function StatsScreen() {
   const router = useRouter()
@@ -13,108 +14,112 @@ export default function StatsScreen() {
   const primaryActivity = preferences.primaryActivity || "Basketball"
   const isStudio = ["Pilates", "Yoga", "Lagree", "Barre", "Meditation"].includes(primaryActivity)
 
+  // Health data from Apple Health
+  const { todayStats, isLoading: healthLoading, hasPermission: healthPermission } = useTodayStats()
+  const { courtWeeklyStats, activeSession } = useCourtTracking()
+
   // Activity-specific metrics
   const metrics = isStudio
     ? [
-        {
-          title: "Balance",
-          subtitle: "Core Strength",
-          value: "85",
-          status: "Good",
-          gradient: ["#FF9A8B", "#FF6A88", "#FF99AC"],
-          icon: "fitness",
-        },
-        {
-          title: "Flexibility",
-          subtitle: "Range of Motion",
-          value: "92%",
-          status: "Excellent",
-          gradient: ["#4FACFE", "#00F2FE"],
-          icon: "body",
-        },
-        {
-          title: "Mindfulness",
-          subtitle: "Focus Score",
-          value: "+12",
-          status: "Nice",
-          gradient: ["#FA709A", "#FEE140"],
-          icon: "heart",
-        },
-        {
-          title: "Recovery",
-          subtitle: "Monitoring",
-          value: "AM/PM",
-          status: "Tracking",
-          gradient: ["#667EEA", "#764BA2"],
-          icon: "moon",
-        },
-        {
-          title: "Heart Rate",
-          subtitle: "Monitoring",
-          value: "72 bpm",
-          status: "Normal",
-          gradient: ["#F093FB", "#F5576C"],
-          icon: "pulse",
-        },
-        {
-          title: "Calories",
-          subtitle: "Burned Today",
-          value: "420",
-          status: "Active",
-          gradient: ["#FA8BFF", "#2BD2FF", "#2BFF88"],
-          icon: "flame",
-        },
-      ]
+      {
+        title: "Balance",
+        subtitle: "Core Strength",
+        value: "85",
+        status: "Good",
+        gradient: ["#FF9A8B", "#FF6A88", "#FF99AC"],
+        icon: "fitness",
+      },
+      {
+        title: "Flexibility",
+        subtitle: "Range of Motion",
+        value: "92%",
+        status: "Excellent",
+        gradient: ["#4FACFE", "#00F2FE"],
+        icon: "body",
+      },
+      {
+        title: "Mindfulness",
+        subtitle: "Focus Score",
+        value: "+12",
+        status: "Nice",
+        gradient: ["#FA709A", "#FEE140"],
+        icon: "heart",
+      },
+      {
+        title: "Recovery",
+        subtitle: "Monitoring",
+        value: "AM/PM",
+        status: "Tracking",
+        gradient: ["#667EEA", "#764BA2"],
+        icon: "moon",
+      },
+      {
+        title: "Heart Rate",
+        subtitle: "Monitoring",
+        value: "72 bpm",
+        status: "Normal",
+        gradient: ["#F093FB", "#F5576C"],
+        icon: "pulse",
+      },
+      {
+        title: "Calories",
+        subtitle: "Burned Today",
+        value: "420",
+        status: "Active",
+        gradient: ["#FA8BFF", "#2BD2FF", "#2BFF88"],
+        icon: "flame",
+      },
+    ]
     : [
-        {
-          title: "Performance",
-          subtitle: "Overall Score",
-          value: "88",
-          status: "Great",
-          gradient: ["#FF9A8B", "#FF6A88", "#FF99AC"],
-          icon: "trophy",
-        },
-        {
-          title: "Endurance",
-          subtitle: "Stamina Level",
-          value: "76%",
-          status: "Good",
-          gradient: ["#4FACFE", "#00F2FE"],
-          icon: "speedometer",
-        },
-        {
-          title: "Strength",
-          subtitle: "Power Output",
-          value: "+18",
-          status: "Improving",
-          gradient: ["#FA709A", "#FEE140"],
-          icon: "barbell",
-        },
-        {
-          title: "Recovery",
-          subtitle: "Rest Quality",
-          value: "85%",
-          status: "Optimal",
-          gradient: ["#667EEA", "#764BA2"],
-          icon: "bed",
-        },
-        {
-          title: "Heart Rate",
-          subtitle: "Avg BPM",
-          value: "145",
-          status: "Training",
-          gradient: ["#F093FB", "#F5576C"],
-          icon: "pulse",
-        },
-        {
-          title: "Sessions",
-          subtitle: "This Week",
-          value: "8",
-          status: "Active",
-          gradient: ["#FA8BFF", "#2BD2FF", "#2BFF88"],
-          icon: "calendar",
-        },
-      ]
+      {
+        title: "Performance",
+        subtitle: "Overall Score",
+        value: "88",
+        status: "Great",
+        gradient: ["#FF9A8B", "#FF6A88", "#FF99AC"],
+        icon: "trophy",
+      },
+      {
+        title: "Endurance",
+        subtitle: "Stamina Level",
+        value: "76%",
+        status: "Good",
+        gradient: ["#4FACFE", "#00F2FE"],
+        icon: "speedometer",
+      },
+      {
+        title: "Strength",
+        subtitle: "Power Output",
+        value: "+18",
+        status: "Improving",
+        gradient: ["#FA709A", "#FEE140"],
+        icon: "barbell",
+      },
+      {
+        title: "Recovery",
+        subtitle: "Rest Quality",
+        value: "85%",
+        status: "Optimal",
+        gradient: ["#667EEA", "#764BA2"],
+        icon: "bed",
+      },
+      {
+        title: "Heart Rate",
+        subtitle: "Avg BPM",
+        value: "145",
+        status: "Training",
+        gradient: ["#F093FB", "#F5576C"],
+        icon: "pulse",
+      },
+      {
+        title: "Sessions",
+        subtitle: "This Week",
+        value: "8",
+        status: "Active",
+        gradient: ["#FA8BFF", "#2BD2FF", "#2BFF88"],
+        icon: "calendar",
+      },
+    ]
 
   const fadeAnim = useRef(new Animated.Value(0)).current
   const scaleAnims = useRef(
@@ -151,6 +156,64 @@ export default function StatsScreen() {
         <Animated.View style={{ opacity: fadeAnim }} className="px-6 pt-16 pb-6">
           <Text className="text-3xl font-bold text-foreground mb-2">Stats</Text>
           <Text className="text-muted-foreground">Your {primaryActivity.toLowerCase()} metrics</Text>
+        </Animated.View>
+
+        {/* Today's Health - Live Apple Health Data */}
+        <Animated.View style={{ opacity: fadeAnim }} className="px-6 mb-6">
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+              router.push("/health-dashboard")
+            }}
+          >
+            <LinearGradient
+              colors={["rgba(126, 217, 87, 0.15)", "rgba(126, 217, 87, 0.05)"]}
+              style={{ borderRadius: 20, padding: 16, borderWidth: 1, borderColor: "rgba(126, 217, 87, 0.2)" }}
+            >
+              <View className="flex-row items-center justify-between mb-3">
+                <View className="flex-row items-center">
+                  <View className="bg-primary/20 rounded-full p-2 mr-3">
+                    <Ionicons name="fitness" size={20} color="#7ED957" />
+                  </View>
+                  <Text className="text-white font-bold text-lg">Today's Health</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color="#666" />
+              </View>
+
+              <View className="flex-row justify-between">
+                <View className="items-center flex-1">
+                  <Text className="text-2xl font-bold text-white">
+                    {todayStats?.steps?.toLocaleString() || "—"}
+                  </Text>
+                  <Text className="text-xs text-gray-400">Steps</Text>
+                </View>
+                <View className="items-center flex-1">
+                  <Text className="text-2xl font-bold text-orange-400">
+                    {todayStats?.calories?.toLocaleString() || "—"}
+                  </Text>
+                  <Text className="text-xs text-gray-400">Calories</Text>
+                </View>
+                <View className="items-center flex-1">
+                  <Text className="text-2xl font-bold text-purple-400">
+                    {todayStats?.activeMinutes || "—"}
+                  </Text>
+                  <Text className="text-xs text-gray-400">Active Min</Text>
+                </View>
+              </View>
+
+              {activeSession && (
+                <View className="mt-3 pt-3 border-t border-white/10">
+                  <View className="flex-row items-center">
+                    <View className="w-2 h-2 rounded-full bg-green-500 mr-2" />
+                    <Text className="text-green-400 text-sm font-medium">
+                      Session active at {activeSession.courtName}
+                    </Text>
+                  </View>
+                </View>
+              )}
+            </LinearGradient>
+          </TouchableOpacity>
         </Animated.View>
 
         {/* Metrics Grid */}

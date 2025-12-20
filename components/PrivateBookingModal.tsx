@@ -5,7 +5,7 @@
  * - Select time slot from instructor availability
  * - Choose location (client, instructor, virtual)
  * - Add notes
- * - Pay with Stripe (94% to instructor, 6% platform)
+ * - Pay with dynamic platform fees (0%, 5%, or 15%)
  */
 
 import React, { useState, useEffect } from "react"
@@ -28,9 +28,8 @@ import {
     getInstructorAvailability,
     createPrivateBooking,
     confirmBookingPayment,
-    PLATFORM_FEE_PERCENT,
-    INSTRUCTOR_PAYOUT_PERCENT,
 } from "@/lib/services/private-booking-service"
+import { calculateBookingFees, FeeCalculation, formatFeeBreakdown } from "@/lib/services/fee-calculation-service"
 import type { Instructor, AvailabilitySlot } from "@/lib/types/wellness-instructor"
 
 interface PrivateBookingModalProps {
@@ -60,6 +59,8 @@ export function PrivateBookingModal({
     const [locationAddress, setLocationAddress] = useState("")
     const [notes, setNotes] = useState("")
     const [isProcessing, setIsProcessing] = useState(false)
+    const [feeCalculation, setFeeCalculation] = useState<FeeCalculation | null>(null)
+    const [feesLoading, setFeesLoading] = useState(true)
 
     // Fetch availability when modal opens
     useEffect(() => {
@@ -81,6 +82,30 @@ export function PrivateBookingModal({
         )
         setSlots(availableSlots)
         setLoading(false)
+    }
+
+    // Fetch dynamic fees when modal opens
+    useEffect(() => {
+        if (visible && user && instructor.id) {
+            fetchFees()
+        }
+    }, [visible, instructor.id, user?.id])
+
+    const fetchFees = async () => {
+        if (!user) return
+        setFeesLoading(true)
+        try {
+            const fees = await calculateBookingFees(
+                instructor.id,
+                user.id,
+                instructor.hourlyRate || 10000
+            )
+            setFeeCalculation(fees)
+        } catch (error) {
+            console.error("[PrivateBookingModal] Error fetching fees:", error)
+        } finally {
+            setFeesLoading(false)
+        }
     }
 
     const formatSlot = (slot: AvailabilitySlot): SelectedSlot => {
@@ -175,8 +200,9 @@ export function PrivateBookingModal({
     }
 
     const hourlyRate = instructor.hourlyRate || 10000 // cents
-    const platformFee = Math.round(hourlyRate * (PLATFORM_FEE_PERCENT / 100))
-    const instructorPayout = hourlyRate - platformFee
+    // Use calculated fees or show loading state
+    const fees = feeCalculation
+    const formattedFees = fees ? formatFeeBreakdown(fees) : null
 
     return (
         <Modal
@@ -363,43 +389,53 @@ export function PrivateBookingModal({
 
                                 <View style={styles.divider} />
 
+                                {fees && (
+                                    <>
+                                        <View style={styles.summaryRow}>
+                                            <Text style={styles.summaryLabel}>Session</Text>
+                                            <Text style={styles.summaryValue}>
+                                                {formattedFees?.sessionPriceDisplay}
+                                            </Text>
+                                        </View>
+                                        <View style={styles.summaryRow}>
+                                            <Text style={styles.summaryLabel}>Booking Fee</Text>
+                                            <Text style={styles.summaryValue}>
+                                                {formattedFees?.bookingFeeDisplay}
+                                            </Text>
+                                        </View>
+                                        <View style={styles.divider} />
+                                    </>
+                                )}
+
                                 <View style={styles.summaryRow}>
                                     <Text style={styles.totalLabel}>Total</Text>
                                     <Text style={styles.totalValue}>
-                                        ${(hourlyRate / 100).toFixed(2)}
+                                        ${fees ? (fees.totalCharge / 100).toFixed(2) : (hourlyRate / 100).toFixed(2)}
                                     </Text>
                                 </View>
                             </View>
 
-                            {/* Fee Breakdown */}
-                            <View style={styles.feeBreakdown}>
-                                <View style={styles.feeRow}>
-                                    <Text style={styles.feeLabel}>Instructor receives</Text>
-                                    <Text style={styles.feeValue}>
-                                        ${(instructorPayout / 100).toFixed(2)} ({INSTRUCTOR_PAYOUT_PERCENT}%)
-                                    </Text>
-                                </View>
-                                <View style={styles.feeRow}>
-                                    <Text style={styles.feeLabel}>Platform fee</Text>
-                                    <Text style={styles.feeValue}>
-                                        ${(platformFee / 100).toFixed(2)} ({PLATFORM_FEE_PERCENT}%)
-                                    </Text>
-                                </View>
+                            {/* Secure payment notice - no platform fee shown to players */}
+                            <View style={styles.secureNotice}>
+                                <Ionicons name="shield-checkmark" size={16} color="#7ED957" />
+                                <Text style={styles.secureNoticeText}>
+                                    Secure payment • Instructor receives {formattedFees?.trainerPayoutDisplay}
+                                </Text>
                             </View>
 
                             {/* Pay Button */}
                             <TouchableOpacity
                                 style={[styles.payButton, isProcessing && styles.payButtonDisabled]}
                                 onPress={handleBookSession}
-                                disabled={isProcessing}
+                                disabled={isProcessing || !fees}
                             >
-                                {isProcessing ? (
+                                {isProcessing || feesLoading ? (
                                     <ActivityIndicator color="#0A0A0A" />
                                 ) : (
                                     <>
                                         <Ionicons name="card" size={20} color="#0A0A0A" />
                                         <Text style={styles.payButtonText}>
-                                            Pay ${(hourlyRate / 100).toFixed(2)}
+                                            Pay ${fees ? (fees.totalCharge / 100).toFixed(2) : (hourlyRate / 100).toFixed(2)}
                                         </Text>
                                     </>
                                 )}
@@ -665,6 +701,16 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         marginBottom: 6,
     },
+    feeTypeLabel: {
+        fontSize: 14,
+        fontWeight: "600",
+        color: "#FFFFFF",
+    },
+    feeTypeValue: {
+        fontSize: 13,
+        color: "#7ED957",
+        fontWeight: "600",
+    },
     feeLabel: {
         fontSize: 13,
         color: "#9CA3AF",
@@ -673,6 +719,20 @@ const styles = StyleSheet.create({
         fontSize: 13,
         color: "#7ED957",
         fontWeight: "500",
+    },
+    secureNotice: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "rgba(126, 217, 87, 0.1)",
+        borderRadius: 12,
+        padding: 12,
+        marginBottom: 24,
+        gap: 8,
+    },
+    secureNoticeText: {
+        fontSize: 13,
+        color: "#9CA3AF",
     },
     payButton: {
         flexDirection: "row",

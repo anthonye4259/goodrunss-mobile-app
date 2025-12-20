@@ -145,10 +145,8 @@ export default function QuestionnaireScreen() {
     handleComplete()
   }
 
-  const handleSkipLocation = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-    handleComplete()
-  }
+  // Note: Skip option removed per Apple App Store guidelines 5.1.1
+  // Users must always proceed to the permission request
 
   const handleComplete = () => {
     if (selectedActivities.length > 0) {
@@ -276,11 +274,11 @@ export default function QuestionnaireScreen() {
               <Ionicons name="location" size={80} color="#7ED957" />
             </View>
 
-            <Text style={styles.locationTitle}>Enable Location</Text>
+            <Text style={styles.locationTitle}>Find Nearby Options</Text>
             <Text style={styles.locationDescription}>
               {isTeachingRole(userType)
-                ? "Allow location access so clients can find you and you can see nearby venues."
-                : "Allow location access to find nearby courts, studios, and trainers in your area."}
+                ? "We'll ask for location access so clients near you can find your services."
+                : "We'll ask for location access to show courts, studios, and trainers near you."}
             </Text>
 
             {locationError && (
@@ -297,12 +295,8 @@ export default function QuestionnaireScreen() {
               {locationLoading ? (
                 <ActivityIndicator color="#0A0A0A" />
               ) : (
-                <Text style={styles.continueText}>Enable Location</Text>
+                <Text style={styles.continueText}>Continue</Text>
               )}
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={handleSkipLocation} style={styles.skipButton}>
-              <Text style={styles.skipText}>Skip for now</Text>
             </TouchableOpacity>
           </View>
         </SafeAreaView>
