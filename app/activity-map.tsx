@@ -109,7 +109,10 @@ export default function ActivityMapScreen() {
                     <TouchableOpacity style={styles.backButton} onPress={handleBack}>
                         <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
                     </TouchableOpacity>
-                    <Text style={styles.title}>Live Activity Map</Text>
+                    <View style={styles.titleContainer}>
+                        <Ionicons name="sparkles" size={16} color="#8B5CF6" />
+                        <Text style={styles.title}>Live Activity Map</Text>
+                    </View>
                     <TouchableOpacity style={styles.filterButton}>
                         <Ionicons name="filter" size={24} color="#7ED957" />
                     </TouchableOpacity>
@@ -181,7 +184,7 @@ export default function ActivityMapScreen() {
                 </View>
             )}
 
-            {/* Stats Summary */}
+            {/* Stats Summary with GIA Branding */}
             <View style={styles.statsBar}>
                 <View style={styles.statItem}>
                     <Text style={styles.statValue}>67</Text>
@@ -196,6 +199,11 @@ export default function ActivityMapScreen() {
                 <View style={styles.statItem}>
                     <Text style={styles.statValue}>5</Text>
                     <Text style={styles.statLabel}>Near You</Text>
+                </View>
+                <View style={styles.statDivider} />
+                <View style={styles.giaBadge}>
+                    <Ionicons name="sparkles" size={12} color="#8B5CF6" />
+                    <Text style={styles.giaLabel}>GIA</Text>
                 </View>
             </View>
         </View>
@@ -407,5 +415,24 @@ const styles = StyleSheet.create({
         width: 1,
         height: 32,
         backgroundColor: "#252525",
+    },
+    titleContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+    },
+    giaBadge: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+        backgroundColor: "rgba(139, 92, 246, 0.15)",
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 8,
+    },
+    giaLabel: {
+        fontSize: 12,
+        fontWeight: "600",
+        color: "#8B5CF6",
     },
 })

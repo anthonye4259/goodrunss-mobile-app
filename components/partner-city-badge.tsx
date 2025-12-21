@@ -17,7 +17,9 @@ export function PartnerCityBadge() {
     return (
         <View style={styles.container}>
             <View style={styles.badge}>
-                <Text style={styles.emoji}>🏖️</Text>
+                <View style={styles.iconContainer}>
+                    <Ionicons name="sunny-outline" size={24} color="#7ED957" />
+                </View>
                 <View style={styles.textContainer}>
                     <Text style={styles.title}>Myrtle Beach Partner City</Text>
                     <Text style={styles.subtitle}>2x rewards on all reports!</Text>
@@ -44,8 +46,13 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: "rgba(132, 204, 22, 0.3)",
     },
-    emoji: {
-        fontSize: 32,
+    iconContainer: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: "rgba(126, 217, 87, 0.2)",
+        alignItems: "center",
+        justifyContent: "center",
         marginRight: 12,
     },
     textContainer: {

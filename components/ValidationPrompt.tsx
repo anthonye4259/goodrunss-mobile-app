@@ -31,12 +31,12 @@ interface ValidationPromptProps {
     onValidated?: (wasAccurate: boolean) => void
 }
 
-const ACTIVITY_DISPLAY: Record<ActivityLevel, { emoji: string; label: string }> = {
-    dead: { emoji: "💤", label: "Dead" },
-    quiet: { emoji: "🟢", label: "Quiet" },
-    active: { emoji: "🟡", label: "Active" },
-    busy: { emoji: "🟠", label: "Busy" },
-    packed: { emoji: "🔴", label: "Packed" },
+const ACTIVITY_DISPLAY: Record<ActivityLevel, { color: string; label: string }> = {
+    dead: { color: "#6B7280", label: "Dead" },
+    quiet: { color: "#22C55E", label: "Quiet" },
+    active: { color: "#FBBF24", label: "Active" },
+    busy: { color: "#F97316", label: "Busy" },
+    packed: { color: "#EF4444", label: "Packed" },
 }
 
 export function ValidationPrompt({
@@ -119,14 +119,14 @@ export function ValidationPrompt({
 
                     {step === "accuracy" && (
                         <>
-                            <Text style={styles.title}>Help us improve! 🎯</Text>
+                            <Text style={styles.title}>Help us improve!</Text>
                             <Text style={styles.subtitle}>
                                 We predicted <Text style={styles.venueName}>{venueName}</Text> would be:
                             </Text>
 
                             {/* Prediction badge */}
                             <View style={styles.predictionBadge}>
-                                <Text style={styles.predictionEmoji}>{predicted.emoji}</Text>
+                                <View style={[styles.predictionDot, { backgroundColor: predicted.color }]} />
                                 <Text style={styles.predictionLabel}>{predicted.label}</Text>
                             </View>
 
@@ -157,7 +157,7 @@ export function ValidationPrompt({
                         <>
                             <Text style={styles.title}>What was it actually?</Text>
                             <Text style={styles.subtitle}>
-                                We predicted {predicted.emoji} {predicted.label}
+                                We predicted <View style={[styles.inlineDot, { backgroundColor: predicted.color }]} /> {predicted.label}
                             </Text>
 
                             <View style={styles.levelGrid}>
@@ -172,7 +172,7 @@ export function ValidationPrompt({
                                             ]}
                                             onPress={() => handleActualLevel(level)}
                                         >
-                                            <Text style={styles.levelEmoji}>{display.emoji}</Text>
+                                            <View style={[styles.levelDot, { backgroundColor: display.color }]} />
                                             <Text style={styles.levelLabel}>{display.label}</Text>
                                         </TouchableOpacity>
                                     )
@@ -183,7 +183,7 @@ export function ValidationPrompt({
 
                     {step === "thanks" && (
                         <View style={styles.thanksContainer}>
-                            <Text style={styles.thanksEmoji}>🙏</Text>
+                            <Ionicons name="heart" size={48} color="#8B5CF6" />
                             <Text style={styles.thanksTitle}>Thanks!</Text>
                             <Text style={styles.thanksText}>
                                 Your feedback helps everyone play smarter.
@@ -211,7 +211,7 @@ export function InlineValidation({
     return (
         <View style={styles.inlineContainer}>
             <View style={styles.inlineLeft}>
-                <Text style={styles.inlineLabel}>We said {predicted.emoji} {predicted.label}</Text>
+                <Text style={styles.inlineLabel}>We said <View style={[styles.inlineDot, { backgroundColor: predicted.color }]} /> {predicted.label}</Text>
                 <Text style={styles.inlineQuestion}>Accurate?</Text>
             </View>
             <View style={styles.inlineButtons}>
@@ -281,8 +281,16 @@ const styles = StyleSheet.create({
         alignSelf: "center",
         marginBottom: 20,
     },
-    predictionEmoji: {
-        fontSize: 28,
+    predictionDot: {
+        width: 16,
+        height: 16,
+        borderRadius: 8,
+    },
+    inlineDot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        marginHorizontal: 4,
     },
     predictionLabel: {
         fontSize: 18,
@@ -347,9 +355,11 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: "#8B5CF6",
     },
-    levelEmoji: {
-        fontSize: 24,
-        marginBottom: 4,
+    levelDot: {
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        marginBottom: 6,
     },
     levelLabel: {
         fontSize: 12,
@@ -360,8 +370,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         paddingVertical: 20,
     },
-    thanksEmoji: {
-        fontSize: 48,
+    thanksIcon: {
         marginBottom: 12,
     },
     thanksTitle: {

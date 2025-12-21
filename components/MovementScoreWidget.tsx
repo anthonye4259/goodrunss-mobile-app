@@ -45,7 +45,7 @@ const getScoreLabel = (score: number): string => {
 // Get GIA insight based on score
 const getGiaInsight = (score: number, components: ScoreComponents): string => {
     if (score >= 80) {
-        return "You're on fire! 🔥 Your body is primed for peak performance today."
+        return "You're on fire! Your body is primed for peak performance today."
     }
     if (score >= 60) {
         if (components.recovery < 50) {
@@ -121,7 +121,7 @@ export function MovementScoreWidget({ onPress }: MovementScoreProps) {
                         <View style={styles.headerLeft}>
                             <Text style={styles.title}>Movement Score</Text>
                             <View style={styles.streakBadge}>
-                                <Text style={styles.streakEmoji}>🔥</Text>
+                                <Ionicons name="flame" size={14} color="#FBBF24" />
                                 <Text style={styles.streakText}>{streak} day streak</Text>
                             </View>
                         </View>
@@ -266,8 +266,7 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         alignSelf: "flex-start",
     },
-    streakEmoji: {
-        fontSize: 12,
+    streakIcon: {
         marginRight: 4,
     },
     streakText: {
