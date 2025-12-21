@@ -58,7 +58,6 @@ export interface SportContext {
     // Activity
     activityLevel: ActivityLevel
     activityColor: string
-    activityEmoji: string
 
     // Headlines (sport-specific language)
     headline: string              // "Runs are live" / "2 courts free"
@@ -112,7 +111,7 @@ export interface MagicNumber {
 
 interface SportConfig {
     name: string
-    emoji: string
+    icon: string  // Ionicon name (e.g., "basketball-outline")
     color: string
 
     // Terminology
@@ -150,7 +149,7 @@ interface SportConfig {
 const SPORT_CONFIGS: Record<Sport, SportConfig> = {
     basketball: {
         name: "Basketball",
-        emoji: "🏀",
+        icon: "basketball-outline",
         color: "#F97316", // Orange
 
         activeLabel: "Runs are live",
@@ -193,7 +192,7 @@ const SPORT_CONFIGS: Record<Sport, SportConfig> = {
 
     tennis: {
         name: "Tennis",
-        emoji: "🎾",
+        icon: "tennisball-outline",
         color: "#22C55E", // Green
 
         activeLabel: "Courts in use",
@@ -236,7 +235,7 @@ const SPORT_CONFIGS: Record<Sport, SportConfig> = {
 
     pickleball: {
         name: "Pickleball",
-        emoji: "🥒",
+        icon: "tennisball-outline",
         color: "#8B5CF6", // Purple
 
         activeLabel: "Open play active",
@@ -279,7 +278,7 @@ const SPORT_CONFIGS: Record<Sport, SportConfig> = {
 
     volleyball: {
         name: "Volleyball",
-        emoji: "🏐",
+        icon: "football-outline",
         color: "#EAB308", // Yellow
 
         activeLabel: "Games running",
@@ -321,7 +320,7 @@ const SPORT_CONFIGS: Record<Sport, SportConfig> = {
 
     golf: {
         name: "Golf",
-        emoji: "⛳",
+        icon: "golf-outline",
         color: "#166534", // Dark green
 
         activeLabel: "Course busy",
@@ -364,7 +363,7 @@ const SPORT_CONFIGS: Record<Sport, SportConfig> = {
 
     swimming: {
         name: "Swimming",
-        emoji: "🏊",
+        icon: "water-outline",
         color: "#0EA5E9", // Sky blue
 
         activeLabel: "Lanes busy",
@@ -407,7 +406,7 @@ const SPORT_CONFIGS: Record<Sport, SportConfig> = {
 
     soccer: {
         name: "Soccer",
-        emoji: "⚽",
+        icon: "football-outline",
         color: "#16A34A", // Green
 
         activeLabel: "Games running",
@@ -449,7 +448,7 @@ const SPORT_CONFIGS: Record<Sport, SportConfig> = {
 
     padel: {
         name: "Padel",
-        emoji: "🎾",
+        icon: "tennisball-outline",
         color: "#06B6D4", // Cyan
 
         activeLabel: "Courts active",
@@ -491,7 +490,7 @@ const SPORT_CONFIGS: Record<Sport, SportConfig> = {
 
     racquetball: {
         name: "Racquetball",
-        emoji: "🎾",
+        icon: "tennisball-outline",
         color: "#DC2626", // Red
 
         activeLabel: "Courts in use",
@@ -536,12 +535,12 @@ const SPORT_CONFIGS: Record<Sport, SportConfig> = {
 // ACTIVITY LEVEL MAPPING
 // ============================================
 
-const ACTIVITY_LEVELS: Record<ActivityLevel, { color: string; emoji: string }> = {
-    dead: { color: "#6B7280", emoji: "⚪" },
-    quiet: { color: "#22C55E", emoji: "🟢" },
-    active: { color: "#EAB308", emoji: "🟡" },
-    busy: { color: "#F97316", emoji: "🟠" },
-    packed: { color: "#EF4444", emoji: "🔴" },
+const ACTIVITY_LEVELS: Record<ActivityLevel, { color: string }> = {
+    dead: { color: "#6B7280" },
+    quiet: { color: "#22C55E" },
+    active: { color: "#EAB308" },
+    busy: { color: "#F97316" },
+    packed: { color: "#EF4444" },
 }
 
 // ============================================
@@ -589,7 +588,7 @@ class SportIntelligenceService {
 
         // Determine activity level
         const activityLevel = this.scoreToActivityLevel(baseScore)
-        const { color: activityColor, emoji: activityEmoji } = ACTIVITY_LEVELS[activityLevel]
+        const { color: activityColor } = ACTIVITY_LEVELS[activityLevel]
 
         // Generate sport-specific headlines
         const { headline, subheadline } = this.generateHeadlines(
@@ -638,7 +637,6 @@ class SportIntelligenceService {
             sport,
             activityLevel,
             activityColor,
-            activityEmoji,
             headline,
             subheadline,
             waitTime,
@@ -731,28 +729,28 @@ class SportIntelligenceService {
         checkIns: number | undefined,
         config: SportConfig
     ): { headline: string; subheadline: string } {
-        const sportEmoji = config.emoji
+        // No emoji in headlines - clean, premium
 
         // Sport-specific headlines
         if (sport === "basketball") {
             if (level === "packed" || level === "busy") {
                 return {
-                    headline: `${sportEmoji} RUNS ARE LIVE`,
+                    headline: "Runs are live",
                     subheadline: checkIns
-                        ? `${checkIns} ${config.playersLabel} • ${checkIns >= 10 ? "Full court running" : "Half court games"}`
-                        : "Full court games running"
+                        ? `${checkIns} ${config.playersLabel} on court`
+                        : "Usually active now"
                 }
             } else if (level === "active") {
                 return {
-                    headline: `${sportEmoji} Some Action`,
+                    headline: "Some action",
                     subheadline: checkIns
                         ? `${checkIns} ${config.playersLabel} on court`
-                        : "Games forming"
+                        : "Games may be forming"
                 }
             } else {
                 return {
-                    headline: `${sportEmoji} Courts Open`,
-                    subheadline: "Great time to shoot around"
+                    headline: "Courts open",
+                    subheadline: "Good time to shoot around"
                 }
             }
         }
@@ -760,17 +758,17 @@ class SportIntelligenceService {
         if (sport === "tennis" || sport === "padel") {
             if (level === "packed" || level === "busy") {
                 return {
-                    headline: `${sportEmoji} Courts Busy`,
-                    subheadline: "Expect a wait for courts"
+                    headline: "Courts busy",
+                    subheadline: "Expect a wait"
                 }
             } else if (level === "active") {
                 return {
-                    headline: `${sportEmoji} Some Courts Free`,
+                    headline: "Some courts free",
                     subheadline: "Good availability"
                 }
             } else {
                 return {
-                    headline: `${sportEmoji} Courts Available`,
+                    headline: "Courts available",
                     subheadline: "Plenty of open courts"
                 }
             }
@@ -779,20 +777,20 @@ class SportIntelligenceService {
         if (sport === "pickleball") {
             if (level === "packed" || level === "busy") {
                 return {
-                    headline: `${sportEmoji} Open Play Active`,
+                    headline: "Open play active",
                     subheadline: checkIns
-                        ? `${checkIns} in rotation • Put your paddle up!`
-                        : "Paddles are stacked"
+                        ? `${checkIns} in rotation`
+                        : "Usually busy now"
                 }
             } else if (level === "active") {
                 return {
-                    headline: `${sportEmoji} Games Forming`,
+                    headline: "Games forming",
                     subheadline: "Quick to get on court"
                 }
             } else {
                 return {
-                    headline: `${sportEmoji} Courts Available`,
-                    subheadline: "No wait - jump right in"
+                    headline: "Courts available",
+                    subheadline: "No wait expected"
                 }
             }
         }
@@ -800,18 +798,18 @@ class SportIntelligenceService {
         if (sport === "swimming") {
             if (level === "packed" || level === "busy") {
                 return {
-                    headline: `${sportEmoji} Lanes Busy`,
+                    headline: "Lanes busy",
                     subheadline: "Circle swim likely"
                 }
             } else if (level === "active") {
                 return {
-                    headline: `${sportEmoji} Moderate Activity`,
+                    headline: "Moderate activity",
                     subheadline: "Some lanes available"
                 }
             } else {
                 return {
-                    headline: `${sportEmoji} Lanes Open`,
-                    subheadline: "Great time for laps"
+                    headline: "Lanes open",
+                    subheadline: "Good time for laps"
                 }
             }
         }
@@ -822,10 +820,10 @@ class SportIntelligenceService {
             : config.quietLabel
 
         return {
-            headline: `${sportEmoji} ${label.toUpperCase()}`,
+            headline: label,
             subheadline: checkIns
                 ? `${checkIns} ${config.playersLabel}`
-                : level === "quiet" ? "Low activity" : "Moderate activity"
+                : level === "quiet" ? "Low activity expected" : "Moderate activity expected"
         }
     }
 

@@ -356,44 +356,44 @@ function getActivityTips(
 
     // Weather-based tips
     if (weather.uvIndex >= 6) {
-        tips.push("🧴 Apply sunscreen before heading out")
+        tips.push("Apply sunscreen before heading out")
     }
     if (weather.temp > 85) {
-        tips.push("💧 Stay hydrated, bring extra water")
+        tips.push("Stay hydrated, bring extra water")
     }
     if (weather.temp < 50) {
-        tips.push("🧥 Dress in layers for warmth")
+        tips.push("Dress in layers for warmth")
     }
     if (weather.humidity > 70) {
-        tips.push("💦 Expect to sweat more in this humidity")
+        tips.push("Expect to sweat more in this humidity")
     }
     if (weather.windSpeed > 10) {
-        tips.push("🌬️ Wind may affect ball trajectory")
+        tips.push("Wind may affect ball trajectory")
     }
 
     // Activity-specific tips
     switch (category) {
         case "outdoor_court":
             if (weather.conditions.toLowerCase().includes("cloud")) {
-                tips.push("☁️ Good for avoiding sun glare")
+                tips.push("Good for avoiding sun glare")
             }
             break
         case "outdoor_water":
-            tips.push(`🌊 Estimated water temp: ${Math.round(weather.temp - 8)}°F`)
+            tips.push(`Estimated water temp: ${Math.round(weather.temp - 8)}°F`)
             break
         case "outdoor_cardio":
             if (weather.temp > 80) {
-                tips.push("🏃 Consider early morning or evening run")
+                tips.push("Consider early morning or evening run")
             }
             break
         case "indoor_studio":
-            tips.push("🧘 Studio maintains ideal temperature")
+            tips.push("Studio maintains ideal temperature")
             break
     }
 
     // Traffic-based tips
     if (traffic.level === "busy") {
-        tips.push("⏰ Consider off-peak hours for less crowds")
+        tips.push("Consider off-peak hours for less crowds")
     }
 
     return tips.slice(0, 4) // Max 4 tips
@@ -404,27 +404,19 @@ function getHeadline(
     rating: ActivityConditions["playRating"],
     weather: WeatherConditions
 ): string {
-    const activityEmojis: Record<string, string> = {
-        tennis: "🎾", pickleball: "🏓", basketball: "🏀", golf: "⛳",
-        running: "🏃", swimming: "🏊", yoga: "🧘", pilates: "💪",
-        crossfit: "🏋️", cycling: "🚴", soccer: "⚽", volleyball: "🏐",
-    }
-
-    const emoji = activityEmojis[activity.toLowerCase()] || "🏆"
-
     switch (rating) {
         case "perfect":
-            return `Perfect ${activity} Weather! ${emoji}`
+            return `Perfect ${activity} weather`
         case "great":
-            return `Great Day for ${activity}! ${emoji}`
+            return `Great day for ${activity}`
         case "good":
-            return `Good Conditions for ${activity} ${emoji}`
+            return `Good conditions for ${activity}`
         case "fair":
-            return `Playable Conditions ${emoji}`
+            return `Playable conditions`
         case "poor":
-            return `Consider Indoor Alternative Today`
+            return `Consider indoor alternative`
         case "closed":
-            return `Poor Weather - Check Indoor Options`
+            return `Poor weather - check indoor options`
     }
 }
 
@@ -468,22 +460,22 @@ function getWeatherWarnings(weather: WeatherConditions, category: ActivityCatego
     const warnings: string[] = []
 
     if (weather.precipitation > 0) {
-        warnings.push("🌧️ Rain in forecast")
+        warnings.push("Rain in forecast")
     }
     if (weather.conditions.toLowerCase().includes("thunder")) {
-        warnings.push("⛈️ Thunderstorm warning - seek shelter")
+        warnings.push("Thunderstorm warning - seek shelter")
     }
     if (weather.temp > 95) {
-        warnings.push("🌡️ Extreme heat - limit outdoor activity")
+        warnings.push("Extreme heat - limit outdoor activity")
     }
     if (weather.temp < 32) {
-        warnings.push("❄️ Freezing temperatures")
+        warnings.push("Freezing temperatures")
     }
     if (weather.uvIndex >= 8) {
-        warnings.push("☀️ Very high UV - protect your skin")
+        warnings.push("Very high UV - protect your skin")
     }
     if (weather.windGust && weather.windGust > 30) {
-        warnings.push("💨 Wind gusts may affect play")
+        warnings.push("Wind gusts may affect play")
     }
 
     return warnings

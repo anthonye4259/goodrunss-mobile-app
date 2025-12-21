@@ -8,7 +8,7 @@
  * - Weather conditions
  * 
  * Outputs simple traffic-light style status:
- * 🟢 EMPTY → 🟡 LIGHT → 🟠 MODERATE → 🔴 BUSY → 💥 PACKED
+ * EMPTY -> LIGHT -> MODERATE -> BUSY -> PACKED (color-coded)
  */
 
 import { db } from "../firebase-config"
@@ -35,9 +35,8 @@ export interface CourtStatus {
     venueId: string
     venueName?: string
 
-    // Primary status (Waze-style)
+    // Primary status
     crowdLevel: CrowdLevel
-    crowdEmoji: string
     crowdColor: string
     crowdLabel: string
 
@@ -88,12 +87,12 @@ export interface CourtCondition {
 // CROWD LEVEL MAPPING
 // ============================================
 
-const CROWD_LEVELS: Record<CrowdLevel, { emoji: string; color: string; label: string; waitTime: string }> = {
-    empty: { emoji: "🟢", color: "#22C55E", label: "Empty", waitTime: "No wait" },
-    light: { emoji: "🟡", color: "#EAB308", label: "Light Activity", waitTime: "No wait" },
-    moderate: { emoji: "🟠", color: "#F97316", label: "Moderate", waitTime: "~5 min wait" },
-    busy: { emoji: "🔴", color: "#EF4444", label: "Busy", waitTime: "10-15 min wait" },
-    packed: { emoji: "💥", color: "#DC2626", label: "Packed", waitTime: "15+ min wait" },
+const CROWD_LEVELS: Record<CrowdLevel, { color: string; label: string; waitTime: string }> = {
+    empty: { color: "#22C55E", label: "Empty", waitTime: "No wait" },
+    light: { color: "#EAB308", label: "Light", waitTime: "No wait" },
+    moderate: { color: "#F97316", label: "Moderate", waitTime: "~5 min" },
+    busy: { color: "#EF4444", label: "Busy", waitTime: "10-15 min" },
+    packed: { color: "#DC2626", label: "Full", waitTime: "15+ min" },
 }
 
 // ============================================
@@ -101,16 +100,16 @@ const CROWD_LEVELS: Record<CrowdLevel, { emoji: string; color: string; label: st
 // ============================================
 
 const CONDITION_TYPES: Record<string, CourtCondition> = {
-    lights_on: { type: "lights_on", label: "Lights On", icon: "💡", positive: true },
-    lights_off: { type: "lights_off", label: "Lights Off", icon: "🌙", positive: false },
-    wet_courts: { type: "wet_courts", label: "Wet Courts", icon: "💧", positive: false },
-    dry_courts: { type: "dry_courts", label: "Dry Courts", icon: "☀️", positive: true },
-    nets_up: { type: "nets_up", label: "Nets Up", icon: "🎾", positive: true },
-    nets_down: { type: "nets_down", label: "Nets Down", icon: "❌", positive: false },
-    clean: { type: "clean", label: "Clean Courts", icon: "✨", positive: true },
-    dirty: { type: "dirty", label: "Needs Cleaning", icon: "🧹", positive: false },
-    games_running: { type: "games_running", label: "Games Running", icon: "🏀", positive: true },
-    reserved: { type: "reserved", label: "Reserved", icon: "📋", positive: false },
+    lights_on: { type: "lights_on", label: "Lights on", icon: "bulb-outline", positive: true },
+    lights_off: { type: "lights_off", label: "Lights off", icon: "moon-outline", positive: false },
+    wet_courts: { type: "wet_courts", label: "Wet courts", icon: "water-outline", positive: false },
+    dry_courts: { type: "dry_courts", label: "Dry courts", icon: "sunny-outline", positive: true },
+    nets_up: { type: "nets_up", label: "Nets up", icon: "tennisball-outline", positive: true },
+    nets_down: { type: "nets_down", label: "Nets down", icon: "close-outline", positive: false },
+    clean: { type: "clean", label: "Clean", icon: "sparkles-outline", positive: true },
+    dirty: { type: "dirty", label: "Needs cleaning", icon: "trash-outline", positive: false },
+    games_running: { type: "games_running", label: "Games running", icon: "basketball-outline", positive: true },
+    reserved: { type: "reserved", label: "Reserved", icon: "calendar-outline", positive: false },
 }
 
 // ============================================
@@ -187,7 +186,6 @@ class CourtStatusService {
             venueName,
 
             crowdLevel,
-            crowdEmoji: crowd.emoji,
             crowdColor: crowd.color,
             crowdLabel: crowd.label,
 
@@ -426,7 +424,7 @@ class CourtStatusService {
             const prediction = predictVenueTraffic(venueId, testTime, undefined, weather, venueType)
 
             if (prediction.level === "low") {
-                if (h === 0) return "Now ✨"
+                if (h === 0) return "Now"
                 const futureHour = testTime.getHours()
                 const ampm = futureHour >= 12 ? "PM" : "AM"
                 const hour12 = futureHour % 12 || 12
