@@ -145,8 +145,14 @@ export default function HomeScreen() {
               </View>
               <View style={styles.reportTextContainer}>
                 <Text style={styles.reportTitle}>Report Court Condition</Text>
-                <Text style={styles.reportDesc}>Save gas, time & help the planet 🌍</Text>
-                <Text style={styles.reportEarnings}>💰 Earn $5 per report!</Text>
+                <View style={styles.reportDescRow}>
+                  <Text style={styles.reportDesc}>Save gas, time & help the planet</Text>
+                  <Ionicons name="earth" size={14} color="#7ED957" />
+                </View>
+                <View style={styles.reportDescRow}>
+                  <Ionicons name="cash-outline" size={12} color="#7ED957" />
+                  <Text style={styles.reportEarnings}> Earn $5 per report!</Text>
+                </View>
               </View>
               <View style={styles.reportBadge}>
                 <Ionicons name="cash" size={16} color="#7ED957" />
@@ -154,10 +160,13 @@ export default function HomeScreen() {
             </View>
           </TouchableOpacity>
 
-          {/* 🔥 Live Activity Heat Map */}
+          {/* Live Activity Heat Map */}
           <View style={styles.sectionContainer}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>🔥 Live Activity</Text>
+              <View style={styles.sectionTitleRow}>
+                <Ionicons name="flame" size={18} color="#F97316" />
+                <Text style={styles.sectionTitle}>Live Activity</Text>
+              </View>
               <TouchableOpacity onPress={() => handlePress(() => router.push("/activity-map"))}>
                 <Text style={styles.seeAllText}>View Map</Text>
               </TouchableOpacity>
@@ -460,6 +469,11 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#FFFFFF",
   },
+  sectionTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
   seeAllText: {
     fontSize: 14,
     fontWeight: "600",
@@ -650,6 +664,11 @@ const styles = StyleSheet.create({
   reportDesc: {
     fontSize: 14,
     color: "#9CA3AF",
+  },
+  reportDescRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
     marginBottom: 2,
   },
   reportEarnings: {

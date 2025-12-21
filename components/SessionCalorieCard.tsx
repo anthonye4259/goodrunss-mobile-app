@@ -30,14 +30,14 @@ const MET_VALUES: Record<string, number> = {
     default: 5.0,
 };
 
-// Fun comparisons for calorie burn
+// Fun comparisons for calorie burn (no emojis - premium minimal design)
 const CALORIE_COMPARISONS = [
-    { threshold: 100, text: 'a donut', emoji: '🍩' },
-    { threshold: 200, text: 'a bagel with cream cheese', emoji: '🥯' },
-    { threshold: 350, text: '1.5 BigMacs', emoji: '🍔' },
-    { threshold: 500, text: 'a Chipotle burrito', emoji: '🌯' },
-    { threshold: 750, text: 'a large pizza slice', emoji: '🍕' },
-    { threshold: 1000, text: 'a full dinner', emoji: '🍽️' },
+    { threshold: 100, text: 'a donut' },
+    { threshold: 200, text: 'a bagel with cream cheese' },
+    { threshold: 350, text: '1.5 Big Macs' },
+    { threshold: 500, text: 'a Chipotle burrito' },
+    { threshold: 750, text: 'a large pizza' },
+    { threshold: 1000, text: 'a full dinner' },
 ];
 
 interface SessionCalorieCardProps {
@@ -64,7 +64,7 @@ export function calculateCalories(sport: string, durationMinutes: number, weight
 /**
  * Get fun comparison for calorie burn
  */
-function getCalorieComparison(calories: number): { text: string; emoji: string } | null {
+function getCalorieComparison(calories: number): { text: string } | null {
     for (const comparison of CALORIE_COMPARISONS) {
         if (calories <= comparison.threshold) {
             return comparison;
@@ -121,8 +121,9 @@ export function SessionCalorieCard({
 
             {comparison && (
                 <View style={styles.comparison}>
+                    <Ionicons name="restaurant-outline" size={14} color="#D1D5DB" />
                     <Text style={styles.comparisonText}>
-                        {comparison.emoji} That's about {comparison.text} burned!
+                        That's about {comparison.text} burned!
                     </Text>
                 </View>
             )}
@@ -150,9 +151,10 @@ export function CalorieBadge({ sport, durationMinutes }: { sport: string; durati
 export function CalorieEstimateText({ sport, durationMinutes }: { sport: string; durationMinutes: number }) {
     const calories = calculateCalories(sport, durationMinutes);
     return (
-        <Text style={styles.estimateText}>
-            🔥 Est. {calories} cal burn
-        </Text>
+        <View style={styles.estimateRow}>
+            <Ionicons name="flame" size={14} color="#FF6B35" />
+            <Text style={styles.estimateText}> Est. {calories} cal burn</Text>
+        </View>
     );
 }
 
@@ -205,6 +207,9 @@ const styles = StyleSheet.create({
         color: '#9CA3AF',
     },
     comparison: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
         backgroundColor: 'rgba(255, 255, 255, 0.05)',
         borderRadius: 8,
         paddingVertical: 8,
@@ -246,6 +251,10 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     // Estimate text
+    estimateRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
     estimateText: {
         fontSize: 13,
         color: '#9CA3AF',

@@ -27,12 +27,12 @@ const ratingColors = {
     closed: "#EF4444",
 }
 
-const ratingEmojis = {
-    perfect: "🏊",
-    good: "👍",
-    okay: "🤔",
-    cold: "🥶",
-    closed: "⛔",
+const ratingIcons: Record<string, string> = {
+    perfect: "water",
+    good: "checkmark-circle",
+    okay: "help-circle",
+    cold: "snow",
+    closed: "close-circle",
 }
 
 export function PoolConditionsBadge({
@@ -63,20 +63,21 @@ export function PoolConditionsBadge({
     if (loading || !conditions) {
         return (
             <View style={styles.compactBadge}>
-                <Text style={styles.loadingText}>🌡️ Loading...</Text>
+                <Ionicons name="thermometer-outline" size={12} color="#666" />
+                <Text style={styles.loadingText}>Loading...</Text>
             </View>
         )
     }
 
     const color = ratingColors[conditions.swimRating]
-    const emoji = ratingEmojis[conditions.swimRating]
+    const icon = ratingIcons[conditions.swimRating]
 
     // Compact view for venue cards
     if (compact) {
         return (
             <View style={[styles.compactBadge, { backgroundColor: `${color}15` }]}>
                 <Text style={styles.tempText}>{conditions.waterTempDisplay}</Text>
-                <Text style={styles.compactEmoji}>{emoji}</Text>
+                <Ionicons name={icon as any} size={14} color={color} />
             </View>
         )
     }
@@ -86,7 +87,7 @@ export function PoolConditionsBadge({
         <View style={styles.container}>
             {/* Main swim rating */}
             <View style={[styles.ratingBadge, { backgroundColor: `${color}20`, borderColor: color }]}>
-                <Text style={styles.ratingEmoji}>{emoji}</Text>
+                <Ionicons name={icon as any} size={20} color={color} />
                 <Text style={[styles.ratingText, { color }]}>{conditions.swimMessage}</Text>
             </View>
 
@@ -152,8 +153,8 @@ const styles = StyleSheet.create({
         fontWeight: "bold",
         color: "#3B82F6",
     },
-    compactEmoji: {
-        fontSize: 12,
+    compactIcon: {
+        marginLeft: 2,
     },
     ratingBadge: {
         flexDirection: "row",
@@ -164,8 +165,8 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         gap: 8,
     },
-    ratingEmoji: {
-        fontSize: 20,
+    ratingIcon: {
+        marginRight: 6,
     },
     ratingText: {
         fontSize: 14,

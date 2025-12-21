@@ -86,7 +86,7 @@ export default function ReportScreen() {
                                     <Text style={styles.earningsTotal}>${earnings.allTime}</Text>
                                 </View>
                                 <View style={styles.streakBadge}>
-                                    <Text style={styles.streakEmoji}>🔥</Text>
+                                    <Ionicons name="flame" size={16} color="#FBBF24" />
                                     <Text style={styles.streakText}>{earnings.streak} day streak</Text>
                                 </View>
                             </View>
@@ -147,7 +147,7 @@ export default function ReportScreen() {
                                         <Ionicons name="camera" size={32} color="#000" />
                                     </View>
                                     <View style={styles.bigReportText}>
-                                        <Text style={styles.bigReportTitle}>📸 Quick Report</Text>
+                                        <Text style={styles.bigReportTitle}>Quick Report</Text>
                                         <Text style={styles.bigReportDesc}>Snap a photo, earn $1-31 instantly</Text>
                                     </View>
                                     <Ionicons name="chevron-forward" size={28} color="#000" />
@@ -158,7 +158,10 @@ export default function ReportScreen() {
 
                     {/* What You Can Earn */}
                     <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>💰 What You Can Earn</Text>
+                        <View style={styles.sectionTitleRow}>
+                            <Ionicons name="cash-outline" size={20} color="#7ED957" />
+                            <Text style={styles.sectionTitle}>What You Can Earn</Text>
+                        </View>
                         <View style={styles.earnGrid}>
                             <View style={styles.earnCard}>
                                 <Text style={styles.earnAmount}>$1-5</Text>
@@ -178,7 +181,10 @@ export default function ReportScreen() {
                     {/* Nearby Courts */}
                     <View style={styles.section}>
                         <View style={styles.sectionHeader}>
-                            <Text style={styles.sectionTitle}>📍 Courts Near You</Text>
+                            <View style={styles.sectionTitleRow}>
+                                <Ionicons name="location-outline" size={20} color="#7ED957" />
+                                <Text style={styles.sectionTitle}>Courts Near You</Text>
+                            </View>
                             <TouchableOpacity onPress={() => router.push("/(tabs)/explore")}>
                                 <Text style={styles.seeAll}>View Map</Text>
                             </TouchableOpacity>
@@ -217,7 +223,10 @@ export default function ReportScreen() {
 
                     {/* Impact Stats */}
                     <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>🌍 Your Impact</Text>
+                        <View style={styles.sectionTitleRow}>
+                            <Ionicons name="earth-outline" size={20} color="#7ED957" />
+                            <Text style={styles.sectionTitle}>Your Impact</Text>
+                        </View>
                         <View style={styles.impactCard}>
                             <View style={styles.impactRow}>
                                 <View style={styles.impactStat}>
@@ -275,7 +284,9 @@ const styles = StyleSheet.create({
         paddingVertical: 6,
         borderRadius: 16,
     },
-    streakEmoji: { fontSize: 16, marginRight: 4 },
+    streakIcon: {
+        marginRight: 4,
+    },
     streakText: { fontSize: 12, fontWeight: "bold", color: "#FBBF24" },
     earningsRow: {
         flexDirection: "row",
@@ -317,7 +328,13 @@ const styles = StyleSheet.create({
         alignItems: "center",
         marginBottom: 16,
     },
-    sectionTitle: { fontSize: 20, fontWeight: "bold", color: "#FFFFFF", marginBottom: 16 },
+    sectionTitle: { fontSize: 20, fontWeight: "bold", color: "#FFFFFF" },
+    sectionTitleRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+        marginBottom: 16,
+    },
     seeAll: { fontSize: 14, fontWeight: "600", color: "#7ED957" },
     bigReportButton: {
         borderRadius: 20,
