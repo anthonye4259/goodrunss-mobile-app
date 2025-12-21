@@ -22,6 +22,14 @@ import { venueService } from "@/lib/services/venue-service"
 import { Venue } from "@/lib/venue-data"
 import { MapsService } from "@/lib/services/maps-service"
 import { PoolConditionsBadge } from "@/components/PoolConditionsBadge"
+// Intelligence Components
+import { SportStatusCard } from "@/components/SportStatusCard"
+import { HourlyForecast, generateHourlyPredictions } from "@/components/HourlyForecast"
+import { RegularsInsights, type VenueInsight } from "@/components/RegularsInsights"
+import { ValidationPrompt } from "@/components/ValidationPrompt"
+import { getSportContext, type SportContext, type Sport } from "@/lib/services/sport-intelligence-service"
+import { QuickReportButton, QuickCourtReportModal } from "@/components/QuickCourtReport"
+
 
 export default function VenueDetailScreen() {
   const { id } = useLocalSearchParams()
@@ -36,6 +44,11 @@ export default function VenueDetailScreen() {
   const [loading, setLoading] = useState(true)
   const [activePlayers, setActivePlayers] = useState<any[]>([])
   const [needPlayersAlerts, setNeedPlayersAlerts] = useState<any[]>([])
+  // Intelligence state
+  const [sportContext, setSportContext] = useState<SportContext | null>(null)
+  const [venueInsights, setVenueInsights] = useState<VenueInsight[]>([])
+  const [showQuickReport, setShowQuickReport] = useState(false)
+  const [showValidation, setShowValidation] = useState(false)
 
   const primaryActivity = getPrimaryActivity(preferences.activities) as Activity
   const content = getActivityContent(primaryActivity)
@@ -65,6 +78,9 @@ export default function VenueDetailScreen() {
       // Load real-time data
       loadCheckIns(id)
       loadAlerts(id)
+
+      // Load intelligence data
+      loadSportContext(id, enrichedVenue)
     }
     setLoading(false)
   }
@@ -103,6 +119,38 @@ export default function VenueDetailScreen() {
       timestamp: alert.timestamp?.toDate?.() || new Date()
     }))
     setNeedPlayersAlerts(formatted)
+  }
+
+  // Load sport-specific intelligence
+  const loadSportContext = async (venueId: string, venueData: any) => {
+    try {
+      // Map activity to sport type
+      const sportMap: Record<string, Sport> = {
+        "Basketball": "basketball",
+        "Tennis": "tennis",
+        "Pickleball": "pickleball",
+        "Swimming": "swimming",
+        "Golf": "golf",
+        "Volleyball": "volleyball",
+        "Soccer": "soccer",
+      }
+      const sport = sportMap[primaryActivity] || "basketball"
+
+      // Get active check-in count
+      const checkInCount = activePlayers.reduce((sum, p) => sum + p.count, 0)
+
+      // Fetch sport context
+      const context = await getSportContext(
+        venueId,
+        sport,
+        undefined, // weather - could integrate with activity-conditions-service
+        checkInCount > 0 ? checkInCount : undefined
+      )
+
+      setSportContext(context)
+    } catch (error) {
+      console.error("[VenueDetail] Error loading sport context:", error)
+    }
   }
 
   const generateMockQuality = (sport: string, rating: number) => {
@@ -333,6 +381,16 @@ export default function VenueDetailScreen() {
                 <Text className="text-primary font-bold">{venue.price}</Text>
               </View>
             </View>
+
+            {/* 🎯 REAL-TIME STATUS - THE EDGE (Sport-specific intelligence) */}
+            {sportContext && (
+              <View className="mb-6">
+                <SportStatusCard
+                  context={sportContext}
+                  onReportPress={() => setShowQuickReport(true)}
+                />
+              </View>
+            )}
 
             <View className="bg-card border border-border rounded-2xl p-4 mb-6">
               <View className="flex-row items-center justify-between mb-4">
@@ -644,6 +702,21 @@ export default function VenueDetailScreen() {
           onClose={() => setShowReviewModal(false)}
           onSubmit={handleReviewSubmit}
           venueName={venue.name}
+        />
+
+        {/* Quick Report Modal */}
+        <QuickCourtReportModal
+          venueId={typeof id === "string" ? id : ""}
+          venueName={venue.name}
+          userId={user?.id || "guest"}
+          visible={showQuickReport}
+          onClose={() => setShowQuickReport(false)}
+          onReportSubmitted={() => {
+            // Refresh sport context after report
+            if (typeof id === "string") {
+              loadSportContext(id, venue)
+            }
+          }}
         />
       </LinearGradient>
     </ErrorBoundary>
