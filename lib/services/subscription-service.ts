@@ -18,6 +18,8 @@ export interface Subscription {
     trialEndsAt?: string
     stripeCustomerId?: string
     stripeSubscriptionId?: string
+    email?: string  // Email for cross-platform sync (web + mobile)
+    userId?: string // Firebase UID (mobile) or Clerk ID (web)
 }
 
 export interface ProFeature {
@@ -137,9 +139,28 @@ class SubscriptionService {
             return this.cachedSubscription
         }
 
-        // Try to get from Firebase first (source of truth)
+        // Try to get from Firebase (source of truth)
         if (db) {
             try {
+                // First try email-based lookup (for cross-platform sync)
+                const email = await this.getCurrentUserEmail()
+                if (email) {
+                    const { collection, query, where, getDocs, limit } = await import("firebase/firestore")
+                    const q = query(
+                        collection(db, "subscriptions"),
+                        where("email", "==", email.toLowerCase()),
+                        limit(1)
+                    )
+                    const snapshot = await getDocs(q)
+                    if (!snapshot.empty) {
+                        const data = snapshot.docs[0].data() as Subscription
+                        await this.cacheSubscription(data)
+                        console.log("[Subscription] Found by email:", email)
+                        return data
+                    }
+                }
+
+                // Fallback to userId lookup (for backwards compatibility)
                 const { doc, getDoc } = await import("firebase/firestore")
                 const userId = await this.getCurrentUserId()
                 if (userId) {
@@ -403,14 +424,25 @@ class SubscriptionService {
         await AsyncStorage.setItem(STORAGE_KEYS.SUBSCRIPTION, JSON.stringify(subscription))
         this.cachedSubscription = subscription
 
-        // Sync to Firebase
+        // Sync to Firebase with email for cross-platform access
         if (db) {
             try {
                 const userId = await this.getCurrentUserId()
+                const email = await this.getCurrentUserEmail()
+
                 if (userId) {
                     const { doc, setDoc } = await import("firebase/firestore")
-                    await setDoc(doc(db, "subscriptions", userId), subscription)
-                    console.log("[Subscription] Synced to Firebase")
+
+                    // Include email in subscription for cross-platform lookup
+                    const subWithEmail = {
+                        ...subscription,
+                        email: email?.toLowerCase() || null,
+                        userId: userId,
+                        updatedAt: new Date().toISOString(),
+                    }
+
+                    await setDoc(doc(db, "subscriptions", userId), subWithEmail)
+                    console.log("[Subscription] Synced to Firebase with email:", email)
                 }
             } catch (error) {
                 console.warn("Firebase sync failed:", error)
@@ -429,6 +461,19 @@ class SubscriptionService {
             return auth?.currentUser?.uid || await AsyncStorage.getItem("userId")
         } catch (error) {
             return await AsyncStorage.getItem("userId")
+        }
+    }
+
+    private async getCurrentUserEmail(): Promise<string | null> {
+        try {
+            const { auth } = await import("@/lib/firebase-config")
+            if (auth?.currentUser?.email) {
+                return auth.currentUser.email
+            }
+            // Fallback to stored email
+            return await AsyncStorage.getItem("userEmail")
+        } catch (error) {
+            return await AsyncStorage.getItem("userEmail")
         }
     }
 
