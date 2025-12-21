@@ -43,6 +43,7 @@
     "expo-sharing": "~13.0.0",
     "expo-splash-screen": "~0.29.18",
     "expo-status-bar": "~2.0.0",
+    "expo-task-manager": "~12.0.6",
     "expo-updates": "~0.26.11",
     "expo-web-browser": "~14.0.1",
     "firebase": "^10.7.1",
