@@ -183,7 +183,7 @@ export default function ExploreScreen() {
                   <Text style={styles.impactDesc}>Save gas money, time & reduce CO₂ emissions</Text>
                 </View>
                 <View style={styles.impactStats}>
-                  <Text style={styles.impactNumber}>🌍</Text>
+                  <Ionicons name="earth" size={24} color="#7ED957" />
                 </View>
               </View>
 
@@ -233,7 +233,7 @@ export default function ExploreScreen() {
                       {/* Traffic Prediction */}
                       <View style={styles.trafficContainer}>
                         <View style={[styles.trafficBadge, { backgroundColor: `${trafficPrediction.color}20` }]}>
-                          <Text style={styles.trafficEmoji}>{trafficPrediction.emoji}</Text>
+                          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: trafficPrediction.color }} />
                           <Text style={[styles.trafficLabel, { color: trafficPrediction.color }]}>
                             {trafficPrediction.label}
                           </Text>
