@@ -389,6 +389,26 @@ export default function VenueDetailScreen() {
                   context={sportContext}
                   onReportPress={() => setShowQuickReport(true)}
                 />
+
+                {/* 🤖 GIA Predictions */}
+                <View className="mt-5 space-y-5">
+                  <HourlyForecast
+                    venueId={id as string}
+                    sport={sportContext.sport}
+                    predictions={generateHourlyPredictions(sportContext.sport, id as string, [10, 5, 5, 10, 30, 60, 85, 90, 75, 50, 30, 10])}
+                    bestTime={{ hour: sportContext.bestTime, reason: "Optimal conditions" }}
+                    accuracy={87}
+                  />
+
+                  <RegularsInsights
+                    venueId={id as string}
+                    insights={[
+                      { type: "pattern", icon: "time-outline", text: "Usually gets busy after 5 PM", confidence: 0.92 },
+                      { type: "tip", icon: "bulb-outline", text: "Locals act is friendly", confidence: 0.88 },
+                      { type: "trend", icon: "trending-up-outline", text: "Popularity rising this week", confidence: 0.75 }
+                    ]}
+                  />
+                </View>
               </View>
             )}
 

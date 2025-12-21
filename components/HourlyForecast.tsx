@@ -86,8 +86,8 @@ export function HourlyForecast({
             {/* Header */}
             <View style={styles.header}>
                 <View style={styles.headerLeft}>
-                    <Ionicons name="analytics" size={18} color="#8B5CF6" />
-                    <Text style={styles.headerTitle}>Hourly Forecast</Text>
+                    <Ionicons name="sparkles" size={18} color="#EC4899" />
+                    <Text style={styles.headerTitle}>GIA Prediction</Text>
                 </View>
                 {accuracy !== undefined && accuracy > 0 && (
                     <View style={styles.accuracyBadge}>
@@ -99,7 +99,7 @@ export function HourlyForecast({
             {/* Best Time Recommendation */}
             <View style={styles.bestTimeCard}>
                 <View style={styles.bestTimeIcon}>
-                    <Text style={styles.bestTimeEmoji}>✨</Text>
+                    <Ionicons name="time" size={24} color="#EC4899" />
                 </View>
                 <View style={styles.bestTimeContent}>
                     <Text style={styles.bestTimeLabel}>Best time to come</Text>
@@ -137,8 +137,8 @@ export function HourlyForecast({
                             />
                         </View>
 
-                        {/* Emoji */}
-                        <Text style={styles.hourEmoji}>{pred.emoji}</Text>
+                        {/* Activity indicator dot */}
+                        <View style={[styles.hourDot, { backgroundColor: pred.color }]} />
 
                         {/* Time label */}
                         <Text style={[
@@ -201,7 +201,10 @@ export function TomorrowPreview({
 }) {
     return (
         <View style={styles.tomorrowCard}>
-            <Text style={styles.tomorrowTitle}>📅 Tomorrow</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                <Ionicons name="calendar" size={16} color="#9CA3AF" />
+                <Text style={styles.tomorrowTitle}>Tomorrow</Text>
+            </View>
             <View style={styles.tomorrowSlots}>
                 <TimeSlot
                     label="Morning"
@@ -308,14 +311,8 @@ function formatHour(hour: number): string {
 }
 
 function getLevelEmoji(level: ActivityLevel): string {
-    const emojis: Record<ActivityLevel, string> = {
-        dead: "💤",
-        quiet: "🟢",
-        active: "🟡",
-        busy: "🟠",
-        packed: "🔴",
-    }
-    return emojis[level]
+    // Return empty string - we use color dots now
+    return ""
 }
 
 const styles = StyleSheet.create({
@@ -433,6 +430,12 @@ const styles = StyleSheet.create({
     hourLabelNow: {
         color: "#8B5CF6",
         fontWeight: "700",
+    },
+    hourDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+        marginBottom: 8,
     },
     bestDot: {
         position: "absolute",

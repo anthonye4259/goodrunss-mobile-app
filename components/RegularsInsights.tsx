@@ -56,12 +56,12 @@ export type InsightCategory =
     | "other"
 
 const CATEGORY_CONFIG: Record<InsightCategory, { icon: string; label: string }> = {
-    timing: { icon: "⏰", label: "Timing" },
-    conditions: { icon: "💡", label: "Conditions" },
-    community: { icon: "👥", label: "Community" },
-    equipment: { icon: "🏀", label: "Equipment" },
-    access: { icon: "🔑", label: "Access" },
-    other: { icon: "💬", label: "Other" },
+    timing: { icon: "time-outline", label: "Timing" },
+    conditions: { icon: "bulb-outline", label: "Conditions" },
+    community: { icon: "people-outline", label: "Community" },
+    equipment: { icon: "basketball-outline", label: "Equipment" },
+    access: { icon: "key-outline", label: "Access" },
+    other: { icon: "chatbubble-outline", label: "Other" },
 }
 
 // ============================================
@@ -135,7 +135,7 @@ export function RegularsInsights({
             {/* Header */}
             <View style={styles.header}>
                 <View style={styles.headerLeft}>
-                    <Text style={styles.headerEmoji}>💬</Text>
+                    <Ionicons name="people" size={18} color="#8B5CF6" />
                     <Text style={styles.headerTitle}>Regulars Know</Text>
                 </View>
                 <TouchableOpacity
@@ -164,9 +164,11 @@ export function RegularsInsights({
                                 ]}
                                 onPress={() => setSelectedCategory(cat)}
                             >
-                                <Text style={styles.categoryEmoji}>
-                                    {CATEGORY_CONFIG[cat].icon}
-                                </Text>
+                                <Ionicons
+                                    name={CATEGORY_CONFIG[cat].icon as any}
+                                    size={18}
+                                    color={selectedCategory === cat ? "#8B5CF6" : "#9CA3AF"}
+                                />
                             </TouchableOpacity>
                         ))}
                     </View>
@@ -211,7 +213,7 @@ export function RegularsInsights({
                 </View>
             ) : (
                 <View style={styles.emptyState}>
-                    <Text style={styles.emptyEmoji}>🤔</Text>
+                    <Ionicons name="chatbubbles-outline" size={32} color="#6B7280" />
                     <Text style={styles.emptyText}>
                         No tips yet. Be the first to share!
                     </Text>
@@ -236,7 +238,7 @@ function InsightCard({
     return (
         <View style={styles.insightCard}>
             <View style={styles.insightLeft}>
-                <Text style={styles.insightIcon}>{config.icon}</Text>
+                <Ionicons name={config.icon as any} size={16} color="#8B5CF6" />
                 <Text style={styles.insightText}>{insight.text}</Text>
             </View>
             <TouchableOpacity
@@ -264,7 +266,7 @@ export function InsightBadge({
 
     return (
         <View style={styles.badge}>
-            <Text style={styles.badgeIcon}>{config.icon}</Text>
+            <Ionicons name={config.icon as any} size={12} color="#A78BFA" />
             <Text style={styles.badgeText}>{text}</Text>
         </View>
     )
