@@ -296,7 +296,7 @@ export default function TrainerDashboard() {
               <View className="items-center">
                 <Ionicons name="image" size={48} color="#fff" style={{ marginBottom: 16 }} />
                 <Text className="text-white text-xl font-bold text-center mb-2">
-                  {preferences.userType === "instructor" ? "🧘‍♀️ Transform Your Practice" : "🏀 Level Up Your Game"}
+                  {preferences.userType === "instructor" ? "Transform Your Practice" : "Level Up Your Game"}
                 </Text>
                 <Text className="text-white/90 text-center mb-4">
                   {preferences.userType === "instructor"

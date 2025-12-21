@@ -327,7 +327,7 @@ export default function QuestionnaireScreen() {
           {recActivitiesToShow.length > 0 && (
             <View style={styles.sectionContainer}>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionEmoji}>🏀</Text>
+                <Ionicons name="basketball-outline" size={20} color="#7ED957" />
                 <Text style={styles.sectionTitle}>Sports & Recreation</Text>
               </View>
               <View style={styles.activityGrid}>
@@ -357,7 +357,7 @@ export default function QuestionnaireScreen() {
           {studioActivitiesToShow.length > 0 && (
             <View style={styles.sectionContainer}>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionEmoji}>🧘</Text>
+                <Ionicons name="body-outline" size={20} color="#8B5CF6" />
                 <Text style={styles.sectionTitle}>Studio & Wellness</Text>
               </View>
               <View style={styles.activityGrid}>

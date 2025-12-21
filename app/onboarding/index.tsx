@@ -104,7 +104,7 @@ export default function OnboardingScreen() {
           {/* Play/Practice Section */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionEmoji}>🎯</Text>
+              <Ionicons name="trophy-outline" size={18} color="#FF6B35" />
               <Text style={styles.sectionTitle}>I PLAY / PRACTICE</Text>
             </View>
             <View style={styles.optionRow}>
@@ -137,7 +137,7 @@ export default function OnboardingScreen() {
           {/* Teach/Train Section */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionEmoji}>👨‍🏫</Text>
+              <Ionicons name="school-outline" size={18} color="#7ED957" />
               <Text style={styles.sectionTitle}>I TEACH / TRAIN</Text>
             </View>
             <View style={styles.optionRow}>

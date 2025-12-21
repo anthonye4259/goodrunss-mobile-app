@@ -42,13 +42,13 @@ export default function ProDashboardScreen() {
   const handleStartTrial = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
     setIsProcessing(true)
-    
+
     try {
       await subscriptionService.startTrial()
       await refresh()
-      
+
       Alert.alert(
-        "🎉 Trial Started!",
+        "Trial Started!",
         "You now have 7 days of Pro access! All premium features are unlocked in the app AND on the web dashboard.",
         [{ text: "Let's Go!", onPress: () => router.back() }]
       )
@@ -68,7 +68,7 @@ export default function ProDashboardScreen() {
       // In production, this would open Stripe checkout
       const mockCustomerId = `cus_${Date.now()}`
       const mockSubscriptionId = `sub_${Date.now()}`
-      
+
       await subscriptionService.activateSubscription(
         selectedPlan as SubscriptionPeriod,
         mockCustomerId,
@@ -77,7 +77,7 @@ export default function ProDashboardScreen() {
       await refresh()
 
       Alert.alert(
-        "🎉 Welcome to Pro!",
+        "Welcome to Pro!",
         "Your subscription is now active! Premium features are unlocked on BOTH mobile and web dashboard.",
         [{ text: "Awesome!", onPress: () => router.back() }]
       )
@@ -121,22 +121,25 @@ export default function ProDashboardScreen() {
                 <Ionicons name="checkmark-circle" size={16} color="#000" />
                 <Text style={styles.proBadgeText}>PRO ACTIVE</Text>
               </View>
-              
-              <Text style={styles.proActiveTitle}>You're a Pro! 🎉</Text>
-              
+
+              <Text style={styles.proActiveTitle}>You're a Pro!</Text>
+
               {isTrialing && (
                 <View style={styles.trialInfo}>
                   <Ionicons name="time" size={16} color="#FBBF24" />
                   <Text style={styles.trialInfoText}>{trialDaysRemaining} days left in trial</Text>
                 </View>
               )}
-              
+
               <Text style={styles.proActiveSubtitle}>
                 All premium features are unlocked on both mobile and web dashboard.
               </Text>
 
               <View style={styles.unlockedFeatures}>
-                <Text style={styles.unlockedTitle}>✨ Unlocked Features:</Text>
+                <View style={styles.unlockedTitleRow}>
+                  <Ionicons name="sparkles" size={16} color="#8B5CF6" />
+                  <Text style={styles.unlockedTitle}>Unlocked Features:</Text>
+                </View>
                 {FEATURES.map((feature, index) => (
                   <View key={index} style={styles.unlockedRow}>
                     <Ionicons name="checkmark" size={16} color="#7ED957" />
@@ -273,8 +276,8 @@ export default function ProDashboardScreen() {
         {/* Fixed CTAs */}
         <View style={styles.ctaContainer}>
           {/* Start Trial Button */}
-          <TouchableOpacity 
-            style={styles.trialButton} 
+          <TouchableOpacity
+            style={styles.trialButton}
             onPress={handleStartTrial}
             disabled={isProcessing}
           >
@@ -287,10 +290,10 @@ export default function ProDashboardScreen() {
               </>
             )}
           </TouchableOpacity>
-          
+
           {/* Subscribe Button */}
-          <TouchableOpacity 
-            style={styles.ctaButton} 
+          <TouchableOpacity
+            style={styles.ctaButton}
             onPress={handleSubscribe}
             disabled={isProcessing}
           >
@@ -305,7 +308,7 @@ export default function ProDashboardScreen() {
               </>
             )}
           </TouchableOpacity>
-          
+
           <Text style={styles.ctaSubtext}>Cancel anytime • Works on mobile + web</Text>
         </View>
       </SafeAreaView>
@@ -328,7 +331,7 @@ const styles = StyleSheet.create({
   backButton: { width: 40, height: 40, alignItems: "center", justifyContent: "center" },
   headerTitle: { fontSize: 18, fontWeight: "bold", color: "#FFF" },
   scrollView: { flex: 1, paddingHorizontal: 16 },
-  
+
   // Pro Active State
   proActiveContent: { paddingVertical: 24 },
   proActiveCard: {
@@ -364,7 +367,13 @@ const styles = StyleSheet.create({
   trialInfoText: { fontSize: 13, color: "#FBBF24", fontWeight: "500" },
   proActiveSubtitle: { fontSize: 15, color: "#9CA3AF", textAlign: "center", lineHeight: 22 },
   unlockedFeatures: { marginTop: 24, width: "100%" },
-  unlockedTitle: { fontSize: 14, fontWeight: "600", color: "#FFF", marginBottom: 12 },
+  unlockedTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 12
+  },
+  unlockedTitle: { fontSize: 14, fontWeight: "600", color: "#FFF" },
   unlockedRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 8 },
   unlockedText: { fontSize: 14, color: "#E2E8F0" },
   dashboardButton: {
@@ -380,7 +389,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   dashboardButtonText: { fontSize: 15, fontWeight: "600", color: "#FFF" },
-  
+
   // Pricing Screen
   hero: { alignItems: "center", paddingVertical: 24 },
   heroBadge: {
@@ -396,7 +405,7 @@ const styles = StyleSheet.create({
   heroBadgeText: { fontSize: 11, fontWeight: "bold", color: "#7ED957", letterSpacing: 1 },
   heroTitle: { fontSize: 26, fontWeight: "bold", color: "#FFF", textAlign: "center", marginBottom: 8 },
   heroSubtitle: { fontSize: 15, color: "#9CA3AF", textAlign: "center", lineHeight: 22 },
-  
+
   syncBanner: {
     flexDirection: "row",
     alignItems: "center",
@@ -408,7 +417,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   syncText: { flex: 1, fontSize: 13, color: "#06B6D4", lineHeight: 18 },
-  
+
   previewCard: { borderRadius: 16, overflow: "hidden", marginVertical: 16 },
   previewGradient: { padding: 16 },
   previewHeader: { marginBottom: 16 },
@@ -425,7 +434,7 @@ const styles = StyleSheet.create({
   previewStat: { alignItems: "center" },
   previewStatValue: { fontSize: 28, fontWeight: "bold", color: "#7ED957" },
   previewStatLabel: { fontSize: 12, color: "#9CA3AF", marginTop: 4 },
-  
+
   plansSection: { marginVertical: 16 },
   sectionTitle: { fontSize: 18, fontWeight: "bold", color: "#FFF", marginBottom: 16 },
   plansRow: { flexDirection: "row", gap: 10 },
@@ -455,7 +464,7 @@ const styles = StyleSheet.create({
   planPerMonth: { fontSize: 11, color: "#666" },
   planSavings: { fontSize: 11, color: "#7ED957", marginTop: 4 },
   selectedCheckmark: { position: "absolute", top: 8, right: 8 },
-  
+
   featuresSection: { marginVertical: 16 },
   featureRow: {
     flexDirection: "row",
@@ -470,7 +479,7 @@ const styles = StyleSheet.create({
   featureContent: { flex: 1 },
   featureTitle: { fontSize: 15, fontWeight: "600", color: "#FFF", marginBottom: 2 },
   featureDescription: { fontSize: 13, color: "#9CA3AF" },
-  
+
   accessCard: {
     flexDirection: "row",
     alignItems: "center",
@@ -482,7 +491,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   accessText: { fontSize: 14, color: "#7ED957", fontWeight: "500" },
-  
+
   ctaContainer: {
     position: "absolute",
     bottom: 0,

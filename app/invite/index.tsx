@@ -32,16 +32,16 @@ const getInviteConfig = (userType: string | null): InviteConfig => {
                 subtitle: "Invite athletes to train with you",
                 linkType: "coach",
                 benefits: [
-                    "📅 Easy online booking - no texts/calls",
-                    "💰 Get paid instantly via Stripe",
-                    "⭐ Build your review count faster",
-                    "📈 Rise in local trainer rankings",
+                    "Easy online booking - no texts/calls",
+                    "Get paid instantly via Stripe",
+                    "Build your review count faster",
+                    "Rise in local trainer rankings",
                 ],
                 clientBenefits: [
-                    "🎯 Book sessions in 30 seconds",
-                    "📍 Find your sessions on the map",
-                    "📊 Track their progress over time",
-                    "💬 Message you directly in app",
+                    "Book sessions in 30 seconds",
+                    "Find your sessions on the map",
+                    "Track their progress over time",
+                    "Message you directly in app",
                 ],
                 ctaText: "Invite Athletes",
                 color: "#7ED957",
@@ -54,16 +54,16 @@ const getInviteConfig = (userType: string | null): InviteConfig => {
                 subtitle: "Invite students to your classes",
                 linkType: "instructor",
                 benefits: [
-                    "📅 Students book classes instantly",
-                    "💰 Get paid per booking automatically",
-                    "⭐ Build your rating with reviews",
-                    "📈 Fill classes faster than ever",
+                    "Students book classes instantly",
+                    "Get paid per booking automatically",
+                    "Build your rating with reviews",
+                    "Fill classes faster than ever",
                 ],
                 clientBenefits: [
-                    "🧘 Book classes in seconds",
-                    "🔔 Get reminded before class",
-                    "📍 Navigate to studio easily",
-                    "❤️ Save you as a favorite",
+                    "Book classes in seconds",
+                    "Get reminded before class",
+                    "Navigate to studio easily",
+                    "Save you as a favorite",
                 ],
                 ctaText: "Invite Students",
                 color: "#8B5CF6",
@@ -76,10 +76,10 @@ const getInviteConfig = (userType: string | null): InviteConfig => {
                 subtitle: "Invite players AND clients",
                 linkType: "pro",
                 benefits: [
-                    "👥 Find players when you want to play",
-                    "💼 Find clients when you coach",
-                    "🔔 Get notified of friend activity",
-                    "🏆 Earn Ambassador badge + 100 XP",
+                    "Find players when you want to play",
+                    "Find clients when you coach",
+                    "Get notified of friend activity",
+                    "Earn Ambassador badge + 100 XP",
                 ],
                 ctaText: "Invite Anyone",
                 color: "#06B6D4",
@@ -92,10 +92,10 @@ const getInviteConfig = (userType: string | null): InviteConfig => {
                 subtitle: "Invite friends to find games with you",
                 linkType: "player",
                 benefits: [
-                    "👀 See when friends are at courts",
-                    "🔔 Get notified when they check in",
-                    "🎯 Challenge them to matches",
-                    "🏆 Coordinate group games easily",
+                    "See when friends are at courts",
+                    "Get notified when they check in",
+                    "Challenge them to matches",
+                    "Coordinate group games easily",
                 ],
                 ctaText: "Invite Friends",
                 color: "#FF6B35",
@@ -234,7 +234,10 @@ export default function InviteScreen() {
 
                     {/* Your Benefits */}
                     <View style={styles.benefitsCard}>
-                        <Text style={styles.benefitsTitle}>✨ What YOU Get:</Text>
+                        <View style={styles.benefitsTitleRow}>
+                            <Ionicons name="sparkles" size={16} color="#7ED957" />
+                            <Text style={styles.benefitsTitle}>What YOU Get:</Text>
+                        </View>
                         {config.benefits.map((benefit, index) => (
                             <View key={index} style={styles.benefitRow}>
                                 <Ionicons name="checkmark-circle" size={20} color="#7ED957" />
@@ -246,7 +249,10 @@ export default function InviteScreen() {
                     {/* Client Benefits - Only show for trainers/instructors */}
                     {config.clientBenefits && (
                         <View style={[styles.benefitsCard, { backgroundColor: '#1E293B' }]}>
-                            <Text style={styles.benefitsTitle}>🎁 What THEY Get:</Text>
+                            <View style={styles.benefitsTitleRow}>
+                                <Ionicons name="gift-outline" size={16} color="#8B5CF6" />
+                                <Text style={styles.benefitsTitle}>What THEY Get:</Text>
+                            </View>
                             {config.clientBenefits.map((benefit, index) => (
                                 <View key={index} style={styles.benefitRow}>
                                     <Ionicons name="gift" size={20} color="#8B5CF6" />
@@ -444,10 +450,16 @@ const styles = StyleSheet.create({
         padding: 16,
         marginBottom: 16,
     },
+    benefitsTitleRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+        marginBottom: 12,
+    },
     benefitsTitle: {
         fontSize: 14,
-        color: "#666",
-        marginBottom: 12,
+        fontWeight: "600",
+        color: "#9CA3AF",
     },
     benefitRow: {
         flexDirection: "row",
