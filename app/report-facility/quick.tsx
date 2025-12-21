@@ -18,25 +18,25 @@ export default function QuickReportScreen() {
     const [submitting, setSubmitting] = useState(false)
 
     const crowdLevels = [
-        { key: "empty", label: "Empty", emoji: "😴", players: "0-2" },
-        { key: "light", label: "Light", emoji: "🏃", players: "3-5" },
-        { key: "moderate", label: "Moderate", emoji: "👥", players: "6-10" },
-        { key: "busy", label: "Busy", emoji: "🔥", players: "11-15" },
-        { key: "packed", label: "Packed", emoji: "🚀", players: "16+" },
+        { key: "empty", label: "Empty", icon: "bed-outline", color: "#22C55E", players: "0-2" },
+        { key: "light", label: "Light", icon: "walk-outline", color: "#84CC16", players: "3-5" },
+        { key: "moderate", label: "Moderate", icon: "people-outline", color: "#EAB308", players: "6-10" },
+        { key: "busy", label: "Busy", icon: "flame-outline", color: "#F97316", players: "11-15" },
+        { key: "packed", label: "Packed", icon: "rocket-outline", color: "#EF4444", players: "16+" },
     ]
 
     const ageGroups = [
-        { key: "kids", label: "Kids", emoji: "👶", range: "Under 13" },
-        { key: "teens", label: "Teens", emoji: "🧒", range: "13-17" },
-        { key: "adults", label: "Adults", emoji: "👨", range: "18+" },
-        { key: "mixed", label: "Mixed", emoji: "👨‍👩‍👧", range: "All ages" },
+        { key: "kids", label: "Kids", icon: "happy-outline", range: "Under 13" },
+        { key: "teens", label: "Teens", icon: "school-outline", range: "13-17" },
+        { key: "adults", label: "Adults", icon: "person-outline", range: "18+" },
+        { key: "mixed", label: "Mixed", icon: "people-outline", range: "All ages" },
     ]
 
     const skillLevels = [
-        { key: "beginner", label: "Beginner", emoji: "🌱" },
-        { key: "intermediate", label: "Intermediate", emoji: "⚡" },
-        { key: "advanced", label: "Advanced", emoji: "🏆" },
-        { key: "mixed", label: "Mixed", emoji: "🎯" },
+        { key: "beginner", label: "Beginner", icon: "leaf-outline", color: "#22C55E" },
+        { key: "intermediate", label: "Intermediate", icon: "flash-outline", color: "#EAB308" },
+        { key: "advanced", label: "Advanced", icon: "trophy-outline", color: "#F59E0B" },
+        { key: "mixed", label: "Mixed", icon: "apps-outline", color: "#8B5CF6" },
     ]
 
     const handleAddPhoto = async () => {
@@ -76,7 +76,7 @@ export default function QuickReportScreen() {
 
         if (success) {
             Alert.alert(
-                "Report Submitted! 🎉",
+                "Report Submitted!",
                 "Thank you for helping the community. You earned $15!",
                 [{ text: "OK", onPress: () => router.back() }]
             )
@@ -115,7 +115,9 @@ export default function QuickReportScreen() {
                                         setCrowdLevel(level.key as any)
                                     }}
                                 >
-                                    <Text className="text-2xl text-center mb-1">{level.emoji}</Text>
+                                    <View style={{ alignItems: "center", marginBottom: 4 }}>
+                                        <Ionicons name={level.icon as any} size={28} color={level.color} />
+                                    </View>
                                     <Text className={`font-bold text-xs text-center ${crowdLevel === level.key ? "text-primary" : "text-foreground"}`}>
                                         {level.label}
                                     </Text>
@@ -139,7 +141,9 @@ export default function QuickReportScreen() {
                                         setAgeGroup(group.key as any)
                                     }}
                                 >
-                                    <Text className="text-2xl text-center mb-1">{group.emoji}</Text>
+                                    <View style={{ alignItems: "center", marginBottom: 4 }}>
+                                        <Ionicons name={group.icon as any} size={28} color="#9CA3AF" />
+                                    </View>
                                     <Text className={`font-bold text-xs text-center ${ageGroup === group.key ? "text-primary" : "text-foreground"}`}>
                                         {group.label}
                                     </Text>
@@ -163,7 +167,9 @@ export default function QuickReportScreen() {
                                         setSkillLevel(level.key as any)
                                     }}
                                 >
-                                    <Text className="text-2xl text-center mb-1">{level.emoji}</Text>
+                                    <View style={{ alignItems: "center", marginBottom: 4 }}>
+                                        <Ionicons name={level.icon as any} size={28} color={level.color} />
+                                    </View>
                                     <Text className={`font-bold text-xs text-center ${skillLevel === level.key ? "text-primary" : "text-foreground"}`}>
                                         {level.label}
                                     </Text>

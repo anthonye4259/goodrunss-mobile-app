@@ -12,7 +12,6 @@ const { width } = Dimensions.get("window")
 
 interface FeatureSlide {
     id: string
-    emoji: string
     icon: string
     color: string
     title: string
@@ -26,7 +25,6 @@ interface FeatureSlide {
 const PLAYER_FEATURES: FeatureSlide[] = [
     {
         id: "live-data",
-        emoji: "🔴",
         icon: "pulse",
         color: "#EF4444",
         title: "Real-Time Court Data",
@@ -36,7 +34,6 @@ const PLAYER_FEATURES: FeatureSlide[] = [
     },
     {
         id: "live-map",
-        emoji: "🗺️",
         icon: "map",
         color: "#3B82F6",
         title: "Live Activity Map",
@@ -47,7 +44,6 @@ const PLAYER_FEATURES: FeatureSlide[] = [
     },
     {
         id: "earn-money",
-        emoji: "💰",
         icon: "cash",
         color: "#22C55E",
         title: "Earn Money Reporting",
@@ -58,7 +54,6 @@ const PLAYER_FEATURES: FeatureSlide[] = [
     },
     {
         id: "leagues",
-        emoji: "🏆",
         icon: "trophy",
         color: "#F59E0B",
         title: "Join Local Leagues",
@@ -68,7 +63,6 @@ const PLAYER_FEATURES: FeatureSlide[] = [
     },
     {
         id: "gia",
-        emoji: "✨",
         icon: "sparkles",
         color: "#EC4899",
         title: "GIA AI Assistant",
@@ -79,7 +73,6 @@ const PLAYER_FEATURES: FeatureSlide[] = [
     },
     {
         id: "community",
-        emoji: "👥",
         icon: "people",
         color: "#06B6D4",
         title: "Never Play Alone",
@@ -94,7 +87,6 @@ const PLAYER_FEATURES: FeatureSlide[] = [
 const TRAINER_FEATURES: FeatureSlide[] = [
     {
         id: "earnings",
-        emoji: "💰",
         icon: "cash",
         color: "#22C55E",
         title: "Maximize Your Earnings",
@@ -104,7 +96,6 @@ const TRAINER_FEATURES: FeatureSlide[] = [
     },
     {
         id: "bookings",
-        emoji: "📅",
         icon: "calendar",
         color: "#3B82F6",
         title: "Manage Bookings",
@@ -114,7 +105,6 @@ const TRAINER_FEATURES: FeatureSlide[] = [
     },
     {
         id: "live-map",
-        emoji: "🗺️",
         icon: "map",
         color: "#EF4444",
         title: "Find Training Venues",
@@ -125,7 +115,6 @@ const TRAINER_FEATURES: FeatureSlide[] = [
     },
     {
         id: "clients",
-        emoji: "👥",
         icon: "people",
         color: "#8B5CF6",
         title: "Build Your Client Base",
@@ -135,7 +124,6 @@ const TRAINER_FEATURES: FeatureSlide[] = [
     },
     {
         id: "gia",
-        emoji: "✨",
         icon: "sparkles",
         color: "#EC4899",
         title: "GIA Coaching Assistant",
@@ -146,7 +134,6 @@ const TRAINER_FEATURES: FeatureSlide[] = [
     },
     {
         id: "referrals",
-        emoji: "🎁",
         icon: "gift",
         color: "#F59E0B",
         title: "Earn From Referrals",
@@ -160,7 +147,6 @@ const TRAINER_FEATURES: FeatureSlide[] = [
 const INSTRUCTOR_FEATURES: FeatureSlide[] = [
     {
         id: "low-fee",
-        emoji: "💰",
         icon: "cash",
         color: "#22C55E",
         title: "Keep 94% of Your Earnings",
@@ -170,7 +156,6 @@ const INSTRUCTOR_FEATURES: FeatureSlide[] = [
     },
     {
         id: "pro-revenue",
-        emoji: "👑",
         icon: "star",
         color: "#F59E0B",
         title: "Earn From Pro Members",
@@ -180,7 +165,6 @@ const INSTRUCTOR_FEATURES: FeatureSlide[] = [
     },
     {
         id: "private-sessions",
-        emoji: "🧘",
         icon: "person",
         color: "#EC4899",
         title: "Offer Private Sessions",
@@ -190,7 +174,6 @@ const INSTRUCTOR_FEATURES: FeatureSlide[] = [
     },
     {
         id: "spotify",
-        emoji: "🎵",
         icon: "musical-notes",
         color: "#1DB954",
         title: "Share Your Playlists",
@@ -200,7 +183,6 @@ const INSTRUCTOR_FEATURES: FeatureSlide[] = [
     },
     {
         id: "pro-priority",
-        emoji: "⚡",
         icon: "flash",
         color: "#8B5CF6",
         title: "Control Waitlist Priority",
@@ -210,7 +192,6 @@ const INSTRUCTOR_FEATURES: FeatureSlide[] = [
     },
     {
         id: "dashboard",
-        emoji: "📊",
         icon: "desktop",
         color: "#3B82F6",
         title: "Full Dashboard Access",
@@ -225,7 +206,6 @@ const INSTRUCTOR_FEATURES: FeatureSlide[] = [
 const BOTH_FEATURES: FeatureSlide[] = [
     {
         id: "live-data",
-        emoji: "🔴",
         icon: "pulse",
         color: "#EF4444",
         title: "Real-Time Venue Data",
@@ -235,7 +215,6 @@ const BOTH_FEATURES: FeatureSlide[] = [
     },
     {
         id: "dual-mode",
-        emoji: "🔄",
         icon: "sync",
         color: "#06B6D4",
         title: "Player + Teacher Mode",
@@ -245,7 +224,6 @@ const BOTH_FEATURES: FeatureSlide[] = [
     },
     {
         id: "earnings",
-        emoji: "💰",
         icon: "cash",
         color: "#22C55E",
         title: "Track Your Earnings",
@@ -255,7 +233,6 @@ const BOTH_FEATURES: FeatureSlide[] = [
     },
     {
         id: "live-map",
-        emoji: "🗺️",
         icon: "map",
         color: "#3B82F6",
         title: "Find Any Venue",
@@ -266,7 +243,6 @@ const BOTH_FEATURES: FeatureSlide[] = [
     },
     {
         id: "gia",
-        emoji: "✨",
         icon: "sparkles",
         color: "#EC4899",
         title: "GIA Your Way",
@@ -277,7 +253,6 @@ const BOTH_FEATURES: FeatureSlide[] = [
     },
     {
         id: "community",
-        emoji: "👥",
         icon: "people",
         color: "#8B5CF6",
         title: "Build Your Network",
@@ -419,9 +394,8 @@ export default function FeaturesScreen() {
                 >
                     {/* Feature Icon */}
                     <View style={[styles.iconContainer, { backgroundColor: `${currentSlide.color}20` }]}>
-                        <Text style={styles.emoji}>{currentSlide.emoji}</Text>
                         <View style={[styles.iconRing, { borderColor: currentSlide.color }]}>
-                            <Ionicons name={currentSlide.icon as any} size={48} color={currentSlide.color} />
+                            <Ionicons name={currentSlide.icon as any} size={56} color={currentSlide.color} />
                         </View>
                     </View>
 
