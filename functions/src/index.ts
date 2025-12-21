@@ -1671,15 +1671,22 @@ export const cleanupExpiredFlashWindows = functions.pubsub
 // PRIVATE SESSION BOOKING (Stripe Connect)
 // ============================================
 
-// Platform fee: 6% (instructor keeps 94%)
-const PLATFORM_FEE_PERCENT = 6
+// Legacy fallback - now using dynamic tiered fees:
+// - Existing client: 0% platform fee, $1 booking fee
+// - Marketplace new: 15% platform fee, $3 booking fee
+// - Marketplace repeat: 5% platform fee, $1 booking fee
+const LEGACY_PLATFORM_FEE_PERCENT = 6
 
 /**
  * Create Payment Intent for Private Session with Stripe Connect
  * 
- * Uses destination charges to split payment:
- * - 94% goes to instructor's connected Stripe account
- * - 6% goes to platform (us)
+ * Uses destination charges to split payment.
+ * Supports tiered platform fees based on client-trainer relationship:
+ * - 0% for existing clients
+ * - 15% for new marketplace clients
+ * - 5% for repeat marketplace clients
+ * 
+ * Also handles player booking fees ($1 or $3)
  */
 export const createPaymentForPrivateSession = functions.https.onCall(async (data, context) => {
     try {
@@ -1698,37 +1705,71 @@ export const createPaymentForPrivateSession = functions.https.onCall(async (data
         }
 
         const {
-            amount, // in cents
+            // Session pricing (from fee-calculation-service)
+            sessionPrice,      // Session price in cents (trainer's rate)
+            bookingFee,        // Player booking fee in cents ($100 or $300)
+            platformFee,       // Platform fee in cents (calculated based on tier)
+            totalCharge,       // Total to charge player (session + booking fee)
+
+            // Fee info for tracking
+            feeType,           // "existing" | "marketplace" | "repeat"
+            platformFeePercent, // 0, 5, or 15
+
+            // Stripe Connect
             instructorStripeAccountId,
-            platformFee,
+
+            // Legacy support
+            amount,            // Fallback if new params not provided
+
+            // Booking metadata
             metadata
         } = data
 
-        if (!amount || !instructorStripeAccountId) {
+        // Determine final amounts (support both new and legacy format)
+        const finalTotalCharge = totalCharge || amount
+        const finalSessionPrice = sessionPrice || amount
+        const finalBookingFee = bookingFee || 0
+        const finalPlatformFee = platformFee !== undefined
+            ? platformFee
+            : Math.round((finalSessionPrice) * (LEGACY_PLATFORM_FEE_PERCENT / 100))
+        const finalPlatformFeePercent = platformFeePercent !== undefined
+            ? platformFeePercent
+            : LEGACY_PLATFORM_FEE_PERCENT
+
+        if (!finalTotalCharge || !instructorStripeAccountId) {
             throw new functions.https.HttpsError(
                 "invalid-argument",
-                "Missing required fields: amount, instructorStripeAccountId"
+                "Missing required fields: amount/totalCharge, instructorStripeAccountId"
             )
         }
 
-        // Calculate platform fee (6%)
-        const calculatedPlatformFee = platformFee || Math.round(amount * (PLATFORM_FEE_PERCENT / 100))
+        // Calculate trainer payout: session price minus platform fee
+        // (booking fee goes to platform, not trainer)
+        const trainerPayout = finalSessionPrice - finalPlatformFee
 
         // Create payment intent with destination charge
-        // This automatically splits the payment
+        // Total charge to player: session price + booking fee
+        // Platform keeps: platform fee (% of session) + booking fee
+        // Trainer receives: session price - platform fee
         const paymentIntent = await stripe.paymentIntents.create({
-            amount,
+            amount: finalTotalCharge, // Total charge to player
             currency: "usd",
-            // Destination charge: instructor gets payment minus our fee
+            // Destination charge: instructor gets their payout
             transfer_data: {
                 destination: instructorStripeAccountId,
-                // Instructor receives: amount - platform fee
             },
-            application_fee_amount: calculatedPlatformFee,
+            // Application fee = our cut (platform fee + booking fee)
+            application_fee_amount: finalPlatformFee + finalBookingFee,
             metadata: {
                 ...metadata,
                 type: "private_session",
-                platformFeePercent: PLATFORM_FEE_PERCENT.toString(),
+                // Fee breakdown for tracking
+                sessionPrice: finalSessionPrice.toString(),
+                bookingFee: finalBookingFee.toString(),
+                platformFee: finalPlatformFee.toString(),
+                platformFeePercent: finalPlatformFeePercent.toString(),
+                trainerPayout: trainerPayout.toString(),
+                feeType: feeType || "legacy",
             },
             automatic_payment_methods: {
                 enabled: true,
@@ -1737,14 +1778,28 @@ export const createPaymentForPrivateSession = functions.https.onCall(async (data
 
         functions.logger.info("Private session payment intent created", {
             paymentIntentId: paymentIntent.id,
-            amount,
-            platformFee: calculatedPlatformFee,
+            totalCharge: finalTotalCharge,
+            sessionPrice: finalSessionPrice,
+            bookingFee: finalBookingFee,
+            platformFee: finalPlatformFee,
+            platformFeePercent: finalPlatformFeePercent,
+            trainerPayout,
+            feeType: feeType || "legacy",
             instructorStripeAccountId,
         })
 
         return {
             clientSecret: paymentIntent.client_secret,
             paymentIntentId: paymentIntent.id,
+            // Return fee breakdown for confirmation
+            fees: {
+                sessionPrice: finalSessionPrice,
+                bookingFee: finalBookingFee,
+                platformFee: finalPlatformFee,
+                platformFeePercent: finalPlatformFeePercent,
+                totalCharge: finalTotalCharge,
+                trainerPayout,
+            }
         }
     } catch (error: any) {
         functions.logger.error("Error creating private session payment:", error)
