@@ -1,8 +1,8 @@
 /**
- * SportStatusCard - Rich Sport-Specific Display
+ * SportStatusCard - Minimal Premium Display
  * 
- * Each sport gets its own look, language, and information.
- * This is THE EDGE - feels native to each community.
+ * Clean. Sophisticated. No emojis.
+ * Says everything with less.
  */
 
 import React from "react"
@@ -11,25 +11,46 @@ import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import type { SportContext, Sport } from "@/lib/services/sport-intelligence-service"
 
+// ============================================
+// TYPES
+// ============================================
+
 interface SportStatusCardProps {
     context: SportContext
     venueName?: string
     onReportPress?: () => void
-    variant?: "full" | "compact" | "hero"
+    variant?: "full" | "compact" | "minimal"
 }
 
-// Sport-specific gradients
-const SPORT_GRADIENTS: Record<Sport, [string, string]> = {
-    basketball: ["#F97316", "#EA580C"],
-    tennis: ["#22C55E", "#16A34A"],
-    pickleball: ["#8B5CF6", "#7C3AED"],
-    volleyball: ["#EAB308", "#CA8A04"],
-    golf: ["#166534", "#14532D"],
-    swimming: ["#0EA5E9", "#0284C7"],
-    soccer: ["#16A34A", "#15803D"],
-    padel: ["#06B6D4", "#0891B2"],
-    racquetball: ["#DC2626", "#B91C1C"],
+// Sport accent colors (subtle, premium)
+const SPORT_COLORS: Record<Sport, string> = {
+    basketball: "#F97316",
+    tennis: "#22C55E",
+    pickleball: "#8B5CF6",
+    volleyball: "#EAB308",
+    golf: "#16A34A",
+    swimming: "#0EA5E9",
+    soccer: "#22C55E",
+    padel: "#06B6D4",
+    racquetball: "#EF4444",
 }
+
+// Sport icons
+const SPORT_ICONS: Record<Sport, string> = {
+    basketball: "basketball-outline",
+    tennis: "tennisball-outline",
+    pickleball: "tennisball-outline",
+    volleyball: "football-outline",
+    golf: "golf-outline",
+    swimming: "water-outline",
+    soccer: "football-outline",
+    padel: "tennisball-outline",
+    racquetball: "tennisball-outline",
+}
+
+// ============================================
+// MAIN COMPONENT
+// ============================================
 
 export function SportStatusCard({
     context,
@@ -41,628 +62,325 @@ export function SportStatusCard({
         sport,
         activityLevel,
         activityColor,
-        activityEmoji,
         headline,
-        subheadline,
-        waitTime,
         bestTime,
-        bestTimeReason,
-        recommendation,
-        shouldCome,
-        atmosphere,
-        atmosphereLabel,
-        conditions,
-        magicNumber,
-        sportTip,
-        confidence,
-        confidenceLabel,
-        dataSource,
-        weatherImpact,
+        waitTime,
         weatherScore,
+        shouldCome,
     } = context
 
-    const gradient = SPORT_GRADIENTS[sport]
+    const accentColor = SPORT_COLORS[sport] || "#8B5CF6"
+    const sportIcon = SPORT_ICONS[sport] || "fitness-outline"
 
-    if (variant === "compact") {
+    // Get minimal status text
+    const statusText = getStatusText(activityLevel)
+    const statusLabel = shouldCome ? "Good time" : "Check later"
+
+    if (variant === "minimal") {
         return (
-            <View style={styles.compactContainer}>
-                <LinearGradient
-                    colors={gradient}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.compactGradient}
-                >
-                    <Text style={styles.compactEmoji}>{activityEmoji}</Text>
-                </LinearGradient>
-                <View style={styles.compactContent}>
-                    <Text style={styles.compactHeadline} numberOfLines={1}>
-                        {headline}
-                    </Text>
-                    <Text style={styles.compactSubheadline} numberOfLines={1}>
-                        {subheadline}
-                    </Text>
+            <View style={styles.minimalCard}>
+                <View style={styles.minimalLeft}>
+                    <View style={[styles.statusDot, { backgroundColor: activityColor }]} />
+                    <Text style={styles.minimalStatus}>{statusText}</Text>
                 </View>
-                {dataSource === "live" && (
-                    <View style={styles.liveBadge}>
-                        <View style={styles.liveInner} />
-                    </View>
+                {waitTime && (
+                    <Text style={styles.minimalWait}>{waitTime}</Text>
                 )}
             </View>
         )
     }
 
-    if (variant === "hero") {
+    if (variant === "compact") {
         return (
-            <LinearGradient
-                colors={[gradient[0] + "20", gradient[1] + "10"]}
-                style={styles.heroContainer}
-            >
-                {/* Main Status */}
-                <View style={styles.heroMain}>
-                    <Text style={styles.heroEmoji}>{activityEmoji}</Text>
-                    <Text style={[styles.heroHeadline, { color: activityColor }]}>
-                        {headline}
-                    </Text>
-                    <Text style={styles.heroSubheadline}>{subheadline}</Text>
-                </View>
-
-                {/* Magic Number */}
-                {magicNumber && (
-                    <View style={[styles.magicNumber, { borderColor: activityColor }]}>
-                        <Text style={styles.magicNumberLabel}>{magicNumber.label}</Text>
+            <View style={styles.compactCard}>
+                <View style={styles.compactTop}>
+                    <View style={styles.compactLeft}>
+                        <View style={[styles.statusDot, { backgroundColor: activityColor }]} />
+                        <Text style={styles.compactStatus}>{statusText}</Text>
                     </View>
-                )}
-
-                {/* Recommendation */}
-                <View style={[
-                    styles.recommendationBadge,
-                    { backgroundColor: shouldCome ? "#22C55E20" : "#F9731620" }
-                ]}>
-                    <Ionicons
-                        name={shouldCome ? "checkmark-circle" : "time"}
-                        size={18}
-                        color={shouldCome ? "#22C55E" : "#F97316"}
-                    />
-                    <Text style={[
-                        styles.recommendationText,
-                        { color: shouldCome ? "#22C55E" : "#F97316" }
-                    ]}>
-                        {recommendation}
+                    <Text style={[styles.compactLabel, { color: shouldCome ? "#22C55E" : "#F97316" }]}>
+                        {statusLabel}
                     </Text>
                 </View>
-
-                {/* Best Time */}
-                <View style={styles.bestTimeRow}>
-                    <Ionicons name="time-outline" size={16} color="#9CA3AF" />
-                    <Text style={styles.bestTimeLabel}>Best time:</Text>
-                    <Text style={styles.bestTimeValue}>{bestTime}</Text>
-                    <Text style={styles.bestTimeReason}>({bestTimeReason})</Text>
+                <View style={styles.compactStats}>
+                    <View style={styles.compactStat}>
+                        <Ionicons name="time-outline" size={14} color="#6B7280" />
+                        <Text style={styles.compactStatText}>{bestTime}</Text>
+                    </View>
+                    {waitTime && (
+                        <View style={styles.compactStat}>
+                            <Ionicons name="hourglass-outline" size={14} color="#6B7280" />
+                            <Text style={styles.compactStatText}>{waitTime}</Text>
+                        </View>
+                    )}
                 </View>
-            </LinearGradient>
+            </View>
         )
     }
 
     // Full variant
     return (
-        <View style={styles.container}>
-            {/* Header with gradient line */}
-            <LinearGradient
-                colors={gradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.headerGradient}
-            />
-
-            {/* Venue name if provided */}
-            {venueName && (
-                <Text style={styles.venueName}>{venueName}</Text>
-            )}
-
-            {/* Main Status Section */}
-            <View style={styles.mainSection}>
-                <View style={styles.statusRow}>
-                    {/* Emoji + Headline */}
-                    <View style={styles.headlineContainer}>
-                        <Text style={styles.statusEmoji}>{activityEmoji}</Text>
-                        <View>
-                            <Text style={[styles.headline, { color: activityColor }]}>
-                                {headline}
-                            </Text>
-                            <Text style={styles.subheadline}>{subheadline}</Text>
-                        </View>
+        <View style={styles.card}>
+            {/* Header */}
+            <View style={styles.header}>
+                <View style={styles.headerLeft}>
+                    <View style={[styles.sportIcon, { backgroundColor: accentColor + "15" }]}>
+                        <Ionicons name={sportIcon as any} size={18} color={accentColor} />
                     </View>
-
-                    {/* Wait Time Badge */}
-                    {waitTime && (
-                        <View style={styles.waitBadge}>
-                            <Text style={styles.waitTime}>{waitTime}</Text>
-                            <Text style={styles.waitLabel}>wait</Text>
-                        </View>
+                    {venueName && (
+                        <Text style={styles.venueName} numberOfLines={1}>{venueName}</Text>
                     )}
                 </View>
-
-                {/* Magic Number (if applicable) */}
-                {magicNumber && (
-                    <View style={[styles.magicNumberRow, { borderColor: activityColor + "40" }]}>
-                        <View style={styles.magicNumberLeft}>
-                            <Text style={[styles.magicCurrent, { color: activityColor }]}>
-                                {magicNumber.current}
-                            </Text>
-                            <Text style={styles.magicSeparator}>/</Text>
-                            <Text style={styles.magicNeeded}>{magicNumber.needed}</Text>
-                            <Text style={styles.magicUnit}>{magicNumber.unit}</Text>
-                        </View>
-                        <Text style={styles.magicLabel}>{magicNumber.label}</Text>
-                    </View>
-                )}
-            </View>
-
-            <View style={styles.divider} />
-
-            {/* Quick Stats Row */}
-            <View style={styles.statsRow}>
-                {/* Atmosphere */}
-                <View style={styles.stat}>
-                    <Ionicons
-                        name={atmosphere === "competitive" ? "trophy" : atmosphere === "family" ? "people" : "happy"}
-                        size={18}
-                        color="#9CA3AF"
-                    />
-                    <Text style={styles.statLabel}>{atmosphereLabel}</Text>
-                </View>
-
-                {/* Best Time */}
-                <View style={styles.stat}>
-                    <Ionicons name="time" size={18} color="#9CA3AF" />
-                    <Text style={styles.statLabel}>Best: {bestTime}</Text>
-                </View>
-
-                {/* Weather */}
-                {weatherImpact && (
-                    <View style={styles.stat}>
-                        <Text style={styles.weatherEmoji}>
-                            {weatherScore >= 80 ? "☀️" : weatherScore >= 50 ? "⛅" : "🌧️"}
-                        </Text>
-                        <Text style={styles.statLabel}>{weatherScore}%</Text>
-                    </View>
-                )}
-            </View>
-
-            {/* Conditions */}
-            {conditions.length > 0 && (
-                <View style={styles.conditionsRow}>
-                    {conditions.map((condition, index) => (
-                        <View
-                            key={index}
-                            style={[
-                                styles.conditionChip,
-                                {
-                                    backgroundColor: condition.positive
-                                        ? activityColor + "15"
-                                        : "#EF444415"
-                                }
-                            ]}
-                        >
-                            <Text style={styles.conditionIcon}>{condition.icon}</Text>
-                            <Text style={[
-                                styles.conditionLabel,
-                                { color: condition.positive ? activityColor : "#EF4444" }
-                            ]}>
-                                {condition.label}
-                            </Text>
-                        </View>
-                    ))}
-                </View>
-            )}
-
-            {/* Sport Tip */}
-            {sportTip && (
-                <View style={[styles.tipRow, { backgroundColor: gradient[0] + "10" }]}>
-                    <Text style={styles.tipIcon}>💡</Text>
-                    <Text style={styles.tipText}>{sportTip}</Text>
-                </View>
-            )}
-
-            {/* Recommendation */}
-            <View style={[
-                styles.recommendationRow,
-                { backgroundColor: shouldCome ? "#22C55E10" : "#F9731610" }
-            ]}>
-                <Ionicons
-                    name={shouldCome ? "checkmark-circle" : "information-circle"}
-                    size={20}
-                    color={shouldCome ? "#22C55E" : "#F97316"}
-                />
-                <Text style={[
-                    styles.recommendationText,
-                    { color: shouldCome ? "#22C55E" : "#F97316" }
-                ]}>
-                    {recommendation}
-                </Text>
-            </View>
-
-            {/* Footer */}
-            <View style={styles.footer}>
-                <View style={styles.confidenceRow}>
-                    <View style={[
-                        styles.confidenceDot,
-                        { backgroundColor: confidence >= 70 ? "#22C55E" : confidence >= 40 ? "#EAB308" : "#6B7280" }
-                    ]} />
-                    <Text style={styles.confidenceText}>{confidenceLabel}</Text>
-                </View>
-
                 {onReportPress && (
                     <TouchableOpacity style={styles.reportButton} onPress={onReportPress}>
-                        <Ionicons name="add-circle" size={16} color="#8B5CF6" />
-                        <Text style={styles.reportButtonText}>Update</Text>
+                        <Ionicons name="flag-outline" size={18} color="#6B7280" />
                     </TouchableOpacity>
+                )}
+            </View>
+
+            {/* Status */}
+            <View style={styles.statusSection}>
+                <View style={[styles.statusIndicator, { backgroundColor: activityColor }]} />
+                <View style={styles.statusContent}>
+                    <Text style={styles.statusHeadline}>{headline}</Text>
+                    <Text style={[styles.statusVerdict, { color: shouldCome ? "#22C55E" : "#F97316" }]}>
+                        {statusLabel}
+                    </Text>
+                </View>
+            </View>
+
+            {/* Stats */}
+            <View style={styles.statsRow}>
+                <StatItem icon="time-outline" label="Best time" value={bestTime} />
+                <View style={styles.statDivider} />
+                <StatItem icon="partly-sunny-outline" label="Conditions" value={`${weatherScore}%`} />
+                {waitTime && (
+                    <>
+                        <View style={styles.statDivider} />
+                        <StatItem icon="hourglass-outline" label="Wait" value={waitTime} />
+                    </>
                 )}
             </View>
         </View>
     )
 }
 
-/**
- * Mini badge for map pins
- */
-export function SportStatusPill({
-    context
-}: {
-    context: SportContext
-}) {
-    const gradient = SPORT_GRADIENTS[context.sport]
+// ============================================
+// STAT ITEM
+// ============================================
 
+function StatItem({ icon, label, value }: { icon: string; label: string; value: string }) {
     return (
-        <LinearGradient
-            colors={[gradient[0] + "CC", gradient[1] + "CC"]}
-            style={styles.pillContainer}
-        >
-            <Text style={styles.pillEmoji}>{context.activityEmoji}</Text>
-            <Text style={styles.pillLabel}>
-                {context.activityLevel === "packed" || context.activityLevel === "busy"
-                    ? "BUSY"
-                    : context.activityLevel === "active"
-                        ? "SOME"
-                        : "OPEN"
-                }
-            </Text>
-        </LinearGradient>
+        <View style={styles.statItem}>
+            <Ionicons name={icon as any} size={16} color="#6B7280" />
+            <Text style={styles.statLabel}>{label}</Text>
+            <Text style={styles.statValue}>{value}</Text>
+        </View>
     )
 }
 
+// ============================================
+// STATUS PILL (for map pins)
+// ============================================
+
+export function SportStatusPill({ context }: { context: SportContext }) {
+    const statusText = getStatusText(context.activityLevel)
+
+    return (
+        <View style={[styles.pill, { backgroundColor: context.activityColor + "15" }]}>
+            <View style={[styles.pillDot, { backgroundColor: context.activityColor }]} />
+            <Text style={[styles.pillText, { color: context.activityColor }]}>{statusText}</Text>
+        </View>
+    )
+}
+
+// ============================================
+// HELPERS
+// ============================================
+
+function getStatusText(level: string): string {
+    const labels: Record<string, string> = {
+        dead: "Empty",
+        quiet: "Quiet",
+        active: "Active",
+        busy: "Busy",
+        packed: "Full",
+    }
+    return labels[level] || "—"
+}
+
+// ============================================
+// STYLES
+// ============================================
+
 const styles = StyleSheet.create({
-    container: {
-        backgroundColor: "#1A1A2E",
+    // Full card
+    card: {
+        backgroundColor: "#1A1A1A",
         borderRadius: 16,
-        overflow: "hidden",
+        padding: 20,
     },
-    headerGradient: {
-        height: 4,
-    },
-    venueName: {
-        fontSize: 18,
-        fontWeight: "700",
-        color: "#fff",
-        paddingHorizontal: 16,
-        paddingTop: 16,
-        paddingBottom: 8,
-    },
-    mainSection: {
-        padding: 16,
-    },
-    statusRow: {
+    header: {
         flexDirection: "row",
         justifyContent: "space-between",
-        alignItems: "flex-start",
+        alignItems: "center",
+        marginBottom: 20,
     },
-    headlineContainer: {
+    headerLeft: {
         flexDirection: "row",
         alignItems: "center",
-        gap: 12,
+        gap: 10,
         flex: 1,
     },
-    statusEmoji: {
-        fontSize: 36,
+    sportIcon: {
+        width: 36,
+        height: 36,
+        borderRadius: 10,
+        alignItems: "center",
+        justifyContent: "center",
     },
-    headline: {
-        fontSize: 18,
-        fontWeight: "800",
-        letterSpacing: 0.5,
+    venueName: {
+        fontSize: 16,
+        fontWeight: "600",
+        color: "#fff",
+        flex: 1,
     },
-    subheadline: {
-        fontSize: 14,
-        color: "#9CA3AF",
+    reportButton: {
+        padding: 8,
+    },
+    statusSection: {
+        flexDirection: "row",
+        alignItems: "flex-start",
+        gap: 14,
+        marginBottom: 20,
+    },
+    statusIndicator: {
+        width: 4,
+        height: 48,
+        borderRadius: 2,
         marginTop: 2,
     },
-    waitBadge: {
-        alignItems: "center",
-        backgroundColor: "rgba(255,255,255,0.1)",
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderRadius: 10,
+    statusContent: {
+        flex: 1,
     },
-    waitTime: {
-        fontSize: 16,
+    statusHeadline: {
+        fontSize: 22,
         fontWeight: "700",
         color: "#fff",
+        lineHeight: 28,
+        marginBottom: 4,
     },
-    waitLabel: {
-        fontSize: 10,
-        color: "#6B7280",
-    },
-    magicNumberRow: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginTop: 16,
-        padding: 12,
-        borderRadius: 10,
-        borderWidth: 1,
-        backgroundColor: "rgba(255,255,255,0.03)",
-    },
-    magicNumberLeft: {
-        flexDirection: "row",
-        alignItems: "baseline",
-    },
-    magicCurrent: {
-        fontSize: 24,
-        fontWeight: "800",
-    },
-    magicSeparator: {
-        fontSize: 18,
-        color: "#6B7280",
-        marginHorizontal: 2,
-    },
-    magicNeeded: {
-        fontSize: 18,
-        color: "#6B7280",
+    statusVerdict: {
+        fontSize: 14,
         fontWeight: "600",
-    },
-    magicUnit: {
-        fontSize: 12,
-        color: "#6B7280",
-        marginLeft: 6,
-    },
-    magicLabel: {
-        fontSize: 13,
-        color: "#9CA3AF",
-    },
-    divider: {
-        height: 1,
-        backgroundColor: "rgba(255,255,255,0.08)",
     },
     statsRow: {
         flexDirection: "row",
-        justifyContent: "space-around",
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-    },
-    stat: {
-        flexDirection: "row",
         alignItems: "center",
-        gap: 6,
+        justifyContent: "space-around",
     },
-    statLabel: {
-        fontSize: 12,
-        color: "#9CA3AF",
-    },
-    weatherEmoji: {
-        fontSize: 16,
-    },
-    conditionsRow: {
-        flexDirection: "row",
-        flexWrap: "wrap",
-        gap: 8,
-        paddingHorizontal: 16,
-        paddingBottom: 12,
-    },
-    conditionChip: {
-        flexDirection: "row",
+    statItem: {
         alignItems: "center",
         gap: 4,
-        paddingHorizontal: 10,
-        paddingVertical: 6,
-        borderRadius: 16,
     },
-    conditionIcon: {
-        fontSize: 12,
-    },
-    conditionLabel: {
-        fontSize: 12,
-        fontWeight: "500",
-    },
-    tipRow: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 8,
-        marginHorizontal: 16,
-        marginBottom: 12,
-        padding: 10,
-        borderRadius: 10,
-    },
-    tipIcon: {
-        fontSize: 14,
-    },
-    tipText: {
-        fontSize: 13,
-        color: "#D1D5DB",
-        flex: 1,
-    },
-    recommendationRow: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 8,
-        marginHorizontal: 16,
-        marginBottom: 12,
-        padding: 12,
-        borderRadius: 10,
-    },
-    recommendationText: {
-        fontSize: 14,
-        fontWeight: "500",
-        flex: 1,
-    },
-    footer: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-        borderTopWidth: 1,
-        borderTopColor: "rgba(255,255,255,0.05)",
-    },
-    confidenceRow: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 6,
-    },
-    confidenceDot: {
-        width: 6,
-        height: 6,
-        borderRadius: 3,
-    },
-    confidenceText: {
+    statLabel: {
         fontSize: 11,
         color: "#6B7280",
     },
-    reportButton: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 4,
-        paddingHorizontal: 10,
-        paddingVertical: 6,
-        borderRadius: 16,
-        backgroundColor: "rgba(139, 92, 246, 0.15)",
-    },
-    reportButtonText: {
-        fontSize: 12,
+    statValue: {
+        fontSize: 15,
         fontWeight: "600",
-        color: "#8B5CF6",
-    },
-    // Compact
-    compactContainer: {
-        flexDirection: "row",
-        alignItems: "center",
-        padding: 12,
-        backgroundColor: "#1A1A2E",
-        borderRadius: 12,
-    },
-    compactGradient: {
-        width: 40,
-        height: 40,
-        borderRadius: 10,
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    compactEmoji: {
-        fontSize: 20,
-    },
-    compactContent: {
-        flex: 1,
-        marginLeft: 12,
-    },
-    compactHeadline: {
-        fontSize: 14,
-        fontWeight: "700",
         color: "#fff",
     },
-    compactSubheadline: {
-        fontSize: 12,
-        color: "#9CA3AF",
-        marginTop: 2,
+    statDivider: {
+        width: 1,
+        height: 36,
+        backgroundColor: "#333",
     },
-    liveBadge: {
-        width: 12,
-        height: 12,
-        borderRadius: 6,
-        backgroundColor: "rgba(34, 197, 94, 0.2)",
+    // Compact
+    compactCard: {
+        backgroundColor: "#1A1A1A",
+        borderRadius: 12,
+        padding: 14,
+    },
+    compactTop: {
+        flexDirection: "row",
+        justifyContent: "space-between",
         alignItems: "center",
-        justifyContent: "center",
+        marginBottom: 10,
     },
-    liveInner: {
-        width: 6,
-        height: 6,
-        borderRadius: 3,
-        backgroundColor: "#22C55E",
-    },
-    // Hero
-    heroContainer: {
-        padding: 24,
-        borderRadius: 20,
-        alignItems: "center",
-    },
-    heroMain: {
-        alignItems: "center",
-        marginBottom: 16,
-    },
-    heroEmoji: {
-        fontSize: 56,
-        marginBottom: 8,
-    },
-    heroHeadline: {
-        fontSize: 24,
-        fontWeight: "800",
-        letterSpacing: 1,
-    },
-    heroSubheadline: {
-        fontSize: 16,
-        color: "#9CA3AF",
-        marginTop: 4,
-    },
-    magicNumber: {
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 20,
-        borderWidth: 1,
-        marginBottom: 16,
-    },
-    magicNumberLabel: {
-        fontSize: 14,
-        color: "#D1D5DB",
-    },
-    recommendationBadge: {
+    compactLeft: {
         flexDirection: "row",
         alignItems: "center",
         gap: 8,
-        paddingHorizontal: 16,
-        paddingVertical: 10,
-        borderRadius: 20,
-        marginBottom: 12,
     },
-    bestTimeRow: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 6,
-    },
-    bestTimeLabel: {
-        fontSize: 13,
-        color: "#9CA3AF",
-    },
-    bestTimeValue: {
-        fontSize: 13,
-        fontWeight: "700",
+    compactStatus: {
+        fontSize: 16,
+        fontWeight: "600",
         color: "#fff",
     },
-    bestTimeReason: {
-        fontSize: 12,
-        color: "#6B7280",
+    compactLabel: {
+        fontSize: 13,
+        fontWeight: "600",
     },
-    // Pill
-    pillContainer: {
+    compactStats: {
+        flexDirection: "row",
+        gap: 16,
+    },
+    compactStat: {
         flexDirection: "row",
         alignItems: "center",
         gap: 4,
-        paddingHorizontal: 8,
-        paddingVertical: 4,
+    },
+    compactStatText: {
+        fontSize: 13,
+        color: "#9CA3AF",
+    },
+    // Minimal
+    minimalCard: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        backgroundColor: "#1A1A1A",
+        borderRadius: 10,
+        padding: 12,
+    },
+    minimalLeft: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+    },
+    minimalStatus: {
+        fontSize: 14,
+        fontWeight: "600",
+        color: "#fff",
+    },
+    minimalWait: {
+        fontSize: 13,
+        color: "#6B7280",
+    },
+    // Common
+    statusDot: {
+        width: 10,
+        height: 10,
+        borderRadius: 5,
+    },
+    // Pill
+    pill: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
         borderRadius: 12,
     },
-    pillEmoji: {
-        fontSize: 12,
+    pillDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
     },
-    pillLabel: {
-        fontSize: 10,
-        fontWeight: "800",
-        color: "#fff",
-        letterSpacing: 0.5,
+    pillText: {
+        fontSize: 12,
+        fontWeight: "600",
     },
 })
