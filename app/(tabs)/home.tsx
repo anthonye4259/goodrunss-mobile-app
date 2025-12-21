@@ -88,7 +88,7 @@ export default function HomeScreen() {
           <View className="px-6 mb-6">
             <View className="flex-row items-center justify-between mb-4">
               <Text className="text-xl font-bold text-foreground">
-                🔥 {t('home.liveActivity')}
+                {t('home.liveActivity')}
               </Text>
               <TouchableOpacity onPress={() => router.push('/activity-map')}>
                 <Text className="text-primary font-semibold">View All</Text>
@@ -192,7 +192,15 @@ export default function HomeScreen() {
                       className="flex-row items-center px-3 py-1.5 rounded-lg"
                       style={{ backgroundColor: `${trafficPrediction.color}20` }}
                     >
-                      <Text className="text-sm mr-1">{trafficPrediction.emoji}</Text>
+                      <View
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: 4,
+                          backgroundColor: trafficPrediction.color,
+                          marginRight: 6
+                        }}
+                      />
                       <Text
                         className="text-sm font-semibold"
                         style={{ color: trafficPrediction.color }}
