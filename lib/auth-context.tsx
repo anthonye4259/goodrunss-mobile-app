@@ -93,19 +93,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const login = async (email: string, password: string) => {
-    if (!auth) throw new Error("Sign in is temporarily unavailable. Please continue as guest or try again later.")
+    if (!auth) {
+      throw new Error("Sign in is temporarily unavailable. Please continue as guest or try again later.")
+    }
 
     try {
       await signInWithEmailAndPassword(auth, email, password)
       await AsyncStorage.removeItem("guestMode")
     } catch (error: any) {
       console.error("Login error:", error)
-      throw new Error(error.message || "Failed to login")
+      // Translate Firebase errors to user-friendly messages
+      const errorCode = error.code || ""
+      switch (errorCode) {
+        case "auth/invalid-email":
+          throw new Error("Please enter a valid email address.")
+        case "auth/user-disabled":
+          throw new Error("This account has been disabled. Please contact support.")
+        case "auth/user-not-found":
+          throw new Error("No account found with this email. Please sign up first.")
+        case "auth/wrong-password":
+        case "auth/invalid-credential":
+          throw new Error("Incorrect email or password. Please try again.")
+        case "auth/too-many-requests":
+          throw new Error("Too many failed attempts. Please wait a few minutes and try again.")
+        case "auth/network-request-failed":
+          throw new Error("Network error. Please check your connection and try again.")
+        default:
+          throw new Error("Unable to sign in. Please try again or continue as guest.")
+      }
     }
   }
 
   const signup = async (email: string, password: string, name: string) => {
-    if (!auth || !db) throw new Error("Sign up is temporarily unavailable. Please continue as guest or try again later.")
+    if (!auth || !db) {
+      throw new Error("Sign up is temporarily unavailable. Please continue as guest or try again later.")
+    }
 
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password)
@@ -122,7 +144,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await AsyncStorage.removeItem("guestMode")
     } catch (error: any) {
       console.error("Signup error:", error)
-      throw new Error(error.message || "Failed to sign up")
+      // Translate Firebase errors to user-friendly messages
+      const errorCode = error.code || ""
+      switch (errorCode) {
+        case "auth/email-already-in-use":
+          throw new Error("This email is already registered. Please sign in instead.")
+        case "auth/invalid-email":
+          throw new Error("Please enter a valid email address.")
+        case "auth/weak-password":
+          throw new Error("Password must be at least 6 characters long.")
+        case "auth/operation-not-allowed":
+          throw new Error("Sign up is currently disabled. Please try again later.")
+        case "auth/network-request-failed":
+          throw new Error("Network error. Please check your connection and try again.")
+        default:
+          throw new Error("Unable to create account. Please try again or continue as guest.")
+      }
     }
   }
 
