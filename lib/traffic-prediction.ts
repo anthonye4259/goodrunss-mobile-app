@@ -2,7 +2,6 @@ export type TrafficLevel = "low" | "moderate" | "busy"
 
 export interface TrafficPrediction {
     level: TrafficLevel
-    emoji: string
     color: string
     label: string
     confidence: number
@@ -284,7 +283,6 @@ export function predictVenueTraffic(
 
     // Determine traffic level
     let level: TrafficLevel
-    let emoji: string
     let color: string
     let label: string
     let estimatedWaitTime: string | undefined
@@ -292,24 +290,21 @@ export function predictVenueTraffic(
 
     if (trafficScore < 35) {
         level = "low"
-        emoji = "🟢"
         color = "#7ED957"
-        label = "Low Traffic"
+        label = "Low"
         estimatedWaitTime = undefined
         peakHours = isWeekend ? "9 AM - 6 PM" : "6-9 AM, 5-8 PM"
     } else if (trafficScore < 65) {
         level = "moderate"
-        emoji = "🟡"
         color = "#FFA500"
-        label = "Moderate Traffic"
-        estimatedWaitTime = "5-10 min wait"
+        label = "Moderate"
+        estimatedWaitTime = "5-10 min"
         peakHours = isWeekend ? "9 AM - 6 PM" : "6-9 AM, 5-8 PM"
     } else {
         level = "busy"
-        emoji = "🔴"
         color = "#FF6B6B"
         label = "Busy"
-        estimatedWaitTime = "15-20 min wait"
+        estimatedWaitTime = "15-20 min"
         peakHours = isWeekend ? "9 AM - 6 PM" : "6-9 AM, 5-8 PM"
     }
 
@@ -318,7 +313,6 @@ export function predictVenueTraffic(
 
     return {
         level,
-        emoji,
         color,
         label,
         confidence,
