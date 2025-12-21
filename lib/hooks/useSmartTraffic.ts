@@ -124,11 +124,10 @@ export function useSmartTraffic(): UseSmartTrafficResult {
 
             return {
                 level: isPeak ? "moderate" : "low",
-                emoji: isPeak ? "🟡" : "🟢",
                 color: isPeak ? "#FFA500" : "#7ED957",
-                label: isPeak ? "Moderate Traffic" : "Low Traffic",
+                label: isPeak ? "Moderate" : "Low",
                 confidence: 0.6,
-                estimatedWaitTime: isPeak ? "5-10 min wait" : undefined,
+                estimatedWaitTime: isPeak ? "5-10 min" : undefined,
                 peakHours: isWeekend ? "9 AM - 6 PM" : "6-9 AM, 5-8 PM",
             }
         }
@@ -181,22 +180,21 @@ export function useTrafficLevel(venueId: string, venueType?: VenueType): Traffic
 /**
  * Get formatted traffic display
  * Usage: const display = useTrafficDisplay("venue_123")
- *        // { emoji: "🟡", label: "Moderate", color: "#FFA500" }
+ *        // { label: "Moderate", color: "#FFA500" }
  */
 export function useTrafficDisplay(venueId: string, venueType?: VenueType) {
     const { getTraffic, isLoading } = useSmartTraffic()
 
     if (isLoading) {
-        return { emoji: "⏳", label: "Loading...", color: "#9CA3AF" }
+        return { label: "Loading", color: "#9CA3AF" }
     }
 
     const traffic = getTraffic(venueId, venueType)
     if (!traffic) {
-        return { emoji: "❓", label: "Unknown", color: "#9CA3AF" }
+        return { label: "Unknown", color: "#9CA3AF" }
     }
 
     return {
-        emoji: traffic.emoji,
         label: traffic.label.replace(" Traffic", ""),
         color: traffic.color,
         impact: traffic.populationImpact || traffic.geoTrafficImpact || traffic.weatherImpact,

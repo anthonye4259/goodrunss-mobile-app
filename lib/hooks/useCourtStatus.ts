@@ -130,7 +130,6 @@ export function useMultiCourtStatus(venueIds: string[]) {
  */
 export function useCrowdLevel(venueId: string): {
     level: CrowdLevel | null
-    emoji: string
     color: string
     loading: boolean
 } {
@@ -138,7 +137,6 @@ export function useCrowdLevel(venueId: string): {
 
     return {
         level: status?.crowdLevel || null,
-        emoji: status?.crowdEmoji || "⚪",
         color: status?.crowdColor || "#6B7280",
         loading,
     }

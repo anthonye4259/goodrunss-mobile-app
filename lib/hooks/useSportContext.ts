@@ -96,12 +96,11 @@ export function useSportContext({
 export function useSportHeadline(
     venueId: string,
     sport: Sport
-): { headline: string; emoji: string; color: string; loading: boolean } {
+): { headline: string; color: string; loading: boolean } {
     const { context, loading } = useSportContext({ venueId, sport, autoRefresh: false })
 
     return {
         headline: context?.headline || "Loading...",
-        emoji: context?.activityEmoji || "⏳",
         color: context?.activityColor || "#6B7280",
         loading,
     }
