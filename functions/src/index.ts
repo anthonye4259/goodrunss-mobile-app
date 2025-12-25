@@ -13,5 +13,4 @@ export * from "./modules/matching"
 export * from "./modules/admin"
 export * from "./modules/wellness-integrations"
 export * from "./modules/court-integrations"
-
-
+export * from "./modules/booking-confirmation"

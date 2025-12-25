@@ -200,6 +200,28 @@ export default function FacilityDashboardScreen() {
                     </TouchableOpacity>
                 </View>
 
+                {/* Pending Bookings & Quick Block */}
+                <View style={styles.quickActionsRow}>
+                    <TouchableOpacity
+                        style={[styles.quickActionCard, styles.pendingCard]}
+                        onPress={() => router.push(`/facility/pending-bookings?facilityId=${facility.id}`)}
+                    >
+                        <View style={styles.pendingBadge}>
+                            <Ionicons name="time" size={20} color="#FF9500" />
+                        </View>
+                        <Text style={styles.quickActionText}>Pending Bookings</Text>
+                        <Ionicons name="chevron-forward" size={16} color="#666" />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.quickActionCard, styles.blockCard]}
+                        onPress={() => router.push(`/facility/quick-block?facilityId=${facility.id}`)}
+                    >
+                        <Ionicons name="close-circle" size={24} color="#FF6B6B" />
+                        <Text style={styles.quickActionText}>Quick Block</Text>
+                        <Ionicons name="chevron-forward" size={16} color="#666" />
+                    </TouchableOpacity>
+                </View>
+
                 {/* Tab Bar */}
                 <View style={styles.tabBar}>
                     {(["bookings", "courts", "earnings"] as const).map((tab) => (
@@ -590,4 +612,16 @@ const styles = StyleSheet.create({
         borderRadius: 8,
     },
     stripeBtnText: { color: "#000", fontSize: 14, fontWeight: "600" },
+
+    // Pending Bookings & Quick Block
+    pendingCard: { borderWidth: 1, borderColor: "rgba(255, 149, 0, 0.3)" },
+    pendingBadge: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: "rgba(255, 149, 0, 0.2)",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    blockCard: { borderWidth: 1, borderColor: "rgba(255, 107, 107, 0.3)" },
 })
