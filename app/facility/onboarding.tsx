@@ -1,6 +1,6 @@
 /**
  * Facility Onboarding Wizard
- * Seamless 5-step flow for facility owners to list and start accepting bookings
+ * Get discovered by thousands of players looking to book courts
  */
 
 import React, { useState } from "react"
@@ -209,8 +209,10 @@ export default function FacilityOnboardingScreen() {
 
     const renderBusinessInfo = () => (
         <View style={styles.stepContent}>
-            <Text style={styles.stepTitle}>Business Information</Text>
-            <Text style={styles.stepSubtitle}>Tell us about your facility</Text>
+            <Text style={styles.stepTitle}>Get Discovered 🔍</Text>
+            <Text style={styles.stepSubtitle}>
+                List your facility to reach thousands of players looking to book
+            </Text>
 
             <Text style={styles.label}>Facility Name</Text>
             <TextInput
@@ -554,11 +556,20 @@ export default function FacilityOnboardingScreen() {
                 </View>
             </View>
 
+            <View style={styles.visibilityCard}>
+                <Ionicons name="eye" size={24} color="#7ED957" />
+                <View style={styles.visibilityText}>
+                    <Text style={styles.visibilityTitle}>Extra Visibility Channel</Text>
+                    <Text style={styles.visibilitySubtext}>
+                        Keep your existing booking system. We'll send you NEW customers who discover you through GoodRunss.
+                    </Text>
+                </View>
+            </View>
+
             <View style={styles.feesInfo}>
                 <Ionicons name="information-circle" size={20} color="#888" />
                 <Text style={styles.feesText}>
-                    GoodRunss takes 8% of bookings. Players pay a $3 booking fee.
-                    You keep 92% of your court rate!
+                    Only pay when we bring you business. 8% on GoodRunss bookings. You keep 92%!
                 </Text>
             </View>
         </View>
@@ -786,6 +797,20 @@ const styles = StyleSheet.create({
     revenueTitle: { color: "#888", fontSize: 12 },
     revenueAmount: { color: "#7ED957", fontSize: 28, fontWeight: "bold" },
     revenueSubtext: { color: "#888", fontSize: 12 },
+
+    visibilityCard: {
+        flexDirection: "row",
+        alignItems: "flex-start",
+        backgroundColor: "rgba(126, 217, 87, 0.15)",
+        borderRadius: 12,
+        padding: 16,
+        marginTop: 16,
+        borderWidth: 1,
+        borderColor: "rgba(126, 217, 87, 0.3)",
+    },
+    visibilityText: { marginLeft: 12, flex: 1 },
+    visibilityTitle: { color: "#7ED957", fontSize: 14, fontWeight: "600" },
+    visibilitySubtext: { color: "#AAA", fontSize: 13, marginTop: 4, lineHeight: 18 },
 
     feesInfo: {
         flexDirection: "row",
