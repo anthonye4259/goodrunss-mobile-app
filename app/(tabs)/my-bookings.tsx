@@ -26,6 +26,8 @@ import { courtBookingService, CourtBooking } from "@/lib/services/court-booking-
 import { classService, ClassBooking } from "@/lib/services/class-service"
 import { trainerRentalService, TrainerRental } from "@/lib/services/trainer-rental-service"
 import { waitlistService, WaitlistEntry } from "@/lib/services/waitlist-service"
+import { getClientBookings } from "@/lib/services/private-booking-service"
+import type { PrivateBooking } from "@/lib/types/wellness-instructor"
 
 type TabType = "upcoming" | "past" | "waitlist"
 
@@ -38,6 +40,7 @@ export default function MyBookingsScreen() {
     const [courtBookings, setCourtBookings] = useState<CourtBooking[]>([])
     const [classBookings, setClassBookings] = useState<ClassBooking[]>([])
     const [trainerRentals, setTrainerRentals] = useState<TrainerRental[]>([])
+    const [trainerSessions, setTrainerSessions] = useState<PrivateBooking[]>([])
     const [waitlistEntries, setWaitlistEntries] = useState<WaitlistEntry[]>([])
 
     useFocusEffect(
@@ -51,16 +54,18 @@ export default function MyBookingsScreen() {
         setLoading(true)
 
         try {
-            const [courts, classes, rentals, waitlist] = await Promise.all([
+            const [courts, classes, rentals, sessions, waitlist] = await Promise.all([
                 courtBookingService.getPlayerBookings(user.uid),
                 classService.getPlayerClassBookings(user.uid),
                 trainerRentalService.getTrainerAllRentals(user.uid),
+                getClientBookings(user.uid),
                 waitlistService.getUserWaitlist(user.uid),
             ])
 
             setCourtBookings(courts)
             setClassBookings(classes)
             setTrainerRentals(rentals)
+            setTrainerSessions(sessions)
             setWaitlistEntries(waitlist)
         } catch (error) {
             console.error("Error loading bookings:", error)
@@ -80,14 +85,14 @@ export default function MyBookingsScreen() {
     // Combine all bookings into unified list
     type UnifiedBooking = {
         id: string
-        type: "court" | "class" | "rental"
+        type: "court" | "class" | "rental" | "session"
         date: string
         time: string
         title: string
         subtitle: string
         status: string
         amount: number
-        original: CourtBooking | ClassBooking | TrainerRental
+        original: CourtBooking | ClassBooking | TrainerRental | PrivateBooking
     }
 
     const allBookings: UnifiedBooking[] = [
@@ -124,6 +129,20 @@ export default function MyBookingsScreen() {
             amount: b.totalCharged,
             original: b,
         })),
+        ...trainerSessions.map(b => {
+            const sessionDate = b.startTime instanceof Date ? b.startTime : new Date(b.startTime)
+            return {
+                id: b.id,
+                type: "session" as const,
+                date: sessionDate.toISOString().split("T")[0],
+                time: sessionDate.toTimeString().substring(0, 5),
+                title: `Trainer Session`,
+                subtitle: `${b.duration} min session`,
+                status: b.status,
+                amount: b.totalAmount,
+                original: b,
+            }
+        }),
     ].sort((a, b) => {
         const dateA = `${a.date}${a.time}`
         const dateB = `${b.date}${b.time}`
@@ -234,6 +253,13 @@ export default function MyBookingsScreen() {
             court: "#7ED957",
             class: "#FF6B9D",
             rental: "#FFD700",
+            session: "#8B5CF6",
+        }
+        const typeLabels = {
+            court: "Court",
+            class: "Class",
+            rental: "Rental",
+            session: "Session",
         }
 
         return (
@@ -248,7 +274,7 @@ export default function MyBookingsScreen() {
                         </View>
                         <View style={styles.bookingTypeBadge}>
                             <Text style={[styles.bookingTypeText, { color: typeColors[booking.type] }]}>
-                                {booking.type === "court" ? "Court" : booking.type === "class" ? "Class" : "Rental"}
+                                {typeLabels[booking.type]}
                             </Text>
                         </View>
                     </View>
