@@ -618,7 +618,7 @@ class ExternalIntegrationService {
                 logo: "https://courtreserve.com/logo.png",
                 apiDocsUrl: "https://courtreserve.com/api-docs",
                 comingSoon: true,
-                description: "Requires Scale or Enterprise plan",
+                description: "Coming soon",
             },
             {
                 id: "podplay",
@@ -626,7 +626,7 @@ class ExternalIntegrationService {
                 logo: "https://podplay.app/logo.png",
                 apiDocsUrl: "https://help.podplay.app/api-quickstart",
                 comingSoon: true,
-                description: "Requires Professional plan",
+                description: "Coming soon",
             },
             {
                 id: "opencourt",
@@ -634,26 +634,17 @@ class ExternalIntegrationService {
                 logo: "https://opencourt.co/logo.png",
                 apiDocsUrl: "https://opencourt.co/contact",
                 comingSoon: true,
-                description: "API access by request",
+                description: "Coming soon",
             },
         ]
     }
 
     // ============================================
-    // SUPPORTED INTEGRATIONS LIST (WELLNESS/CLASSPASS MODEL)
+    // SUPPORTED INTEGRATIONS LIST (WELLNESS)
     // ============================================
 
     getSupportedWellnessIntegrations(): { id: string; name: string; logo: string; apiDocsUrl: string; method: string; comingSoon: boolean; description: string }[] {
         return [
-            {
-                id: "mindbody",
-                name: "Mindbody",
-                logo: "https://mindbodyonline.com/logo.png",
-                apiDocsUrl: "https://developers.mindbodyonline.com",
-                method: "API Integration",
-                comingSoon: false,
-                description: "Free under 5K calls/month",
-            },
             {
                 id: "calendarsync",
                 name: "Calendar Sync",
@@ -664,13 +655,22 @@ class ExternalIntegrationService {
                 description: "Sync schedule via calendar URL (every hour)",
             },
             {
+                id: "mindbody",
+                name: "Mindbody",
+                logo: "https://mindbodyonline.com/logo.png",
+                apiDocsUrl: "https://developers.mindbodyonline.com",
+                method: "API Integration",
+                comingSoon: true,
+                description: "Coming soon",
+            },
+            {
                 id: "glofox",
                 name: "Glofox",
                 logo: "https://glofox.com/logo.png",
                 apiDocsUrl: "https://support.glofox.com/api",
                 method: "API Integration",
                 comingSoon: true,
-                description: "Requires Enterprise plan",
+                description: "Coming soon",
             },
             {
                 id: "momence",
@@ -686,5 +686,3 @@ class ExternalIntegrationService {
 }
 
 export const externalIntegrationService = ExternalIntegrationService.getInstance()
-
-
