@@ -11,6 +11,7 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { TeacherDashboard } from "@/components/TeacherDashboard"
 import { useUserLocation } from "@/lib/services/location-service"
 import { FriendActivityRail } from "@/components/Live/FriendActivityRail"
+import { SEED_VENUES } from "@/lib/services/smart-data-service"
 
 const { width } = Dimensions.get("window")
 
@@ -33,14 +34,15 @@ const ACTIVITY_COLORS = {
   packed: "#EF4444",
 }
 
-// Sample courts (in production, fetch from Firebase)
-const SAMPLE_COURTS = [
-  { id: "1", name: "Central Park Courts", sport: "Basketball", lat: 40.7829, lng: -73.9654 },
-  { id: "2", name: "Riverside Tennis Center", sport: "Tennis", lat: 40.8010, lng: -73.9712 },
-  { id: "3", name: "Oak Street Park", sport: "Basketball", lat: 40.7580, lng: -73.9855 },
-  { id: "4", name: "Downtown Rec Center", sport: "Pickleball", lat: 40.7128, lng: -74.0060 },
-  { id: "5", name: "Harlem Courts", sport: "Basketball", lat: 40.8116, lng: -73.9465 },
-]
+// Courts from smart data service (blends real + seed data)
+const SAMPLE_COURTS = SEED_VENUES.map(v => ({
+  id: v.id,
+  name: v.name,
+  sport: v.sport,
+  lat: v.lat,
+  lng: v.lng,
+  distance: 0 // will be calculated
+}))
 
 // Calculate distance between two coordinates in miles
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
