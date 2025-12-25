@@ -111,3 +111,164 @@ export const sendDailyDemandInsights = functions.pubsub
             functions.logger.error("Error sending daily insights:", error)
         }
     })
+
+/**
+ * Process Spot Opening - Pro Waitlist Auto-Booking
+ * 
+ * When a booking is cancelled, this function:
+ * 1. Finds waitlist entries for that slot
+ * 2. Prioritizes Pro users
+ * 3. Auto-books for Pro users (instant)
+ * 4. Notifies free users that spot is available
+ */
+export const processSpotOpening = functions.firestore
+    .document("court_bookings/{bookingId}")
+    .onUpdate(async (change, context) => {
+        const before = change.before.data()
+        const after = change.after.data()
+
+        // Only trigger when status changes to "cancelled"
+        if (before.status !== "cancelled" && after.status === "cancelled") {
+            const { venueId, courtId, date, startTime, endTime } = after
+
+            try {
+                // Find waitlist entries for this slot
+                const waitlistQuery = admin.firestore()
+                    .collection("court_waitlist")
+                    .where("venueId", "==", venueId)
+                    .where("date", "==", date)
+                    .where("status", "==", "waiting")
+                    .orderBy("createdAt", "asc")
+                    .limit(20)
+
+                const waitlistSnapshot = await waitlistQuery.get()
+
+                if (waitlistSnapshot.empty) {
+                    functions.logger.info("No waitlist entries for cancelled slot")
+                    return
+                }
+
+                // Separate Pro and Free users
+                const proEntries: any[] = []
+                const freeEntries: any[] = []
+
+                for (const doc of waitlistSnapshot.docs) {
+                    const data = doc.data()
+                    const entry = { id: doc.id, userId: data.userId as string, userName: data.userName as string || "" }
+
+                    // Check if user is Pro
+                    const userDoc = await admin.firestore()
+                        .collection("users")
+                        .doc(entry.userId)
+                        .get()
+
+                    const userData = userDoc.data()
+                    const isPro = userData?.subscriptionStatus === "active" ||
+                        userData?.subscriptionTier === "pro"
+
+                    if (isPro) {
+                        proEntries.push(entry)
+                    } else {
+                        freeEntries.push(entry)
+                    }
+                }
+
+                functions.logger.info("Processing waitlist", {
+                    proCount: proEntries.length,
+                    freeCount: freeEntries.length,
+                })
+
+                // Auto-book for first Pro user
+                if (proEntries.length > 0) {
+                    const winner = proEntries[0]
+
+                    // Create new booking
+                    const newBooking = await admin.firestore()
+                        .collection("court_bookings")
+                        .add({
+                            venueId,
+                            courtId,
+                            date,
+                            startTime,
+                            endTime,
+                            userId: winner.userId,
+                            userName: winner.userName || "Pro Member",
+                            status: "confirmed",
+                            paymentStatus: "pending", // Will charge their card on file
+                            source: "waitlist_auto",
+                            originalWaitlistId: winner.id,
+                            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                        })
+
+                    // Update waitlist entry
+                    await admin.firestore()
+                        .collection("court_waitlist")
+                        .doc(winner.id)
+                        .update({
+                            status: "booked",
+                            bookingId: newBooking.id,
+                            bookedAt: admin.firestore.FieldValue.serverTimestamp(),
+                        })
+
+                    // Notify Pro user
+                    const tokensSnapshot = await admin.firestore()
+                        .collection("users")
+                        .doc(winner.userId)
+                        .collection("deviceTokens")
+                        .get()
+
+                    const tokens = tokensSnapshot.docs.map(d => d.data().token).filter(Boolean)
+
+                    if (tokens.length > 0) {
+                        await admin.messaging().sendEachForMulticast({
+                            notification: {
+                                title: "🎉 You Got the Spot!",
+                                body: `Pro Priority: Auto-booked for ${date} at ${startTime}`,
+                            },
+                            data: {
+                                type: "waitlist_booked",
+                                bookingId: newBooking.id,
+                            },
+                            tokens,
+                        })
+                    }
+
+                    functions.logger.info("Pro user auto-booked from waitlist", {
+                        userId: winner.userId,
+                        bookingId: newBooking.id,
+                    })
+                }
+
+                // Notify remaining free users that spot opened
+                for (const entry of freeEntries) {
+                    const tokensSnapshot = await admin.firestore()
+                        .collection("users")
+                        .doc(entry.userId)
+                        .collection("deviceTokens")
+                        .get()
+
+                    const tokens = tokensSnapshot.docs.map(d => d.data().token).filter(Boolean)
+
+                    if (tokens.length > 0) {
+                        await admin.messaging().sendEachForMulticast({
+                            notification: {
+                                title: "⚡ Spot Just Opened!",
+                                body: `A court is now available for ${date} at ${startTime}. Book now!`,
+                            },
+                            data: {
+                                type: "spot_available",
+                                venueId,
+                                date,
+                                startTime,
+                            },
+                            tokens,
+                        })
+                    }
+                }
+
+            } catch (error) {
+                functions.logger.error("Error processing spot opening:", error)
+            }
+        }
+    })
+
