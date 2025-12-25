@@ -155,7 +155,10 @@ export default function FacilityDashboardScreen() {
                             <Text style={styles.verifiedText}>Verified</Text>
                         </View>
                     </View>
-                    <TouchableOpacity style={styles.settingsBtn}>
+                    <TouchableOpacity
+                        style={styles.settingsBtn}
+                        onPress={() => router.push(`/facility/settings?facilityId=${facility.id}`)}
+                    >
                         <Ionicons name="settings-outline" size={24} color="#FFF" />
                     </TouchableOpacity>
                 </View>
@@ -174,8 +177,27 @@ export default function FacilityDashboardScreen() {
                         <Text style={[styles.statValue, { color: "#7ED957" }]}>
                             ${(totalEarnings / 100).toFixed(0)}
                         </Text>
-                        <Text style={styles.statLabel}>Earnings</Text>
                     </View>
+                </View>
+
+                {/* Quick Actions */}
+                <View style={styles.quickActionsRow}>
+                    <TouchableOpacity
+                        style={styles.quickActionCard}
+                        onPress={() => router.push(`/facility/bookings?facilityId=${facility.id}`)}
+                    >
+                        <Ionicons name="calendar" size={24} color="#7ED957" />
+                        <Text style={styles.quickActionText}>View All Bookings</Text>
+                        <Ionicons name="chevron-forward" size={16} color="#666" />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={styles.quickActionCard}
+                        onPress={() => router.push(`/facility/insights?facilityId=${facility.id}`)}
+                    >
+                        <Ionicons name="analytics" size={24} color="#FFD700" />
+                        <Text style={styles.quickActionText}>AI Insights</Text>
+                        <Ionicons name="chevron-forward" size={16} color="#666" />
+                    </TouchableOpacity>
                 </View>
 
                 {/* Tab Bar */}
@@ -419,6 +441,21 @@ const styles = StyleSheet.create({
     tabActive: { backgroundColor: "#7ED957" },
     tabText: { color: "#888", fontSize: 14, fontWeight: "600" },
     tabTextActive: { color: "#000" },
+
+    quickActionsRow: {
+        paddingHorizontal: 20,
+        gap: 12,
+        marginBottom: 16,
+    },
+    quickActionCard: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "#1A1A1A",
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 8,
+    },
+    quickActionText: { flex: 1, color: "#FFF", fontSize: 16, marginLeft: 12 },
 
     content: { paddingHorizontal: 20, paddingBottom: 40 },
 
