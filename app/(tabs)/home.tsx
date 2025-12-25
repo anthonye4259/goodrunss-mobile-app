@@ -9,7 +9,7 @@ import { getActivityContent, getPrimaryActivity, type Activity } from "@/lib/act
 import { GlobalSearch } from "@/components/global-search"
 import { TrainerCardSkeleton } from "@/components/skeleton-loader"
 import { ErrorBoundary } from "@/components/error-boundary"
-import { LocationService } from "@/lib/location-service"
+import { locationService } from "@/lib/services/location-service"
 import { getVenuesForSport } from "@/lib/venue-data"
 import { predictVenueTraffic } from "@/lib/traffic-prediction"
 import { router } from "expo-router"
@@ -32,8 +32,7 @@ export default function HomeScreen() {
   useEffect(() => {
     const initLocation = async () => {
       setLoading(true)
-      const locationService = LocationService.getInstance()
-      await locationService.requestPermissions()
+      await locationService.requestPermission()
       const currentLocation = await locationService.getCurrentLocation()
 
       if (currentLocation) {
