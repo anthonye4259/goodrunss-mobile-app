@@ -409,6 +409,26 @@ export default function FacilitySettingsScreen() {
                             </Text>
                         </TouchableOpacity>
                     </View>
+
+                    {/* Integrations Section */}
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>Integrations</Text>
+                        <Text style={styles.sectionSubtitle}>Connect your booking system</Text>
+
+                        <TouchableOpacity
+                            style={styles.integrationBtn}
+                            onPress={() => router.push("/facility/integrations")}
+                        >
+                            <View style={styles.integrationInfo}>
+                                <Ionicons name="link" size={24} color="#7ED957" />
+                                <View style={{ marginLeft: 12 }}>
+                                    <Text style={styles.settingLabel}>Connect Booking System</Text>
+                                    <Text style={styles.settingDesc}>CourtReserve, PodPlay, OpenCourt</Text>
+                                </View>
+                            </View>
+                            <Ionicons name="chevron-forward" size={20} color="#888" />
+                        </TouchableOpacity>
+                    </View>
                 </ScrollView>
             </SafeAreaView>
         </View>
@@ -525,4 +545,17 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     saveBtnText: { color: "#000", fontSize: 16, fontWeight: "bold" },
+
+    integrationBtn: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        backgroundColor: "#0A0A0A",
+        borderRadius: 12,
+        padding: 16,
+    },
+    integrationInfo: {
+        flexDirection: "row",
+        alignItems: "center",
+    },
 })
