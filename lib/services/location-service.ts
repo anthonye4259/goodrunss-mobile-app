@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 export interface UserLocation {
     lat: number
     lng: number
+    city?: string
 }
 
 // Default fallback location (NYC)

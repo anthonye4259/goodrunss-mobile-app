@@ -9,6 +9,7 @@
 import firebase from "firebase/compat/app"
 import "firebase/compat/auth"
 import "firebase/compat/firestore"
+import "firebase/compat/functions"
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || "",
@@ -29,6 +30,7 @@ console.log("Firebase config:", {
 let app: firebase.app.App | null = null
 let auth: firebase.auth.Auth | null = null
 let db: firebase.firestore.Firestore | null = null
+let functions: firebase.functions.Functions | null = null
 
 const hasRequiredConfig = !!(firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.appId)
 
@@ -51,6 +53,10 @@ if (hasRequiredConfig) {
     db = firebase.firestore()
     console.log("✅ Firestore ready")
 
+    // Get Functions instance
+    functions = firebase.functions()
+    console.log("✅ Functions ready")
+
   } catch (error) {
     console.error("❌ Firebase error:", error)
   }
@@ -58,5 +64,5 @@ if (hasRequiredConfig) {
   console.warn("⚠️ Firebase config missing - demo mode")
 }
 
-export { app, auth, db }
+export { app, auth, db, functions }
 export default firebase

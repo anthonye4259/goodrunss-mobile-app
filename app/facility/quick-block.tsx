@@ -23,12 +23,11 @@ import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { router, useLocalSearchParams } from "expo-router"
 import * as Haptics from "expo-haptics"
-import { httpsCallable } from "firebase/functions"
 
 import { useAuth } from "@/lib/auth-context"
 import { functions } from "@/lib/firebase-config"
 import { facilityService } from "@/lib/services/facility-service"
-import { colors, spacing, borderRadius } from "@/lib/theme"
+import { colors } from "@/lib/theme"
 
 const TIME_SLOTS = [
     "06:00", "07:00", "08:00", "09:00", "10:00", "11:00",
@@ -131,7 +130,7 @@ export default function QuickBlockScreen() {
     }
 
     const handleBlockRestOfDay = async () => {
-        if (!selectedCourt || !facilityId) {
+        if (!selectedCourt || !facilityId || !functions) {
             Alert.alert("Select a Court", "Please select a court first")
             return
         }
@@ -151,7 +150,7 @@ export default function QuickBlockScreen() {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy)
                         setBlocking(true)
 
-                        const quickBlockSlot = httpsCallable(functions, "quickBlockSlot")
+                        const quickBlockSlot = functions.httpsCallable("quickBlockSlot")
 
                         for (const time of remainingSlots) {
                             try {

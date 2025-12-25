@@ -35,7 +35,7 @@ type UserPreferences = {
 const UserPreferencesContext = createContext<
   | {
     preferences: UserPreferences
-    setPreferences: (prefs: UserPreferences) => void
+    setPreferences: (prefs: Partial<UserPreferences>) => void
     clearPreferences: () => Promise<void>
     addCredits: (amount: number) => void
   }
@@ -64,9 +64,10 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
   }, [])
 
   // Save to AsyncStorage when preferences change
-  const updatePreferences = (prefs: UserPreferences) => {
-    setPreferences(prefs)
-    AsyncStorage.setItem("userPreferences", JSON.stringify(prefs))
+  const updatePreferences = (prefs: Partial<UserPreferences>) => {
+    const merged = { ...preferences, ...prefs }
+    setPreferences(merged)
+    AsyncStorage.setItem("userPreferences", JSON.stringify(merged))
   }
 
   const clearPreferences = async () => {

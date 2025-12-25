@@ -18,7 +18,9 @@ interface AuthContextType {
   hasBiometricCredentials: boolean
   user: {
     id: string
+    uid: string       // alias for Firebase compatibility
     name: string
+    displayName: string  // alias for Firebase compatibility
     email: string
   } | null
   login: (email: string, password: string) => Promise<void>
@@ -74,8 +76,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Even if Firestore fails, we can still use the auth user data
     const fallbackUser = {
       id: firebaseUser.uid,
+      uid: firebaseUser.uid,  // alias for Firebase compatibility
       email: firebaseUser.email || "",
       name: firebaseUser.displayName || "",
+      displayName: firebaseUser.displayName || "",  // alias
     }
 
     if (!db) {
@@ -88,19 +92,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (userDoc.exists) {
         const userData = userDoc.data() || {}
+        const userName = userData.name || firebaseUser.displayName || ""
         setUser({
           id: firebaseUser.uid,
+          uid: firebaseUser.uid,
           email: firebaseUser.email || "",
-          name: userData.name || firebaseUser.displayName || "",
+          name: userName,
+          displayName: userName,
           ...userData
         })
       } else {
         // Try to create user document, but don't fail if permissions block us
         try {
+          const userName = firebaseUser.displayName || ""
           const newUser = {
             id: firebaseUser.uid,
+            uid: firebaseUser.uid,
             email: firebaseUser.email || "",
-            name: firebaseUser.displayName || "",
+            name: userName,
+            displayName: userName,
             createdAt: new Date().toISOString()
           }
           await db.collection("users").doc(firebaseUser.uid).set(newUser)
@@ -203,8 +213,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const uid = userCredential.user!.uid
     setUser({
       id: uid,
+      uid: uid,
       email: email,
-      name: name
+      name: name,
+      displayName: name
     })
     setIsAuthenticated(true)
     setIsGuest(false)

@@ -25,12 +25,10 @@ import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { router } from "expo-router"
 import * as Haptics from "expo-haptics"
-import { collection, query, where, orderBy, onSnapshot } from "firebase/firestore"
-import { httpsCallable } from "firebase/functions"
 
 import { useAuth } from "@/lib/auth-context"
 import { db, functions } from "@/lib/firebase-config"
-import { colors, spacing, borderRadius } from "@/lib/theme"
+import { colors } from "@/lib/theme"
 
 interface PendingBooking {
     id: string
@@ -65,33 +63,30 @@ export default function PendingBookingsScreen() {
 
     // Real-time listener for pending bookings
     useEffect(() => {
-        if (!user) return
+        if (!user || !db) return
 
         setLoading(true)
 
-        const q = query(
-            collection(db, "pendingBookings"),
-            where("facilityOwnerId", "==", user.uid),
-            where("status", "==", "pending"),
-            orderBy("createdAt", "desc")
-        )
+        const unsubscribe = db.collection("pendingBookings")
+            .where("facilityOwnerId", "==", user.uid)
+            .where("status", "==", "pending")
+            .orderBy("createdAt", "desc")
+            .onSnapshot((snapshot) => {
+                const bookings = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                    createdAt: doc.data().createdAt?.toDate?.()?.toISOString(),
+                    expiresAt: doc.data().expiresAt?.toDate?.()?.toISOString(),
+                })) as PendingBooking[]
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const bookings = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data(),
-                createdAt: doc.data().createdAt?.toDate?.()?.toISOString(),
-                expiresAt: doc.data().expiresAt?.toDate?.()?.toISOString(),
-            })) as PendingBooking[]
-
-            setPendingBookings(bookings)
-            setLoading(false)
-            setRefreshing(false)
-        }, (error) => {
-            console.error("Error fetching pending bookings:", error)
-            setLoading(false)
-            setRefreshing(false)
-        })
+                setPendingBookings(bookings)
+                setLoading(false)
+                setRefreshing(false)
+            }, (error) => {
+                console.error("Error fetching pending bookings:", error)
+                setLoading(false)
+                setRefreshing(false)
+            })
 
         return () => unsubscribe()
     }, [user])
@@ -102,11 +97,12 @@ export default function PendingBookingsScreen() {
     }, [])
 
     const handleConfirm = async (bookingId: string) => {
+        if (!functions) return
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
         setProcessingId(bookingId)
 
         try {
-            const confirmBooking = httpsCallable(functions, "confirmBooking")
+            const confirmBooking = functions.httpsCallable("confirmBooking")
             await confirmBooking({ bookingId })
 
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
@@ -120,6 +116,7 @@ export default function PendingBookingsScreen() {
     }
 
     const handleDecline = async (bookingId: string, courtName: string) => {
+        if (!functions) return
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
 
         Alert.alert(
@@ -133,7 +130,7 @@ export default function PendingBookingsScreen() {
                     onPress: async () => {
                         setProcessingId(bookingId)
                         try {
-                            const declineBooking = httpsCallable(functions, "declineBooking")
+                            const declineBooking = functions.httpsCallable("declineBooking")
                             await declineBooking({ bookingId, reason: "Slot no longer available" })
 
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning)
