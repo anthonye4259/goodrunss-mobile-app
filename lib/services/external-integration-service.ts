@@ -25,6 +25,7 @@ export type IntegrationType =
     | "opencourt"
     | "supersaas"
     | "omnify"
+    | "calendarsync"  // iCal/Google Calendar sync
     | "manual" // No integration, manual entry
 
 export interface IntegrationConfig {
@@ -33,10 +34,12 @@ export interface IntegrationConfig {
     apiSecret?: string
     organizationId?: string  // For CourtReserve
     venueSlug?: string       // For PodPlay
+    calendarUrl?: string     // For CalendarSync
     webhookSecret?: string
     isActive: boolean
     lastSyncAt?: string
     syncErrors?: string[]
+    syncTrigger?: number     // For manual sync trigger
 }
 
 export interface ExternalBooking {
@@ -599,37 +602,39 @@ class ExternalIntegrationService {
     // SUPPORTED INTEGRATIONS LIST (COURTS)
     // ============================================
 
-    getSupportedIntegrations(): { id: IntegrationType; name: string; logo: string; apiDocsUrl: string }[] {
+    getSupportedIntegrations(): { id: IntegrationType | "calendarsync"; name: string; logo: string; apiDocsUrl: string; comingSoon: boolean; description: string }[] {
         return [
+            {
+                id: "calendarsync",
+                name: "Calendar Sync",
+                logo: "https://calendar.google.com/favicon.ico",
+                apiDocsUrl: "",
+                comingSoon: false,
+                description: "Sync via iCal/Google Calendar URL (every hour)",
+            },
             {
                 id: "courtreserve",
                 name: "CourtReserve",
                 logo: "https://courtreserve.com/logo.png",
                 apiDocsUrl: "https://courtreserve.com/api-docs",
+                comingSoon: true,
+                description: "Requires Scale or Enterprise plan",
             },
             {
                 id: "podplay",
                 name: "PodPlay",
                 logo: "https://podplay.app/logo.png",
                 apiDocsUrl: "https://help.podplay.app/api-quickstart",
+                comingSoon: true,
+                description: "Requires Professional plan",
             },
             {
                 id: "opencourt",
                 name: "OpenCourt",
                 logo: "https://opencourt.co/logo.png",
                 apiDocsUrl: "https://opencourt.co/contact",
-            },
-            {
-                id: "supersaas",
-                name: "SuperSaaS",
-                logo: "https://supersaas.com/logo.png",
-                apiDocsUrl: "https://www.supersaas.com/info/dev",
-            },
-            {
-                id: "omnify",
-                name: "Omnify",
-                logo: "https://getomnify.com/logo.png",
-                apiDocsUrl: "https://getomnify.com/api",
+                comingSoon: true,
+                description: "API access by request",
             },
         ]
     }
@@ -638,7 +643,7 @@ class ExternalIntegrationService {
     // SUPPORTED INTEGRATIONS LIST (WELLNESS/CLASSPASS MODEL)
     // ============================================
 
-    getSupportedWellnessIntegrations(): { id: string; name: string; logo: string; apiDocsUrl: string; method: string }[] {
+    getSupportedWellnessIntegrations(): { id: string; name: string; logo: string; apiDocsUrl: string; method: string; comingSoon: boolean; description: string }[] {
         return [
             {
                 id: "mindbody",
@@ -646,6 +651,17 @@ class ExternalIntegrationService {
                 logo: "https://mindbodyonline.com/logo.png",
                 apiDocsUrl: "https://developers.mindbodyonline.com",
                 method: "API Integration",
+                comingSoon: false,
+                description: "Free under 5K calls/month",
+            },
+            {
+                id: "calendarsync",
+                name: "Calendar Sync",
+                logo: "https://calendar.google.com/favicon.ico",
+                apiDocsUrl: "",
+                method: "iCal/Google Calendar URL",
+                comingSoon: false,
+                description: "Sync schedule via calendar URL (every hour)",
             },
             {
                 id: "glofox",
@@ -653,6 +669,8 @@ class ExternalIntegrationService {
                 logo: "https://glofox.com/logo.png",
                 apiDocsUrl: "https://support.glofox.com/api",
                 method: "API Integration",
+                comingSoon: true,
+                description: "Requires Enterprise plan",
             },
             {
                 id: "momence",
@@ -660,17 +678,13 @@ class ExternalIntegrationService {
                 logo: "https://momence.com/logo.png",
                 apiDocsUrl: "https://help.momence.com/integrations",
                 method: "API Integration",
-            },
-            {
-                id: "calendarsync",
-                name: "CalendarSync",
-                logo: "https://calendar.google.com/favicon.ico",
-                apiDocsUrl: "",
-                method: "iCal/Google Calendar URL",
+                comingSoon: true,
+                description: "Coming soon",
             },
         ]
     }
 }
 
 export const externalIntegrationService = ExternalIntegrationService.getInstance()
+
 

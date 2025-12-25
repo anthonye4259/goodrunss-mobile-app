@@ -236,19 +236,37 @@ export default function IntegrationsScreen() {
                                 style={[
                                     styles.integrationCard,
                                     selectedIntegration === integration.id && styles.integrationCardSelected,
+                                    integration.comingSoon && styles.integrationCardDisabled,
                                 ]}
                                 onPress={() => {
+                                    if (integration.comingSoon) {
+                                        Alert.alert(
+                                            "Coming Soon",
+                                            `${integration.name} integration will be available soon. ${integration.description}`
+                                        )
+                                        return
+                                    }
                                     Haptics.selectionAsync()
-                                    setSelectedIntegration(integration.id)
+                                    setSelectedIntegration(integration.id as IntegrationType)
                                 }}
                             >
                                 <View style={styles.integrationInfo}>
-                                    <Text style={styles.integrationName}>{integration.name}</Text>
-                                    <TouchableOpacity onPress={() => Linking.openURL(integration.apiDocsUrl)}>
-                                        <Text style={styles.docsLink}>View API Docs →</Text>
-                                    </TouchableOpacity>
+                                    <View style={styles.integrationNameRow}>
+                                        <Text style={styles.integrationName}>{integration.name}</Text>
+                                        {integration.comingSoon && (
+                                            <View style={styles.comingSoonBadge}>
+                                                <Text style={styles.comingSoonText}>Coming Soon</Text>
+                                            </View>
+                                        )}
+                                    </View>
+                                    <Text style={styles.integrationDesc}>{integration.description}</Text>
+                                    {integration.apiDocsUrl && !integration.comingSoon && (
+                                        <TouchableOpacity onPress={() => Linking.openURL(integration.apiDocsUrl)}>
+                                            <Text style={styles.docsLink}>View API Docs →</Text>
+                                        </TouchableOpacity>
+                                    )}
                                 </View>
-                                {selectedIntegration === integration.id && (
+                                {selectedIntegration === integration.id && !integration.comingSoon && (
                                     <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
                                 )}
                             </TouchableOpacity>
@@ -267,7 +285,7 @@ export default function IntegrationsScreen() {
                         >
                             <View style={styles.integrationInfo}>
                                 <Text style={styles.integrationName}>Manual Entry</Text>
-                                <Text style={styles.docsLink}>No integration, manage manually</Text>
+                                <Text style={styles.integrationDesc}>No integration, manage courts manually</Text>
                             </View>
                             {selectedIntegration === "manual" && (
                                 <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
@@ -275,50 +293,72 @@ export default function IntegrationsScreen() {
                         </TouchableOpacity>
                     </View>
 
-                    {/* API Credentials Form */}
+                    {/* Credentials / Calendar Form */}
                     {selectedIntegration && selectedIntegration !== "manual" && (
                         <View style={styles.credentialsSection}>
-                            <Text style={styles.sectionTitle}>API Credentials</Text>
+                            {selectedIntegration === "calendarsync" ? (
+                                <>
+                                    <Text style={styles.sectionTitle}>Calendar URL</Text>
+                                    <View style={styles.inputGroup}>
+                                        <Text style={styles.inputLabel}>iCal or Google Calendar URL</Text>
+                                        <TextInput
+                                            style={styles.input}
+                                            value={venueSlug}
+                                            onChangeText={setVenueSlug}
+                                            placeholder="https://calendar.google.com/calendar/ical/..."
+                                            placeholderTextColor={colors.text.muted}
+                                            autoCapitalize="none"
+                                            autoCorrect={false}
+                                        />
+                                        <Text style={styles.inputHint}>
+                                            Paste your public calendar URL. We'll sync events every hour.
+                                        </Text>
+                                    </View>
+                                </>
+                            ) : (
+                                <>
+                                    <Text style={styles.sectionTitle}>API Credentials</Text>
+                                    <View style={styles.inputGroup}>
+                                        <Text style={styles.inputLabel}>API Key</Text>
+                                        <TextInput
+                                            style={styles.input}
+                                            value={apiKey}
+                                            onChangeText={setApiKey}
+                                            placeholder="Enter your API key"
+                                            placeholderTextColor={colors.text.muted}
+                                            secureTextEntry
+                                            autoCapitalize="none"
+                                        />
+                                    </View>
 
-                            <View style={styles.inputGroup}>
-                                <Text style={styles.inputLabel}>API Key</Text>
-                                <TextInput
-                                    style={styles.input}
-                                    value={apiKey}
-                                    onChangeText={setApiKey}
-                                    placeholder="Enter your API key"
-                                    placeholderTextColor={colors.text.muted}
-                                    secureTextEntry
-                                    autoCapitalize="none"
-                                />
-                            </View>
+                                    {selectedIntegration === "courtreserve" && (
+                                        <View style={styles.inputGroup}>
+                                            <Text style={styles.inputLabel}>Organization ID</Text>
+                                            <TextInput
+                                                style={styles.input}
+                                                value={organizationId}
+                                                onChangeText={setOrganizationId}
+                                                placeholder="Your CourtReserve Org ID"
+                                                placeholderTextColor={colors.text.muted}
+                                                autoCapitalize="none"
+                                            />
+                                        </View>
+                                    )}
 
-                            {selectedIntegration === "courtreserve" && (
-                                <View style={styles.inputGroup}>
-                                    <Text style={styles.inputLabel}>Organization ID</Text>
-                                    <TextInput
-                                        style={styles.input}
-                                        value={organizationId}
-                                        onChangeText={setOrganizationId}
-                                        placeholder="Your CourtReserve Org ID"
-                                        placeholderTextColor={colors.text.muted}
-                                        autoCapitalize="none"
-                                    />
-                                </View>
-                            )}
-
-                            {selectedIntegration === "podplay" && (
-                                <View style={styles.inputGroup}>
-                                    <Text style={styles.inputLabel}>Venue Slug</Text>
-                                    <TextInput
-                                        style={styles.input}
-                                        value={venueSlug}
-                                        onChangeText={setVenueSlug}
-                                        placeholder="e.g. my-tennis-club"
-                                        placeholderTextColor={colors.text.muted}
-                                        autoCapitalize="none"
-                                    />
-                                </View>
+                                    {selectedIntegration === "podplay" && (
+                                        <View style={styles.inputGroup}>
+                                            <Text style={styles.inputLabel}>Venue Slug</Text>
+                                            <TextInput
+                                                style={styles.input}
+                                                value={venueSlug}
+                                                onChangeText={setVenueSlug}
+                                                placeholder="e.g. my-tennis-club"
+                                                placeholderTextColor={colors.text.muted}
+                                                autoCapitalize="none"
+                                            />
+                                        </View>
+                                    )}
+                                </>
                             )}
                         </View>
                     )}
@@ -334,9 +374,10 @@ export default function IntegrationsScreen() {
                                 <ActivityIndicator color="#000" />
                             ) : (
                                 <>
-                                    <Ionicons name="link" size={20} color="#000" />
+                                    <Ionicons name={selectedIntegration === "calendarsync" ? "calendar" : "link"} size={20} color="#000" />
                                     <Text style={styles.saveBtnText}>
-                                        {selectedIntegration === "manual" ? "Save" : "Connect & Sync"}
+                                        {selectedIntegration === "manual" ? "Save" :
+                                            selectedIntegration === "calendarsync" ? "Connect Calendar" : "Connect & Sync"}
                                     </Text>
                                 </>
                             )}
@@ -501,4 +542,17 @@ const styles = StyleSheet.create({
         borderRadius: borderRadius.md,
     },
     syncNowText: { fontSize: 14, fontWeight: "600", color: colors.primary },
+
+    // Coming Soon
+    integrationCardDisabled: { opacity: 0.6 },
+    integrationNameRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+    comingSoonBadge: {
+        backgroundColor: "rgba(249, 115, 22, 0.2)",
+        paddingHorizontal: spacing.sm,
+        paddingVertical: 2,
+        borderRadius: borderRadius.sm,
+    },
+    comingSoonText: { fontSize: 10, fontWeight: "600", color: "#F97316" },
+    integrationDesc: { fontSize: 11, color: colors.text.muted, marginTop: 2 },
+    inputHint: { fontSize: 12, color: colors.text.muted, marginTop: spacing.xs },
 })

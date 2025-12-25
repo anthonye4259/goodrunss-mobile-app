@@ -461,6 +461,210 @@ export const scheduledWellnessSync = functions.pubsub
     })
 
 // ============================================
+// CLOUD FUNCTION: HOURLY CALENDAR SYNC (iCal)
+// ============================================
+
+export const hourlyCalendarSync = functions.pubsub
+    .schedule("every 1 hours")
+    .onRun(async () => {
+        // Sync both wellness and court calendar integrations
+        
+        // Wellness calendars
+        const wellnessIntegrations = await admin.firestore()
+            .collection("studioIntegrations")
+            .where("isActive", "==", true)
+            .where("type", "==", "calendarsync")
+            .get()
+
+        for (const doc of wellnessIntegrations.docs) {
+            const config = doc.data()
+            if (!config.calendarUrl) continue
+
+            try {
+                // Fetch and parse iCal
+                const response = await fetch(config.calendarUrl)
+                if (!response.ok) {
+                    throw new Error(`Calendar fetch failed: ${response.status}`)
+                }
+
+                const icalText = await response.text()
+                const events = parseICalEvents(icalText)
+
+                // Store events as classes
+                const batch = admin.firestore().batch()
+
+                for (const event of events) {
+                    const classRef = admin.firestore()
+                        .collection("studios")
+                        .doc(doc.id)
+                        .collection("classes")
+                        .doc(event.uid)
+
+                    batch.set(classRef, {
+                        externalId: event.uid,
+                        name: event.summary,
+                        instructor: event.organizer || "TBD",
+                        startTime: event.start,
+                        endTime: event.end,
+                        date: event.start.split("T")[0],
+                        description: event.description,
+                        location: event.location,
+                        source: "calendar",
+                        integrationType: "calendarsync",
+                        syncedAt: admin.firestore.FieldValue.serverTimestamp(),
+                    }, { merge: true })
+                }
+
+                batch.update(doc.ref, {
+                    lastSyncAt: new Date().toISOString(),
+                })
+
+                await batch.commit()
+
+                functions.logger.info("Calendar sync completed", {
+                    studioId: doc.id,
+                    eventCount: events.length,
+                })
+            } catch (error: any) {
+                functions.logger.error("Calendar sync error:", { studioId: doc.id, error: error.message })
+                await doc.ref.update({
+                    syncErrors: admin.firestore.FieldValue.arrayUnion(error.message),
+                })
+            }
+        }
+
+        // Court calendars (facilityIntegrations)
+        const courtIntegrations = await admin.firestore()
+            .collection("facilityIntegrations")
+            .where("isActive", "==", true)
+            .where("type", "==", "calendarsync")
+            .get()
+
+        for (const doc of courtIntegrations.docs) {
+            const config = doc.data()
+            if (!config.calendarUrl) continue
+
+            try {
+                const response = await fetch(config.calendarUrl)
+                if (!response.ok) {
+                    throw new Error(`Calendar fetch failed: ${response.status}`)
+                }
+
+                const icalText = await response.text()
+                const events = parseICalEvents(icalText)
+
+                const batch = admin.firestore().batch()
+
+                for (const event of events) {
+                    // Events = blocked times / existing bookings
+                    const slotRef = admin.firestore()
+                        .collection("venues")
+                        .doc(doc.id)
+                        .collection("availability")
+                        .doc(event.uid)
+
+                    batch.set(slotRef, {
+                        externalId: event.uid,
+                        date: event.start.split("T")[0],
+                        startTime: event.start,
+                        endTime: event.end,
+                        status: "blocked",
+                        title: event.summary,
+                        source: "calendar",
+                        syncedAt: admin.firestore.FieldValue.serverTimestamp(),
+                    }, { merge: true })
+                }
+
+                batch.update(doc.ref, {
+                    lastSyncAt: new Date().toISOString(),
+                })
+
+                await batch.commit()
+
+                functions.logger.info("Court calendar sync completed", {
+                    facilityId: doc.id,
+                    eventCount: events.length,
+                })
+            } catch (error: any) {
+                functions.logger.error("Court calendar sync error:", { facilityId: doc.id, error: error.message })
+            }
+        }
+    })
+
+// Simple iCal parser
+function parseICalEvents(icalText: string): Array<{
+    uid: string
+    summary: string
+    start: string
+    end: string
+    description?: string
+    location?: string
+    organizer?: string
+}> {
+    const events: Array<any> = []
+    const lines = icalText.split(/\r?\n/)
+    let currentEvent: any = null
+
+    for (const line of lines) {
+        if (line === "BEGIN:VEVENT") {
+            currentEvent = {}
+        } else if (line === "END:VEVENT" && currentEvent) {
+            if (currentEvent.uid && currentEvent.start) {
+                events.push(currentEvent)
+            }
+            currentEvent = null
+        } else if (currentEvent) {
+            const [key, ...valueParts] = line.split(":")
+            const value = valueParts.join(":")
+            const cleanKey = key.split(";")[0]
+
+            switch (cleanKey) {
+                case "UID":
+                    currentEvent.uid = value
+                    break
+                case "SUMMARY":
+                    currentEvent.summary = value
+                    break
+                case "DTSTART":
+                    currentEvent.start = parseICalDate(value)
+                    break
+                case "DTEND":
+                    currentEvent.end = parseICalDate(value)
+                    break
+                case "DESCRIPTION":
+                    currentEvent.description = value
+                    break
+                case "LOCATION":
+                    currentEvent.location = value
+                    break
+                case "ORGANIZER":
+                    currentEvent.organizer = value.replace(/.*CN=([^;:]+).*/, "$1")
+                    break
+            }
+        }
+    }
+
+    return events
+}
+
+function parseICalDate(value: string): string {
+    // Handle formats like 20241225T140000Z or 20241225
+    if (value.includes("T")) {
+        const year = value.substring(0, 4)
+        const month = value.substring(4, 6)
+        const day = value.substring(6, 8)
+        const hour = value.substring(9, 11)
+        const min = value.substring(11, 13)
+        return `${year}-${month}-${day}T${hour}:${min}:00`
+    } else {
+        const year = value.substring(0, 4)
+        const month = value.substring(4, 6)
+        const day = value.substring(6, 8)
+        return `${year}-${month}-${day}T00:00:00`
+    }
+}
+
+// ============================================
 // CLOUD FUNCTION: PUSH BOOKING ON CREATION
 // ============================================
 

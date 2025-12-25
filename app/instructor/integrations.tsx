@@ -289,22 +289,38 @@ export default function WellnessIntegrationsScreen() {
                                 style={[
                                     styles.integrationCard,
                                     selectedIntegration === integration.id && styles.integrationCardSelected,
+                                    integration.comingSoon && styles.integrationCardDisabled,
                                 ]}
                                 onPress={() => {
+                                    if (integration.comingSoon) {
+                                        Alert.alert(
+                                            "Coming Soon",
+                                            `${integration.name} integration will be available soon. ${integration.description}`
+                                        )
+                                        return
+                                    }
                                     Haptics.selectionAsync()
                                     setSelectedIntegration(integration.id as WellnessIntegrationType)
                                 }}
                             >
                                 <View style={styles.integrationInfo}>
-                                    <Text style={styles.integrationName}>{integration.name}</Text>
+                                    <View style={styles.integrationNameRow}>
+                                        <Text style={styles.integrationName}>{integration.name}</Text>
+                                        {integration.comingSoon && (
+                                            <View style={styles.comingSoonBadge}>
+                                                <Text style={styles.comingSoonText}>Coming Soon</Text>
+                                            </View>
+                                        )}
+                                    </View>
                                     <Text style={styles.integrationMethod}>{integration.method}</Text>
-                                    {integration.apiDocsUrl && (
+                                    <Text style={styles.integrationDesc}>{integration.description}</Text>
+                                    {integration.apiDocsUrl && !integration.comingSoon && (
                                         <TouchableOpacity onPress={() => Linking.openURL(integration.apiDocsUrl)}>
                                             <Text style={styles.docsLink}>View Setup Guide →</Text>
                                         </TouchableOpacity>
                                     )}
                                 </View>
-                                {selectedIntegration === integration.id && (
+                                {selectedIntegration === integration.id && !integration.comingSoon && (
                                     <Ionicons name="checkmark-circle" size={24} color="#8B5CF6" />
                                 )}
                             </TouchableOpacity>
@@ -324,6 +340,7 @@ export default function WellnessIntegrationsScreen() {
                             <View style={styles.integrationInfo}>
                                 <Text style={styles.integrationName}>Manual Entry</Text>
                                 <Text style={styles.integrationMethod}>Add classes manually in GoodRunss</Text>
+                                <Text style={styles.integrationDesc}>No external system needed</Text>
                             </View>
                             {selectedIntegration === "manual" && (
                                 <Ionicons name="checkmark-circle" size={24} color="#8B5CF6" />
@@ -656,5 +673,31 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: "600",
         color: colors.primary,
+    },
+
+    // Coming Soon
+    integrationCardDisabled: {
+        opacity: 0.6,
+    },
+    integrationNameRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: spacing.sm,
+    },
+    comingSoonBadge: {
+        backgroundColor: "rgba(249, 115, 22, 0.2)",
+        paddingHorizontal: spacing.sm,
+        paddingVertical: 2,
+        borderRadius: borderRadius.sm,
+    },
+    comingSoonText: {
+        fontSize: 10,
+        fontWeight: "600",
+        color: "#F97316",
+    },
+    integrationDesc: {
+        fontSize: 11,
+        color: colors.text.muted,
+        marginTop: 2,
     },
 })
