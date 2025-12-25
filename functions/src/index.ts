@@ -2385,3 +2385,230 @@ export const handleCourtBookingPayment = functions.firestore
             }
         }
     })
+
+// ============================================
+// FACILITY SUBSCRIPTION FUNCTIONS ($50/mo Premium)
+// ============================================
+
+/**
+ * Create Stripe Checkout session for facility premium subscription
+ */
+export const createFacilitySubscription = functions.https.onCall(async (data, context) => {
+    if (!stripe) {
+        throw new functions.https.HttpsError(
+            "failed-precondition",
+            "Stripe is not configured"
+        )
+    }
+
+    if (!context.auth) {
+        throw new functions.https.HttpsError(
+            "unauthenticated",
+            "Must be authenticated to subscribe"
+        )
+    }
+
+    const { facilityId } = data
+    if (!facilityId) {
+        throw new functions.https.HttpsError(
+            "invalid-argument",
+            "facilityId is required"
+        )
+    }
+
+    try {
+        // Get facility to verify ownership
+        const facilityDoc = await admin.firestore()
+            .collection("claimed_facilities")
+            .doc(facilityId)
+            .get()
+
+        if (!facilityDoc.exists) {
+            throw new functions.https.HttpsError("not-found", "Facility not found")
+        }
+
+        const facility = facilityDoc.data()
+        if (facility?.ownerId !== context.auth.uid) {
+            throw new functions.https.HttpsError("permission-denied", "Not facility owner")
+        }
+
+        // Create or get Stripe price for $50/mo facility premium
+        // In production, create this in Stripe Dashboard and use the price ID
+        const priceId = config.stripe?.facility_premium_price || "price_facility_premium_50"
+
+        // Create checkout session
+        const session = await stripe.checkout.sessions.create({
+            mode: "subscription",
+            payment_method_types: ["card"],
+            line_items: [
+                {
+                    price: priceId,
+                    quantity: 1,
+                },
+            ],
+            success_url: `goodrunss://facility/premium-success?facilityId=${facilityId}`,
+            cancel_url: `goodrunss://facility/premium?facilityId=${facilityId}`,
+            metadata: {
+                facilityId,
+                userId: context.auth.uid,
+                type: "facility_premium_subscription",
+            },
+        })
+
+        functions.logger.info("Facility subscription checkout created", {
+            facilityId,
+            sessionId: session.id,
+        })
+
+        return { sessionUrl: session.url }
+    } catch (error: any) {
+        functions.logger.error("Error creating facility subscription:", error)
+        throw new functions.https.HttpsError(
+            "internal",
+            error.message || "Failed to create subscription"
+        )
+    }
+})
+
+/**
+ * Cancel facility premium subscription
+ */
+export const cancelFacilitySubscription = functions.https.onCall(async (data, context) => {
+    if (!stripe) {
+        throw new functions.https.HttpsError(
+            "failed-precondition",
+            "Stripe is not configured"
+        )
+    }
+
+    if (!context.auth) {
+        throw new functions.https.HttpsError(
+            "unauthenticated",
+            "Must be authenticated"
+        )
+    }
+
+    const { facilityId } = data
+
+    try {
+        const facilityDoc = await admin.firestore()
+            .collection("claimed_facilities")
+            .doc(facilityId)
+            .get()
+
+        if (!facilityDoc.exists) {
+            throw new functions.https.HttpsError("not-found", "Facility not found")
+        }
+
+        const facility = facilityDoc.data()
+        if (facility?.ownerId !== context.auth.uid) {
+            throw new functions.https.HttpsError("permission-denied", "Not facility owner")
+        }
+
+        if (!facility.stripeSubscriptionId) {
+            throw new functions.https.HttpsError("failed-precondition", "No active subscription")
+        }
+
+        // Cancel at period end (still active until end of billing cycle)
+        await stripe.subscriptions.update(facility.stripeSubscriptionId, {
+            cancel_at_period_end: true,
+        })
+
+        functions.logger.info("Facility subscription cancelled", { facilityId })
+
+        return { success: true }
+    } catch (error: any) {
+        functions.logger.error("Error cancelling facility subscription:", error)
+        throw new functions.https.HttpsError(
+            "internal",
+            error.message || "Failed to cancel subscription"
+        )
+    }
+})
+
+/**
+ * Webhook handler for facility subscription events
+ * Handles: subscription created, renewed, cancelled
+ */
+export const handleFacilitySubscriptionWebhook = functions.https.onRequest(async (req, res) => {
+    if (!stripe) {
+        res.status(500).send("Stripe not configured")
+        return
+    }
+
+    const sig = req.headers["stripe-signature"]
+    const webhookSecret = config.stripe?.facility_webhook_secret || ""
+
+    if (!sig || !webhookSecret) {
+        res.status(400).send("Missing signature or webhook secret")
+        return
+    }
+
+    try {
+        const event = stripe.webhooks.constructEvent(
+            req.rawBody,
+            sig,
+            webhookSecret
+        )
+
+        switch (event.type) {
+            case "checkout.session.completed": {
+                const session = event.data.object as Stripe.Checkout.Session
+                if (session.metadata?.type === "facility_premium_subscription") {
+                    const facilityId = session.metadata.facilityId
+                    const subscriptionId = session.subscription as string
+
+                    await admin.firestore()
+                        .collection("claimed_facilities")
+                        .doc(facilityId)
+                        .update({
+                            subscriptionTier: "premium",
+                            stripeSubscriptionId: subscriptionId,
+                            takeRatePercent: 5, // Reduced rate for premium
+                            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                        })
+
+                    functions.logger.info("Facility upgraded to premium", { facilityId })
+                }
+                break
+            }
+
+            case "customer.subscription.deleted": {
+                const subscription = event.data.object as Stripe.Subscription
+                const facilityId = subscription.metadata?.facilityId
+
+                if (facilityId) {
+                    await admin.firestore()
+                        .collection("claimed_facilities")
+                        .doc(facilityId)
+                        .update({
+                            subscriptionTier: "free",
+                            stripeSubscriptionId: null,
+                            takeRatePercent: 8, // Back to standard rate
+                            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                        })
+
+                    functions.logger.info("Facility downgraded to free", { facilityId })
+                }
+                break
+            }
+
+            case "invoice.payment_succeeded": {
+                // Subscription renewed successfully
+                functions.logger.info("Facility subscription renewed", event.data.object)
+                break
+            }
+
+            case "invoice.payment_failed": {
+                // Payment failed - could send notification to facility owner
+                functions.logger.warn("Facility subscription payment failed", event.data.object)
+                break
+            }
+        }
+
+        res.status(200).send({ received: true })
+    } catch (error: any) {
+        functions.logger.error("Webhook error:", error)
+        res.status(400).send(`Webhook Error: ${error.message}`)
+    }
+})

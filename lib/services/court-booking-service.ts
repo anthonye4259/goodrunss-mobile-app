@@ -95,14 +95,48 @@ export const courtBookingService = {
 
     /**
      * Get available time slots for a court on a date
+     * Respects operating hours and blocked dates
      */
     async getAvailableSlots(
         courtId: string,
-        date: string
+        date: string,
+        options?: {
+            operatingHours?: {
+                [day: string]: { open: string; close: string; closed: boolean }
+            }
+            blockedDates?: string[]
+            hourlyRate?: number
+            courtName?: string
+        }
     ): Promise<AvailableSlot[]> {
         if (!db) return []
 
         try {
+            // Check if date is blocked
+            if (options?.blockedDates?.includes(date)) {
+                return [] // Facility closed this day
+            }
+
+            // Get day of week for operating hours
+            const dateObj = new Date(date + "T12:00:00")
+            const dayNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"]
+            const dayOfWeek = dayNames[dateObj.getDay()]
+
+            // Check if facility is open this day
+            const dayHours = options?.operatingHours?.[dayOfWeek]
+            if (dayHours?.closed) {
+                return [] // Facility closed this day
+            }
+
+            // Determine start and end hours
+            let startHour = 6  // Default 6am
+            let endHour = 22   // Default 10pm
+
+            if (dayHours) {
+                startHour = parseInt(dayHours.open.split(":")[0])
+                endHour = parseInt(dayHours.close.split(":")[0])
+            }
+
             // Get existing bookings for this court on this date
             const bookingsQuery = db.collection(BOOKINGS_COLLECTION)
                 .where("courtId", "==", courtId)
@@ -115,22 +149,41 @@ export const courtBookingService = {
                 endTime: doc.data().endTime,
             }))
 
-            // Generate hourly slots from 6am to 10pm
+            // Also check trainer rentals
+            const rentalsSnapshot = await db.collection("trainer_rentals")
+                .where("courtOrStudioId", "==", courtId)
+                .where("date", "==", date)
+                .where("status", "in", ["confirmed", "completed"])
+                .get()
+
+            rentalsSnapshot.docs.forEach(doc => {
+                bookedSlots.push({
+                    startTime: doc.data().startTime,
+                    endTime: doc.data().endTime,
+                })
+            })
+
+            // Generate hourly slots only during operating hours
             const slots: AvailableSlot[] = []
-            for (let hour = 6; hour < 22; hour++) {
+            for (let hour = startHour; hour < endHour; hour++) {
                 const startTime = `${hour.toString().padStart(2, "0")}:00`
                 const endTime = `${(hour + 1).toString().padStart(2, "0")}:00`
 
-                const isBooked = bookedSlots.some(
-                    slot => slot.startTime === startTime
-                )
+                // Check if this slot overlaps with any booking
+                const isBooked = bookedSlots.some(slot => {
+                    const slotStart = parseInt(slot.startTime.replace(":", ""))
+                    const slotEnd = parseInt(slot.endTime.replace(":", ""))
+                    const checkStart = hour * 100
+                    const checkEnd = (hour + 1) * 100
+                    return checkStart < slotEnd && checkEnd > slotStart
+                })
 
                 slots.push({
                     courtId,
-                    courtName: "", // Will be filled by caller
+                    courtName: options?.courtName || "",
                     startTime,
                     endTime,
-                    hourlyRate: 0, // Will be filled by caller
+                    hourlyRate: options?.hourlyRate || 0,
                     isAvailable: !isBooked,
                 })
             }

@@ -88,7 +88,7 @@ export default function AuthScreen() {
 
         // Demo account gets master access to all features
         const isDemoAccount = email.toLowerCase() === "anthonye4259@gmail.com"
-        
+
         if (isDemoAccount) {
           // Master demo account - full access to all paths
           setPreferences({
@@ -486,6 +486,19 @@ export default function AuthScreen() {
               <Text className="text-center text-muted-foreground">
                 {isLogin ? "Don't have an account? " : "Already have an account? "}
                 <Text className="text-primary font-semibold">{isLogin ? "Sign Up" : "Sign In"}</Text>
+              </Text>
+            </TouchableOpacity>
+
+            {/* Facility Owner Entry Point */}
+            <TouchableOpacity
+              onPress={() => router.push("/facility/onboarding")}
+              className="py-4 border-t border-border mt-2"
+            >
+              <Text className="text-center" style={{ color: "#FFD700" }}>
+                🏢 I'm a Facility Owner
+              </Text>
+              <Text className="text-center text-muted-foreground text-xs mt-1">
+                List your courts or studios and start earning
               </Text>
             </TouchableOpacity>
           </View>

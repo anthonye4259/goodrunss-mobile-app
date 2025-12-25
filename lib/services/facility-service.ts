@@ -9,6 +9,16 @@ import { db } from "../firebase-config"
 const FACILITIES_COLLECTION = "claimed_facilities"
 const COURTS_COLLECTION = "courts"
 
+export interface OperatingHours {
+    [day: string]: {
+        open: string
+        close: string
+        closed: boolean
+    }
+}
+
+export type SubscriptionTier = "free" | "premium"
+
 export interface ClaimedFacility {
     id: string
     venueId: string // Reference to original venue
@@ -16,10 +26,33 @@ export interface ClaimedFacility {
     businessName: string
     businessPhone: string
     businessEmail: string
+    address?: string
+    city?: string
+    state?: string
+    zipCode?: string
+    sports?: string[]
     verified: boolean
     verificationMethod?: "phone" | "email" | "document"
     stripeAccountId?: string // For Stripe Connect payouts
-    takeRatePercent: number // 5-10%
+    takeRatePercent: number // 8% for free, 5% for premium
+
+    // Operating Hours
+    operatingHours?: OperatingHours
+    blockedDates?: string[] // Holidays, maintenance
+
+    // Subscription
+    subscriptionTier: SubscriptionTier
+    subscriptionExpiresAt?: Date
+    stripeSubscriptionId?: string
+
+    // Notifications
+    notifyOnBooking: boolean
+    notifyOnCancellation: boolean
+    dailySummary: boolean
+
+    // Cancellation Policy
+    cancellationWindowHours: number // e.g., 24 = refund if cancelled 24h before
+
     createdAt: Date
     updatedAt: Date
 }
@@ -50,38 +83,58 @@ export interface CourtAvailability {
 export const facilityService = {
     /**
      * Claim a facility (owner registration)
+     * Now supports auto-creating venue and extended options
      */
     async claimFacility(
-        venueId: string,
-        userId: string,
-        businessInfo: {
+        data: {
+            venueId: string
+            ownerId: string
             businessName: string
             businessPhone: string
             businessEmail: string
+            address?: string
+            city?: string
+            state?: string
+            zipCode?: string
+            sports?: string[]
+            operatingHours?: OperatingHours
         }
     ): Promise<string | null> {
         if (!db) return null
 
         try {
-            // Check if already claimed
-            const existingQuery = db.collection(FACILITIES_COLLECTION)
-                .where("venueId", "==", venueId)
-                .limit(1)
+            // Check if already claimed (skip for new venues)
+            if (!data.venueId.startsWith("new-")) {
+                const existingQuery = db.collection(FACILITIES_COLLECTION)
+                    .where("venueId", "==", data.venueId)
+                    .limit(1)
 
-            const existing = await existingQuery.get()
-            if (!existing.empty) {
-                console.warn("Facility already claimed:", venueId)
-                return null
+                const existing = await existingQuery.get()
+                if (!existing.empty) {
+                    console.warn("Facility already claimed:", data.venueId)
+                    return null
+                }
             }
 
             const facilityData: Omit<ClaimedFacility, "id"> = {
-                venueId,
-                ownerId: userId,
-                businessName: businessInfo.businessName,
-                businessPhone: businessInfo.businessPhone,
-                businessEmail: businessInfo.businessEmail,
+                venueId: data.venueId,
+                ownerId: data.ownerId,
+                businessName: data.businessName,
+                businessPhone: data.businessPhone,
+                businessEmail: data.businessEmail,
+                address: data.address,
+                city: data.city,
+                state: data.state,
+                zipCode: data.zipCode,
+                sports: data.sports,
                 verified: false,
-                takeRatePercent: 8, // Default 8%
+                takeRatePercent: 8, // Default 8%, 5% for premium
+                operatingHours: data.operatingHours,
+                subscriptionTier: "free",
+                notifyOnBooking: true,
+                notifyOnCancellation: true,
+                dailySummary: false,
+                cancellationWindowHours: 24,
                 createdAt: new Date(),
                 updatedAt: new Date(),
             }
@@ -324,6 +377,119 @@ export const facilityService = {
         } catch (error) {
             console.error("Error getting claim status:", error)
             return { isClaimed: false, isOwnedByUser: false }
+        }
+    },
+
+    /**
+     * Add a blocked date (holiday, maintenance, etc.)
+     */
+    async addBlockedDate(facilityId: string, date: string): Promise<boolean> {
+        if (!db) return false
+
+        try {
+            const docRef = db.collection(FACILITIES_COLLECTION).doc(facilityId)
+            const doc = await docRef.get()
+            const currentDates = doc.data()?.blockedDates || []
+
+            if (!currentDates.includes(date)) {
+                await docRef.update({
+                    blockedDates: [...currentDates, date],
+                    updatedAt: new Date(),
+                })
+            }
+            return true
+        } catch (error) {
+            console.error("Error adding blocked date:", error)
+            return false
+        }
+    },
+
+    /**
+     * Remove a blocked date
+     */
+    async removeBlockedDate(facilityId: string, date: string): Promise<boolean> {
+        if (!db) return false
+
+        try {
+            const docRef = db.collection(FACILITIES_COLLECTION).doc(facilityId)
+            const doc = await docRef.get()
+            const currentDates = doc.data()?.blockedDates || []
+
+            await docRef.update({
+                blockedDates: currentDates.filter((d: string) => d !== date),
+                updatedAt: new Date(),
+            })
+            return true
+        } catch (error) {
+            console.error("Error removing blocked date:", error)
+            return false
+        }
+    },
+
+    /**
+     * Update notification settings
+     */
+    async updateNotificationSettings(
+        facilityId: string,
+        settings: {
+            notifyOnBooking?: boolean
+            notifyOnCancellation?: boolean
+            dailySummary?: boolean
+        }
+    ): Promise<boolean> {
+        if (!db) return false
+
+        try {
+            await db.collection(FACILITIES_COLLECTION).doc(facilityId).update({
+                ...settings,
+                updatedAt: new Date(),
+            })
+            return true
+        } catch (error) {
+            console.error("Error updating notification settings:", error)
+            return false
+        }
+    },
+
+    /**
+     * Update operating hours
+     */
+    async updateOperatingHours(
+        facilityId: string,
+        operatingHours: { [day: string]: { open: string; close: string; closed: boolean } }
+    ): Promise<boolean> {
+        if (!db) return false
+
+        try {
+            await db.collection(FACILITIES_COLLECTION).doc(facilityId).update({
+                operatingHours,
+                updatedAt: new Date(),
+            })
+            return true
+        } catch (error) {
+            console.error("Error updating operating hours:", error)
+            return false
+        }
+    },
+
+    /**
+     * Update cancellation policy
+     */
+    async updateCancellationPolicy(
+        facilityId: string,
+        cancellationWindowHours: number
+    ): Promise<boolean> {
+        if (!db) return false
+
+        try {
+            await db.collection(FACILITIES_COLLECTION).doc(facilityId).update({
+                cancellationWindowHours,
+                updatedAt: new Date(),
+            })
+            return true
+        } catch (error) {
+            console.error("Error updating cancellation policy:", error)
+            return false
         }
     },
 }
