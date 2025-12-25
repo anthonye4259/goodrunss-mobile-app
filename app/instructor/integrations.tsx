@@ -207,7 +207,7 @@ export default function WellnessIntegrationsScreen() {
                         </View>
                     </View>
 
-                    {/* Current Connection */}
+                    {/* Current Connection - Enhanced */}
                     {config && config.isActive && (
                         <View style={styles.connectedCard}>
                             <View style={styles.connectedHeader}>
@@ -216,14 +216,67 @@ export default function WellnessIntegrationsScreen() {
                                     Connected to {integrations.find(i => i.id === config.type)?.name}
                                 </Text>
                             </View>
+
+                            {/* Sync Stats */}
+                            <View style={styles.syncStats}>
+                                <View style={styles.statItem}>
+                                    <Text style={styles.statValue}>Auto</Text>
+                                    <Text style={styles.statLabel}>Every 30 min</Text>
+                                </View>
+                                <View style={styles.statDivider} />
+                                <View style={styles.statItem}>
+                                    <Text style={styles.statValue}>14</Text>
+                                    <Text style={styles.statLabel}>Days synced</Text>
+                                </View>
+                                <View style={styles.statDivider} />
+                                <View style={styles.statItem}>
+                                    <Text style={styles.statValue}>✓</Text>
+                                    <Text style={styles.statLabel}>Push enabled</Text>
+                                </View>
+                            </View>
+
                             {config.lastSyncAt && (
                                 <Text style={styles.lastSync}>
                                     Last synced: {new Date(config.lastSyncAt).toLocaleString()}
                                 </Text>
                             )}
-                            <TouchableOpacity style={styles.disconnectBtn} onPress={handleDisconnect}>
-                                <Text style={styles.disconnectText}>Disconnect</Text>
-                            </TouchableOpacity>
+
+                            {/* Show sync errors if any */}
+                            {config.syncErrors && config.syncErrors.length > 0 && (
+                                <View style={styles.errorBox}>
+                                    <Ionicons name="warning" size={16} color={colors.status.error} />
+                                    <Text style={styles.errorText}>
+                                        {config.syncErrors[config.syncErrors.length - 1]}
+                                    </Text>
+                                </View>
+                            )}
+
+                            {/* Action Buttons */}
+                            <View style={styles.connectedActions}>
+                                <TouchableOpacity
+                                    style={styles.syncNowBtn}
+                                    onPress={async () => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+                                        // Trigger sync by updating the config (triggers Cloud Function)
+                                        if (db) {
+                                            await setDoc(doc(db, "studioIntegrations", studioId), {
+                                                ...config,
+                                                syncTrigger: Date.now(), // Force trigger
+                                                updatedAt: serverTimestamp(),
+                                            })
+                                            Alert.alert("Sync Started", "Classes will refresh in a moment...")
+                                            loadConfig() // Reload to show updated status
+                                        }
+                                    }}
+                                >
+                                    <Ionicons name="refresh" size={16} color={colors.primary} />
+                                    <Text style={styles.syncNowText}>Sync Now</Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity style={styles.disconnectBtn} onPress={handleDisconnect}>
+                                    <Text style={styles.disconnectText}>Disconnect</Text>
+                                </TouchableOpacity>
+                            </View>
                         </View>
                     )}
 
@@ -540,4 +593,68 @@ const styles = StyleSheet.create({
     },
     valueTitle: { fontSize: 16, fontWeight: "bold", color: colors.text.primary, marginTop: spacing.sm },
     valueText: { fontSize: 13, color: colors.text.secondary, textAlign: "center", marginTop: spacing.sm, lineHeight: 18 },
+
+    // Sync Stats
+    syncStats: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        marginTop: spacing.lg,
+        marginBottom: spacing.md,
+    },
+    statItem: {
+        alignItems: "center",
+        flex: 1,
+    },
+    statValue: {
+        fontSize: 18,
+        fontWeight: "bold",
+        color: colors.text.primary,
+    },
+    statLabel: {
+        fontSize: 11,
+        color: colors.text.muted,
+        marginTop: 2,
+    },
+    statDivider: {
+        width: 1,
+        backgroundColor: colors.border.default,
+    },
+
+    // Error Box
+    errorBox: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: spacing.sm,
+        backgroundColor: "rgba(239, 68, 68, 0.1)",
+        padding: spacing.md,
+        borderRadius: borderRadius.md,
+        marginTop: spacing.md,
+    },
+    errorText: {
+        flex: 1,
+        fontSize: 12,
+        color: colors.status.error,
+    },
+
+    // Connected Actions
+    connectedActions: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginTop: spacing.lg,
+    },
+    syncNowBtn: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: spacing.xs,
+        backgroundColor: "rgba(126, 217, 87, 0.15)",
+        paddingVertical: spacing.sm,
+        paddingHorizontal: spacing.lg,
+        borderRadius: borderRadius.md,
+    },
+    syncNowText: {
+        fontSize: 14,
+        fontWeight: "600",
+        color: colors.primary,
+    },
 })
