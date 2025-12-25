@@ -19,9 +19,9 @@ import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from "firebase/firest
 // INTEGRATION TYPES
 // ============================================
 
-export type IntegrationType = 
+export type IntegrationType =
     | "courtreserve"
-    | "podplay" 
+    | "podplay"
     | "opencourt"
     | "supersaas"
     | "omnify"
@@ -203,6 +203,265 @@ class PodPlayClient {
 }
 
 // ============================================
+// OPENCOURT INTEGRATION
+// ============================================
+
+class OpenCourtClient {
+    private baseUrl = "https://api.opencourt.co/v1"
+    private apiKey: string
+    private clubId: string
+
+    constructor(apiKey: string, clubId: string) {
+        this.apiKey = apiKey
+        this.clubId = clubId
+    }
+
+    private async request(endpoint: string, options: RequestInit = {}) {
+        const response = await fetch(`${this.baseUrl}${endpoint}`, {
+            ...options,
+            headers: {
+                "Authorization": `Bearer ${this.apiKey}`,
+                "Content-Type": "application/json",
+                ...options.headers,
+            },
+        })
+
+        if (!response.ok) {
+            throw new Error(`OpenCourt API error: ${response.status}`)
+        }
+
+        return response.json()
+    }
+
+    async getCourts(): Promise<ExternalCourt[]> {
+        const data = await this.request(`/clubs/${this.clubId}/courts`)
+        return data.courts.map((c: any) => ({
+            externalId: c.id,
+            name: c.name,
+            sport: c.sport_type || "Tennis",
+            indoor: c.indoor || false,
+            surface: c.surface,
+        }))
+    }
+
+    async getAvailability(date: string): Promise<ExternalBooking[]> {
+        const data = await this.request(`/clubs/${this.clubId}/availability?date=${date}`)
+        return data.slots.map((s: any) => ({
+            externalId: s.id,
+            courtId: s.court_id,
+            courtName: s.court_name,
+            date,
+            startTime: s.start_time,
+            endTime: s.end_time,
+            status: s.available ? "available" : "booked",
+            price: s.price_cents,
+        }))
+    }
+
+    async createBooking(courtId: string, date: string, startTime: string, endTime: string, customerEmail: string): Promise<string> {
+        const data = await this.request(`/clubs/${this.clubId}/bookings`, {
+            method: "POST",
+            body: JSON.stringify({
+                court_id: courtId,
+                date,
+                start_time: startTime,
+                end_time: endTime,
+                customer_email: customerEmail,
+            }),
+        })
+        return data.booking_id
+    }
+}
+
+// ============================================
+// WELLNESS STUDIO INTEGRATIONS
+// (ClassPass model: Mindbody, Glofox, Momence)
+// ============================================
+
+export interface WellnessClass {
+    externalId: string
+    name: string
+    instructor: string
+    startTime: string
+    endTime: string
+    date: string
+    capacity: number
+    spotsLeft: number
+    category: string // yoga, pilates, spin, etc.
+}
+
+export interface WellnessIntegrationConfig {
+    type: "mindbody" | "glofox" | "momence" | "calendarsync" | "manual"
+    apiKey?: string
+    siteId?: string        // Mindbody
+    branchId?: string      // Glofox
+    companyUuid?: string   // Momence
+    calendarUrl?: string   // CalendarSync (iCal/Google)
+    isActive: boolean
+    lastSyncAt?: string
+}
+
+class MindbodyClient {
+    private baseUrl = "https://api.mindbodyonline.com/public/v6"
+    private apiKey: string
+    private siteId: string
+
+    constructor(apiKey: string, siteId: string) {
+        this.apiKey = apiKey
+        this.siteId = siteId
+    }
+
+    private async request(endpoint: string) {
+        const response = await fetch(`${this.baseUrl}${endpoint}`, {
+            headers: {
+                "Api-Key": this.apiKey,
+                "SiteId": this.siteId,
+                "Content-Type": "application/json",
+            },
+        })
+
+        if (!response.ok) {
+            throw new Error(`Mindbody API error: ${response.status}`)
+        }
+
+        return response.json()
+    }
+
+    async getClasses(startDate: string, endDate: string): Promise<WellnessClass[]> {
+        const data = await this.request(`/class/classes?startDate=${startDate}&endDate=${endDate}`)
+        return data.Classes.map((c: any) => ({
+            externalId: c.Id.toString(),
+            name: c.ClassName,
+            instructor: c.Staff?.Name || "TBD",
+            startTime: c.StartDateTime,
+            endTime: c.EndDateTime,
+            date: c.StartDateTime.split("T")[0],
+            capacity: c.MaxCapacity,
+            spotsLeft: c.MaxCapacity - (c.TotalBooked || 0),
+            category: c.ClassDescription?.Category || "fitness",
+        }))
+    }
+
+    async bookClass(classId: string, clientId: string): Promise<string> {
+        // Mindbody uses a visit-based booking system
+        const response = await fetch(`${this.baseUrl}/class/addclienttoclass`, {
+            method: "POST",
+            headers: {
+                "Api-Key": this.apiKey,
+                "SiteId": this.siteId,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                ClassId: classId,
+                ClientId: clientId,
+            }),
+        })
+
+        if (!response.ok) throw new Error("Booking failed")
+        const data = await response.json()
+        return data.Visit?.Id?.toString() || classId
+    }
+}
+
+class GlofoxClient {
+    private baseUrl = "https://api.glofox.com/v1"
+    private apiKey: string
+    private branchId: string
+
+    constructor(apiKey: string, branchId: string) {
+        this.apiKey = apiKey
+        this.branchId = branchId
+    }
+
+    private async request(endpoint: string) {
+        const response = await fetch(`${this.baseUrl}${endpoint}`, {
+            headers: {
+                "Authorization": `Bearer ${this.apiKey}`,
+                "Content-Type": "application/json",
+            },
+        })
+
+        if (!response.ok) throw new Error(`Glofox API error: ${response.status}`)
+        return response.json()
+    }
+
+    async getClasses(date: string): Promise<WellnessClass[]> {
+        const data = await this.request(`/branches/${this.branchId}/sessions?date=${date}`)
+        return data.sessions.map((s: any) => ({
+            externalId: s.id,
+            name: s.name,
+            instructor: s.instructor_name || "TBD",
+            startTime: s.start_time,
+            endTime: s.end_time,
+            date,
+            capacity: s.capacity,
+            spotsLeft: s.spots_remaining,
+            category: s.category || "fitness",
+        }))
+    }
+}
+
+class MomenceClient {
+    private baseUrl = "https://api.momence.com/v1"
+    private apiKey: string
+    private companyUuid: string
+
+    constructor(apiKey: string, companyUuid: string) {
+        this.apiKey = apiKey
+        this.companyUuid = companyUuid
+    }
+
+    private async request(endpoint: string) {
+        const response = await fetch(`${this.baseUrl}${endpoint}`, {
+            headers: {
+                "X-API-Key": this.apiKey,
+                "Content-Type": "application/json",
+            },
+        })
+
+        if (!response.ok) throw new Error(`Momence API error: ${response.status}`)
+        return response.json()
+    }
+
+    async getClasses(startDate: string, endDate: string): Promise<WellnessClass[]> {
+        const data = await this.request(`/companies/${this.companyUuid}/classes?start=${startDate}&end=${endDate}`)
+        return data.classes.map((c: any) => ({
+            externalId: c.id,
+            name: c.title,
+            instructor: c.instructor?.name || "TBD",
+            startTime: c.start_time,
+            endTime: c.end_time,
+            date: c.date,
+            capacity: c.max_capacity,
+            spotsLeft: c.spots_available,
+            category: c.category || "yoga",
+        }))
+    }
+}
+
+// CalendarSync for studios without API integration
+class CalendarSyncClient {
+    private calendarUrl: string
+
+    constructor(calendarUrl: string) {
+        this.calendarUrl = calendarUrl
+    }
+
+    async getEvents(): Promise<WellnessClass[]> {
+        // Fetch iCal/Google Calendar feed and parse events
+        // In production, use a library like ical.js
+        const response = await fetch(this.calendarUrl)
+        const icsData = await response.text()
+
+        // Basic parsing (production should use proper iCal parser)
+        const events: WellnessClass[] = []
+        // Parse VEVENT blocks...
+
+        return events
+    }
+}
+
+// ============================================
 // MAIN INTEGRATION SERVICE
 // ============================================
 
@@ -222,7 +481,7 @@ class ExternalIntegrationService {
 
     async saveIntegrationConfig(facilityId: string, config: IntegrationConfig): Promise<void> {
         if (!db) return
-        
+
         await setDoc(doc(db, "facilityIntegrations", facilityId), {
             ...config,
             updatedAt: serverTimestamp(),
@@ -243,16 +502,20 @@ class ExternalIntegrationService {
     // CLIENT FACTORY
     // ============================================
 
-    private getClient(config: IntegrationConfig): CourtReserveClient | PodPlayClient | null {
+    private getClient(config: IntegrationConfig): CourtReserveClient | PodPlayClient | OpenCourtClient | null {
         switch (config.type) {
             case "courtreserve":
                 if (!config.apiKey || !config.organizationId) return null
                 return new CourtReserveClient(config.apiKey, config.organizationId)
-            
+
             case "podplay":
                 if (!config.apiKey || !config.venueSlug) return null
                 return new PodPlayClient(config.apiKey, config.venueSlug)
-            
+
+            case "opencourt":
+                if (!config.apiKey || !config.organizationId) return null
+                return new OpenCourtClient(config.apiKey, config.organizationId)
+
             default:
                 return null
         }
@@ -271,7 +534,7 @@ class ExternalIntegrationService {
 
         try {
             const courts = await client.getCourts()
-            
+
             // Update last sync time
             await updateDoc(doc(db!, "facilityIntegrations", facilityId), {
                 lastSyncAt: new Date().toISOString(),
@@ -320,7 +583,7 @@ class ExternalIntegrationService {
         try {
             let externalId: string
 
-            if (client instanceof CourtReserveClient) {
+            if (client instanceof CourtReserveClient || client instanceof OpenCourtClient) {
                 externalId = await client.createBooking(courtId, date, startTime, endTime, customerEmail)
             } else {
                 externalId = await client.createBooking(courtId, date, startTime, customerEmail)
@@ -333,7 +596,7 @@ class ExternalIntegrationService {
     }
 
     // ============================================
-    // SUPPORTED INTEGRATIONS LIST
+    // SUPPORTED INTEGRATIONS LIST (COURTS)
     // ============================================
 
     getSupportedIntegrations(): { id: IntegrationType; name: string; logo: string; apiDocsUrl: string }[] {
@@ -354,7 +617,7 @@ class ExternalIntegrationService {
                 id: "opencourt",
                 name: "OpenCourt",
                 logo: "https://opencourt.co/logo.png",
-                apiDocsUrl: "https://opencourt.co/developers",
+                apiDocsUrl: "https://opencourt.co/contact",
             },
             {
                 id: "supersaas",
@@ -370,6 +633,44 @@ class ExternalIntegrationService {
             },
         ]
     }
+
+    // ============================================
+    // SUPPORTED INTEGRATIONS LIST (WELLNESS/CLASSPASS MODEL)
+    // ============================================
+
+    getSupportedWellnessIntegrations(): { id: string; name: string; logo: string; apiDocsUrl: string; method: string }[] {
+        return [
+            {
+                id: "mindbody",
+                name: "Mindbody",
+                logo: "https://mindbodyonline.com/logo.png",
+                apiDocsUrl: "https://developers.mindbodyonline.com",
+                method: "API Integration",
+            },
+            {
+                id: "glofox",
+                name: "Glofox",
+                logo: "https://glofox.com/logo.png",
+                apiDocsUrl: "https://support.glofox.com/api",
+                method: "API Integration",
+            },
+            {
+                id: "momence",
+                name: "Momence",
+                logo: "https://momence.com/logo.png",
+                apiDocsUrl: "https://help.momence.com/integrations",
+                method: "API Integration",
+            },
+            {
+                id: "calendarsync",
+                name: "CalendarSync",
+                logo: "https://calendar.google.com/favicon.ico",
+                apiDocsUrl: "",
+                method: "iCal/Google Calendar URL",
+            },
+        ]
+    }
 }
 
 export const externalIntegrationService = ExternalIntegrationService.getInstance()
+
