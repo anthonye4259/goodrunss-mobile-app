@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Platform, Dimensions, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Platform, Dimensions, ActivityIndicator, ScrollView } from 'react-native';
 import MapView, { Marker, PROVIDER_DEFAULT, PROVIDER_GOOGLE } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -127,14 +127,14 @@ export default function ExploreScreen() {
     useEffect(() => {
         if (location) {
             const newRegion = {
-                latitude: location.coords.latitude,
-                longitude: location.coords.longitude,
+                latitude: location.lat,
+                longitude: location.lng,
                 latitudeDelta: 0.05,
                 longitudeDelta: 0.05,
             };
             setRegion(newRegion);
             mapRef.current?.animateToRegion(newRegion, 1000);
-            loadVenues(location.coords.latitude, location.coords.longitude);
+            loadVenues(location.lat, location.lng);
         } else {
             loadVenues(region.latitude, region.longitude);
         }
