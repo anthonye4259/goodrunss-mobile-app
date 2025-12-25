@@ -54,7 +54,7 @@ export function NearMeBadge({ radiusMiles = 1, compact = false }: NearMeBadgePro
 
     const handlePress = () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-        router.push("/(tabs)/explore")
+        router.push("/(tabs)/live")
     }
 
     if (loading || locationLoading) {

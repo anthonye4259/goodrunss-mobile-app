@@ -22,6 +22,7 @@ import {
 } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import * as Haptics from "expo-haptics"
+import { useStripe } from "@stripe/stripe-react-native"
 
 import { useAuth } from "@/lib/auth-context"
 import {
@@ -51,6 +52,7 @@ export function PrivateBookingModal({
     instructor,
 }: PrivateBookingModalProps) {
     const { user } = useAuth()
+    const { initPaymentSheet, presentPaymentSheet } = useStripe()
     const [step, setStep] = useState<"time" | "details" | "payment">("time")
     const [loading, setLoading] = useState(true)
     const [slots, setSlots] = useState<AvailabilitySlot[]>([])
@@ -149,6 +151,7 @@ export function PrivateBookingModal({
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy)
 
         try {
+            // 1. Create booking and get payment intent
             const result = await createPrivateBooking({
                 instructorId: instructor.id,
                 clientId: user.id,
@@ -163,31 +166,60 @@ export function PrivateBookingModal({
                 price: instructor.hourlyRate || 10000, // Default $100 in cents
             })
 
-            if (result.success && result.paymentIntentClientSecret) {
-                // In a real app, present Stripe payment sheet here
-                // For now, simulate successful payment
-                Alert.alert(
-                    "Payment Required",
-                    "In production, Stripe payment sheet would appear here.",
-                    [
-                        {
-                            text: "Simulate Payment",
-                            onPress: async () => {
-                                if (result.bookingId) {
-                                    await confirmBookingPayment(result.bookingId)
-                                    Alert.alert("Success!", "Your session is booked!", [
-                                        { text: "OK", onPress: onClose }
-                                    ])
-                                }
-                            },
-                        },
-                    ]
-                )
-            } else {
-                Alert.alert("Error", result.message)
+            if (!result.success || !result.paymentIntentClientSecret) {
+                Alert.alert("Error", result.message || "Failed to create booking")
+                setIsProcessing(false)
+                return
             }
+
+            // 2. Initialize Stripe Payment Sheet
+            const { error: initError } = await initPaymentSheet({
+                paymentIntentClientSecret: result.paymentIntentClientSecret,
+                merchantDisplayName: "GoodRunss",
+                style: "automatic",
+                googlePay: { merchantCountryCode: "US", testEnv: __DEV__ },
+                applePay: { merchantCountryCode: "US" },
+                defaultBillingDetails: {
+                    name: user.name || undefined,
+                    email: user.email || undefined,
+                },
+            })
+
+            if (initError) {
+                console.error("[Payment] Init error:", initError)
+                Alert.alert("Payment Error", initError.message)
+                setIsProcessing(false)
+                return
+            }
+
+            // 3. Present Payment Sheet (Apple Pay / Card form)
+            const { error: paymentError } = await presentPaymentSheet()
+
+            if (paymentError) {
+                if (paymentError.code === "Canceled") {
+                    // User cancelled - not an error
+                    console.log("[Payment] User cancelled")
+                } else {
+                    Alert.alert("Payment Failed", paymentError.message)
+                }
+                setIsProcessing(false)
+                return
+            }
+
+            // 4. Payment successful! Confirm booking
+            if (result.bookingId) {
+                await confirmBookingPayment(result.bookingId)
+            }
+
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+            Alert.alert(
+                "Booking Confirmed! 🎉",
+                `Your session with ${instructor.displayName} is booked for ${selectedSlot.formattedDate} at ${selectedSlot.formattedTime}.`,
+                [{ text: "Done", onPress: onClose }]
+            )
         } catch (error: any) {
-            Alert.alert("Error", error.message || "Failed to book session")
+            console.error("[Payment] Error:", error)
+            Alert.alert("Error", error.message || "Failed to process payment")
         } finally {
             setIsProcessing(false)
         }

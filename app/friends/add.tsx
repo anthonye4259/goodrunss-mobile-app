@@ -4,6 +4,7 @@ import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, Image 
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { router } from "expo-router"
+import { socialService } from "@/lib/services/social-service"
 
 interface UserSuggestion {
   id: string
@@ -52,13 +53,11 @@ export default function AddFriendScreen() {
     }
   }
 
+
   const handleSendRequest = async (userId: string) => {
     try {
-      // TODO: Replace with actual API call
-      // await fetch('/api/friends/requests', {
-      //   method: 'POST',
-      //   body: JSON.stringify({ toUserId: userId }),
-      // });
+      await socialService.sendFriendRequest(userId)
+      // Optimistic update
       setSuggestions((prev) => prev.filter((user) => user.id !== userId))
     } catch (error) {
       console.error("Error sending friend request:", error)

@@ -1,669 +1,415 @@
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator, RefreshControl } from "react-native"
-import { LinearGradient } from "expo-linear-gradient"
-import { Ionicons } from "@expo/vector-icons"
-import { useState, useEffect } from "react"
-import { useTranslation } from "react-i18next"
-import { useUserPreferences } from "@/lib/user-preferences"
-import { getActivityContent, getPrimaryActivity, type Activity } from "@/lib/activity-content"
-import { getVenuesForSport, Venue } from "@/lib/venue-data"
-import { venueService } from "@/lib/services/venue-service"
-import { useUserLocation } from "@/lib/services/location-service"
-import { predictVenueTraffic } from "@/lib/traffic-prediction"
-import { router } from "expo-router"
-import * as Haptics from "expo-haptics"
-import { SafeAreaView } from "react-native-safe-area-context"
-import { QuickSettingsBar } from "@/components/quick-settings-bar"
-import { VenueCardSkeleton } from "@/components/ui/SkeletonLoader"
-import { ErrorState } from "@/components/ui/ErrorState"
-import { EmptyState } from "@/components/ui/EmptyState"
+
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Platform, Dimensions, ActivityIndicator } from 'react-native';
+import MapView, { Marker, PROVIDER_DEFAULT, PROVIDER_GOOGLE } from 'react-native-maps';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
+import { router } from 'expo-router';
+import { useUserLocation } from '@/lib/services/location-service';
+import { venueService } from '@/lib/services/venue-service';
+import { useUserPreferences } from '@/lib/user-preferences';
+import { VenueListCard } from '@/components/Live/VenueListCard'; // Reusing this properly
+import PagerView from 'react-native-pager-view';
+
+const { width, height } = Dimensions.get('window');
+
+// Optimization: Memoized Marker Component
+const VenueMarker = React.memo(({ venue, selected, onPress }: { venue: any, selected: boolean, onPress: (v: any) => void }) => {
+    // Optimization: Stop tracking view changes after initial render unless selected
+    // This dramatically improves performance for many markers
+    const [tracksViewChanges, setTracksViewChanges] = useState(true);
+
+    useEffect(() => {
+        if (tracksViewChanges) {
+            // Stop tracking after 500ms (enough for image load/render)
+            const timer = setTimeout(() => {
+                setTracksViewChanges(false);
+            }, 500);
+            return () => clearTimeout(timer);
+        }
+    }, [tracksViewChanges]);
+
+    useEffect(() => {
+        // Re-enable tracking if selection changes (to animate size)
+        setTracksViewChanges(true);
+    }, [selected]);
+
+    return (
+        <Marker
+            coordinate={{ latitude: venue.lat, longitude: venue.lng }}
+            onPress={() => onPress(venue)}
+            tracksViewChanges={tracksViewChanges}
+            tracksInfoWindowChanges={false}
+        >
+            <View style={[styles.markerContainer, selected && styles.markerSelected]}>
+                <View style={[
+                    styles.markerDot,
+                    { backgroundColor: venue.activePlayersNow > 5 ? '#EF4444' : venue.activePlayersNow > 0 ? '#EAB308' : '#22C55E' }
+                ]} />
+            </View>
+            {selected && (
+                <View style={styles.callout}>
+                    <Text style={styles.calloutText}>{venue.name}</Text>
+                </View>
+            )}
+        </Marker>
+    );
+});
+
+const MAP_STYLE = [
+    {
+        "elementType": "geometry",
+        "stylers": [{ "color": "#212121" }]
+    },
+    {
+        "elementType": "labels.icon",
+        "stylers": [{ "visibility": "off" }]
+    },
+    {
+        "elementType": "labels.text.fill",
+        "stylers": [{ "color": "#757575" }]
+    },
+    {
+        "elementType": "labels.text.stroke",
+        "stylers": [{ "color": "#212121" }]
+    },
+    {
+        "featureType": "administrative",
+        "elementType": "geometry",
+        "stylers": [{ "color": "#757575" }]
+    },
+    {
+        "featureType": "poi",
+        "elementType": "geometry",
+        "stylers": [{ "color": "#181818" }]
+    },
+    {
+        "featureType": "poi.park",
+        "elementType": "geometry",
+        "stylers": [{ "color": "#181818" }]
+    },
+    {
+        "featureType": "road",
+        "elementType": "geometry.fill",
+        "stylers": [{ "color": "#2c2c2c" }]
+    },
+    {
+        "featureType": "road",
+        "elementType": "labels.text.fill",
+        "stylers": [{ "color": "#8a8a8a" }]
+    },
+    {
+        "featureType": "water",
+        "elementType": "geometry",
+        "stylers": [{ "color": "#000000" }]
+    }
+];
 
 export default function ExploreScreen() {
-  const { t } = useTranslation()
-  const { preferences } = useUserPreferences()
-  const [searchQuery, setSearchQuery] = useState("")
-  const [activeTab, setActiveTab] = useState<"trainers" | "venues">("venues")
-  const [venues, setVenues] = useState<Venue[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(false)
-  const [refreshing, setRefreshing] = useState(false)
-  const { location, loading: locationLoading } = useUserLocation()
+    const mapRef = useRef<MapView>(null);
+    const { location } = useUserLocation();
+    const { preferences } = useUserPreferences();
+    const [venues, setVenues] = useState<any[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null);
+    const [searchText, setSearchText] = useState("");
 
-  const primaryActivity = getPrimaryActivity(preferences.activities) as Activity
-  const content = getActivityContent(primaryActivity)
+    // Initial Region (NYC Default)
+    const [region, setRegion] = useState({
+        latitude: 40.7829,
+        longitude: -73.9654,
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
+    });
 
-  useEffect(() => {
-    if (!locationLoading) {
-      loadVenues()
-    }
-  }, [primaryActivity, location, locationLoading])
-
-  const loadVenues = async () => {
-    if (activeTab === "venues" || true) { // Always load for now to be ready
-      setLoading(true)
-      setError(false)
-      try {
-        // Try fetching from Firestore first
-        const remoteVenues = await venueService.getVenuesNearby(
-          location,
-          50, // 50km radius
-          primaryActivity
-        )
-
-        if (remoteVenues.length > 0) {
-          setVenues(remoteVenues)
+    useEffect(() => {
+        if (location) {
+            const newRegion = {
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude,
+                latitudeDelta: 0.05,
+                longitudeDelta: 0.05,
+            };
+            setRegion(newRegion);
+            mapRef.current?.animateToRegion(newRegion, 1000);
+            loadVenues(location.coords.latitude, location.coords.longitude);
         } else {
-          // Fallback to local data
-          console.log("Using local venue data fallback")
-          setVenues(getVenuesForSport(primaryActivity))
+            loadVenues(region.latitude, region.longitude);
         }
-      } catch (error) {
-        console.error("Failed to load venues:", error)
-        setError(true)
-        // Still set fallback data on error
-        setVenues(getVenuesForSport(primaryActivity))
-      } finally {
-        setLoading(false)
-      }
-    }
-  }
+    }, [location]); // preferences.primaryActivity could be another dep
 
-  const handlePress = (action: () => void) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-    action()
-  }
+    const loadVenues = async (lat: number, lng: number) => {
+        setLoading(true);
+        try {
+            // Fetch real venues (or mock if service fails)
+            const results = await venueService.getVenuesNearby({ coords: { latitude: lat, longitude: lng } } as any, 20, preferences.primaryActivity || 'Basketball');
+            setVenues(results);
+        } catch (err) {
+            console.log("Error loading venues", err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  const onRefresh = async () => {
-    setRefreshing(true)
-    await loadVenues()
-    setRefreshing(false)
-  }
+    const handleSearchArea = () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        loadVenues(region.latitude, region.longitude);
+    };
 
-  return (
-    <LinearGradient colors={["#0A0A0A", "#141414"]} style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={["top"]}>
-        <QuickSettingsBar />
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor="#7ED957"
-              colors={["#7ED957"]}
-            />
-          }
-        >
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.title}>{t('explore.liveTraffic')}</Text>
+    const handleMarkerPress = (venue: any) => {
+        Haptics.selectionAsync();
+        setSelectedVenueId(venue.id);
+        // Find index for pager scroll
+    };
 
-            {/* Search Bar */}
-            <View style={styles.searchContainer}>
-              <Ionicons name="search" size={20} color="#9CA3AF" />
-              <TextInput
-                style={styles.searchInput}
-                placeholder={t('explore.searchPlaceholder')}
-                placeholderTextColor="#9CA3AF"
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-              />
+    // Optimization: Only render venues within the current viewport (plus margin)
+    const visibleVenues = React.useMemo(() => {
+        if (!region || venues.length === 0) return [];
+
+        // Simple bounding box with margin
+        const margin = 0.05; // ~5km margin
+        const minLat = region.latitude - (region.latitudeDelta / 2) - margin;
+        const maxLat = region.latitude + (region.latitudeDelta / 2) + margin;
+        const minLng = region.longitude - (region.longitudeDelta / 2) - margin;
+        const maxLng = region.longitude + (region.longitudeDelta / 2) + margin;
+
+        return venues.filter(v =>
+            v.lat >= minLat && v.lat <= maxLat &&
+            v.lng >= minLng && v.lng <= maxLng
+        );
+    }, [venues, region]);
+
+    return (
+        <View style={styles.container}>
+            {/* Map Background */}
+            <MapView
+                ref={mapRef}
+                style={StyleSheet.absoluteFill}
+                provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : PROVIDER_DEFAULT}
+                customMapStyle={MAP_STYLE}
+                initialRegion={region}
+                onRegionChangeComplete={(r) => {
+                    // Debounce or just set state (React Native Maps is usually optimized for this)
+                    // We set it here to trigger the visibleVenues recalculation
+                    setRegion(r);
+                }}
+                showsUserLocation
+                showsCompass={false}
+            // Optimization: Reduce frequency of updates if needed
+            // maxZoomLevel={18}
+            >
+                {visibleVenues.map(venue => (
+                    <VenueMarker
+                        key={venue.id}
+                        venue={venue}
+                        selected={selectedVenueId === venue.id}
+                        onPress={handleMarkerPress}
+                    />
+                ))}
+            </MapView>
+
+            <LinearGradient
+                colors={['rgba(0,0,0,0.8)', 'transparent']}
+                style={styles.topGradient}
+            >
+                <SafeAreaView edges={['top']}>
+                    <View style={styles.searchContainer}>
+                        <View style={styles.inputWrapper}>
+                            <Ionicons name="search" size={20} color="#999" />
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Search locations..."
+                                placeholderTextColor="#999"
+                                value={searchText}
+                                onChangeText={setSearchText}
+                                returnKeyType="search"
+                            />
+                        </View>
+                        <TouchableOpacity style={styles.filterBtn}>
+                            <Ionicons name="options" size={20} color="#FFF" />
+                        </TouchableOpacity>
+                    </View>
+                </SafeAreaView>
+            </LinearGradient>
+
+            {/* Floating Action Buttons */}
+            <View style={styles.fabContainer}>
+                <TouchableOpacity style={styles.searchAreaBtn} onPress={handleSearchArea}>
+                    {loading ? <ActivityIndicator color="#000" size="small" /> : (
+                        <>
+                            <Ionicons name="refresh" size={16} color="#000" />
+                            <Text style={styles.searchAreaText}>Search this Area</Text>
+                        </>
+                    )}
+                </TouchableOpacity>
             </View>
-          </View>
 
-          {/* Tabs */}
-          <View style={styles.tabsContainer}>
+            {/* Crowdsource FAB */}
             <TouchableOpacity
-              style={[styles.tab, activeTab === "trainers" && styles.tabActive]}
-              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveTab("trainers") }}
+                style={styles.addVenueFab}
+                onPress={() => router.push('/venues/add')}
+                activeOpacity={0.8}
             >
-              <Text style={[styles.tabText, activeTab === "trainers" && styles.tabTextActive]}>
-                {content.trainerTitlePlural}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.tab, activeTab === "venues" && styles.tabActive]}
-              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveTab("venues") }}
-            >
-              <Text style={[styles.tabText, activeTab === "venues" && styles.tabTextActive]}>
-                Venues
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Content */}
-          {activeTab === "trainers" ? (
-            <View style={styles.contentSection}>
-              <Text style={styles.sectionTitle}>Top {content.trainerTitlePlural} Near You</Text>
-              {content.sampleTrainers.map((trainer, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.trainerCard}
-                  onPress={() => handlePress(() => router.push(`/trainers/${index}`))}
+                <LinearGradient
+                    colors={['#7ED957', '#4C9E29']}
+                    style={styles.fabGradient}
                 >
-                  <View style={styles.trainerHeader}>
-                    <View style={styles.trainerAvatar}>
-                      <Text style={styles.trainerInitial}>{trainer.name.charAt(0)}</Text>
-                    </View>
-                    <View style={styles.trainerInfo}>
-                      <Text style={styles.trainerName}>{trainer.name}</Text>
-                      <View style={styles.trainerRating}>
-                        <Ionicons name="star" size={14} color="#7ED957" />
-                        <Text style={styles.trainerRatingText}>{trainer.rating} ({trainer.reviews} reviews)</Text>
-                      </View>
-                      <Text style={styles.trainerSpecialty}>{trainer.specialties?.[0] || primaryActivity}</Text>
-                    </View>
-                  </View>
-                  <View style={styles.trainerFooter}>
-                    <View>
-                      <Text style={styles.trainerLocation}>
-                        <Ionicons name="location" size={14} color="#9CA3AF" /> {trainer.location}
-                      </Text>
-                    </View>
-                    <View style={styles.trainerPriceContainer}>
-                      <Text style={styles.trainerPrice}>${trainer.price}/hr</Text>
-                      <TouchableOpacity style={styles.bookButton}>
-                        <Text style={styles.bookButtonText}>Book</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
-          ) : (
-            <View style={styles.contentSection}>
-              {/* Environmental Impact Banner */}
-              <View style={styles.impactBanner}>
-                <View style={styles.impactIconContainer}>
-                  <Ionicons name="leaf" size={24} color="#7ED957" />
-                </View>
-                <View style={styles.impactTextContainer}>
-                  <Text style={styles.impactTitle}>Check Before You Go</Text>
-                  <Text style={styles.impactDesc}>Save gas money, time & reduce CO₂ emissions</Text>
-                </View>
-                <View style={styles.impactStats}>
-                  <Ionicons name="earth" size={24} color="#7ED957" />
-                </View>
-              </View>
+                    <Ionicons name="add" size={28} color="#000" />
+                </LinearGradient>
+            </TouchableOpacity>
 
-              <Text style={styles.sectionTitle}>Nearby {content.locationPrefix}s</Text>
-              {loading ? (
-                <>
-                  <VenueCardSkeleton />
-                  <VenueCardSkeleton />
-                  <VenueCardSkeleton />
-                </>
-              ) : venues.length === 0 ? (
-                <EmptyState
-                  icon="search-outline"
-                  title="No venues found"
-                  message="We couldn't find any venues nearby. Try adjusting your location or sport preferences."
-                  actionLabel="Refresh"
-                  onAction={loadVenues}
-                />
-              ) : (
-                venues.map((venue, index) => {
-                  const trafficPrediction = predictVenueTraffic(venue.id, new Date(), venue.activePlayersNow)
-                  const minutesAgo = venue.lastActivityTimestamp
-                    ? Math.floor((Date.now() - venue.lastActivityTimestamp.getTime()) / 60000)
-                    : null
-
-                  return (
-                    <TouchableOpacity
-                      key={venue.id}
-                      style={styles.venueCard}
-                      onPress={() => handlePress(() => router.push(`/venues/${venue.id}`))}
+            {/* Venue Carousel (Bottom) */}
+            {venues.length > 0 && (
+                <View style={styles.carouselContainer}>
+                    <ScrollView
+                        horizontal
+                        pagingEnabled
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={{ paddingHorizontal: 20, gap: 10 }}
+                        snapToInterval={width - 40}
+                        decelerationRate="fast"
                     >
-                      <View style={styles.venueHeader}>
-                        <View style={styles.venueIcon}>
-                          <Ionicons name="location" size={24} color="#7ED957" />
-                        </View>
-                        <View style={styles.venueInfo}>
-                          <Text style={styles.venueName}>{venue.name}</Text>
-                          <Text style={styles.venueAddress}>{venue.address}</Text>
-                          <View style={styles.venueRating}>
-                            <Ionicons name="star" size={14} color="#7ED957" />
-                            <Text style={styles.venueRatingText}>{venue.rating}</Text>
-                            <Text style={styles.venueDistance}> • {venue.distance || "0.8"} mi</Text>
-                          </View>
-                        </View>
-                      </View>
-
-                      {/* Traffic Prediction */}
-                      <View style={styles.trafficContainer}>
-                        <View style={[styles.trafficBadge, { backgroundColor: `${trafficPrediction.color}20` }]}>
-                          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: trafficPrediction.color }} />
-                          <Text style={[styles.trafficLabel, { color: trafficPrediction.color }]}>
-                            {trafficPrediction.label}
-                          </Text>
-                        </View>
-                        {trafficPrediction.estimatedWaitTime && (
-                          <Text style={styles.waitTime}>{trafficPrediction.estimatedWaitTime}</Text>
-                        )}
-                      </View>
-
-                      {/* Real-time Player Activity */}
-                      {venue.activePlayersNow && venue.activePlayersNow > 0 && (
-                        <View style={styles.activePlayersContainer}>
-                          <View style={styles.activeDot} />
-                          <Ionicons name="people" size={14} color="#7ED957" />
-                          <Text style={styles.activePlayersText}>
-                            {venue.activePlayersNow} {venue.activePlayersNow === 1 ? "player" : "players"} active now
-                          </Text>
-                          {minutesAgo !== null && (
-                            <Text style={styles.activePlayersTime}> • {minutesAgo}m ago</Text>
-                          )}
-                        </View>
-                      )}
-
-                      <View style={styles.venueFooter}>
-                        <View style={styles.venueAmenities}>
-                          {venue.amenities?.slice(0, 2).map((amenity, i) => (
-                            <View key={i} style={styles.amenityBadge}>
-                              <Text style={styles.amenityText}>{amenity}</Text>
-                            </View>
-                          ))}
-                        </View>
-                        <View style={styles.venueActions}>
-                          <TouchableOpacity
-                            style={styles.reportButton}
-                            onPress={(e) => {
-                              e.stopPropagation()
-                              handlePress(() => router.push(`/report-facility/${venue.id}`))
-                            }}
-                          >
-                            <Ionicons name="clipboard-outline" size={16} color="#7ED957" />
-                            <Text style={styles.reportButtonText}>Report</Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity style={styles.viewButton}>
-                            <Text style={styles.viewButtonText}>View</Text>
-                            <Ionicons name="chevron-forward" size={16} color="#7ED957" />
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                    </TouchableOpacity>
-                  )
-                })
-              )}
-            </View>
-          )}
-
-          {/* Categories */}
-          <View style={styles.contentSection}>
-            <Text style={styles.sectionTitle}>Categories</Text>
-            <View style={styles.categoriesGrid}>
-              {["Basketball", "Tennis", "Pickleball", "Golf", "Soccer", "Yoga", "Pilates", "Swimming"].map((sport, index) => (
-                <TouchableOpacity key={index} style={styles.categoryCard} onPress={() => handlePress(() => { })}>
-                  <Ionicons
-                    name={
-                      sport === "Basketball" ? "basketball" :
-                        sport === "Tennis" ? "tennisball" :
-                          sport === "Golf" ? "golf" :
-                            sport === "Soccer" ? "football" :
-                              sport === "Yoga" || sport === "Pilates" ? "body" :
-                                sport === "Swimming" ? "water" :
-                                  "fitness"
-                    }
-                    size={28}
-                    color="#7ED957"
-                  />
-                  <Text style={styles.categoryText}>{sport}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    </LinearGradient>
-  )
+                        {venues.map((venue) => (
+                            <TouchableOpacity
+                                key={venue.id}
+                                style={styles.cardWrapper}
+                                activeOpacity={0.9}
+                                onPress={() => router.push(`/venues/${venue.id}`)}
+                            >
+                                <VenueListCard venue={venue} onPress={() => router.push(`/venues/${venue.id}`)} />
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+                </View>
+            )}
+        </View>
+    );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 40,
-  },
-  header: {
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 16,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-    marginBottom: 16,
-  },
-  searchContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#1A1A1A",
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  searchInput: {
-    flex: 1,
-    marginLeft: 12,
-    fontSize: 16,
-    color: "#FFFFFF",
-  },
-  tabsContainer: {
-    flexDirection: "row",
-    paddingHorizontal: 24,
-    marginBottom: 24,
-    gap: 12,
-  },
-  tab: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 50,
-    backgroundColor: "#1A1A1A",
-  },
-  tabActive: {
-    backgroundColor: "#7ED957",
-  },
-  tabText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#9CA3AF",
-  },
-  tabTextActive: {
-    color: "#000000",
-  },
-  contentSection: {
-    paddingHorizontal: 24,
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-    marginBottom: 16,
-  },
-  trainerCard: {
-    backgroundColor: "#1A1A1A",
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-  },
-  trainerHeader: {
-    flexDirection: "row",
-    marginBottom: 12,
-  },
-  trainerAvatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "rgba(132, 204, 22, 0.2)",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 12,
-  },
-  trainerInitial: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#7ED957",
-  },
-  trainerInfo: {
-    flex: 1,
-  },
-  trainerName: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-  },
-  trainerRating: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 4,
-  },
-  trainerRatingText: {
-    fontSize: 14,
-    color: "#9CA3AF",
-    marginLeft: 4,
-  },
-  trainerSpecialty: {
-    fontSize: 14,
-    color: "#7ED957",
-    marginTop: 4,
-  },
-  trainerFooter: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  trainerLocation: {
-    fontSize: 14,
-    color: "#9CA3AF",
-  },
-  trainerPriceContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  trainerPrice: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#7ED957",
-  },
-  bookButton: {
-    backgroundColor: "#7ED957",
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  bookButtonText: {
-    color: "#000000",
-    fontWeight: "600",
-  },
-  venueCard: {
-    backgroundColor: "#1A1A1A",
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-  },
-  venueHeader: {
-    flexDirection: "row",
-    marginBottom: 12,
-  },
-  venueIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 12,
-    backgroundColor: "rgba(132, 204, 22, 0.2)",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 12,
-  },
-  venueInfo: {
-    flex: 1,
-  },
-  venueName: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-  },
-  venueAddress: {
-    fontSize: 14,
-    color: "#9CA3AF",
-    marginTop: 4,
-  },
-  venueRating: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 4,
-  },
-  venueRatingText: {
-    fontSize: 14,
-    color: "#7ED957",
-    marginLeft: 4,
-  },
-  venueDistance: {
-    fontSize: 14,
-    color: "#9CA3AF",
-  },
-  venueFooter: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  venueAmenities: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  amenityBadge: {
-    backgroundColor: "#2A2A2A",
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  amenityText: {
-    fontSize: 12,
-    color: "#9CA3AF",
-  },
-  trafficContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
-    gap: 8,
-  },
-  trafficBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
-    gap: 6,
-  },
-  trafficEmoji: {
-    fontSize: 14,
-  },
-  trafficLabel: {
-    fontSize: 13,
-    fontWeight: "600",
-  },
-  waitTime: {
-    fontSize: 12,
-    color: "#9CA3AF",
-  },
-  activePlayersContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(126, 217, 87, 0.1)",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
-    marginBottom: 12,
-    gap: 6,
-  },
-  activeDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "#7ED957",
-  },
-  activePlayersText: {
-    fontSize: 13,
-    color: "#7ED957",
-    fontWeight: "500",
-  },
-  activePlayersTime: {
-    fontSize: 12,
-    color: "#9CA3AF",
-  },
-  viewButton: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  viewButtonText: {
-    color: "#7ED957",
-    fontWeight: "600",
-    marginRight: 4,
-  },
-  venueActions: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  reportButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(132, 204, 22, 0.1)",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
-    gap: 4,
-  },
-  reportButtonText: {
-    color: "#7ED957",
-    fontWeight: "600",
-    fontSize: 13,
-  },
-  categoriesGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 12,
-  },
-  categoryCard: {
-    backgroundColor: "#1A1A1A",
-    borderRadius: 12,
-    padding: 16,
-    width: "30%",
-    alignItems: "center",
-  },
-  categoryText: {
-    fontSize: 12,
-    color: "#FFFFFF",
-    marginTop: 8,
-    textAlign: "center",
-  },
-  impactBanner: {
-    backgroundColor: "rgba(132, 204, 22, 0.1)",
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "rgba(132, 204, 22, 0.3)",
-  },
-  impactIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "rgba(132, 204, 22, 0.2)",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 12,
-  },
-  impactTextContainer: {
-    flex: 1,
-  },
-  impactTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-    marginBottom: 2,
-  },
-  impactDesc: {
-    fontSize: 13,
-    color: "#9CA3AF",
-  },
-  impactStats: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  impactNumber: {
-    fontSize: 24,
-  },
-})
+    container: { flex: 1, backgroundColor: '#000' },
+    topGradient: { position: 'absolute', top: 0, left: 0, right: 0, paddingBottom: 40 },
+    searchContainer: {
+        flexDirection: 'row',
+        paddingHorizontal: 20,
+        paddingTop: 10,
+        gap: 12
+    },
+    inputWrapper: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(30,30,30,0.9)',
+        borderRadius: 12,
+        paddingHorizontal: 12,
+        paddingVertical: 12,
+        borderWidth: 1,
+        borderColor: '#333'
+    },
+    input: {
+        flex: 1,
+        color: '#FFF',
+        marginLeft: 10,
+        fontSize: 16
+    },
+    filterBtn: {
+        width: 48,
+        height: 48,
+        borderRadius: 12,
+        backgroundColor: 'rgba(30,30,30,0.9)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: '#333'
+    },
+
+    // Markers
+    markerContainer: {
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: '#FFF'
+    },
+    markerSelected: {
+        transform: [{ scale: 1.2 }],
+        borderColor: '#7ED957',
+        backgroundColor: '#000'
+    },
+    markerDot: {
+        width: 12,
+        height: 12,
+        borderRadius: 6,
+    },
+    callout: {
+        position: 'absolute',
+        bottom: 30,
+        backgroundColor: '#FFF',
+        padding: 4,
+        borderRadius: 4,
+        width: 100,
+        alignItems: 'center'
+    },
+    calloutText: { fontSize: 10, fontWeight: 'bold' },
+
+    // FAB
+    fabContainer: {
+        position: 'absolute',
+        top: 130,
+        alignSelf: 'center',
+        zIndex: 10
+    },
+    searchAreaBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FFF',
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 25,
+        gap: 6,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+    },
+    searchAreaText: { fontWeight: 'bold', fontSize: 12 },
+
+    // Carousel
+    carouselContainer: {
+        position: 'absolute',
+        bottom: 40,
+        left: 0,
+        right: 0,
+        height: 140, // Height of VenueListCard roughly
+    },
+    cardWrapper: {
+        width: width - 60,
+    },
+
+    // Add Venue FAB
+    addVenueFab: {
+        position: 'absolute',
+        right: 20,
+        bottom: 200, // Above carousel
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4.65,
+        elevation: 8,
+    },
+    fabGradient: {
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        alignItems: 'center',
+        justifyContent: 'center'
+    }
+});

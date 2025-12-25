@@ -2,7 +2,7 @@
   "expo": {
     "name": "GoodRunss",
     "slug": "goodrunss-mobile",
-    "owner": "anthonye4258",
+    "owner": "tony4080",
     "version": "1.0.0",
     "scheme": "goodrunss",
     "orientation": "portrait",
@@ -19,7 +19,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.goodrunss.app",
-      "buildNumber": "113",
+      "buildNumber": "116",
       "deploymentTarget": "15.1",
       "associatedDomains": [
         "applinks:goodrunss.com",
@@ -107,21 +107,33 @@
             "minSdkVersion": 23
           }
         }
-      ]
+      ],
+      [
+        "@stripe/stripe-react-native",
+        {
+          "merchantIdentifier": "merchant.com.goodrunss.app",
+          "enableGooglePay": true
+        }
+      ],
+      "expo-asset",
+      "expo-font",
+      "expo-localization",
+      "expo-web-browser",
+      "expo-secure-store"
     ],
     "extra": {
       "router": {
         "origin": false
       },
       "eas": {
-        "projectId": "54c9b3c6-9f21-44cc-921b-0fa2db35b4a4"
+        "projectId": "b63887f4-0f38-4414-8597-47548483ad9f"
       }
     },
     "runtimeVersion": {
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/54c9b3c6-9f21-44cc-921b-0fa2db35b4a4"
+      "url": ""
     }
   }
 }

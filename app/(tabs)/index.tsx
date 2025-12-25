@@ -1,265 +1,457 @@
-import { View, Text, ScrollView, TouchableOpacity, Animated, StyleSheet } from "react-native"
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Dimensions } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { useUserPreferences } from "@/lib/user-preferences"
-import { getActivityContent } from "@/lib/activity-content"
 import { router } from "expo-router"
-import { useEffect, useRef, useState } from "react"
+import { useState, useMemo, useEffect } from "react"
 import * as Haptics from "expo-haptics"
 import { useAuth } from "@/lib/auth-context"
 import { LoginPromptModal } from "@/components/login-prompt-modal"
 import { SafeAreaView } from "react-native-safe-area-context"
-import { ActivityHeatMap } from "@/components/ActivityHeatMap"
-import { MovementScoreWidget } from "@/components/MovementScoreWidget"
-import { NearestVenueWidget } from "@/components/NearestVenueWidget"
-import { FavoritesWidget } from "@/components/FavoritesWidget"
 import { TeacherDashboard } from "@/components/TeacherDashboard"
-import { PartnerCityBadge } from "@/components/partner-city-badge"
-import { NearMeBadge } from "@/components/NearMeBadge"
-import { ProactiveGIA } from "@/components/ProactiveGIA"
+import { useUserLocation } from "@/lib/services/location-service"
+import { FriendActivityRail } from "@/components/Live/FriendActivityRail"
+
+const { width } = Dimensions.get("window")
+
+// Design tokens
+const colors = {
+  bg: "#0A0A0A",
+  card: "#141414",
+  cardBorder: "#1F1F1F",
+  primary: "#7ED957",
+  textPrimary: "#FFFFFF",
+  textSecondary: "#9CA3AF",
+  textMuted: "#6B7280",
+}
+
+// Activity level colors
+const ACTIVITY_COLORS = {
+  quiet: "#22C55E",
+  active: "#EAB308",
+  busy: "#F97316",
+  packed: "#EF4444",
+}
+
+// Sample courts (in production, fetch from Firebase)
+const SAMPLE_COURTS = [
+  { id: "1", name: "Central Park Courts", sport: "Basketball", lat: 40.7829, lng: -73.9654 },
+  { id: "2", name: "Riverside Tennis Center", sport: "Tennis", lat: 40.8010, lng: -73.9712 },
+  { id: "3", name: "Oak Street Park", sport: "Basketball", lat: 40.7580, lng: -73.9855 },
+  { id: "4", name: "Downtown Rec Center", sport: "Pickleball", lat: 40.7128, lng: -74.0060 },
+  { id: "5", name: "Harlem Courts", sport: "Basketball", lat: 40.8116, lng: -73.9465 },
+]
+
+// Calculate distance between two coordinates in miles
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 3959 // Earth's radius in miles
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLon = (lon2 - lon1) * Math.PI / 180
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2)
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  return R * c
+}
+
+// Generate hourly predictions
+function generateHourlyPredictions(currentHour: number) {
+  const isWeekend = new Date().getDay() === 0 || new Date().getDay() === 6
+  const predictions = []
+
+  for (let i = 0; i < 6; i++) {
+    const h = (currentHour + i) % 24
+    let level: 'quiet' | 'active' | 'busy' | 'packed' = 'quiet'
+
+    // Simple prediction logic
+    if (isWeekend) {
+      if (h >= 10 && h <= 17) level = Math.random() > 0.5 ? 'busy' : 'active'
+      else if (h >= 18 && h <= 20) level = 'active'
+    } else {
+      if ((h >= 6 && h <= 9) || (h >= 17 && h <= 20)) level = Math.random() > 0.5 ? 'busy' : 'packed'
+      else if (h >= 12 && h <= 14) level = 'active'
+    }
+
+    const hourStr = i === 0 ? "Now" :
+      h === 0 ? "12a" : h < 12 ? `${h}a` : h === 12 ? "12p" : `${h - 12}p`
+
+    predictions.push({
+      hour: hourStr,
+      level,
+      color: ACTIVITY_COLORS[level],
+      isNow: i === 0,
+      isBest: level === 'quiet' && i > 0
+    })
+  }
+
+  // Find best time
+  const bestIndex = predictions.findIndex((p, i) => i > 0 && p.level === 'quiet')
+  if (bestIndex > 0) predictions[bestIndex].isBest = true
+
+  return predictions
+}
 
 export default function HomeScreen() {
-  const { preferences } = useUserPreferences()
-  const { isGuest } = useAuth()
+  const { preferences, setPreferences } = useUserPreferences()
+  const { isGuest, user } = useAuth()
+  const { location } = useUserLocation()
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
-  const [loginPromptFeature, setLoginPromptFeature] = useState("")
-  const [loginPromptDescription, setLoginPromptDescription] = useState("")
+  const [currentHour] = useState(new Date().getHours())
+
+  // For "both" users - read from preferences for persistence across screens (including GIA)
+  const viewMode = preferences.activeMode || "trainer"
+  const setViewMode = (mode: "player" | "trainer") => {
+    setPreferences({ ...preferences, activeMode: mode })
+  }
+
   const primaryActivity = preferences.primaryActivity || "Basketball"
-  const content = getActivityContent(primaryActivity as any)
 
-  // Check if user is a teaching role (trainer or instructor)
-  const isTeachingRole = preferences.userType === "trainer" || preferences.userType === "instructor"
+  // Include "both" in teaching role check
+  const isBothUser = preferences.userType === "both"
+  const isTeachingRole = preferences.userType === "trainer" || preferences.userType === "instructor" || (isBothUser && viewMode === "trainer")
 
-  const fadeAnim = useRef(new Animated.Value(0)).current
-  const slideAnim = useRef(new Animated.Value(30)).current
+  // Get nearest court based on user location
+  const nearestCourt = useMemo(() => {
+    if (!location) {
+      return SAMPLE_COURTS[0] // Default to first court
+    }
 
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-    ]).start()
-  }, [])
+    let nearest = SAMPLE_COURTS[0]
+    let minDistance = Infinity
+
+    for (const court of SAMPLE_COURTS) {
+      const distance = calculateDistance(location.lat, location.lng, court.lat, court.lng)
+      if (distance < minDistance) {
+        minDistance = distance
+        nearest = court
+      }
+    }
+
+    return { ...nearest, distance: minDistance }
+  }, [location])
+
+  // Generate predictions
+  const predictions = useMemo(() => generateHourlyPredictions(currentHour), [currentHour])
+  const bestTimeIndex = predictions.findIndex(p => p.isBest)
+  const bestTime = bestTimeIndex > 0 ? predictions[bestTimeIndex].hour : "Now"
+
+  // Time-based greeting
+  const getGreeting = () => {
+    if (currentHour < 12) return "Good morning"
+    if (currentHour < 17) return "Good afternoon"
+    return "Good evening"
+  }
 
   const handlePress = (action: () => void) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     action()
   }
 
-  return (
-    <LinearGradient colors={["#0A0A0A", "#141414"]} style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={["top"]}>
-        {isGuest && (
-          <View style={styles.guestBanner}>
-            <View style={styles.guestBannerContent}>
-              <View style={styles.guestBannerText}>
-                <Text style={styles.guestModeLabel}>GUEST MODE</Text>
-                <Text style={styles.guestModeDesc}>Sign up to unlock all features</Text>
-              </View>
-              <TouchableOpacity style={styles.signUpButton} onPress={() => router.push("/auth")}>
-                <Text style={styles.signUpButtonText}>Sign Up</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
+  // For teachers (including guests testing the app), show their dashboard
+  if (isTeachingRole) {
+    return (
+      <LinearGradient colors={[colors.bg, "#141414"]} style={styles.container}>
+        <SafeAreaView style={styles.safeArea} edges={["top"]}>
+          {/* Mode Toggle for "Both" Users */}
+          {isBothUser && (
+            <TouchableOpacity
+              style={styles.modeToggle}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+                setViewMode("player")
+              }}
+            >
+              <Ionicons name="swap-horizontal" size={16} color="#7ED957" />
+              <Text style={styles.modeToggleText}>Switch to Player Mode</Text>
+            </TouchableOpacity>
+          )}
+          <TeacherDashboard userType={preferences.userType === "both" ? "trainer" : preferences.userType as "trainer" | "instructor"} />
+        </SafeAreaView>
+      </LinearGradient>
+    )
+  }
 
-        <Animated.ScrollView
-          style={[styles.scrollView, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}
+  // Player view - also handle "both" users in player mode
+  const showBothModeToggle = isBothUser && viewMode === "player"
+
+  return (
+    <LinearGradient colors={[colors.bg, "#141414"]} style={styles.container}>
+      <SafeAreaView style={styles.safeArea} edges={["top"]}>
+        <ScrollView
+          style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Partner City Badge - Shows for Myrtle Beach users */}
-          <PartnerCityBadge />
-
-          {/* Header with Profile & Notifications */}
-          <View style={styles.header}>
-            <View style={styles.headerRow}>
-              <View style={styles.headerTextContainer}>
-                <Text style={styles.welcomeText}>
-                  {isGuest ? "Welcome to GoodRunss!" : "Welcome back!"}
-                </Text>
-                <Text style={styles.subText}>
-                  {isGuest ? "Discover trainers and courts near you" : `Ready to play ${primaryActivity.toLowerCase()}?`}
-                </Text>
-              </View>
-              <View style={styles.headerIcons}>
-                <TouchableOpacity
-                  style={styles.headerIconButton}
-                  onPress={() => handlePress(() => router.push("/(tabs)/activity"))}
-                >
-                  <Ionicons name="notifications-outline" size={24} color="#FFFFFF" />
-                  <View style={styles.notificationBadge} />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.headerIconButton}
-                  onPress={() => handlePress(() => router.push("/(tabs)/profile"))}
-                >
-                  <View style={styles.profileAvatar}>
-                    <Text style={styles.profileInitial}>
-                      {isGuest ? "G" : "U"}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-
-          {/* Show Teacher Dashboard for trainers/instructors, otherwise show player widgets */}
-          {isTeachingRole && !isGuest ? (
-            <TeacherDashboard userType={preferences.userType as "trainer" | "instructor"} />
-          ) : (
-            <>
-              {/* Proactive GIA Suggestions */}
-              <ProactiveGIA compact />
-
-              {/* Near Me Badge - Courts within 1 mile */}
-              <NearMeBadge />
-
-              {/* Movement Score Widget - Daily Check-in */}
-              {!isGuest && <MovementScoreWidget />}
-
-              {/* Nearest Venue with Live Traffic + GR Predict */}
-              <NearestVenueWidget />
-
-              {/* Favorites */}
-              {!isGuest && <FavoritesWidget />}
-            </>
+          {/* Mode Toggle for "Both" Users in Player Mode */}
+          {showBothModeToggle && (
+            <TouchableOpacity
+              style={styles.modeToggle}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+                setViewMode("trainer")
+              }}
+            >
+              <Ionicons name="swap-horizontal" size={16} color="#7ED957" />
+              <Text style={styles.modeToggleText}>Switch to Trainer Mode</Text>
+            </TouchableOpacity>
           )}
 
-          {/* Quick Report - Environmental Impact */}
-          <TouchableOpacity
-            style={styles.reportCard}
-            onPress={() => handlePress(() => router.push("/report-facility/quick"))}
-            activeOpacity={0.8}
-          >
-            <View style={styles.reportCardContent}>
-              <View style={styles.reportIconContainer}>
-                <Ionicons name="leaf" size={32} color="#7ED957" />
-              </View>
-              <View style={styles.reportTextContainer}>
-                <Text style={styles.reportTitle}>Report Court Condition</Text>
-                <View style={styles.reportDescRow}>
-                  <Text style={styles.reportDesc}>Save gas, time & help the planet</Text>
-                  <Ionicons name="earth" size={14} color="#7ED957" />
-                </View>
-                <View style={styles.reportDescRow}>
-                  <Ionicons name="cash-outline" size={12} color="#7ED957" />
-                  <Text style={styles.reportEarnings}> Earn $5 per report!</Text>
-                </View>
-              </View>
-              <View style={styles.reportBadge}>
-                <Ionicons name="cash" size={16} color="#7ED957" />
-              </View>
+          {/* ===== HEADER ===== */}
+          <View style={styles.header}>
+            <View>
+              <Text style={styles.greeting}>{getGreeting()}</Text>
+              <Text style={styles.userName}>
+                {isGuest ? "Guest" : user?.name || preferences.name || "Player"}
+              </Text>
             </View>
-          </TouchableOpacity>
-
-          {/* Live Activity Heat Map */}
-          <View style={styles.sectionContainer}>
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionTitleRow}>
-                <Ionicons name="flame" size={18} color="#F97316" />
-                <Text style={styles.sectionTitle}>Live Activity</Text>
-              </View>
-              <TouchableOpacity onPress={() => handlePress(() => router.push("/activity-map"))}>
-                <Text style={styles.seeAllText}>View Map</Text>
+            <View style={styles.headerRight}>
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={() => handlePress(() => router.push("/(tabs)/activity"))}
+              >
+                <Ionicons name="notifications-outline" size={22} color={colors.textPrimary} />
               </TouchableOpacity>
-            </View>
-            <View style={styles.heatMapContainer}>
-              <ActivityHeatMap height={200} />
+              <TouchableOpacity
+                style={styles.avatarButton}
+                onPress={() => handlePress(() => router.push("/(tabs)/profile"))}
+              >
+                <Text style={styles.avatarText}>
+                  {isGuest ? "G" : (user?.name?.[0] || "U")}
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
 
-          {/* Upcoming Session */}
-          <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>Upcoming</Text>
-            <TouchableOpacity
-              style={styles.upcomingCard}
-              activeOpacity={0.7}
-              onPress={() => handlePress(() => router.push("/(tabs)/bookings"))}
+          {/* ===== HERO CARD - GIA PREDICTION (WOW FACTOR) ===== */}
+          <TouchableOpacity
+            style={styles.heroCard}
+            onPress={() => handlePress(() => router.push("/(tabs)/live"))}
+            activeOpacity={0.9}
+          >
+            <LinearGradient
+              colors={["#0D1F0A", "#0A0A0A", "#1A0A2E"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.heroGradient}
             >
-              <View style={styles.upcomingHeader}>
-                <View style={styles.upcomingIcon}>
-                  <Ionicons name="calendar" size={24} color="#7ED957" />
+              {/* Top Row: Badge + Live Indicator */}
+              <View style={styles.heroTopRow}>
+                <View style={styles.giaBadge}>
+                  <Ionicons name="sparkles" size={14} color="#8B5CF6" />
+                  <Text style={styles.giaBadgeText}>GIA</Text>
                 </View>
-                <View style={styles.upcomingInfo}>
-                  <Text style={styles.upcomingTitle}>{content.sampleSessions[0]?.title || "Next Session"}</Text>
-                  <Text style={styles.upcomingLocation}>{content.sampleSessions[0]?.location || "TBD"}</Text>
+                <View style={styles.liveIndicator}>
+                  <View style={styles.liveDot} />
+                  <Text style={styles.liveText}>LIVE</Text>
                 </View>
               </View>
-              <View style={styles.upcomingFooter}>
-                <Text style={styles.upcomingTime}>{content.sampleSessions[0]?.time || "Schedule soon"}</Text>
-                <TouchableOpacity style={styles.startButton} onPress={() => router.push("/(tabs)/bookings")}>
-                  <Text style={styles.startButtonText}>View</Text>
+
+              {/* Main Content: Venue-Specific Prediction */}
+              <View style={styles.heroMain}>
+                <View style={styles.venueRow}>
+                  <Ionicons name="location" size={16} color={colors.primary} />
+                  <Text style={styles.venueName}>{nearestCourt.name}</Text>
+                  <Text style={styles.venueDistance}>
+                    {nearestCourt.distance ? `${nearestCourt.distance.toFixed(1)} mi` : "nearby"}
+                  </Text>
+                </View>
+                <Text style={styles.heroBigText}>
+                  {predictions[0]?.level === 'quiet' ? "QUIET" :
+                    predictions[0]?.level === 'active' ? "ACTIVE" :
+                      predictions[0]?.level === 'busy' ? "BUSY" : "PACKED"}
+                </Text>
+                <Text style={styles.heroConfidence}>
+                  {predictions[0]?.level === 'quiet' ? '2 players • Perfect for pickup' :
+                    predictions[0]?.level === 'active' ? '5 players • Games happening' :
+                      predictions[0]?.level === 'busy' ? '8 players • Getting crowded' :
+                        '12+ players • Full courts'}
+                </Text>
+              </View>
+
+              {/* Activity Timeline - Horizontal bars */}
+              <View style={styles.heroTimeline}>
+                <Text style={styles.timelineTitle}>Next 6 hours</Text>
+                <View style={styles.timelineBars}>
+                  {predictions.map((pred, index) => (
+                    <View key={index} style={styles.timelineItem}>
+                      <View style={[
+                        styles.timelineBar,
+                        {
+                          height: pred.level === 'quiet' ? 20 :
+                            pred.level === 'active' ? 28 :
+                              pred.level === 'busy' ? 38 : 48,
+                          backgroundColor: pred.color,
+                          opacity: pred.isNow ? 1 : 0.7,
+                        },
+                        pred.isNow && styles.timelineBarNow,
+                      ]} />
+                      <Text style={[
+                        styles.timelineLabel,
+                        pred.isNow && styles.timelineLabelNow
+                      ]}>{pred.hour}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+
+              {/* Bottom: Tap hint */}
+              <View style={styles.heroBottom}>
+                <Ionicons name="map-outline" size={16} color={colors.textMuted} />
+                <Text style={styles.heroHint}>Tap to see live court map</Text>
+                <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+              </View>
+            </LinearGradient>
+          </TouchableOpacity>
+
+          {/* ===== FRIENDS ACTIVE ===== */}
+          <FriendActivityRail />
+
+          {/* ===== NEARBY COURTS (Secondary Info) ===== */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Nearby Courts</Text>
+              <TouchableOpacity onPress={() => handlePress(() => router.push("/near-me"))}>
+                <Text style={styles.seeAll}>See all</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Court List */}
+            <View style={styles.courtList}>
+              {[
+                { name: "Riverside Park", distance: "0.3 mi", activity: "high" },
+                { name: "Central Courts", distance: "0.7 mi", activity: "medium" },
+                { name: "Oak Street Park", distance: "1.2 mi", activity: "low" },
+              ].map((court, i) => (
+                <TouchableOpacity
+                  key={i}
+                  style={[styles.courtItem, i === 2 && { borderBottomWidth: 0 }]}
+                  onPress={() => handlePress(() => router.push("/(tabs)/live"))}
+                >
+                  <View style={styles.courtLeft}>
+                    <View style={[
+                      styles.activityIndicator,
+                      {
+                        backgroundColor: court.activity === "high" ? "#7ED957" :
+                          court.activity === "medium" ? "#FBBF24" : "#6B7280"
+                      }
+                    ]} />
+                    <View>
+                      <Text style={styles.courtName}>{court.name}</Text>
+                      <Text style={styles.courtDistance}>{court.distance}</Text>
+                    </View>
+                  </View>
+                  <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
                 </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* ===== QUICK ACTIONS (2x2 Grid) ===== */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Quick Actions</Text>
+            <View style={styles.actionsGrid}>
+              <TouchableOpacity
+                style={styles.actionCard}
+                onPress={() => handlePress(() => router.push("/(tabs)/live"))}
+              >
+                <View style={[styles.actionIcon, { backgroundColor: "rgba(126, 217, 87, 0.15)" }]}>
+                  <Ionicons name="map-outline" size={24} color={colors.primary} />
+                </View>
+                <Text style={styles.actionLabel}>Find Courts</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.actionCard}
+                onPress={() => handlePress(() => router.push("/(tabs)/trainers"))}
+              >
+                <View style={[styles.actionIcon, { backgroundColor: "rgba(139, 92, 246, 0.15)" }]}>
+                  <Ionicons name="fitness-outline" size={24} color="#8B5CF6" />
+                </View>
+                <Text style={styles.actionLabel}>Find Trainer</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.actionCard}
+                onPress={() => handlePress(() => router.push("/report-facility/quick"))}
+              >
+                <View style={[styles.actionIcon, { backgroundColor: "rgba(251, 191, 36, 0.15)" }]}>
+                  <Ionicons name="camera-outline" size={24} color="#FBBF24" />
+                </View>
+                <Text style={styles.actionLabel}>Report Court</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.actionCard}
+                onPress={() => handlePress(() => router.push("/(tabs)/bookings"))}
+              >
+                <View style={[styles.actionIcon, { backgroundColor: "rgba(6, 182, 212, 0.15)" }]}>
+                  <Ionicons name="calendar-outline" size={24} color="#06B6D4" />
+                </View>
+                <Text style={styles.actionLabel}>My Bookings</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* ===== EARN BANNER ===== */}
+          <TouchableOpacity
+            style={styles.earnBanner}
+            onPress={() => handlePress(() => router.push("/(tabs)/report"))}
+            activeOpacity={0.9}
+          >
+            <View style={styles.earnLeft}>
+              <View style={styles.earnIconContainer}>
+                <Ionicons name="cash-outline" size={24} color={colors.primary} />
               </View>
+              <View>
+                <Text style={styles.earnTitle}>Earn $5 per report</Text>
+                <Text style={styles.earnSubtitle}>Help others, get paid</Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+          </TouchableOpacity>
+
+          {/* Spacer for tab bar */}
+          <View style={{ height: 100 }} />
+        </ScrollView>
+
+        {/* Guest Banner - Fixed at bottom */}
+        {isGuest && (
+          <View style={styles.guestBanner}>
+            <View>
+              <Text style={styles.guestLabel}>Guest Mode</Text>
+              <Text style={styles.guestDesc}>Sign up to unlock all features</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.signUpButton}
+              onPress={() => router.push("/auth")}
+            >
+              <Text style={styles.signUpText}>Sign Up</Text>
+            </TouchableOpacity>
+
+            {/* Debug Toggle for Guest */}
+            <TouchableOpacity
+              style={[styles.signUpButton, { backgroundColor: '#333', marginLeft: 8 }]}
+              onPress={() => {
+                // Toggle between trainer/player for guest demo
+                // This relies on useUserPreferences exposing a setter or we hack it here
+                // ideally we navigate to a screen that sets it, but for now let's just 
+                // assume the user can go to Profile -> Switch View (which we should verify works for guests)
+                router.push("/(tabs)/profile")
+              }}
+            >
+              <Text style={[styles.signUpText, { color: '#FFF' }]}>Switch View</Text>
             </TouchableOpacity>
           </View>
-
-          {/* Quick Actions */}
-          <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>Quick Actions</Text>
-            <View style={styles.quickActionsGrid}>
-              <TouchableOpacity style={styles.quickAction} onPress={() => router.push("/(tabs)/explore")}>
-                <View style={[styles.quickActionIcon, { backgroundColor: "rgba(132, 204, 22, 0.2)" }]}>
-                  <Ionicons name="map" size={24} color="#7ED957" />
-                </View>
-                <Text style={styles.quickActionText}>Find Courts</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.quickAction} onPress={() => router.push("/(tabs)/bookings")}>
-                <View style={[styles.quickActionIcon, { backgroundColor: "rgba(251, 191, 36, 0.2)" }]}>
-                  <Ionicons name="calendar" size={24} color="#FBBF24" />
-                </View>
-                <Text style={styles.quickActionText}>Bookings</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.quickAction} onPress={() => router.push("/(tabs)/messages")}>
-                <View style={[styles.quickActionIcon, { backgroundColor: "rgba(14, 165, 233, 0.2)" }]}>
-                  <Ionicons name="chatbubbles" size={24} color="#0EA5E9" />
-                </View>
-                <Text style={styles.quickActionText}>Messages</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.quickAction} onPress={() => router.push("/invite")}>
-                <View style={[styles.quickActionIcon, { backgroundColor: "rgba(236, 72, 153, 0.2)" }]}>
-                  <Ionicons name="person-add" size={24} color="#EC4899" />
-                </View>
-                <Text style={styles.quickActionText}>Invite</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Find Leagues Banner */}
-          <TouchableOpacity
-            style={styles.leaguesBanner}
-            onPress={() => handlePress(() => router.push("/leagues"))}
-            activeOpacity={0.8}
-          >
-            <View style={styles.leaguesBannerContent}>
-              <View style={styles.leaguesBannerIcon}>
-                <Ionicons name="trophy" size={28} color="#EF4444" />
-              </View>
-              <View style={styles.leaguesBannerText}>
-                <Text style={styles.leaguesBannerTitle}>Join a League</Text>
-                <Text style={styles.leaguesBannerDesc}>Find competitive & rec leagues near you</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={24} color="#666" />
-            </View>
-          </TouchableOpacity>
-        </Animated.ScrollView>
+        )}
       </SafeAreaView>
 
       <LoginPromptModal
         visible={showLoginPrompt}
         onClose={() => setShowLoginPrompt(false)}
-        feature={loginPromptFeature}
-        description={loginPromptDescription}
+        feature=""
+        description=""
       />
-    </LinearGradient>
+    </LinearGradient >
   )
 }
 
@@ -274,82 +466,42 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 40,
+    paddingHorizontal: 20,
   },
-  guestBanner: {
-    backgroundColor: "rgba(132, 204, 22, 0.1)",
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(132, 204, 22, 0.2)",
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-  },
-  guestBannerContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  guestBannerText: {
-    flex: 1,
-  },
-  guestModeLabel: {
-    color: "#7ED957",
-    fontWeight: "bold",
-    fontSize: 12,
-  },
-  guestModeDesc: {
-    color: "#9CA3AF",
-    fontSize: 12,
-  },
-  signUpButton: {
-    backgroundColor: "#7ED957",
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  signUpButtonText: {
-    color: "#000",
-    fontWeight: "600",
-    fontSize: 14,
-  },
+
+  // Header
   header: {
-    paddingHorizontal: 24,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingTop: 16,
     paddingBottom: 24,
   },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
+  greeting: {
+    fontSize: 14,
+    fontFamily: "Inter_400Regular",
+    color: colors.textSecondary,
+    marginBottom: 2,
   },
-  headerTextContainer: {
-    flex: 1,
+  userName: {
+    fontSize: 24,
+    fontFamily: "Inter_700Bold",
+    color: colors.textPrimary,
   },
-  headerIcons: {
+  headerRight: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
   },
-  headerIconButton: {
-    position: "relative",
+  iconButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#1A1A1A",
+    backgroundColor: colors.card,
     alignItems: "center",
     justifyContent: "center",
   },
-  notificationBadge: {
-    position: "absolute",
-    top: 8,
-    right: 8,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: "#EF4444",
-    borderWidth: 2,
-    borderColor: "#0A0A0A",
-  },
-  profileAvatar: {
+  avatarButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
@@ -357,366 +509,326 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
-    borderColor: "#7ED957",
+    borderColor: colors.primary,
   },
-  profileInitial: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#7ED957",
-  },
-  welcomeText: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-    marginBottom: 8,
-  },
-  subText: {
+  avatarText: {
     fontSize: 16,
-    color: "#9CA3AF",
+    fontFamily: "Inter_700Bold",
+    color: colors.primary,
   },
-  viewStatsLink: {
+
+  // Hero Card
+  heroCard: {
+    borderRadius: 24,
+    overflow: "hidden",
+    marginBottom: 24,
+  },
+  heroGradient: {
+    padding: 20,
+    borderWidth: 1,
+    borderColor: "rgba(139, 92, 246, 0.3)",
+    borderRadius: 24,
+  },
+  heroTopRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  giaBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(139, 92, 246, 0.2)",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    gap: 6,
+  },
+  giaBadgeText: {
+    fontSize: 13,
+    fontFamily: "Inter_700Bold",
+    color: "#8B5CF6",
+  },
+  liveIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  liveDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#EF4444",
+  },
+  liveText: {
+    fontSize: 11,
+    fontFamily: "Inter_700Bold",
+    color: "#EF4444",
+    letterSpacing: 1,
+  },
+  heroMain: {
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  venueRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 12,
+  },
+  venueName: {
+    fontSize: 16,
+    fontFamily: "Inter_600SemiBold",
+    color: colors.textPrimary,
+  },
+  venueDistance: {
+    fontSize: 14,
+    fontFamily: "Inter_400Regular",
+    color: colors.textMuted,
+  },
+  heroBigText: {
+    fontSize: 56,
+    fontFamily: "Inter_700Bold",
+    color: colors.primary,
+    letterSpacing: -2,
+  },
+  heroConfidence: {
+    fontSize: 14,
+    fontFamily: "Inter_500Medium",
+    color: colors.textSecondary,
+    marginTop: 8,
+  },
+  heroTimeline: {
+    marginBottom: 16,
+  },
+  timelineTitle: {
+    fontSize: 12,
+    fontFamily: "Inter_500Medium",
+    color: colors.textMuted,
+    marginBottom: 12,
+  },
+  timelineBars: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    height: 60,
+    gap: 6,
+  },
+  timelineItem: {
+    flex: 1,
+    alignItems: "center",
+  },
+  timelineBar: {
+    width: "100%",
+    borderRadius: 6,
+    minHeight: 20,
+  },
+  timelineBarNow: {
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+  },
+  timelineLabel: {
+    fontSize: 10,
+    fontFamily: "Inter_500Medium",
+    color: colors.textMuted,
+    marginTop: 8,
+  },
+  timelineLabelNow: {
+    color: "#FFFFFF",
+    fontFamily: "Inter_700Bold",
+  },
+  heroBottom: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingTop: 12,
-    gap: 4,
+    gap: 8,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255, 255, 255, 0.1)",
   },
-  viewStatsText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#7ED957",
+  heroHint: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    color: colors.textMuted,
   },
-  forYouCard: {
-    marginHorizontal: 24,
-    marginBottom: 24,
-    borderRadius: 16,
-    overflow: "hidden",
-  },
-  forYouGradient: {
-    padding: 24,
-  },
-  forYouContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  forYouTextContainer: {
-    flex: 1,
-  },
-  aiLabel: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  aiLabelText: {
-    color: "#000",
-    fontWeight: "bold",
-    fontSize: 12,
-    marginLeft: 8,
-  },
-  forYouTitle: {
-    color: "#000",
-    fontWeight: "bold",
-    fontSize: 24,
-    marginBottom: 4,
-  },
-  forYouDesc: {
-    color: "rgba(0,0,0,0.7)",
-    fontSize: 14,
-  },
-  statsContainer: {
-    paddingHorizontal: 24,
-    marginBottom: 24,
-  },
-  statsCard: {
-    backgroundColor: "#1A1A1A",
-    borderRadius: 16,
-    padding: 24,
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  statItem: {
-    alignItems: "center",
-    flex: 1,
-  },
-  statItemBorder: {
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-    borderColor: "#333",
-  },
-  statNumber: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#7ED957",
-  },
-  statLabel: {
-    fontSize: 14,
-    color: "#9CA3AF",
-    marginTop: 4,
-  },
-  sectionContainer: {
-    paddingHorizontal: 24,
+
+
+  // Section
+  section: {
     marginBottom: 24,
   },
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 12,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#FFFFFF",
+    fontSize: 18,
+    fontFamily: "Inter_600SemiBold",
+    color: colors.textPrimary,
+    marginBottom: 12,
   },
-  sectionTitleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  seeAllText: {
+  seeAll: {
     fontSize: 14,
-    fontWeight: "600",
-    color: "#7ED957",
+    fontFamily: "Inter_500Medium",
+    color: colors.primary,
   },
-  heatMapContainer: {
-    backgroundColor: "#1A1A1A",
+
+  // Court List
+  courtList: {
+    backgroundColor: colors.card,
     borderRadius: 16,
     overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "#252525",
   },
-  upcomingCard: {
-    backgroundColor: "#1A1A1A",
-    borderRadius: 16,
-    padding: 24,
-    borderWidth: 1,
-    borderColor: "rgba(132, 204, 22, 0.3)",
-  },
-  upcomingHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  upcomingIcon: {
-    backgroundColor: "rgba(132, 204, 22, 0.2)",
-    borderRadius: 50,
-    padding: 12,
-    marginRight: 16,
-  },
-  upcomingInfo: {
-    flex: 1,
-  },
-  upcomingTitle: {
-    color: "#FFFFFF",
-    fontWeight: "bold",
-    fontSize: 18,
-  },
-  upcomingLocation: {
-    color: "#9CA3AF",
-    fontSize: 14,
-  },
-  upcomingFooter: {
+  courtItem: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-  },
-  upcomingTime: {
-    color: "#9CA3AF",
-    fontSize: 14,
-  },
-  startButton: {
-    backgroundColor: "#7ED957",
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  startButtonText: {
-    color: "#000",
-    fontWeight: "600",
-  },
-  trainerCard: {
-    backgroundColor: "#1A1A1A",
-    borderRadius: 16,
     padding: 16,
-    width: 256,
-    marginRight: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.cardBorder,
   },
-  trainerHeader: {
+  courtLeft: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 12,
+    gap: 12,
   },
-  trainerAvatar: {
-    backgroundColor: "rgba(132, 204, 22, 0.2)",
-    borderRadius: 24,
-    width: 48,
-    height: 48,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 12,
+  activityIndicator: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
-  trainerInitial: {
-    color: "#7ED957",
-    fontWeight: "bold",
-    fontSize: 18,
-  },
-  trainerInfo: {
-    flex: 1,
-  },
-  trainerName: {
-    color: "#FFFFFF",
-    fontWeight: "bold",
+  courtName: {
     fontSize: 16,
+    fontFamily: "Inter_500Medium",
+    color: colors.textPrimary,
   },
-  trainerRating: {
-    flexDirection: "row",
-    alignItems: "center",
+  courtDistance: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    color: colors.textMuted,
+    marginTop: 2,
   },
-  trainerRatingText: {
-    color: "#9CA3AF",
-    fontSize: 14,
-    marginLeft: 4,
-  },
-  trainerLocation: {
-    color: "#9CA3AF",
-    fontSize: 14,
-    marginBottom: 12,
-  },
-  trainerFooter: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  trainerPrice: {
-    color: "#7ED957",
-    fontWeight: "bold",
-    fontSize: 18,
-  },
-  bookButton: {
-    backgroundColor: "#7ED957",
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  bookButtonText: {
-    color: "#000",
-    fontWeight: "600",
-  },
-  quickActionsGrid: {
+
+  // Actions Grid
+  actionsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 12,
   },
-  quickAction: {
-    backgroundColor: "#1A1A1A",
+  actionCard: {
+    width: (width - 52) / 2,
+    backgroundColor: colors.card,
     borderRadius: 16,
-    padding: 16,
-    width: "47%",
+    padding: 20,
     alignItems: "center",
   },
-  quickActionIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+  actionIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 12,
   },
-  quickActionText: {
-    color: "#FFFFFF",
-    fontSize: 12,
-    marginTop: 8,
-    textAlign: "center",
-  },
-  reportCard: {
-    marginHorizontal: 24,
-    marginBottom: 24,
-    borderRadius: 16,
-    backgroundColor: "#1A1A1A",
-    borderWidth: 2,
-    borderColor: "#7ED957",
-    overflow: "hidden",
-  },
-  reportCardContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 16,
-  },
-  reportIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 12,
-    backgroundColor: "rgba(132, 204, 22, 0.2)",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 16,
-  },
-  reportTextContainer: {
-    flex: 1,
-  },
-  reportTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-    marginBottom: 4,
-  },
-  reportDesc: {
+  actionLabel: {
     fontSize: 14,
-    color: "#9CA3AF",
+    fontFamily: "Inter_500Medium",
+    color: colors.textPrimary,
   },
-  reportDescRow: {
+
+  // Earn Banner
+  earnBanner: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    marginBottom: 2,
-  },
-  reportEarnings: {
-    fontSize: 12,
-    color: "#7ED957",
-    fontWeight: "600",
-  },
-  reportBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "rgba(132, 204, 22, 0.2)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  leaguesBanner: {
-    marginHorizontal: 24,
-    marginBottom: 24,
-    backgroundColor: "#1A1A1A",
+    justifyContent: "space-between",
+    backgroundColor: colors.card,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: "#252525",
+    borderColor: colors.cardBorder,
+    marginBottom: 24,
   },
-  leaguesBannerContent: {
+  earnLeft: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 12,
   },
-  leaguesBannerIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "rgba(239, 68, 68, 0.15)",
+  earnIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: "rgba(126, 217, 87, 0.15)",
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 12,
   },
-  leaguesBannerText: {
-    flex: 1,
-  },
-  leaguesBannerTitle: {
+  earnTitle: {
     fontSize: 16,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-    marginBottom: 4,
+    fontFamily: "Inter_600SemiBold",
+    color: colors.textPrimary,
   },
-  leaguesBannerDesc: {
+  earnSubtitle: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    color: colors.textMuted,
+    marginTop: 2,
+  },
+
+  // Guest Banner
+  guestBanner: {
+    position: "absolute",
+    bottom: 100,
+    left: 20,
+    right: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "rgba(126, 217, 87, 0.1)",
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "rgba(126, 217, 87, 0.2)",
+  },
+  guestLabel: {
+    fontSize: 12,
+    fontFamily: "Inter_600SemiBold",
+    color: colors.primary,
+  },
+  guestDesc: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: colors.textSecondary,
+  },
+  signUpButton: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  signUpText: {
     fontSize: 14,
-    color: "#9CA3AF",
+    fontFamily: "Inter_600SemiBold",
+    color: "#000",
+  },
+  // Mode Toggle for "Both" users
+  modeToggle: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(126, 217, 87, 0.1)",
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    marginHorizontal: 20,
+    marginBottom: 12,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: "rgba(126, 217, 87, 0.2)",
+  },
+  modeToggleText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#7ED957",
   },
 })

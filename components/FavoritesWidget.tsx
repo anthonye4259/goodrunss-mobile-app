@@ -150,7 +150,7 @@ export function FavoritesWidget() {
                     style={styles.addCard}
                     onPress={() => {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-                        router.push("/(tabs)/explore")
+                        router.push("/(tabs)/live")
                     }}
                 >
                     <View style={styles.addIcon}>

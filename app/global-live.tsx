@@ -140,7 +140,7 @@ export default function GlobalLiveScreen() {
     const [refreshing, setRefreshing] = useState(false)
     const [selectedSport, setSelectedSport] = useState<Sport | "all">("all")
 
-    const primaryActivity = getPrimaryActivity(preferences.activities) as Activity
+    const primaryActivity = getPrimaryActivity(preferences.activities)
 
     // Sports to show
     const sports: Sport[] = ["basketball", "tennis", "pickleball", "volleyball", "swimming", "golf"]

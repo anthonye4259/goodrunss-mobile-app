@@ -1,133 +1,97 @@
 import { Tabs } from "expo-router"
+import { View } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
-import { View, Text, Image } from "react-native"
 import { useUserPreferences } from "@/lib/user-preferences"
 
-export default function TabsLayout() {
+export default function TabLayout() {
   const { preferences } = useUserPreferences()
+  const isTrainer = preferences.userType === "trainer" || preferences.userType === "instructor"
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: "#141414",
-          borderTopColor: "#252525",
-          borderTopWidth: 1,
-          height: 80,
-          paddingBottom: 16,
-          paddingTop: 8,
+          backgroundColor: "#0F0F0F",
+          borderTopColor: "#1A1A1A",
         },
         tabBarActiveTintColor: "#7ED957",
         tabBarInactiveTintColor: "#666",
+        tabBarShowLabel: true,
         tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: "600",
+          fontFamily: "Inter_500Medium",
+          fontSize: 12,
         },
       }}
     >
-      {/* Tab 1: Home */}
       <Tabs.Screen
         name="index"
         options={{
-          title: "Home",
-          tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} />,
-        }}
-      />
-
-      {/* Tab 2: Live Map (BILLION DOLLAR FEATURE) */}
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: "Live Map",
+          title: "Today",
           tabBarIcon: ({ color, focused }) => (
-            <View style={{ alignItems: "center" }}>
-              {focused && (
-                <View style={{
-                  position: "absolute",
-                  top: -4,
-                  width: 6,
-                  height: 6,
-                  borderRadius: 3,
-                  backgroundColor: "#EF4444",
-                }} />
-              )}
-              <Ionicons name="map" size={24} color={color} />
-            </View>
+            <Ionicons name={focused ? "today" : "today-outline"} size={24} color={color} />
           ),
         }}
       />
-
-      {/* Tab 3: Report & Earn (BILLION DOLLAR FEATURE) */}
       <Tabs.Screen
-        name="report"
+        name="live"
         options={{
-          title: "Report",
+          title: isTrainer ? "Market" : "Live",
           tabBarIcon: ({ color, focused }) => (
-            <View style={{ alignItems: "center" }}>
-              <View style={{
-                position: "absolute",
-                top: -8,
-                right: -12,
-                backgroundColor: "#7ED957",
-                paddingHorizontal: 4,
-                paddingVertical: 1,
-                borderRadius: 6,
-                zIndex: 1,
-              }}>
-                <Text style={{ fontSize: 8, fontWeight: "bold", color: "#000" }}>$$$</Text>
-              </View>
-              <Ionicons name="camera" size={24} color={color} />
-            </View>
+            <Ionicons
+              name={isTrainer ? (focused ? "briefcase" : "briefcase-outline") : (focused ? "radio" : "radio-outline")}
+              size={26}
+              color={color}
+            />
           ),
         }}
       />
-
-      {/* Tab 4: GIA AI (BILLION DOLLAR FEATURE) */}
       <Tabs.Screen
         name="gia"
         options={{
           title: "GIA",
           tabBarIcon: ({ color, focused }) => (
-            <View style={{
-              backgroundColor: focused ? "#8B5CF6" : "transparent",
+            <View style={focused ? {
+              backgroundColor: "#8B5CF6",
               borderRadius: 12,
-              padding: 6,
-              marginBottom: -4,
-            }}>
-              <Ionicons
-                name="sparkles"
-                size={24}
-                color={focused ? "#FFFFFF" : color}
-              />
+              padding: 4,
+            } : {}}>
+              <Ionicons name={focused ? "sparkles" : "sparkles-outline"} size={24} color={focused ? "#FFFFFF" : color} />
             </View>
           ),
+          tabBarActiveTintColor: "#8B5CF6", // Purple for GIA
         }}
       />
-
-      {/* Tab 5: Contextual - Dashboard for trainers, Find Coach for players */}
       <Tabs.Screen
-        name="trainers"
+        name="profile"
         options={{
-          title: preferences.userType === "trainer" || preferences.userType === "instructor" || preferences.userType === "both"
-            ? "Dashboard"
-            : "Coaches",
-          tabBarIcon: ({ color, size }) => (
-            preferences.userType === "trainer" || preferences.userType === "instructor" || preferences.userType === "both"
-              ? <Ionicons name="stats-chart" size={size} color={color} />
-              : <Ionicons name="fitness" size={size} color={color} />
+          title: "Profile",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? "person" : "person-outline"} size={24} color={color} />
           ),
         }}
       />
 
-      {/* Hidden tabs - accessible via navigation but not in tab bar */}
-      <Tabs.Screen name="home" options={{ href: null }} />
+      {/* Hide other files in this directory from the tab bar */}
+      <Tabs.Screen name="SwipeableTabs" options={{ href: null }} />
       <Tabs.Screen name="activity" options={{ href: null }} />
-      <Tabs.Screen name="profile" options={{ href: null }} />
-      <Tabs.Screen name="messages" options={{ href: null }} />
       <Tabs.Screen name="bookings" options={{ href: null }} />
-      <Tabs.Screen name="trainer" options={{ href: null }} />
+      <Tabs.Screen name="home" options={{ href: null }} />
+      <Tabs.Screen name="index-old" options={{ href: null }} />
+      <Tabs.Screen
+        name="messages"
+        options={{
+          title: "Inbox",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? "chatbubbles" : "chatbubbles-outline"} size={24} color={color} />
+          ),
+          tabBarBadge: 2, // Mock badge for demo
+        }}
+      />
+      <Tabs.Screen name="report" options={{ href: null }} />
       <Tabs.Screen name="stats" options={{ href: null }} />
+      <Tabs.Screen name="trainer" options={{ href: null }} />
+      <Tabs.Screen name="trainers" options={{ href: null }} />
     </Tabs>
   )
 }

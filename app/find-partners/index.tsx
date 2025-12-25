@@ -1,63 +1,82 @@
 
-import { View, Text, ScrollView, TouchableOpacity } from "react-native"
+import { View, Text, ScrollView, TouchableOpacity, Alert } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { router } from "expo-router"
 import * as Haptics from "expo-haptics"
 import { SkeletonLoader } from "@/components/skeleton-loader"
+import { socialService } from "@/lib/services/social-service"
+import { useAuth } from "@/lib/auth-context"
 
 export default function FindPartnersScreen() {
+  const { user } = useAuth()
   const [searchRadius, setSearchRadius] = useState(5)
   const [selectedSport, setSelectedSport] = useState<string | null>(null)
   const [selectedSkillLevel, setSelectedSkillLevel] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [players, setPlayers] = useState<any[]>([])
 
   const sports = ["Basketball", "Tennis", "Pickleball", "Golf", "Swimming", "Yoga"]
   const skillLevels = ["Beginner", "Intermediate", "Advanced", "Expert"]
 
-  // Mock nearby players - would come from GPS-based backend query
-  const nearbyPlayers = [
-    {
-      id: "1",
-      name: "Mike Johnson",
-      sport: "Basketball",
-      skillLevel: "Advanced",
-      rating: 4.8,
-      matchesPlayed: 47,
-      distance: "0.3 mi",
-      availability: "Available now",
-      avatar: "MJ",
-    },
-    {
-      id: "2",
-      name: "Sarah Chen",
-      sport: "Tennis",
-      skillLevel: "Intermediate",
-      rating: 4.6,
-      matchesPlayed: 32,
-      distance: "0.7 mi",
-      availability: "Available today",
-      avatar: "SC",
-    },
-    {
-      id: "3",
-      name: "Alex Rivera",
-      sport: "Pickleball",
-      skillLevel: "Expert",
-      rating: 4.9,
-      matchesPlayed: 89,
-      distance: "1.2 mi",
-      availability: "Available weekends",
-      avatar: "AR",
-    },
-  ]
+  useEffect(() => {
+    loadPlayers()
+  }, [searchRadius, selectedSport, selectedSkillLevel])
 
-  const filteredPlayers = nearbyPlayers.filter((player) => {
-    if (selectedSport && player.sport !== selectedSport) return false
-    if (selectedSkillLevel && player.skillLevel !== selectedSkillLevel) return false
-    return true
-  })
+  const loadPlayers = async () => {
+    setLoading(true)
+    try {
+      // Mock user location (NYC coordinates)
+      const lat = 40.7128
+      const lng = -74.0060
+
+      const data = await socialService.getNearbyPlayers(
+        lat,
+        lng,
+        searchRadius,
+        {
+          sport: selectedSport || undefined,
+          skillLevel: selectedSkillLevel || undefined
+        }
+      )
+      setPlayers(data)
+    } catch (error) {
+      console.error("Failed to load players:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleMatchRequest = async (player: any) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+
+    Alert.alert(
+      "Send Match Request",
+      `Challenge ${player.name} to a ${player.sport} match?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Send Challenge",
+          onPress: async () => {
+            try {
+              await socialService.sendChallenge({
+                challengerId: user?.id || "current_user",
+                challengerName: user?.name || "Me",
+                challengedId: player.id,
+                challengedName: player.name,
+                activity: player.sport,
+                message: "Let's play!"
+              })
+              Alert.alert("Success", "Challenge sent! You'll be notified when they respond.")
+            } catch (error) {
+              Alert.alert("Error", "Could not send challenge.")
+            }
+          }
+        }
+      ]
+    )
+  }
 
   return (
     <LinearGradient colors={["#0A0A0A", "#141414"]} style={{ flex: 1 }}>
@@ -169,18 +188,19 @@ export default function FindPartnersScreen() {
 
         {/* Results */}
         <View className="px-6 mb-6">
-          <Text className="text-foreground font-bold mb-3">{filteredPlayers.length} Players Found</Text>
+          <Text className="text-foreground font-bold mb-3">{players.length} Players Found</Text>
 
           {loading ? (
             <SkeletonLoader type="list" count={3} />
           ) : (
-            filteredPlayers.map((player) => (
+            players.map((player) => (
               <TouchableOpacity
                 key={player.id}
                 className="bg-card border border-border rounded-2xl p-4 mb-4"
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-                  router.push(`/player/${player.id}`)
+                  // router.push(`/player/${player.id}`) // Player profile not implemented yet
+                  Alert.alert("Profile", "Player profile coming soon!")
                 }}
               >
                 <View className="flex-row items-start justify-between mb-3">
@@ -197,7 +217,7 @@ export default function FindPartnersScreen() {
                       </View>
                       <View className="flex-row items-center">
                         <Ionicons name="navigate" size={14} color="#7ED957" />
-                        <Text className="text-muted-foreground text-sm ml-1">{player.distance} away</Text>
+                        <Text className="text-muted-foreground text-sm ml-1">{player.distance} mi away</Text>
                       </View>
                     </View>
                   </View>
@@ -217,10 +237,7 @@ export default function FindPartnersScreen() {
 
                 <TouchableOpacity
                   className="bg-primary rounded-xl py-3"
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-                    router.push(`/match-request/${player.id}`)
-                  }}
+                  onPress={() => handleMatchRequest(player)}
                 >
                   <Text className="text-background font-bold text-center">Send Match Request</Text>
                 </TouchableOpacity>

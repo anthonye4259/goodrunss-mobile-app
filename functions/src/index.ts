@@ -1996,3 +1996,392 @@ export const checkStripeAccountStatus = functions.https.onCall(async (data, cont
     }
 })
 
+// ============================================
+// FACILITY STRIPE CONNECT FUNCTIONS
+// For court booking payouts
+// ============================================
+
+/**
+ * Create Stripe Connect account for a facility
+ */
+export const createFacilityConnectAccount = functions.https.onCall(async (data, context) => {
+    try {
+        if (!stripe) {
+            throw new functions.https.HttpsError(
+                "failed-precondition",
+                "Stripe is not configured"
+            )
+        }
+
+        const { facilityId, businessName, email, returnUrl, refreshUrl } = data
+
+        if (!facilityId || !businessName || !email) {
+            throw new functions.https.HttpsError(
+                "invalid-argument",
+                "Missing required fields: facilityId, businessName, email"
+            )
+        }
+
+        // Create a Stripe Connect Express account
+        const account = await stripe.accounts.create({
+            type: "express",
+            country: "US",
+            email,
+            business_profile: {
+                name: businessName,
+                mcc: "7941", // Sports clubs/fields/promoters
+            },
+            capabilities: {
+                card_payments: { requested: true },
+                transfers: { requested: true },
+            },
+            business_type: "company",
+            metadata: {
+                facilityId,
+                platform: "goodrunss",
+                type: "facility",
+            },
+        })
+
+        // Save account ID to facility record
+        const db = admin.firestore()
+        await db.collection("claimed_facilities").doc(facilityId).update({
+            stripeAccountId: account.id,
+            stripeAccountStatus: "pending",
+            stripeAccountCreatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        })
+
+        // Create onboarding link
+        const accountLink = await stripe.accountLinks.create({
+            account: account.id,
+            refresh_url: refreshUrl || "goodrunss://facility/stripe-refresh",
+            return_url: returnUrl || "goodrunss://facility/stripe-return",
+            type: "account_onboarding",
+        })
+
+        functions.logger.info("Stripe Connect account created for facility", {
+            accountId: account.id,
+            facilityId,
+            businessName,
+        })
+
+        return {
+            accountId: account.id,
+            onboardingUrl: accountLink.url,
+        }
+    } catch (error: any) {
+        functions.logger.error("Error creating facility Stripe Connect account:", error)
+        throw new functions.https.HttpsError(
+            "internal",
+            error.message || "Failed to create account"
+        )
+    }
+})
+
+/**
+ * Create new onboarding link for facility (if they didn't finish setup)
+ */
+export const createFacilityOnboardingLink = functions.https.onCall(async (data, context) => {
+    try {
+        if (!stripe) {
+            throw new functions.https.HttpsError(
+                "failed-precondition",
+                "Stripe is not configured"
+            )
+        }
+
+        const { stripeAccountId, returnUrl, refreshUrl } = data
+
+        if (!stripeAccountId) {
+            throw new functions.https.HttpsError(
+                "invalid-argument",
+                "Missing stripeAccountId"
+            )
+        }
+
+        const accountLink = await stripe.accountLinks.create({
+            account: stripeAccountId,
+            refresh_url: refreshUrl || "goodrunss://facility/stripe-refresh",
+            return_url: returnUrl || "goodrunss://facility/stripe-return",
+            type: "account_onboarding",
+        })
+
+        return { url: accountLink.url }
+    } catch (error: any) {
+        functions.logger.error("Error creating onboarding link:", error)
+        throw new functions.https.HttpsError(
+            "internal",
+            error.message || "Failed to create onboarding link"
+        )
+    }
+})
+
+/**
+ * Get facility Connect account status
+ */
+export const getFacilityConnectStatus = functions.https.onCall(async (data, context) => {
+    try {
+        if (!stripe) {
+            throw new functions.https.HttpsError(
+                "failed-precondition",
+                "Stripe is not configured"
+            )
+        }
+
+        const { stripeAccountId } = data
+
+        if (!stripeAccountId) {
+            throw new functions.https.HttpsError(
+                "invalid-argument",
+                "Missing stripeAccountId"
+            )
+        }
+
+        const account = await stripe.accounts.retrieve(stripeAccountId)
+
+        // Update facility record with status
+        if (account.charges_enabled && account.payouts_enabled) {
+            const db = admin.firestore()
+            const facilitiesSnapshot = await db.collection("claimed_facilities")
+                .where("stripeAccountId", "==", stripeAccountId)
+                .limit(1)
+                .get()
+
+            if (!facilitiesSnapshot.empty) {
+                await facilitiesSnapshot.docs[0].ref.update({
+                    stripeAccountStatus: "active",
+                    stripeOnboardedAt: admin.firestore.FieldValue.serverTimestamp(),
+                })
+            }
+        }
+
+        return {
+            id: account.id,
+            charges_enabled: account.charges_enabled,
+            payouts_enabled: account.payouts_enabled,
+            details_submitted: account.details_submitted,
+        }
+    } catch (error: any) {
+        functions.logger.error("Error getting facility Connect status:", error)
+        throw new functions.https.HttpsError(
+            "internal",
+            error.message || "Failed to get status"
+        )
+    }
+})
+
+/**
+ * Create Stripe login link for facility dashboard
+ */
+export const createFacilityDashboardLink = functions.https.onCall(async (data, context) => {
+    try {
+        if (!stripe) {
+            throw new functions.https.HttpsError(
+                "failed-precondition",
+                "Stripe is not configured"
+            )
+        }
+
+        const { stripeAccountId } = data
+
+        if (!stripeAccountId) {
+            throw new functions.https.HttpsError(
+                "invalid-argument",
+                "Missing stripeAccountId"
+            )
+        }
+
+        const loginLink = await stripe.accounts.createLoginLink(stripeAccountId)
+
+        return { url: loginLink.url }
+    } catch (error: any) {
+        functions.logger.error("Error creating dashboard link:", error)
+        throw new functions.https.HttpsError(
+            "internal",
+            error.message || "Failed to create dashboard link"
+        )
+    }
+})
+
+/**
+ * Create Payment Intent for Court Booking with Split
+ * 
+ * Payment flow:
+ * - Player pays: Court rate + $3 booking fee
+ * - GoodRunss takes: $3 booking fee + 8% of court rate
+ * - Facility gets: 92% of court rate (via Stripe Connect transfer)
+ */
+export const createFacilityPaymentIntent = functions.https.onCall(async (data, context) => {
+    try {
+        if (!stripe) {
+            throw new functions.https.HttpsError(
+                "failed-precondition",
+                "Stripe is not configured"
+            )
+        }
+
+        if (!context.auth) {
+            throw new functions.https.HttpsError(
+                "unauthenticated",
+                "User must be authenticated"
+            )
+        }
+
+        const {
+            amount, // Total amount in cents (court rate + booking fee)
+            facilityStripeAccountId,
+            applicationFeeAmount, // GoodRunss's cut ($3 + 8% of court rate) in cents
+            bookingId,
+            courtId,
+            facilityId,
+            courtRate, // Court rate in cents
+        } = data
+
+        if (!amount || !facilityStripeAccountId || !applicationFeeAmount || !bookingId) {
+            throw new functions.https.HttpsError(
+                "invalid-argument",
+                "Missing required fields: amount, facilityStripeAccountId, applicationFeeAmount, bookingId"
+            )
+        }
+
+        // Verify the Connect account is valid and can receive payments
+        const account = await stripe.accounts.retrieve(facilityStripeAccountId)
+        if (!account.charges_enabled || !account.payouts_enabled) {
+            throw new functions.https.HttpsError(
+                "failed-precondition",
+                "Facility Stripe account is not fully set up for payments"
+            )
+        }
+
+        // Create payment intent with destination charge
+        // This charges the player and automatically splits payment to facility
+        const paymentIntent = await stripe.paymentIntents.create({
+            amount, // Total charge to player
+            currency: "usd",
+            application_fee_amount: applicationFeeAmount, // GoodRunss keeps this
+            transfer_data: {
+                destination: facilityStripeAccountId, // Facility gets the rest
+            },
+            metadata: {
+                type: "court_booking",
+                bookingId,
+                courtId: courtId || "",
+                facilityId: facilityId || "",
+                playerId: context.auth.uid,
+                courtRate: courtRate?.toString() || "",
+                applicationFee: applicationFeeAmount.toString(),
+            },
+            automatic_payment_methods: {
+                enabled: true,
+            },
+        })
+
+        functions.logger.info("Facility payment intent created", {
+            paymentIntentId: paymentIntent.id,
+            bookingId,
+            amount,
+            applicationFee: applicationFeeAmount,
+            facilityReceives: amount - applicationFeeAmount,
+        })
+
+        return {
+            paymentIntentId: paymentIntent.id,
+            clientSecret: paymentIntent.client_secret,
+        }
+    } catch (error: any) {
+        functions.logger.error("Error creating facility payment intent:", error)
+        throw new functions.https.HttpsError(
+            "internal",
+            error.message || "Failed to create payment intent"
+        )
+    }
+})
+
+/**
+ * Handle Court Booking Payment Success
+ * Updates booking status when payment succeeds
+ */
+export const handleCourtBookingPayment = functions.firestore
+    .document("court_bookings/{bookingId}")
+    .onUpdate(async (change, context) => {
+        const before = change.before.data()
+        const after = change.after.data()
+
+        // Only proceed if payment status changed to "paid"
+        if (before.paymentStatus === after.paymentStatus) {
+            return
+        }
+
+        if (after.paymentStatus === "paid" && after.status === "confirmed") {
+            try {
+                // Send confirmation push to player
+                const userId = after.userId
+                if (userId) {
+                    const tokensSnapshot = await admin
+                        .firestore()
+                        .collection("users")
+                        .doc(userId)
+                        .collection("deviceTokens")
+                        .get()
+
+                    const tokens = tokensSnapshot.docs.map((doc) => doc.data().token).filter(Boolean)
+
+                    if (tokens.length > 0) {
+                        await admin.messaging().sendEachForMulticast({
+                            notification: {
+                                title: "Court Booked! 🎾",
+                                body: `Your court is reserved for ${after.date} at ${after.startTime}`,
+                            },
+                            data: {
+                                type: "court_booking_confirmed",
+                                bookingId: context.params.bookingId,
+                            },
+                            tokens,
+                        })
+                    }
+                }
+
+                // Send notification to facility owner
+                const facilityDoc = await admin.firestore()
+                    .collection("claimed_facilities")
+                    .doc(after.facilityId)
+                    .get()
+
+                const facility = facilityDoc.data()
+                if (facility?.ownerId) {
+                    const ownerTokensSnapshot = await admin
+                        .firestore()
+                        .collection("users")
+                        .doc(facility.ownerId)
+                        .collection("deviceTokens")
+                        .get()
+
+                    const ownerTokens = ownerTokensSnapshot.docs
+                        .map((doc) => doc.data().token)
+                        .filter(Boolean)
+
+                    if (ownerTokens.length > 0) {
+                        await admin.messaging().sendEachForMulticast({
+                            notification: {
+                                title: "New Booking! 💰",
+                                body: `${after.userName} booked a court for ${after.date} at ${after.startTime}`,
+                            },
+                            data: {
+                                type: "new_court_booking",
+                                bookingId: context.params.bookingId,
+                            },
+                            tokens: ownerTokens,
+                        })
+                    }
+                }
+
+                functions.logger.info("Court booking payment processed", {
+                    bookingId: context.params.bookingId,
+                    userId,
+                    facilityId: after.facilityId,
+                })
+            } catch (error) {
+                functions.logger.error("Error processing court booking payment:", error)
+            }
+        }
+    })

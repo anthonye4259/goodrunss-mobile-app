@@ -1,29 +1,33 @@
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import AsyncStorage from "@react-native-async-storage/async-storage"
-import { auth, db } from "./firebase-config"
+import firebase, { auth, db } from "./firebase-config"
 import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut as firebaseSignOut,
-  onAuthStateChanged,
-  User as FirebaseUser
-} from "firebase/auth"
-import { doc, getDoc, setDoc } from "firebase/firestore"
+  saveCredentials,
+  clearStoredCredentials,
+  authenticateWithBiometrics,
+  hasStoredCredentials,
+  getStoredEmail,
+  isBiometricAvailable
+} from "./services/biometric-auth"
 
 interface AuthContextType {
   isAuthenticated: boolean
   isGuest: boolean
+  loading: boolean
+  hasBiometricCredentials: boolean
   user: {
     id: string
     name: string
     email: string
   } | null
   login: (email: string, password: string) => Promise<void>
+  loginWithBiometrics: () => Promise<boolean>
   signup: (email: string, password: string, name: string) => Promise<void>
   logout: () => Promise<void>
   continueAsGuest: () => void
   promptLogin: (feature: string) => boolean
+  getStoredEmail: () => Promise<string | null>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -33,15 +37,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isGuest, setIsGuest] = useState(true)
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [hasBiometricCredentials, setHasBiometricCredentials] = useState(false)
 
   useEffect(() => {
+    // Check for stored biometric credentials
+    hasStoredCredentials().then(setHasBiometricCredentials)
+
     if (!auth) {
       setLoading(false)
       return
     }
 
-    // Listen to auth state changes
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    // Listen to auth state changes (compat SDK)
+    const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
       if (firebaseUser) {
         // User is signed in
         await loadUserData(firebaseUser)
@@ -62,33 +70,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe()
   }, [])
 
-  const loadUserData = async (firebaseUser: FirebaseUser) => {
-    if (!db) return
+  const loadUserData = async (firebaseUser: firebase.User) => {
+    // Even if Firestore fails, we can still use the auth user data
+    const fallbackUser = {
+      id: firebaseUser.uid,
+      email: firebaseUser.email || "",
+      name: firebaseUser.displayName || "",
+    }
+
+    if (!db) {
+      setUser(fallbackUser)
+      return
+    }
 
     try {
-      const userDoc = await getDoc(doc(db, "users", firebaseUser.uid))
+      const userDoc = await db.collection("users").doc(firebaseUser.uid).get()
 
-      if (userDoc.exists()) {
-        const userData = userDoc.data()
+      if (userDoc.exists) {
+        const userData = userDoc.data() || {}
         setUser({
           id: firebaseUser.uid,
           email: firebaseUser.email || "",
-          name: userData.name || "",
+          name: userData.name || firebaseUser.displayName || "",
           ...userData
         })
       } else {
-        // Create user document if it doesn't exist
-        const newUser = {
-          id: firebaseUser.uid,
-          email: firebaseUser.email || "",
-          name: firebaseUser.displayName || "",
-          createdAt: new Date().toISOString()
+        // Try to create user document, but don't fail if permissions block us
+        try {
+          const newUser = {
+            id: firebaseUser.uid,
+            email: firebaseUser.email || "",
+            name: firebaseUser.displayName || "",
+            createdAt: new Date().toISOString()
+          }
+          await db.collection("users").doc(firebaseUser.uid).set(newUser)
+          setUser(newUser)
+        } catch (writeError) {
+          console.warn("⚠️ Could not create user doc:", writeError)
+          setUser(fallbackUser)
         }
-        await setDoc(doc(db, "users", firebaseUser.uid), newUser)
-        setUser(newUser)
       }
     } catch (error) {
-      console.error("Error loading user data:", error)
+      console.warn("⚠️ Could not load user data from Firestore, using auth data:", error)
+      setUser(fallbackUser)
     }
   }
 
@@ -98,11 +122,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      await signInWithEmailAndPassword(auth, email, password)
+      const userCredential = await auth.signInWithEmailAndPassword(email, password)
       await AsyncStorage.removeItem("guestMode")
+
+      // Save credentials to Keychain for biometric re-auth
+      const uid = userCredential.user?.uid || ""
+      const userName = userCredential.user?.displayName || ""
+      await saveCredentials(email, password, userName, uid)
+      setHasBiometricCredentials(true)
     } catch (error: any) {
       console.error("Login error:", error)
-      // Translate Firebase errors to user-friendly messages
       const errorCode = error.code || ""
       switch (errorCode) {
         case "auth/invalid-email":
@@ -124,27 +153,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  // Biometric login - authenticate with Face ID/Touch ID and auto-login
+  const loginWithBiometrics = async (): Promise<boolean> => {
+    try {
+      const credentials = await authenticateWithBiometrics()
+      if (!credentials) {
+        return false
+      }
+
+      // Use stored credentials to sign in
+      await login(credentials.email, credentials.password)
+      return true
+    } catch (error) {
+      console.error("Biometric login failed:", error)
+      return false
+    }
+  }
+
   const signup = async (email: string, password: string, name: string) => {
-    if (!auth || !db) {
+    if (!auth) {
       throw new Error("Sign up is temporarily unavailable. Please continue as guest or try again later.")
     }
 
+    // Step 1: Create the Firebase Auth account (this is critical)
+    let userCredential
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password)
-
-      // Create user document in Firestore
-      await setDoc(doc(db, "users", userCredential.user.uid), {
-        name,
-        email,
-        createdAt: new Date().toISOString(),
-        activities: [],
-        preferences: {}
-      })
-
-      await AsyncStorage.removeItem("guestMode")
+      userCredential = await auth.createUserWithEmailAndPassword(email, password)
     } catch (error: any) {
-      console.error("Signup error:", error)
-      // Translate Firebase errors to user-friendly messages
+      console.error("Signup auth error:", error)
       const errorCode = error.code || ""
       switch (errorCode) {
         case "auth/email-already-in-use":
@@ -161,15 +197,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           throw new Error("Unable to create account. Please try again or continue as guest.")
       }
     }
+
+    // Step 2: Set user state immediately with the provided name
+    // This ensures "Welcome {name}" works even if Firestore write fails
+    const uid = userCredential.user!.uid
+    setUser({
+      id: uid,
+      email: email,
+      name: name
+    })
+    setIsAuthenticated(true)
+    setIsGuest(false)
+
+    // Step 3: Save credentials to Keychain for biometric re-auth
+    await saveCredentials(email, password, name, uid)
+    setHasBiometricCredentials(true)
+
+    // Step 4: Try to create Firestore user document (non-critical)
+    if (db) {
+      try {
+        await db.collection("users").doc(uid).set({
+          name,
+          email,
+          createdAt: new Date().toISOString(),
+          activities: [],
+          preferences: {}
+        })
+        console.log("✅ User document created in Firestore")
+      } catch (firestoreError) {
+        console.warn("⚠️ Could not create user document (will retry later):", firestoreError)
+      }
+    }
+
+    await AsyncStorage.removeItem("guestMode")
   }
 
   const logout = async () => {
     if (!auth) return
 
     try {
-      await firebaseSignOut(auth)
+      await auth.signOut()
       await AsyncStorage.removeItem("guestMode")
+      // Clear biometric credentials from Keychain
+      await clearStoredCredentials()
+      setHasBiometricCredentials(false)
       setIsAuthenticated(false)
+      setIsGuest(false)
       setUser(null)
     } catch (error) {
       console.error("Logout error:", error)
@@ -192,12 +265,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const contextValue = {
     isAuthenticated,
     isGuest,
+    loading,
+    hasBiometricCredentials,
     user,
     login,
+    loginWithBiometrics,
     signup,
     logout,
     continueAsGuest,
-    promptLogin
+    promptLogin,
+    getStoredEmail: async () => getStoredEmail()
   }
 
   return (

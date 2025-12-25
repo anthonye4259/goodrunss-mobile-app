@@ -20,6 +20,7 @@ import { WaitlistJoinModal } from "@/components/waitlist-join-modal"
 import { ReviewModal } from "@/components/review-modal"
 import { venueService } from "@/lib/services/venue-service"
 import { Venue } from "@/lib/venue-data"
+import { isBookingEnabled, isBookableSport, getBookableCategory } from "@/lib/launch-cities"
 import { MapsService } from "@/lib/services/maps-service"
 import { PoolConditionsBadge } from "@/components/PoolConditionsBadge"
 // Intelligence Components
@@ -50,7 +51,7 @@ export default function VenueDetailScreen() {
   const [showQuickReport, setShowQuickReport] = useState(false)
   const [showValidation, setShowValidation] = useState(false)
 
-  const primaryActivity = getPrimaryActivity(preferences.activities) as Activity
+  const primaryActivity = getPrimaryActivity(preferences.activities)
   const content = getActivityContent(primaryActivity)
 
   useEffect(() => {
@@ -637,6 +638,64 @@ export default function VenueDetailScreen() {
                 </TouchableOpacity>
               </View>
 
+              {/* Booking CTA - For racquet sports (courts) and wellness (classes) in launch cities */}
+              {isBookableSport(venue.sport) && (
+                <TouchableOpacity
+                  className={`rounded-xl py-4 flex-row items-center justify-center mt-3 ${isBookingEnabled(venue.city)
+                    ? "bg-primary"
+                    : "bg-card border border-border"
+                    }`}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+                    if (isBookingEnabled(venue.city)) {
+                      // Route based on category: wellness -> classes, racquet -> courts
+                      const category = getBookableCategory(venue.sport)
+                      if (category === "wellness") {
+                        router.push(`/book-class/${id}`)
+                      } else {
+                        router.push(`/book-court/${id}`)
+                      }
+                    } else {
+                      // Show coming soon alert
+                      alert("Booking is coming soon to your city! We're expanding rapidly.")
+                    }
+                  }}
+                >
+                  <Ionicons
+                    name={isBookingEnabled(venue.city) ? "calendar" : "time-outline"}
+                    size={20}
+                    color={isBookingEnabled(venue.city) ? "#000" : "#666"}
+                  />
+                  <Text className={`font-bold ml-2 text-lg ${isBookingEnabled(venue.city) ? "text-background" : "text-muted-foreground"
+                    }`}>
+                    {isBookingEnabled(venue.city)
+                      ? getBookableCategory(venue.sport) === "wellness"
+                        ? "Book Class"
+                        : "Book Court"
+                      : "Coming Soon to Your City"}
+                  </Text>
+                </TouchableOpacity>
+              )}
+
+              {/* Trainer/Instructor Rental CTA */}
+              {isBookableSport(venue.sport) && isBookingEnabled(venue.city) && (
+                <TouchableOpacity
+                  className="border border-yellow-500 rounded-xl py-3 flex-row items-center justify-center mt-2"
+                  style={{ backgroundColor: "rgba(255, 215, 0, 0.1)" }}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+                    router.push(`/rent-facility/${id}`)
+                  }}
+                >
+                  <Ionicons name="ribbon" size={18} color="#FFD700" />
+                  <Text className="font-semibold ml-2 text-base" style={{ color: "#FFD700" }}>
+                    {getBookableCategory(venue.sport) === "wellness"
+                      ? "Instructor? Rent Studio"
+                      : "Trainer? Rent Court"}
+                  </Text>
+                </TouchableOpacity>
+              )}
+
               {canRequestPlayers && (
                 <TouchableOpacity
                   className="bg-accent rounded-xl py-4 flex-row items-center justify-center"
@@ -692,6 +751,26 @@ export default function VenueDetailScreen() {
             </View>
 
             <View className="px-6 mb-6">
+              {/* Claim Facility CTA for racquet venues */}
+              {isBookableSport(venue.sport) && (
+                <TouchableOpacity
+                  className="bg-card border border-border rounded-xl p-4 flex-row items-center justify-between mb-3"
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                    router.push(`/facility/claim?venueId=${id}&venueName=${encodeURIComponent(venue.name)}`)
+                  }}
+                >
+                  <View className="flex-row items-center">
+                    <Ionicons name="business" size={24} color="#7ED957" />
+                    <View className="ml-3">
+                      <Text className="text-foreground font-semibold">Own This Facility?</Text>
+                      <Text className="text-muted-foreground text-sm">Claim it to accept bookings</Text>
+                    </View>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color="#666" />
+                </TouchableOpacity>
+              )}
+
               <TouchableOpacity
                 className="bg-card border border-border rounded-xl p-4 flex-row items-center justify-between"
                 onPress={handleUploadPhoto}

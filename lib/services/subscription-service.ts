@@ -192,6 +192,18 @@ class SubscriptionService {
     }
 
     async isPro(): Promise<boolean> {
+        // Check RevenueCat First (Mobile IAP Source of Truth)
+        try {
+            const { revenueCatService } = await import("@/lib/revenue-cat");
+            const customerInfo = await revenueCatService.getCustomerInfo();
+            if (customerInfo && revenueCatService.isPro(customerInfo)) {
+                return true;
+            }
+        } catch (e) {
+            console.warn("IAP check failed, falling back to db", e);
+        }
+
+        // Fallback to Firebase/Stripe (Web Source of Truth)
         const sub = await this.getSubscription()
         return sub.tier === "pro" && (sub.status === "active" || sub.status === "trial")
     }

@@ -6,12 +6,25 @@ import { LocationProvider } from "@/lib/location-context"
 import { StripeProvider } from "@/lib/stripe-provider"
 import { NotificationService } from "@/lib/notification-service"
 import { dailyEngagementService } from "@/lib/services/daily-engagement-service"
-import { useEffect } from "react"
+import { useEffect, useCallback } from "react"
 import "@/lib/i18n"
 import "../global.css"
 import { AuthProvider, useAuth } from "@/lib/auth-context"
 import { useDeepLinking } from "@/lib/services/deep-linking"
 import { setupTrainerRealTimeSync, setupClientRealTimeSync, unsubscribeAll } from "@/lib/services/realtime-sync"
+import { View, ActivityIndicator, Text } from "react-native"
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from "@expo-google-fonts/inter"
+import * as SplashScreen from "expo-splash-screen"
+
+// Prevent splash screen from auto-hiding
+SplashScreen.preventAutoHideAsync()
+
 
 
 // Inner component that has access to auth
@@ -40,6 +53,27 @@ function AppContent({ children }: { children: React.ReactNode }) {
 
 
 export default function RootLayout() {
+  // Load Inter fonts
+  const [fontsLoaded] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+  })
+
+  // Hide splash screen once fonts are loaded
+  const onLayoutRootView = useCallback(async () => {
+    if (fontsLoaded) {
+      await SplashScreen.hideAsync()
+    }
+  }, [fontsLoaded])
+
+  useEffect(() => {
+    if (fontsLoaded) {
+      onLayoutRootView()
+    }
+  }, [fontsLoaded, onLayoutRootView])
+
   useEffect(() => {
     const initNotifications = async () => {
       try {
@@ -63,6 +97,26 @@ export default function RootLayout() {
 
     initNotifications()
   }, [])
+
+  // Show loading screen while fonts load
+  if (!fontsLoaded) {
+    return (
+      <View style={{
+        flex: 1,
+        backgroundColor: '#0A0A0A',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <Text style={{
+          fontSize: 32,
+          fontWeight: 'bold',
+          color: '#7ED957',
+          marginBottom: 8,
+        }}>GoodRunss</Text>
+        <ActivityIndicator size="small" color="#7ED957" style={{ marginTop: 20 }} />
+      </View>
+    )
+  }
 
 
 

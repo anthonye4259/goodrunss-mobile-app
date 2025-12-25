@@ -25,7 +25,7 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(false)
   const [nearbyTrainers, setNearbyTrainers] = useState<any[]>([])
 
-  const primaryActivity = getPrimaryActivity(preferences.activities) as Activity
+  const primaryActivity = getPrimaryActivity(preferences.activities)
 
   useEffect(() => {
     const initLocation = async () => {

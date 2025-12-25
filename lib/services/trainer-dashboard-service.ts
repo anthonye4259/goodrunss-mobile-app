@@ -37,7 +37,13 @@ export interface Booking {
     amount: number
     createdAt: string
     updatedAt?: string
+    platformFee?: number
+    netPayout?: number
+    isFirstSession?: boolean
 }
+
+// Import Subscription Service for Fee Logic
+import { subscriptionService } from "./subscription-service"
 
 export interface Earnings {
     today: number
@@ -218,6 +224,69 @@ class TrainerDashboardService {
     // ============================================
     // BOOKINGS
     // ============================================
+
+    async addBooking(booking: Omit<Booking, "id" | "createdAt" | "platformFee" | "netPayout" | "isFirstSession" | "updatedAt">): Promise<Booking> {
+        const userId = await this.ensureUserId()
+
+        // 1. Calculate Fees
+        let feeRate = 0.15 // Default 15% for Free Tier
+        const isPro = await subscriptionService.isPro()
+
+        // Check for previous bookings (Rebook Logic)
+        const previousBookings = await this.getBookings()
+        const isFirstSession = !previousBookings.some(b =>
+            b.clientId === booking.clientId &&
+            (b.status === "completed" || b.status === "confirmed")
+        )
+
+        if (isPro) {
+            if (isFirstSession) {
+                feeRate = 0.06 // 6% for first-time SaaS bookings
+            } else {
+                feeRate = 0.04 // 4% for re-bookings (SaaS)
+            }
+        }
+
+        const platformFee = booking.amount * feeRate
+        const netPayout = booking.amount - platformFee
+
+        const newBooking = {
+            ...booking,
+            id: `booking_${Date.now()}`,
+            platformFee,
+            netPayout,
+            isFirstSession,
+            createdAt: new Date().toISOString(),
+            status: booking.status || "pending",
+            paymentStatus: booking.paymentStatus || "pending"
+        } as Booking
+
+        if (!db) {
+            const bookings = await this.getBookings()
+            bookings.push(newBooking)
+            await AsyncStorage.setItem(`@trainer_bookings_${userId}`, JSON.stringify(bookings))
+
+            // Should also update Earnings here if paid
+            if (newBooking.paymentStatus === 'paid') {
+                // this.updateEarnings(netPayout) // Placeholder
+            }
+
+            return newBooking
+        }
+
+        try {
+            const { collection, addDoc, serverTimestamp } = await import("firebase/firestore")
+            const docRef = await addDoc(collection(db, "trainers", userId, "bookings"), {
+                ...newBooking,
+                createdAt: serverTimestamp(),
+            })
+
+            return { ...newBooking, id: docRef.id }
+        } catch (error) {
+            console.error("Error adding booking:", error)
+            throw error
+        }
+    }
 
     async getBookings(status?: Booking["status"]): Promise<Booking[]> {
         const userId = await this.ensureUserId()

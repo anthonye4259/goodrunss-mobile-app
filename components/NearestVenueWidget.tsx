@@ -148,7 +148,7 @@ export function NearestVenueWidget() {
                         <Text style={styles.liveText}>LIVE</Text>
                     </View>
                 </View>
-                <TouchableOpacity onPress={() => router.push("/(tabs)/explore")}>
+                <TouchableOpacity onPress={() => router.push("/(tabs)/live")}>
                     <Text style={styles.seeAll}>View Map</Text>
                 </TouchableOpacity>
             </View>

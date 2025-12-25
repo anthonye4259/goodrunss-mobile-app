@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from "react-native"
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from "react-native"
 import { useRouter } from "expo-router"
 import { LinearGradient } from "expo-linear-gradient"
 import { SafeAreaView } from "react-native-safe-area-context"
@@ -7,354 +7,308 @@ import { Ionicons } from "@expo/vector-icons"
 import * as Haptics from "expo-haptics"
 import { useUserPreferences } from "@/lib/user-preferences"
 
+const { width } = Dimensions.get("window")
+
 type UserTypeOption = "player" | "trainer" | "instructor" | "both"
 
-const USER_TYPE_OPTIONS = [
+// Clean options
+const OPTIONS: { id: UserTypeOption; title: string; desc: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   {
-    id: "player" as UserTypeOption,
-    title: "Player",
-    subtitle: "Find Games & Courts",
-    description: "Check conditions, join games, compete",
-    icon: "basketball" as const,
-    color: "#FF6B35",
-    category: "play",
+    id: "player",
+    title: "I Play",
+    desc: "Find courts, check conditions, join games",
+    icon: "basketball-outline",
   },
   {
-    id: "trainer" as UserTypeOption,
-    title: "Trainer",
-    subtitle: "Sports Coach",
-    description: "Coach athletes, manage clients",
-    icon: "fitness" as const,
-    color: "#7ED957",
-    category: "teach",
+    id: "trainer",
+    title: "I Train",
+    desc: "Coach athletes, manage bookings, get paid",
+    icon: "fitness-outline",
   },
   {
-    id: "instructor" as UserTypeOption,
-    title: "Instructor",
-    subtitle: "Wellness Teacher",
-    description: "Teach wellness, host sessions",
-    icon: "sparkles" as const,
-    color: "#EC4899",
-    category: "teach",
+    id: "instructor",
+    title: "I Teach",
+    desc: "Host wellness classes, build your community",
+    icon: "sparkles-outline",
   },
   {
-    id: "both" as UserTypeOption,
+    id: "both",
     title: "I Do Both",
-    subtitle: "Play & Teach",
-    description: "I both play AND teach",
-    icon: "sync" as const,
-    color: "#06B6D4",
-    category: "both",
+    desc: "I play AND teach or train others",
+    icon: "swap-horizontal-outline",
   },
 ]
-
 
 export default function OnboardingScreen() {
   const router = useRouter()
   const { setPreferences } = useUserPreferences()
-  const [userType, setUserType] = useState<UserTypeOption | null>(null)
+  const [selected, setSelected] = useState<UserTypeOption | null>(null)
 
   const handleSelect = (type: UserTypeOption) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-    setUserType(type)
+    setSelected(type)
   }
 
   const handleContinue = () => {
-    if (userType) {
+    if (selected) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
       router.push({
         pathname: "/onboarding/questionnaire",
-        params: { userType }
+        params: { userType: selected }
       })
     }
   }
 
   const handleSkip = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-    // Set minimal defaults and mark as incomplete
     setPreferences({
       userType: "player",
       activities: ["Basketball"],
       primaryActivity: "Basketball",
       isStudioUser: false,
       isRecUser: true,
-      onboardingComplete: false, // Will prompt to complete later
+      onboardingComplete: false,
     })
     router.replace("/(tabs)")
   }
 
-  const playOptions = USER_TYPE_OPTIONS.filter(o => o.category === "play")
-  const teachOptions = USER_TYPE_OPTIONS.filter(o => o.category === "teach")
-  const bothOption = USER_TYPE_OPTIONS.find(o => o.category === "both")!
-
   return (
-    <LinearGradient colors={["#0A0A0A", "#141414"]} style={styles.container}>
+    <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          {/* Skip Button in Top Right */}
-          <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
-            <Text style={styles.skipText}>Skip for now</Text>
-          </TouchableOpacity>
+        {/* Skip Button */}
+        <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
+          <Text style={styles.skipText}>Skip</Text>
+        </TouchableOpacity>
 
-          <View style={styles.header}>
-            <Text style={styles.title}>Welcome to GoodRunss</Text>
-            <Text style={styles.subtitle}>What brings you here?</Text>
+        {/* Header with Accent */}
+        <View style={styles.header}>
+          <View style={styles.brandBadge}>
+            <Text style={styles.brandText}>GoodRunss</Text>
           </View>
+          <Text style={styles.title}>What brings{"\n"}you here?</Text>
+          <Text style={styles.subtitle}>
+            Choose your primary role to personalize your experience
+          </Text>
+        </View>
 
-          {/* Play/Practice Section */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Ionicons name="trophy-outline" size={18} color="#FF6B35" />
-              <Text style={styles.sectionTitle}>I PLAY / PRACTICE</Text>
-            </View>
-            <View style={styles.optionRow}>
-              {playOptions.map((option) => (
-                <TouchableOpacity
-                  key={option.id}
-                  onPress={() => handleSelect(option.id)}
-                  style={[
-                    styles.optionCard,
-                    userType === option.id && styles.optionCardSelected,
-                    { borderColor: userType === option.id ? option.color : "#333" }
-                  ]}
-                >
-                  <View style={[styles.optionIconContainer, { backgroundColor: `${option.color}20` }]}>
-                    <Ionicons name={option.icon} size={28} color={option.color} />
-                  </View>
-                  <Text style={styles.optionTitle}>{option.title}</Text>
-                  <Text style={styles.optionSubtitle}>{option.subtitle}</Text>
-                  <Text style={styles.optionDescription}>{option.description}</Text>
-                  {userType === option.id && (
-                    <View style={[styles.checkBadge, { backgroundColor: option.color }]}>
-                      <Ionicons name="checkmark" size={16} color="#FFF" />
-                    </View>
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
+        {/* Options */}
+        <View style={styles.optionsContainer}>
+          {OPTIONS.map((option, index) => {
+            const isSelected = selected === option.id
+            return (
+              <TouchableOpacity
+                key={option.id}
+                onPress={() => handleSelect(option.id)}
+                activeOpacity={0.8}
+                style={[
+                  styles.optionCard,
+                  isSelected && styles.optionCardSelected
+                ]}
+              >
+                <View style={[
+                  styles.iconContainer,
+                  isSelected && styles.iconContainerSelected
+                ]}>
+                  <Ionicons
+                    name={option.icon}
+                    size={24}
+                    color={isSelected ? "#7ED957" : "#666"}
+                  />
+                </View>
+                <View style={styles.optionText}>
+                  <Text style={[
+                    styles.optionTitle,
+                    isSelected && styles.optionTitleSelected
+                  ]}>{option.title}</Text>
+                  <Text style={styles.optionDesc}>{option.desc}</Text>
+                </View>
+                <View style={[
+                  styles.radio,
+                  isSelected && styles.radioSelected
+                ]}>
+                  {isSelected && <View style={styles.radioInner} />}
+                </View>
+              </TouchableOpacity>
+            )
+          })}
+        </View>
 
-          {/* Teach/Train Section */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Ionicons name="school-outline" size={18} color="#7ED957" />
-              <Text style={styles.sectionTitle}>I TEACH / TRAIN</Text>
-            </View>
-            <View style={styles.optionRow}>
-              {teachOptions.map((option) => (
-                <TouchableOpacity
-                  key={option.id}
-                  onPress={() => handleSelect(option.id)}
-                  style={[
-                    styles.optionCard,
-                    userType === option.id && styles.optionCardSelected,
-                    { borderColor: userType === option.id ? option.color : "#333" }
-                  ]}
-                >
-                  <View style={[styles.optionIconContainer, { backgroundColor: `${option.color}20` }]}>
-                    <Ionicons name={option.icon} size={28} color={option.color} />
-                  </View>
-                  <Text style={styles.optionTitle}>{option.title}</Text>
-                  <Text style={styles.optionSubtitle}>{option.subtitle}</Text>
-                  <Text style={styles.optionDescription}>{option.description}</Text>
-                  {userType === option.id && (
-                    <View style={[styles.checkBadge, { backgroundColor: option.color }]}>
-                      <Ionicons name="checkmark" size={16} color="#FFF" />
-                    </View>
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          {/* Both Option */}
+        {/* Footer */}
+        <View style={styles.footer}>
           <TouchableOpacity
-            onPress={() => handleSelect(bothOption.id)}
+            onPress={handleContinue}
+            disabled={!selected}
             style={[
-              styles.bothCard,
-              userType === bothOption.id && styles.bothCardSelected,
-              { borderColor: userType === bothOption.id ? bothOption.color : "#333" }
+              styles.continueButton,
+              selected && styles.continueButtonActive
             ]}
           >
-            <View style={[styles.bothIconContainer, { backgroundColor: `${bothOption.color}20` }]}>
-              <Ionicons name={bothOption.icon} size={24} color={bothOption.color} />
-            </View>
-            <View style={styles.bothTextContainer}>
-              <Text style={styles.bothTitle}>{bothOption.title}</Text>
-              <Text style={styles.bothDescription}>{bothOption.description}</Text>
-            </View>
-            {userType === bothOption.id && (
-              <View style={[styles.checkBadge, { backgroundColor: bothOption.color }]}>
-                <Ionicons name="checkmark" size={16} color="#FFF" />
-              </View>
-            )}
+            <Text style={[
+              styles.continueText,
+              selected && styles.continueTextActive
+            ]}>
+              Continue
+            </Text>
+            <Ionicons
+              name="arrow-forward"
+              size={20}
+              color={selected ? "#000" : "#444"}
+            />
           </TouchableOpacity>
 
-          {/* Continue Button */}
-          {userType && (
-            <TouchableOpacity onPress={handleContinue} style={styles.continueButton}>
-              <Text style={styles.continueText}>Continue</Text>
-              <Ionicons name="arrow-forward" size={20} color="#000" />
-            </TouchableOpacity>
-          )}
-
-          <View style={{ height: 40 }} />
-        </ScrollView>
+          <Text style={styles.footerNote}>
+            You can always change this later
+          </Text>
+        </View>
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#0A0A0A",
   },
   safeArea: {
     flex: 1,
+    paddingHorizontal: 24,
   },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: 20,
-    paddingTop: 40,
+  skipButton: {
+    alignSelf: "flex-end",
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+  },
+  skipText: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 15,
+    color: "#666",
   },
   header: {
+    marginTop: 8,
     marginBottom: 32,
   },
+  brandBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: "rgba(126, 217, 87, 0.1)",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginBottom: 20,
+  },
+  brandText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 13,
+    color: "#7ED957",
+    letterSpacing: 0.5,
+  },
   title: {
-    fontSize: 32,
-    fontWeight: "bold",
+    fontFamily: "Inter_700Bold",
+    fontSize: 34,
     color: "#FFFFFF",
-    marginBottom: 8,
+    lineHeight: 42,
+    marginBottom: 12,
   },
   subtitle: {
-    fontSize: 18,
-    color: "#9CA3AF",
+    fontFamily: "Inter_400Regular",
+    fontSize: 16,
+    color: "#888",
+    lineHeight: 24,
   },
-  section: {
-    marginBottom: 24,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12,
-    gap: 8,
-  },
-  sectionEmoji: {
-    fontSize: 18,
-  },
-  sectionTitle: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#666",
-    letterSpacing: 1,
-  },
-  optionRow: {
-    flexDirection: "row",
-    gap: 12,
+  optionsContainer: {
+    flex: 1,
+    gap: 10,
   },
   optionCard: {
-    flex: 1,
-    borderWidth: 2,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#111111",
     borderRadius: 16,
-    padding: 16,
-    backgroundColor: "#1A1A1A",
-    position: "relative",
+    borderWidth: 1.5,
+    borderColor: "#1A1A1A",
+    padding: 18,
   },
   optionCardSelected: {
+    borderColor: "#7ED957",
     backgroundColor: "rgba(126, 217, 87, 0.05)",
   },
-  optionIconContainer: {
+  iconContainer: {
     width: 48,
     height: 48,
     borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 12,
-  },
-  optionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-    marginBottom: 2,
-  },
-  optionSubtitle: {
-    fontSize: 12,
-    color: "#7ED957",
-    fontWeight: "600",
-    marginBottom: 6,
-  },
-  optionDescription: {
-    fontSize: 12,
-    color: "#9CA3AF",
-    lineHeight: 16,
-  },
-  checkBadge: {
-    position: "absolute",
-    top: 12,
-    right: 12,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  bothCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 2,
-    borderRadius: 16,
-    padding: 16,
     backgroundColor: "#1A1A1A",
-    marginTop: 8,
-    position: "relative",
-  },
-  bothCardSelected: {
-    backgroundColor: "rgba(6, 182, 212, 0.05)",
-  },
-  bothIconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 14,
   },
-  bothTextContainer: {
+  iconContainerSelected: {
+    backgroundColor: "rgba(126, 217, 87, 0.15)",
+  },
+  optionText: {
     flex: 1,
   },
-  bothTitle: {
+  optionTitle: {
+    fontFamily: "Inter_600SemiBold",
     fontSize: 17,
-    fontWeight: "bold",
     color: "#FFFFFF",
-    marginBottom: 2,
+    marginBottom: 4,
   },
-  bothDescription: {
-    fontSize: 13,
-    color: "#9CA3AF",
+  optionTitleSelected: {
+    color: "#7ED957",
+  },
+  optionDesc: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 14,
+    color: "#888",
+    lineHeight: 20,
+  },
+  radio: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: "#333",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  radioSelected: {
+    borderColor: "#7ED957",
+  },
+  radioInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#7ED957",
+  },
+  footer: {
+    paddingTop: 16,
+    paddingBottom: 16,
   },
   continueButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#7ED957",
-    borderRadius: 12,
-    paddingVertical: 16,
-    marginTop: 24,
+    backgroundColor: "#1A1A1A",
+    borderRadius: 14,
+    paddingVertical: 18,
     gap: 8,
   },
+  continueButtonActive: {
+    backgroundColor: "#7ED957",
+  },
   continueText: {
-    color: "#000000",
-    fontWeight: "bold",
-    fontSize: 18,
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 17,
+    color: "#444",
   },
-  skipButton: {
-    alignSelf: "flex-end",
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+  continueTextActive: {
+    color: "#000",
   },
-  skipText: {
-    color: "#6B7280",
-    fontSize: 14,
-    fontWeight: "500",
+  footerNote: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 13,
+    color: "#555",
+    textAlign: "center",
+    marginTop: 16,
   },
 })

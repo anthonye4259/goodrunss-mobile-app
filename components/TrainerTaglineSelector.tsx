@@ -11,7 +11,8 @@ import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from "rea
 import { Ionicons } from "@expo/vector-icons"
 import { useState, useEffect } from "react"
 import * as Haptics from "expo-haptics"
-import { generateTrainerTagline, type TaglineResult } from "@/lib/services/trainer-profile-defaults"
+import { generateTrainerTagline, generateTaglineOptions } from "@/lib/services/trainer-profile-defaults"
+
 
 interface TrainerTaglineSelectorProps {
     activity: string
@@ -35,23 +36,24 @@ export function TrainerTaglineSelector({
         loadTaglines()
     }, [activity])
 
+    // ... imports
+
     const loadTaglines = async () => {
         setLoading(true)
         try {
-            const result = await generateTrainerTagline(activity)
-            setOptions(result.options)
-            if (!selectedTagline) {
-                setSelectedTagline(result.tagline) // Default suggestion
+            // Correct API call: Get multiple options directly
+            const options = generateTaglineOptions(activity)
+            setOptions(options)
+
+            if (!selectedTagline && options.length > 0) {
+                setSelectedTagline(options[0]) // Default to first option
             }
         } catch (error) {
             console.error("[TaglineSelector] Error:", error)
-            // Fallback options
             setOptions([
                 `${activity} Pro`,
-                `${activity} Expert`,
-                `${activity} Master`,
-                `The ${activity} Coach`,
-                `${activity} Champion`,
+                `${activity} Coach`,
+                `${activity} Expert`
             ])
         } finally {
             setLoading(false)
@@ -62,8 +64,8 @@ export function TrainerTaglineSelector({
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
         setRegenerating(true)
         try {
-            const result = await generateTrainerTagline(activity)
-            setOptions(result.options)
+            const newOptions = generateTaglineOptions(activity)
+            setOptions(newOptions)
         } catch (error) {
             console.error("[TaglineSelector] Regenerate error:", error)
         } finally {
@@ -115,7 +117,7 @@ export function TrainerTaglineSelector({
 
             {/* Options */}
             <View style={styles.optionsContainer}>
-                {options.map((tagline, index) => (
+                {(options || []).map((tagline, index) => (
                     <TouchableOpacity
                         key={index}
                         style={[

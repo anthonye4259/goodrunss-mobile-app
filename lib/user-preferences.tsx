@@ -11,6 +11,9 @@ type UserPreferences = {
   primaryActivity?: string
   onboardingComplete?: boolean // True if setup completed, false if skipped
 
+  // For "both" users - which mode they're currently in
+  activeMode?: "player" | "trainer"
+
   userId?: string
   location?: {
     latitude: number

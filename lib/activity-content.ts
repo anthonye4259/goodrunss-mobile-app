@@ -750,13 +750,18 @@ export const ACTIVITY_CONTENT: Record<Activity, ActivityContent> = {
   },
 }
 
-export function getActivityContent(activity: Activity): ActivityContent {
-  return ACTIVITY_CONTENT[activity]
+export function getActivityContent(activity: Activity | null | undefined): ActivityContent {
+  // Default to Basketball if no activity is provided to prevent crashes
+  const safeActivity = activity || "Basketball"
+  return ACTIVITY_CONTENT[safeActivity] || ACTIVITY_CONTENT["Basketball"]
 }
 
-export function getPrimaryActivity(activities: string[]): Activity | null {
-  if (activities.length === 0) return null
-  return activities[0] as Activity
+export function getPrimaryActivity(activities: string[] | undefined | null): Activity {
+  // Always return a valid Activity, defaulting to Basketball
+  if (!activities || activities.length === 0) return "Basketball"
+  // Validate that the activity exists in our content
+  const activity = activities[0] as Activity
+  return ACTIVITY_CONTENT[activity] ? activity : "Basketball"
 }
 
 export function isStudioActivity(activity: string): boolean {

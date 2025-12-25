@@ -1,7 +1,14 @@
-import { initializeApp, FirebaseApp, getApps, getApp } from "firebase/app"
-import { getFirestore, Firestore } from "firebase/firestore"
-import { getAuth, Auth, initializeAuth, getReactNativePersistence } from "firebase/auth"
-import AsyncStorage from "@react-native-async-storage/async-storage"
+/**
+ * Firebase Configuration for React Native / Expo
+ * 
+ * Uses Firebase compat SDK for reliable React Native compatibility.
+ * The modular SDK v10+ has known issues with Metro bundler.
+ */
+
+// Use compat SDK - much more reliable with React Native
+import firebase from "firebase/compat/app"
+import "firebase/compat/auth"
+import "firebase/compat/firestore"
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || "",
@@ -12,61 +19,44 @@ const firebaseConfig = {
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID || "",
 }
 
-// Log configuration status (without exposing keys)
-const configStatus = {
-  apiKey: !!firebaseConfig.apiKey,
-  authDomain: !!firebaseConfig.authDomain,
-  projectId: !!firebaseConfig.projectId,
-  appId: !!firebaseConfig.appId,
-}
-console.log("Firebase config status:", configStatus)
+console.log("Firebase config:", {
+  apiKey: firebaseConfig.apiKey ? "✓" : "✗",
+  projectId: firebaseConfig.projectId,
+  appId: firebaseConfig.appId ? "✓" : "✗",
+})
 
-// Safe initialization - won't crash if Firebase isn't configured
-let app: FirebaseApp | null = null
-let db: Firestore | null = null
-let auth: Auth | null = null
+// Initialize Firebase app (compat style)
+let app: firebase.app.App | null = null
+let auth: firebase.auth.Auth | null = null
+let db: firebase.firestore.Firestore | null = null
 
-try {
-  // Check if all required config values are present
-  const hasRequiredConfig = firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.appId
+const hasRequiredConfig = !!(firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.appId)
 
-  if (!hasRequiredConfig) {
-    console.warn("⚠️ Firebase config incomplete - some features may not work")
-  }
-
-  // Check if Firebase app already exists
-  if (getApps().length > 0) {
-    app = getApp()
-    // CRITICAL: When app already exists, we still need to get auth properly
-    // Try to get existing auth instance - this preserves the persistence setting
-    try {
-      auth = getAuth(app)
-    } catch (authError) {
-      console.log("Reinitializing auth with persistence...")
-      auth = initializeAuth(app, {
-        persistence: getReactNativePersistence(AsyncStorage)
-      })
+if (hasRequiredConfig) {
+  try {
+    // Initialize or get existing app
+    if (firebase.apps.length === 0) {
+      app = firebase.initializeApp(firebaseConfig)
+      console.log("✅ Firebase App initialized")
+    } else {
+      app = firebase.app()
+      console.log("✅ Firebase App already exists")
     }
-  } else if (firebaseConfig.projectId) {
-    app = initializeApp(firebaseConfig)
-    // Initialize Auth with AsyncStorage persistence for React Native
-    auth = initializeAuth(app, {
-      persistence: getReactNativePersistence(AsyncStorage)
-    })
-  }
 
-  if (app) {
-    db = getFirestore(app)
-    console.log("✅ Firebase initialized successfully")
-    console.log("✅ Auth instance:", auth ? "Ready" : "Not available")
-    console.log("✅ Firestore:", db ? "Ready" : "Not available")
-  } else {
-    console.warn("⚠️ Firebase not configured - running without backend")
+    // Get auth instance
+    auth = firebase.auth()
+    console.log("✅ Auth ready")
+
+    // Get Firestore instance
+    db = firebase.firestore()
+    console.log("✅ Firestore ready")
+
+  } catch (error) {
+    console.error("❌ Firebase error:", error)
   }
-} catch (error) {
-  console.error("❌ Firebase setup error:", error)
-  // App will continue without Firebase, but log the actual error
+} else {
+  console.warn("⚠️ Firebase config missing - demo mode")
 }
 
-export { db, app, auth }
-
+export { app, auth, db }
+export default firebase

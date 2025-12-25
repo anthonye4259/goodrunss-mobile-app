@@ -41,8 +41,20 @@
       "cache": {
         "disabled": true
       },
+      "env": {
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyD2itZ1e4WTYyBV4UyLAdjNqFCGGKX546s",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "goodrunss-ai.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "goodrunss-ai",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "goodrunss-ai.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "947746883381",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:947746883381:web:50154e35b6a7f8bdc6ee7c",
+        "EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY": "pk_live_51Rfsym06I3eFkRUmipmmgFo6bqX8Al08OhJZm1N6b6UvO6ZnLUDuhOQpNNaSeJlbFAmETOt64P6oRMboXLsnm3tJ00ClGq74Lv",
+        "EXPO_PUBLIC_OPENWEATHER_API_KEY": "56ce8aa942f8654efda6714dd9a4bb25",
+        "EXPO_PUBLIC_DASHBOARD_API_URL": "https://studios.goodrunss.com"
+      },
       "ios": {
-        "resourceClass": "m-medium"
+        "resourceClass": "m-medium",
+        "credentialsSource": "remote"
       },
       "android": {
         "buildType": "app-bundle",

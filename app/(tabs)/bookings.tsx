@@ -1,64 +1,96 @@
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native"
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
 import { useUserPreferences } from "@/lib/user-preferences"
-import { getActivityContent, getPrimaryActivity, type Activity } from "@/lib/activity-content"
+import { getActivityContent, getPrimaryActivity } from "@/lib/activity-content"
 import { router } from "expo-router"
 import * as Haptics from "expo-haptics"
 import { SafeAreaView } from "react-native-safe-area-context"
-import { useState } from "react"
-
-type Booking = {
-  id: string
-  title: string
-  trainer: string
-  location: string
-  date: string
-  time: string
-  status: "upcoming" | "completed" | "cancelled"
-  price: number
-}
+import { useState, useEffect } from "react"
+import { useAuth } from "@/lib/auth-context"
+import { courtBookingService, CourtBooking } from "@/lib/services/court-booking-service"
+import { venueService } from "@/lib/services/venue-service"
 
 export default function BookingsScreen() {
   const { t } = useTranslation()
   const { preferences } = useUserPreferences()
-  const primaryActivity = getPrimaryActivity(preferences.activities) as Activity
+  const { user } = useAuth()
+  const primaryActivity = getPrimaryActivity(preferences.activities)
   const content = getActivityContent(primaryActivity)
   const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming")
+  const [loading, setLoading] = useState(true)
+  const [courtBookings, setCourtBookings] = useState<CourtBooking[]>([])
+  const [venueNames, setVenueNames] = useState<Record<string, string>>({})
 
-  const MOCK_BOOKINGS: Booking[] = [
-    {
-      id: "1",
-      title: `${primaryActivity} Training Session`,
-      trainer: content.sampleTrainers[0]?.name || "Coach",
-      location: "Downtown Sports Complex",
-      date: "Tomorrow",
-      time: "10:00 AM",
-      status: "upcoming",
-      price: content.sampleTrainers[0]?.price || 75,
-    },
-    {
-      id: "2",
-      title: `${primaryActivity} Private Lesson`,
-      trainer: content.sampleTrainers[1]?.name || "Trainer",
-      location: "Community Recreation Center",
-      date: "Dec 8",
-      time: "2:00 PM",
-      status: "upcoming",
-      price: content.sampleTrainers[1]?.price || 85,
-    },
-  ]
+  useEffect(() => {
+    loadBookings()
+  }, [user])
 
-  const handlePress = (id: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-    router.push(`/booking/${id}`)
+  const loadBookings = async () => {
+    if (!user) {
+      setLoading(false)
+      return
+    }
+
+    setLoading(true)
+    try {
+      const bookings = await courtBookingService.getPlayerBookings(user.uid)
+      setCourtBookings(bookings)
+
+      // Load venue names for each booking
+      const venueIds = [...new Set(bookings.map(b => b.venueId))]
+      const names: Record<string, string> = {}
+      for (const venueId of venueIds) {
+        const venue = await venueService.getVenueById(venueId)
+        if (venue) names[venueId] = venue.name
+      }
+      setVenueNames(names)
+    } catch (error) {
+      console.error("Error loading bookings:", error)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const upcomingBookings = MOCK_BOOKINGS.filter(b => b.status === "upcoming")
-  const pastBookings = MOCK_BOOKINGS.filter(b => b.status === "completed" || b.status === "cancelled")
+  const handleCancelBooking = async (booking: CourtBooking) => {
+    Alert.alert(
+      "Cancel Booking",
+      `Cancel your booking at ${venueNames[booking.venueId] || "venue"} on ${booking.date} at ${booking.startTime}?`,
+      [
+        { text: "Keep Booking", style: "cancel" },
+        {
+          text: "Cancel",
+          style: "destructive",
+          onPress: async () => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning)
+            const success = await courtBookingService.cancelBooking(booking.id, user?.uid || "")
+            if (success) {
+              loadBookings()
+              Alert.alert("Cancelled", "Your booking has been cancelled. Refund will be processed.")
+            } else {
+              Alert.alert("Error", "Failed to cancel booking")
+            }
+          },
+        },
+      ]
+    )
+  }
+
+  const today = new Date().toISOString().split("T")[0]
+  const upcomingBookings = courtBookings.filter(b => b.date >= today && b.status === "confirmed")
+  const pastBookings = courtBookings.filter(b => b.date < today || b.status !== "confirmed")
 
   const displayBookings = activeTab === "upcoming" ? upcomingBookings : pastBookings
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "confirmed": return "#7ED957"
+      case "completed": return "#4CAF50"
+      case "cancelled": return "#FF6B6B"
+      default: return "#888"
+    }
+  }
 
   return (
     <LinearGradient colors={["#0A0A0A", "#141414"]} style={styles.container}>
@@ -66,7 +98,7 @@ export default function BookingsScreen() {
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>{t('bookings.title')}</Text>
+            <Text style={styles.title}>My Bookings</Text>
           </View>
 
           {/* Tabs */}
@@ -76,7 +108,7 @@ export default function BookingsScreen() {
               onPress={() => setActiveTab("upcoming")}
             >
               <Text style={[styles.tabText, activeTab === "upcoming" && styles.tabTextActive]}>
-                {t('bookings.upcoming')}
+                Upcoming ({upcomingBookings.length})
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -84,54 +116,60 @@ export default function BookingsScreen() {
               onPress={() => setActiveTab("past")}
             >
               <Text style={[styles.tabText, activeTab === "past" && styles.tabTextActive]}>
-                {t('bookings.past')}
+                Past ({pastBookings.length})
               </Text>
             </TouchableOpacity>
           </View>
 
-          {/* Bookings List */}
-          {displayBookings.length > 0 ? (
+          {/* Loading State */}
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#7ED957" />
+            </View>
+          ) : displayBookings.length > 0 ? (
             <View style={styles.bookingsContainer}>
               {displayBookings.map((booking) => (
-                <TouchableOpacity
-                  key={booking.id}
-                  style={styles.bookingCard}
-                  onPress={() => handlePress(booking.id)}
-                >
+                <View key={booking.id} style={styles.bookingCard}>
                   <View style={styles.bookingHeader}>
                     <View style={styles.bookingIcon}>
-                      <Ionicons name="calendar" size={24} color="#7ED957" />
+                      <Ionicons name="tennisball" size={24} color="#7ED957" />
                     </View>
                     <View style={styles.bookingInfo}>
-                      <Text style={styles.bookingTitle}>{booking.title}</Text>
-                      <Text style={styles.bookingTrainer}>with {booking.trainer}</Text>
+                      <Text style={styles.bookingTitle}>Court Booking</Text>
+                      <Text style={styles.bookingTrainer}>
+                        {venueNames[booking.venueId] || "Venue"}
+                      </Text>
                     </View>
-                    <View style={styles.statusBadge}>
-                      <Text style={styles.statusText}>
-                        {booking.status === "upcoming" ? "Upcoming" : booking.status}
+                    <View style={[styles.statusBadge, { backgroundColor: `${getStatusColor(booking.status)}20` }]}>
+                      <Text style={[styles.statusText, { color: getStatusColor(booking.status) }]}>
+                        {booking.status}
                       </Text>
                     </View>
                   </View>
 
                   <View style={styles.bookingDetails}>
                     <View style={styles.detailRow}>
-                      <Ionicons name="location-outline" size={16} color="#9CA3AF" />
-                      <Text style={styles.detailText}>{booking.location}</Text>
+                      <Ionicons name="calendar-outline" size={16} color="#9CA3AF" />
+                      <Text style={styles.detailText}>{booking.date}</Text>
                     </View>
                     <View style={styles.detailRow}>
                       <Ionicons name="time-outline" size={16} color="#9CA3AF" />
-                      <Text style={styles.detailText}>{booking.date} at {booking.time}</Text>
+                      <Text style={styles.detailText}>{booking.startTime} - {booking.endTime}</Text>
                     </View>
                   </View>
 
                   <View style={styles.bookingFooter}>
-                    <Text style={styles.bookingPrice}>${booking.price}</Text>
-                    <TouchableOpacity style={styles.viewButton}>
-                      <Text style={styles.viewButtonText}>View Details</Text>
-                      <Ionicons name="chevron-forward" size={16} color="#7ED957" />
-                    </TouchableOpacity>
+                    <Text style={styles.bookingPrice}>${(booking.totalCharged / 100).toFixed(2)}</Text>
+                    {booking.status === "confirmed" && activeTab === "upcoming" && (
+                      <TouchableOpacity
+                        style={styles.cancelButton}
+                        onPress={() => handleCancelBooking(booking)}
+                      >
+                        <Text style={styles.cancelButtonText}>Cancel</Text>
+                      </TouchableOpacity>
+                    )}
                   </View>
-                </TouchableOpacity>
+                </View>
               ))}
             </View>
           ) : (
@@ -142,12 +180,12 @@ export default function BookingsScreen() {
               <Text style={styles.emptyTitle}>No {activeTab === "upcoming" ? "Upcoming" : "Past"} Bookings</Text>
               <Text style={styles.emptyDescription}>
                 {activeTab === "upcoming"
-                  ? "Book a session with a trainer to get started on your fitness journey."
-                  : "Your completed sessions will appear here."}
+                  ? "Book a court at a tennis, pickleball, or padel facility."
+                  : "Your completed court bookings will appear here."}
               </Text>
               {activeTab === "upcoming" && (
-                <TouchableOpacity style={styles.findButton} onPress={() => router.push("/(tabs)/explore")}>
-                  <Text style={styles.findButtonText}>Find {content.trainerTitlePlural}</Text>
+                <TouchableOpacity style={styles.findButton} onPress={() => router.push("/venues/map")}>
+                  <Text style={styles.findButtonText}>Find Courts</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -318,5 +356,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#000",
+  },
+  loadingContainer: {
+    paddingTop: 100,
+    alignItems: "center",
+  },
+  cancelButton: {
+    backgroundColor: "rgba(255, 107, 107, 0.2)",
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  cancelButtonText: {
+    color: "#FF6B6B",
+    fontSize: 14,
+    fontWeight: "600",
   },
 })

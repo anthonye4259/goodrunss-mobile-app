@@ -307,6 +307,42 @@ export const venueService = {
     },
 
     /**
+     * Propose a new venue (Crowdsourcing)
+     */
+    async submitVenueProposal(
+        userId: string,
+        name: string,
+        sport: string,
+        lat: number,
+        lng: number,
+        description: string,
+        photos: string[]
+    ): Promise<string | null> {
+        if (!db) return null
+
+        try {
+            const proposalsRef = collection(db, "venue_proposals")
+
+            const docRef = await addDoc(proposalsRef, {
+                submittedBy: userId,
+                name,
+                sport, // Main sport
+                lat,
+                lng,
+                description,
+                photos,
+                status: "pending_review",
+                createdAt: serverTimestamp()
+            })
+
+            return docRef.id
+        } catch (error) {
+            console.error("Error submitting proposal:", error)
+            return null
+        }
+    },
+
+    /**
      * Get all venues (for global heat map)
      */
     async getAllVenues(limitCount: number = 500): Promise<Venue[]> {

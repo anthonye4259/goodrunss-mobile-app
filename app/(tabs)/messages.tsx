@@ -5,7 +5,11 @@ import { useTranslation } from "react-i18next"
 import { router } from "expo-router"
 import * as Haptics from "expo-haptics"
 import { SafeAreaView } from "react-native-safe-area-context"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useAuth } from "@/lib/auth-context"
+import { useUserPreferences } from "@/lib/user-preferences"
+import { collection, query, where, orderBy, onSnapshot } from "firebase/firestore"
+import { db } from "@/lib/firebase-config"
 
 type Conversation = {
   id: string
@@ -56,11 +60,57 @@ const MOCK_CONVERSATIONS: Conversation[] = [
 
 export default function MessagesScreen() {
   const { t } = useTranslation()
-  const [conversations] = useState<Conversation[]>(MOCK_CONVERSATIONS)
+  const [conversations, setConversations] = useState<Conversation[]>([])
+  const { preferences } = useUserPreferences()
+  const { user } = useAuth()
+  const userId = user?.id || preferences.userId
+
+  useEffect(() => {
+    if (!userId || !db) return
+
+    // Query conversations where current user is a participant
+    const q = query(
+      collection(db, "conversations"),
+      where("participants", "array-contains", userId),
+      orderBy("lastMessageTime", "desc")
+    )
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const convos = snapshot.docs.map(doc => {
+        const data = doc.data()
+        // Determine other user's name/avatar logic here (requires user fetching or storing in convo)
+        // For now, using a placeholder or stored name if available
+        const otherParticipant = data.participantNames?.[data.participants.find((p: string) => p !== userId)] || "User"
+
+        return {
+          id: doc.id,
+          name: otherParticipant, // Simplified
+          lastMessage: data.lastMessage || "",
+          time: data.lastMessageTime ? formatTime(data.lastMessageTime) : "",
+          unread: data.unreadCounts?.[userId] || 0,
+          avatar: otherParticipant.charAt(0),
+          isOnline: false // Presence not implemented yet
+        }
+      })
+      setConversations(convos)
+    })
+
+    return () => unsubscribe()
+  }, [userId])
 
   const handlePress = (id: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     router.push(`/chat/${id}`)
+  }
+
+  const formatTime = (timestamp: any) => {
+    // Handle Firestore Timestamp or Date
+    const date = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp)
+    const now = new Date()
+    if (date.toDateString() === now.toDateString()) {
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    }
+    return date.toLocaleDateString()
   }
 
   return (
@@ -70,7 +120,7 @@ export default function MessagesScreen() {
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.title}>{t('messages.title')}</Text>
-            <TouchableOpacity style={styles.newMessageButton}>
+            <TouchableOpacity style={styles.newMessageButton} onPress={() => router.push("/friends")}>
               <Ionicons name="create-outline" size={24} color="#7ED957" />
             </TouchableOpacity>
           </View>
@@ -97,7 +147,7 @@ export default function MessagesScreen() {
                       <Text style={styles.conversationTime}>{conversation.time}</Text>
                     </View>
                     <View style={styles.conversationFooter}>
-                      <Text style={styles.lastMessage} numberOfLines={1}>
+                      <Text style={[styles.lastMessage, conversation.unread > 0 && styles.lastMessageBold]} numberOfLines={1}>
                         {conversation.lastMessage}
                       </Text>
                       {conversation.unread > 0 && (
@@ -119,7 +169,7 @@ export default function MessagesScreen() {
               <Text style={styles.emptyDescription}>
                 Start a conversation with a trainer or player to see your messages here.
               </Text>
-              <TouchableOpacity style={styles.startButton} onPress={() => router.push("/(tabs)/explore")}>
+              <TouchableOpacity style={styles.startButton} onPress={() => router.push("/friends")}>
                 <Text style={styles.startButtonText}>Find People</Text>
               </TouchableOpacity>
             </View>
@@ -280,4 +330,8 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#000",
   },
+  lastMessageBold: {
+    fontWeight: 'bold',
+    color: '#FFF'
+  }
 })

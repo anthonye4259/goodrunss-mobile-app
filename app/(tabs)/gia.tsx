@@ -9,6 +9,8 @@ import {
   Platform,
   Animated,
   StyleSheet,
+  ActivityIndicator,
+  LayoutAnimation,
 } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useUserPreferences } from "@/lib/user-preferences"
@@ -16,44 +18,76 @@ import * as Haptics from "expo-haptics"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { LinearGradient } from "expo-linear-gradient"
 
+// New Premium Components
+import { AIOrb } from "@/components/GIA/AIOrb"
+import { MessageBubble } from "@/components/GIA/MessageBubble"
+import { TypingIndicator } from "@/components/GIA/TypingIndicator"
+import { ActionChip } from "@/components/GIA/ActionChip"
+import { ActivityRings } from "@/components/GIA/ActivityRings"
+import { WidgetRenderer } from "@/components/GIA/Widgets/WidgetRenderer"
+
 type Message = {
   id: string
   role: "user" | "assistant"
   content: string
   timestamp: Date
-  suggestions?: string[]
+  suggestions?: { label: string; icon?: keyof typeof Ionicons.glyphMap }[]
+  widget?: string; // Type of widget to render (e.g. 'trainers', 'conditions')
 }
 
 export default function GIAScreen() {
   const { preferences } = useUserPreferences()
-  const userType = preferences.userType || "player"
+  const rawUserType = preferences.userType || "player"
 
-  // Get personalized greeting based on user type
+  // For "both" users, check their active mode to determine context
+  const isBothUser = rawUserType === "both"
+  const activeMode = preferences.activeMode || "trainer"
+
+  // Effective user type for GIA context
+  const userType = isBothUser ? activeMode : rawUserType
+  const isTrainerMode = userType === "trainer" || userType === "instructor"
+
+  const [hasHealthAccess, setHasHealthAccess] = useState(false)
+  const [showRings, setShowRings] = useState(true)
+
+  // Get personalized greeting - now context-aware for "both" users
   const getGreeting = () => {
+    if (isBothUser && activeMode === "trainer") {
+      return "Hey Coach! I'm GIA, ready to help grow your business. (Trainer Mode)"
+    }
+    if (isBothUser && activeMode === "player") {
+      return "Hey! I'm GIA, your personal sports AI. (Player Mode)"
+    }
     switch (userType) {
       case "trainer":
-        return "Hey Coach! I'm GIA, your coaching assistant. How can I help you grow your business today?"
+        return "Hey Coach! I'm GIA, ready to help grow your business."
       case "instructor":
-        return "Hey! I'm GIA, your teaching assistant. How can I help you manage your practice today?"
-      case "both":
-        return "Hey! I'm GIA, your personal assistant. Whether you're training or teaching, I'm here to help!"
+        return "Hey Instructor! I'm GIA, here to manage your classes."
       default:
-        return "Hey! I'm GIA, your sports AI assistant. How can I help you today?"
+        return "Hey! I'm GIA, your personal sports AI assistant."
     }
   }
 
-  // Get personalized suggestions based on user type
+  // Get smart suggestions with icons - context-aware
   const getSuggestions = () => {
-    switch (userType) {
-      case "trainer":
-        return ["View my schedule", "Message clients", "Track earnings", "Find training venues"]
-      case "instructor":
-        return ["View my classes", "Message students", "Track earnings", "Set availability"]
-      case "both":
-        return ["Find a court", "View my bookings", "Check client messages", "Track my stats"]
-      default:
-        return ["Find a court nearby", "Get a workout plan", "Find pickup games", "Track my stats"]
+    const playerSuggestions = [
+      { label: "Find courts nearby", icon: "location-outline" as const },
+      { label: "Get a workout plan", icon: "fitness-outline" as const },
+      { label: "Can I play outside?", icon: "sunny-outline" as const },
+      { label: "Find a coach", icon: "search-outline" as const },
+    ]
+
+    const trainerSuggestions = [
+      { label: "Find leads", icon: "people-outline" as const },
+      { label: "Send invoice", icon: "receipt-outline" as const },
+      { label: "Blast message", icon: "megaphone-outline" as const },
+    ]
+
+    // For "both" users, return suggestions based on active mode
+    if (isTrainerMode) {
+      return trainerSuggestions
     }
+    return playerSuggestions
   }
 
   const [messages, setMessages] = useState<Message[]>([
@@ -68,88 +102,115 @@ export default function GIAScreen() {
   const [input, setInput] = useState("")
   const [isTyping, setIsTyping] = useState(false)
   const scrollViewRef = useRef<ScrollView>(null)
-  const fadeAnim = useRef(new Animated.Value(0)).current
-
-  useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 600,
-      useNativeDriver: true,
-    }).start()
-  }, [])
 
   const handleSend = async () => {
     if (!input.trim()) return
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    const userText = input
+    setInput("") // Clear immediately
 
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
-      content: input,
+      content: userText,
       timestamp: new Date(),
     }
 
     setMessages((prev) => [...prev, userMessage])
-    setInput("")
     setIsTyping(true)
 
-    try {
-      // Get AI response from OpenAI
-      const { giaService } = await import("@/lib/services/gia-service")
-
-      const conversationHistory = messages.map(m => ({
-        role: m.role,
-        content: m.content
-      }))
-
-      const response = await giaService.sendMessage(
-        [...conversationHistory, { role: "user", content: userMessage.content }],
-        {
-          location: preferences.location ? {
-            city: preferences.location.city,
-            state: preferences.location.state
-          } : undefined,
-          sport: preferences.primaryActivity,
-          userType: preferences.userType || "player"
-        }
-      )
-
-      const suggestions = giaService.getSuggestions(userMessage.content, preferences)
-
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: response,
-        timestamp: new Date(),
-        suggestions,
-      }
-
-      setMessages((prev) => [...prev, assistantMessage])
-    } catch (error) {
-      console.error("Error getting AI response:", error)
-
-      // Fallback message if API fails
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: "I'm having trouble connecting right now. Please try again in a moment.",
-        timestamp: new Date(),
-        suggestions: ["Find nearby courts", "Book a trainer", "Report conditions", "Find players"],
-      }
-      setMessages((prev) => [...prev, assistantMessage])
-    } finally {
-      setIsTyping(false)
+    // Collapse rings when chatting starts to save space
+    if (showRings) {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setShowRings(false);
     }
+
+    // Simulate AI delay for "thinking" effect
+    setTimeout(async () => {
+      // Mock Response Logic
+      let responseText = "I can definitely help with that! "
+      let nextSuggestions = getSuggestions()
+      let widgetType = undefined;
+
+      const lowerText = userText.toLowerCase();
+
+      if (lowerText.includes("court")) {
+        responseText += "I found 3 basketball courts nearby nicely rated. Would you like to see them on the map?"
+        nextSuggestions = [
+          { label: "Show on map", icon: "map-outline" },
+          { label: "Filter by rating", icon: "filter-outline" }
+        ]
+      } else if (lowerText.includes("coach") || lowerText.includes("trainer")) {
+        responseText += "Here are the top rated coaches in your area available this week:"
+        widgetType = 'trainers';
+        nextSuggestions = [
+          { label: "View all profiles", icon: "person-outline" },
+          { label: "Check availability", icon: "calendar-outline" }
+        ]
+      } else if (lowerText.includes("invoice") || lowerText.includes("bill")) {
+        responseText += "I can handle that. Here is a draft invoice for Mike Ross based on his last session."
+        widgetType = 'invoice';
+        nextSuggestions = [
+          { label: "Change amount", icon: "create-outline" },
+          { label: "Send to someone else", icon: "people-outline" }
+        ]
+      } else if (lowerText.includes("leads") || lowerText.includes("clients") || lowerText.includes("grow")) {
+        responseText += " found some new potential clients that match your profile:"
+        widgetType = 'leads';
+        nextSuggestions = [
+          { label: "Message all", icon: "chatbubbles-outline" },
+          { label: "View full list", icon: "list-outline" }
+        ]
+      } else if (lowerText.includes("blast") || lowerText.includes("campaign") || lowerText.includes("message all")) {
+        responseText += "good idea. I've drafted a campaign for your active clients:"
+        widgetType = 'campaign';
+        nextSuggestions = [
+          { label: "Edit message", icon: "create-outline" },
+          { label: "Send now", icon: "paper-plane-outline" }
+        ]
+      } else if (lowerText.includes("health") || lowerText.includes("apple") || lowerText.includes("sync")) {
+        responseText += "I can sync with Apple Health to track your Move, Exercise, and Stand goals. Tap the button above to connect! ⌚️"
+        setHasHealthAccess(true); // Simulate auto-connect for demo
+        setShowRings(true); // Show rings again
+      } else if (lowerText.includes("play outside") || lowerText.includes("weather") || lowerText.includes("condition")) {
+        responseText += "Conditions are looking great! "
+        widgetType = 'conditions';
+        nextSuggestions = [
+          { label: "Find outdoor courts", icon: "sunny-outline" },
+          { label: "Set alert", icon: "notifications-outline" }
+        ]
+      } else {
+        responseText += "What specifically are you looking to achieve today?"
+      }
+
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: responseText,
+        timestamp: new Date(),
+        suggestions: nextSuggestions,
+        widget: widgetType,
+      }
+
+      setMessages((prev) => [...prev, assistantMessage])
+      setIsTyping(false)
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+    }, 1200)
   }
 
-  const handleSuggestionPress = (suggestion: string) => {
+  const handleSuggestionPress = (suggestionLabel: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-    setInput(suggestion)
+    setInput(suggestionLabel)
+  }
+
+  const toggleHealthSync = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+    setHasHealthAccess(!hasHealthAccess)
   }
 
   return (
-    <LinearGradient colors={["#0A0A0A", "#141414"]} style={styles.container}>
+    <LinearGradient colors={["#0A0A0A", "#111111"]} style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={["top"]}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -158,91 +219,136 @@ export default function GIAScreen() {
         >
           {/* Header */}
           <View style={styles.header}>
-            <View style={styles.headerContent}>
-              <View style={styles.giaAvatar}>
-                <Ionicons name="sparkles" size={24} color="#8B5CF6" />
-              </View>
-              <View>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                  <Text style={styles.headerTitle}>GIA</Text>
-                  <View style={styles.versionBadge}>
-                    <Text style={styles.versionText}>g0</Text>
-                  </View>
-                </View>
-                <Text style={styles.headerSubtitle}>Your AI Assistant</Text>
-              </View>
+            <View style={styles.headerOrbContainer}>
+              <AIOrb size={50} isThinking={isTyping} />
+            </View>
+            <View style={styles.headerTextContainer}>
+              <Text style={styles.headerTitle}>GIA</Text>
+              <Text style={styles.headerSubtitle}>
+                {isTyping ? "Thinking..." : "AI Assistant"}
+              </Text>
+            </View>
+            {/* Context/Version Badge */}
+            <View style={styles.versionBadge}>
+              <Text style={styles.versionText}>BETA</Text>
             </View>
           </View>
 
-          {/* Messages */}
-          <Animated.ScrollView
+          {/* Messages Area */}
+          <ScrollView
             ref={scrollViewRef}
-            style={[styles.messagesContainer, { opacity: fadeAnim }]}
+            style={styles.messagesContainer}
             contentContainerStyle={styles.messagesContent}
             onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
             showsVerticalScrollIndicator={false}
           >
+            {/* Daily Brief / Health Dashboard */}
+            {showRings && (
+              <View style={styles.dashboardCard}>
+                <View style={styles.dashboardHeader}>
+                  <View>
+                    <Text style={styles.dashboardTitle}>Daily Activity</Text>
+                    <Text style={styles.dashboardDate}>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</Text>
+                  </View>
+                  <TouchableOpacity
+                    style={[styles.syncButton, hasHealthAccess && styles.syncButtonActive]}
+                    onPress={toggleHealthSync}
+                  >
+                    <Ionicons name={hasHealthAccess ? "checkmark-circle" : "sync"} size={16} color={hasHealthAccess ? "#000" : "#7ED957"} />
+                    <Text style={[styles.syncButtonText, hasHealthAccess && { color: "#000" }]}>
+                      {hasHealthAccess ? "Synced" : "Sync Health"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.ringsContainer}>
+                  <ActivityRings
+                    size={140}
+                    movePercentage={hasHealthAccess ? 0.65 : 0}
+                    exercisePercentage={hasHealthAccess ? 0.45 : 0}
+                    standPercentage={hasHealthAccess ? 0.8 : 0}
+                  />
+                  <View style={styles.statsColumn}>
+                    <View style={styles.statItem}>
+                      <Text style={[styles.statValue, { color: "#FA114F" }]}>{hasHealthAccess ? "450" : "--"}</Text>
+                      <Text style={styles.statLabel}>MOVE / 700</Text>
+                    </View>
+                    <View style={styles.statItem}>
+                      <Text style={[styles.statValue, { color: "#A4FF00" }]}>{hasHealthAccess ? "28" : "--"}</Text>
+                      <Text style={styles.statLabel}>EXERCISE / 60</Text>
+                    </View>
+                    <View style={styles.statItem}>
+                      <Text style={[styles.statValue, { color: "#00D9FF" }]}>{hasHealthAccess ? "8" : "--"}</Text>
+                      <Text style={styles.statLabel}>STAND / 12</Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+            )}
+
+            {/* Welcome Spacer */}
+            {!showRings && <View style={{ height: 20 }} />}
+
             {messages.map((message) => (
-              <View
-                key={message.id}
-                style={[
-                  styles.messageWrapper,
-                  message.role === "user" ? styles.userMessageWrapper : styles.assistantMessageWrapper,
-                ]}
-              >
-                {message.role === "assistant" && (
-                  <View style={styles.assistantAvatar}>
-                    <Ionicons name="sparkles" size={16} color="#8B5CF6" />
+              <View key={message.id}>
+                <View style={styles.messageRow}>
+                  {message.role === 'assistant' && (
+                    <View style={styles.messageAvatar}>
+                      <AIOrb size={28} isThinking={false} />
+                    </View>
+                  )}
+                  <MessageBubble content={message.content} role={message.role} />
+                </View>
+
+                {/* Render Widget if Present */}
+                {message.widget && (
+                  <View style={styles.widgetContainer}>
+                    <WidgetRenderer type={message.widget} />
                   </View>
                 )}
-                <View
-                  style={[
-                    styles.messageBubble,
-                    message.role === "user" ? styles.userBubble : styles.assistantBubble,
-                  ]}
-                >
-                  <Text style={[styles.messageText, message.role === "user" && styles.userMessageText]}>
-                    {message.content}
-                  </Text>
-                </View>
               </View>
             ))}
 
             {isTyping && (
-              <View style={[styles.messageWrapper, styles.assistantMessageWrapper]}>
-                <View style={styles.assistantAvatar}>
-                  <Ionicons name="sparkles" size={16} color="#8B5CF6" />
+              <View style={styles.messageRow}>
+                <View style={styles.messageAvatar}>
+                  <AIOrb size={28} isThinking={true} />
                 </View>
-                <View style={[styles.messageBubble, styles.assistantBubble]}>
-                  <Text style={styles.typingText}>GIA is typing...</Text>
+                <View style={styles.typingBubble}>
+                  <TypingIndicator />
                 </View>
               </View>
             )}
 
-            {/* Suggestions */}
-            {messages.length > 0 && messages[messages.length - 1].suggestions && !isTyping && (
+            <View style={{ height: 20 }} />
+          </ScrollView>
+
+          {/* Smart Suggestions (Quick Actions) */}
+          {!isTyping && messages.length > 0 && messages[messages.length - 1].suggestions && (
+            <View style={styles.suggestionsWrapper}>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                style={styles.suggestionsContainer}
                 contentContainerStyle={styles.suggestionsContent}
               >
-                {messages[messages.length - 1].suggestions?.map((suggestion, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={styles.suggestionChip}
-                    onPress={() => handleSuggestionPress(suggestion)}
-                  >
-                    <Text style={styles.suggestionText}>{suggestion}</Text>
-                  </TouchableOpacity>
+                {messages[messages.length - 1].suggestions?.map((suggestion, idx) => (
+                  <ActionChip
+                    key={idx}
+                    label={suggestion.label}
+                    icon={suggestion.icon}
+                    onPress={() => handleSuggestionPress(suggestion.label)}
+                  />
                 ))}
               </ScrollView>
-            )}
-          </Animated.ScrollView>
+            </View>
+          )}
 
-          {/* Input */}
+          {/* Input Area */}
           <View style={styles.inputContainer}>
-            <View style={styles.inputWrapper}>
+            <LinearGradient
+              colors={['#1A1A1A', '#1A1A1A']}
+              style={styles.inputGradient}
+            >
               <TextInput
                 style={styles.textInput}
                 value={input}
@@ -257,9 +363,9 @@ export default function GIAScreen() {
                 onPress={handleSend}
                 disabled={!input.trim()}
               >
-                <Ionicons name="send" size={20} color={input.trim() ? "#000" : "#666"} />
+                <Ionicons name="arrow-up" size={20} color={input.trim() ? "#000" : "#666"} />
               </TouchableOpacity>
-            </View>
+            </LinearGradient>
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -278,42 +384,42 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#1A1A1A",
-  },
-  headerContent: {
     flexDirection: "row",
     alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#1A1A1A",
+    backgroundColor: "rgba(10, 10, 10, 0.95)", // slightly transparent
+    zIndex: 10,
   },
-  giaAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "rgba(139, 92, 246, 0.2)",
-    alignItems: "center",
-    justifyContent: "center",
+  headerOrbContainer: {
     marginRight: 12,
   },
+  headerTextContainer: {
+    flex: 1,
+  },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
+    fontSize: 18,
+    fontFamily: "Inter_700Bold",
     color: "#FFFFFF",
   },
   headerSubtitle: {
-    fontSize: 14,
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
     color: "#9CA3AF",
   },
   versionBadge: {
-    backgroundColor: "rgba(126, 217, 87, 0.2)",
-    borderRadius: 6,
+    backgroundColor: "rgba(126, 217, 87, 0.1)",
+    borderRadius: 8,
     paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: "rgba(126, 217, 87, 0.2)",
   },
   versionText: {
-    fontSize: 12,
-    fontWeight: "bold",
+    fontSize: 10,
+    fontFamily: "Inter_700Bold",
     color: "#7ED957",
   },
   messagesContainer: {
@@ -321,104 +427,141 @@ const styles = StyleSheet.create({
   },
   messagesContent: {
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingBottom: 20,
   },
-  messageWrapper: {
+  // Dashboard Card Styles
+  dashboardCard: {
+    backgroundColor: "#111",
+    borderRadius: 24,
+    padding: 20,
+    marginBottom: 24,
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: "#222",
+  },
+  dashboardHeader: {
     flexDirection: "row",
-    marginBottom: 16,
-    alignItems: "flex-end",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 20,
   },
-  userMessageWrapper: {
-    justifyContent: "flex-end",
+  dashboardTitle: {
+    fontSize: 18,
+    fontFamily: "Inter_700Bold",
+    color: "#FFF",
   },
-  assistantMessageWrapper: {
-    justifyContent: "flex-start",
+  dashboardDate: {
+    fontSize: 13,
+    fontFamily: "Inter_500Medium",
+    color: "#666",
+    marginTop: 2,
   },
-  assistantAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "rgba(139, 92, 246, 0.2)",
+  syncButton: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    marginRight: 8,
-  },
-  messageBubble: {
-    maxWidth: "75%",
-    padding: 16,
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 20,
+    backgroundColor: "rgba(126, 217, 87, 0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(126, 217, 87, 0.3)",
   },
-  userBubble: {
+  syncButtonActive: {
     backgroundColor: "#7ED957",
-    borderBottomRightRadius: 4,
+    borderColor: "#7ED957",
   },
-  assistantBubble: {
+  syncButtonText: {
+    fontSize: 12,
+    fontFamily: "Inter_600SemiBold",
+    color: "#7ED957",
+  },
+  ringsContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-around",
+  },
+  statsColumn: {
+    gap: 16,
+    alignItems: "flex-start",
+  },
+  statItem: {
+
+  },
+  statValue: {
+    fontSize: 20,
+    fontFamily: "Inter_700Bold",
+  },
+  statLabel: {
+    fontSize: 10,
+    fontFamily: "Inter_600SemiBold",
+    color: "#666",
+    letterSpacing: 0.5,
+  },
+
+  messageRow: {
+    marginBottom: 16,
+    flexDirection: 'row',
+  },
+  widgetContainer: {
+    marginLeft: 36, // Align with bubble (Avatar 28 + margin 8)
+    marginBottom: 16,
+  },
+  messageAvatar: {
+    marginRight: 8,
+    justifyContent: 'flex-end',
+    marginBottom: 4, // Align with bottom of bubble
+  },
+  typingBubble: {
     backgroundColor: "#1A1A1A",
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomLeftRadius: 4,
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: 'rgba(139, 92, 246, 0.2)',
   },
-  messageText: {
-    fontSize: 16,
-    color: "#FFFFFF",
-    lineHeight: 22,
-  },
-  userMessageText: {
-    color: "#000000",
-  },
-  typingText: {
-    fontSize: 14,
-    color: "#9CA3AF",
-    fontStyle: "italic",
-  },
-  suggestionsContainer: {
-    marginTop: 8,
+  suggestionsWrapper: {
+    paddingVertical: 12,
+    backgroundColor: "transparent",
   },
   suggestionsContent: {
-    paddingRight: 16,
-    gap: 8,
-  },
-  suggestionChip: {
-    backgroundColor: "#1A1A1A",
-    borderRadius: 20,
     paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderWidth: 1,
-    borderColor: "#333",
-    marginRight: 8,
-  },
-  suggestionText: {
-    fontSize: 14,
-    color: "#7ED957",
   },
   inputContainer: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderTopColor: "#1A1A1A",
+    paddingBottom: 16,
+    paddingTop: 8,
     backgroundColor: "#0A0A0A",
   },
-  inputWrapper: {
+  inputGradient: {
     flexDirection: "row",
     alignItems: "flex-end",
-    backgroundColor: "#1A1A1A",
-    borderRadius: 24,
+    borderRadius: 28,
     paddingHorizontal: 16,
     paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: "#333",
   },
   textInput: {
     flex: 1,
     fontSize: 16,
+    fontFamily: "Inter_400Regular",
     color: "#FFFFFF",
     maxHeight: 100,
-    paddingVertical: 8,
+    paddingTop: 10,
+    paddingBottom: 10,
+    marginRight: 8,
   },
   sendButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: "#7ED957",
     alignItems: "center",
     justifyContent: "center",
-    marginLeft: 8,
+    marginBottom: 4,
   },
   sendButtonDisabled: {
     backgroundColor: "#333",

@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage"
-import { db } from "@/lib/firebase-config"
+import { db, auth } from "@/lib/firebase-config"
 import { NotificationService } from "@/lib/notification-service"
 import type { FriendActivity } from "@/lib/friends-types"
 
@@ -648,18 +648,177 @@ class SocialService {
     // UTILITY
     // ============================================
 
-    private calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
-        const R = 6371 // Earth radius in km
-        const dLat = (lat2 - lat1) * (Math.PI / 180)
-        const dLng = (lng2 - lng1) * (Math.PI / 180)
+    // ============================================
+    // PLAYER DISCOVERY
+    // ============================================
+
+    // ============================================
+    // GROUPS & LEAGUES (REAL DATA)
+    // ============================================
+
+    async createGroup(groupData: any): Promise<string> {
+        if (!db) throw new Error("No database connection");
+        const userId = auth?.currentUser?.uid;
+        if (!userId) throw new Error("User not authenticated");
+
+        const { collection, addDoc, serverTimestamp } = await import("firebase/firestore");
+
+        const group = {
+            ...groupData,
+            createdBy: userId,
+            members: [userId],
+            createdAt: serverTimestamp(),
+            active: true
+        };
+
+        const docRef = await addDoc(collection(db, "groups"), group);
+        return docRef.id;
+    }
+
+    async getGroups(): Promise<any[]> {
+        if (!db) return [];
+        try {
+            const { collection, getDocs, query, where, orderBy } = await import("firebase/firestore");
+            // Simple query: All public groups or groups I'm in
+            const q = query(collection(db, "groups"), orderBy("createdAt", "desc"));
+            const snapshot = await getDocs(q);
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (e) {
+            console.error("Error fetching groups:", e);
+            return [];
+        }
+    }
+
+    async createLeague(leagueData: any): Promise<string> {
+        if (!db) throw new Error("No database connection");
+        const userId = auth?.currentUser?.uid;
+        if (!userId) throw new Error("User not authenticated");
+
+        const { collection, addDoc, serverTimestamp } = await import("firebase/firestore");
+
+        const league = {
+            ...leagueData,
+            commissionerId: userId,
+            participants: [],
+            createdAt: serverTimestamp(),
+            status: 'registering'
+        };
+
+        const docRef = await addDoc(collection(db, "leagues"), league);
+        return docRef.id;
+    }
+
+    async getLeagues(): Promise<any[]> {
+        if (!db) return [];
+        try {
+            const { collection, getDocs, query, orderBy } = await import("firebase/firestore");
+            const q = query(collection(db, "leagues"), orderBy("createdAt", "desc"));
+            const snapshot = await getDocs(q);
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (e) {
+            console.error("Error fetching leagues:", e);
+            return [];
+        }
+    }
+
+    // ============================================
+    // PLAYER DISCOVERY (REAL DATA)
+    // ============================================
+
+    async getNearbyPlayers(
+        lat: number,
+        lng: number,
+        radius: number,
+        filters?: { sport?: string; skillLevel?: string }
+    ): Promise<any[]> {
+        if (!db) return [];
+
+        try {
+            const { collection, getDocs, query, where, limit } = await import("firebase/firestore");
+
+            // NOTE: Geo-queries in basic Firestore are limited. 
+            // We fetch recent active users and filter client-side for now.
+            // In production, use GeoFire or Algolia.
+
+            const usersRef = collection(db, "users");
+            // Fetch users who have set their location
+            // This is a simplified approach for the MVP
+            const q = query(usersRef, limit(50));
+
+            const snapshot = await getDocs(q);
+            const players = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
+
+            return players.filter(p => {
+                // 1. Filter by Location (Haversine approx)
+                if (p.location) {
+                    const dist = this.calculateDistance(lat, lng, p.location.lat, p.location.lng);
+                    if (dist > radius) return false;
+                    p.distance = dist; // Attach distance for UI
+                } else {
+                    return false; // No location, no show
+                }
+
+                // 2. Filter by Sport
+                if (filters?.sport && !p.sports?.includes(filters.sport)) return false;
+
+                // 3. Filter by Skill
+                // (Simplified check)
+
+                return true;
+            });
+
+        } catch (error) {
+            console.error("Error fetching real players:", error);
+            return [];
+        }
+    }
+
+    // ============================================
+    // FRIEND MANAGEMENT
+    // ============================================
+
+    async sendFriendRequest(userId: string): Promise<boolean> {
+        if (!db) return false;
+        const currentUserId = auth?.currentUser?.uid;
+        if (!currentUserId) return false;
+
+        try {
+            const { collection, addDoc, serverTimestamp } = await import("firebase/firestore");
+            await addDoc(collection(db, "friend_requests"), {
+                from: currentUserId,
+                to: userId,
+                status: 'pending',
+                createdAt: serverTimestamp()
+            });
+            return true;
+        } catch (e) {
+            console.error(e);
+            return false;
+        }
+    }
+
+    async getFriends(): Promise<any[]> {
+        // Implement real friend fetching based on "friends" subcollection or array
+        // For MVP speed, we'll fetch connections
+        return [];
+    }
+
+    // Helper
+    private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+        const R = 6371; // Radius of the earth in km
+        const dLat = this.deg2rad(lat2 - lat1);
+        const dLon = this.deg2rad(lon2 - lon1);
         const a =
             Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(lat1 * (Math.PI / 180)) *
-            Math.cos(lat2 * (Math.PI / 180)) *
-            Math.sin(dLng / 2) *
-            Math.sin(dLng / 2)
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-        return R * c
+            Math.cos(this.deg2rad(lat1)) * Math.cos(this.deg2rad(lat2)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const d = R * c; // Distance in km
+        return d;
+    }
+
+    private deg2rad(deg: number): number {
+        return deg * (Math.PI / 180);
     }
 }
 

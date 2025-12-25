@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Image, Share, Alert } from "react-native"
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Image, Share, Alert, Platform } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
@@ -6,27 +6,44 @@ import { useUserPreferences } from "@/lib/user-preferences"
 import { useAuth } from "@/lib/auth-context"
 import { router } from "expo-router"
 import * as Haptics from "expo-haptics"
+import * as Clipboard from "expo-clipboard"
 import { SafeAreaView } from "react-native-safe-area-context"
+import { GlassCard } from "@/components/Profile/GlassCard"
+import { LiquidGauge } from "@/components/Profile/LiquidGauge"
+import { socialService } from "@/lib/services/social-service"
+
+// Mock Data
+const ACTIVITY_SCORE = 92
+const RECOVERY_SCORE = 78
 
 export default function ProfileScreen() {
   const { t } = useTranslation()
   const { preferences } = useUserPreferences()
   const { user } = useAuth()
+  // "both" users see the business profile by default
+  const isTeachingRole = preferences.userType === "trainer" || preferences.userType === "instructor" || preferences.userType === "both"
+  const isInstructor = preferences.userType === "instructor"
 
-  const isTeachingRole = preferences.userType === "trainer" || preferences.userType === "instructor"
+  // Booking link for trainers
+  const bookingLink = `https://goodrunss.app/book/${user?.id || 'demo'}`
 
-  const handlePress = (route: string) => {
+  const handleSettingsPress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-    router.push(route as any)
+    router.push("/settings/menu" as any)
+  }
+
+  const handleCopyLink = async () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+    await Clipboard.setStringAsync(bookingLink)
+    Alert.alert("✓ Copied!", "Booking link ready to share")
   }
 
   const handleShareProfile = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-    const profileUrl = `https://goodrunss.com/coach/${user?.id || "me"}`
     try {
       await Share.share({
-        message: `Book a session with me on GoodRunss! 🏀\n\n${profileUrl}`,
-        url: profileUrl,
+        message: `Book a session with me on GoodRunss! 🏋️\n${bookingLink}`,
+        url: bookingLink,
         title: "My GoodRunss Profile",
       })
     } catch (error) {
@@ -34,264 +51,658 @@ export default function ProfileScreen() {
     }
   }
 
-  const menuItems = [
-    { icon: "options-outline", label: "My Preferences", route: "/settings/preferences", highlight: true },
-    { icon: "person-outline", label: "Edit Profile", route: "/settings/edit-profile" },
-    { icon: "card-outline", label: "Payment Methods", route: "/settings/payment-methods" },
-    { icon: "notifications-outline", label: "Notifications", route: "/settings/notifications/friends" },
-    { icon: "location-outline", label: "Location", route: "/settings/location" },
-    { icon: "language-outline", label: "Language & Region", route: "/settings/language-region" },
-    { icon: "lock-closed-outline", label: "Privacy", route: "/settings/privacy" },
-    { icon: "help-circle-outline", label: "Help & Support", route: "/settings/help" },
-    { icon: "document-text-outline", label: "Terms of Service", route: "/settings/terms" },
-  ]
-
-  return (
-    <LinearGradient colors={["#0A0A0A", "#141414"]} style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={["top"]}>
-        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.title}>{t('profile.title')}</Text>
+  // ============================================
+  // TRAINER/INSTRUCTOR PROFILE VIEW
+  // ============================================
+  if (isTeachingRole) {
+    return (
+      <View style={styles.container}>
+        <LinearGradient
+          colors={["#0A0A0A", "#111", "#0A0A0A"]}
+          style={StyleSheet.absoluteFill}
+        />
+        <SafeAreaView style={styles.safeArea} edges={["top"]}>
+          <View style={styles.headerBar}>
+            <Text style={styles.headerTitle}>My Business</Text>
+            <TouchableOpacity style={styles.settingsButton} onPress={handleSettingsPress}>
+              <Ionicons name="settings-outline" size={24} color="#FFF" />
+            </TouchableOpacity>
           </View>
 
-          {/* Profile Card */}
-          <View style={styles.profileCard}>
-            <View style={styles.avatarContainer}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>
-                  {preferences.userType === "trainer" ? "T" : "P"}
-                </Text>
-              </View>
-              <TouchableOpacity style={styles.editAvatarButton}>
-                <Ionicons name="camera" size={16} color="#FFF" />
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.userName}>GoodRunss User</Text>
-            <Text style={styles.userType}>
-              {preferences.userType === "trainer" ? "Trainer" : "Player"} • {preferences.primaryActivity || "Basketball"}
-            </Text>
-
-            {/* Stats */}
-            <View style={styles.statsRow}>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>12</Text>
-                <Text style={styles.statLabel}>Sessions</Text>
-              </View>
-              <View style={[styles.statItem, styles.statBorder]}>
-                <Text style={styles.statNumber}>4.9</Text>
-                <Text style={styles.statLabel}>Rating</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>23</Text>
-                <Text style={styles.statLabel}>Friends</Text>
-              </View>
-            </View>
-
-            {/* Share Profile Button - For Trainers/Instructors */}
-            {isTeachingRole && (
-              <TouchableOpacity style={styles.shareProfileButton} onPress={handleShareProfile}>
-                <Ionicons name="share-social" size={18} color="#7ED957" />
-                <Text style={styles.shareProfileText}>Share Booking Link</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-
-          {/* Menu Items */}
-          <View style={styles.menuContainer}>
-            {menuItems.map((item, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.menuItem}
-                onPress={() => handlePress(item.route)}
-              >
-                <View style={styles.menuItemLeft}>
-                  <View style={styles.menuIcon}>
-                    <Ionicons name={item.icon as any} size={22} color="#7ED957" />
+          <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            {/* Profile Card */}
+            <View style={styles.trainerCard}>
+              <View style={styles.trainerHeader}>
+                <View style={styles.trainerAvatarWrap}>
+                  <LinearGradient colors={['#7ED957', '#22C55E']} style={styles.trainerAvatarRing}>
+                    <View style={styles.trainerAvatarInner}>
+                      <Text style={styles.trainerAvatarText}>{isInstructor ? "I" : "T"}</Text>
+                    </View>
+                  </LinearGradient>
+                  <View style={styles.verifiedBadge}>
+                    <Ionicons name="checkmark-circle" size={20} color="#7ED957" />
                   </View>
-                  <Text style={styles.menuLabel}>{item.label}</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color="#666" />
+                <View style={styles.trainerInfo}>
+                  <Text style={styles.trainerName}>{preferences.name || "Your Name"}</Text>
+                  <Text style={styles.trainerRole}>{isInstructor ? "Wellness Instructor" : "Sports Coach"}</Text>
+                  <View style={styles.ratingRow}>
+                    <Ionicons name="star" size={14} color="#FBBF24" />
+                    <Text style={styles.ratingText}>5.0</Text>
+                    <Text style={styles.ratingCount}>(12 reviews)</Text>
+                  </View>
+                </View>
+              </View>
+              <TouchableOpacity style={styles.editProfileBtn} onPress={() => router.push("/settings/edit-profile")}>
+                <Text style={styles.editProfileText}>Edit Profile</Text>
               </TouchableOpacity>
-            ))}
+            </View>
+
+            {/* 🔗 BOOKING LINK - Most Important */}
+            <View style={styles.bookingLinkSection}>
+              <Text style={styles.sectionLabel}>YOUR BOOKING LINK</Text>
+              <View style={styles.bookingLinkBox}>
+                <Text style={styles.bookingLinkUrl} numberOfLines={1}>{bookingLink}</Text>
+              </View>
+              <View style={styles.bookingLinkActions}>
+                <TouchableOpacity style={styles.copyLinkBtn} onPress={handleCopyLink}>
+                  <Ionicons name="copy-outline" size={18} color="#000" />
+                  <Text style={styles.copyLinkText}>Copy</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.shareLinkBtn} onPress={handleShareProfile}>
+                  <Ionicons name="share-social-outline" size={18} color="#7ED957" />
+                  <Text style={styles.shareLinkText}>Share</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Business Stats */}
+            <View style={styles.businessStats}>
+              <View style={styles.bizStatCard}>
+                <Text style={styles.bizStatValue}>$1,240</Text>
+                <Text style={styles.bizStatLabel}>This Month</Text>
+              </View>
+              <View style={styles.bizStatCard}>
+                <Text style={styles.bizStatValue}>8</Text>
+                <Text style={styles.bizStatLabel}>Active Clients</Text>
+              </View>
+              <View style={styles.bizStatCard}>
+                <Text style={styles.bizStatValue}>24</Text>
+                <Text style={styles.bizStatLabel}>Sessions</Text>
+              </View>
+            </View>
+
+            {/* Quick Actions */}
+            <Text style={styles.sectionLabel}>QUICK ACTIONS</Text>
+            <View style={styles.quickActions}>
+              <TouchableOpacity style={styles.actionItem} onPress={() => router.push("/trainer-dashboard")}>
+                <View style={[styles.actionIcon, { backgroundColor: 'rgba(126,217,87,0.15)' }]}>
+                  <Ionicons name="stats-chart" size={20} color="#7ED957" />
+                </View>
+                <Text style={styles.actionLabel}>Dashboard</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.actionItem} onPress={() => router.push("/(tabs)/bookings")}>
+                <View style={[styles.actionIcon, { backgroundColor: 'rgba(59,130,246,0.15)' }]}>
+                  <Ionicons name="calendar" size={20} color="#3B82F6" />
+                </View>
+                <Text style={styles.actionLabel}>Calendar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.actionItem} onPress={() => router.push("/business/crm")}>
+                <View style={[styles.actionIcon, { backgroundColor: 'rgba(251,191,36,0.15)' }]}>
+                  <Ionicons name="people" size={20} color="#FBBF24" />
+                </View>
+                <Text style={styles.actionLabel}>Clients</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.actionItem} onPress={() => router.push("/pro-dashboard")}>
+                <View style={[styles.actionIcon, { backgroundColor: 'rgba(168,85,247,0.15)' }]}>
+                  <Ionicons name="rocket" size={20} color="#A855F7" />
+                </View>
+                <Text style={styles.actionLabel}>Pro Tools</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.version}>GoodRunss for {isInstructor ? "Instructors" : "Trainers"} • v1.0.0</Text>
+          </ScrollView>
+        </SafeAreaView>
+      </View>
+    )
+  }
+
+  // ============================================
+  // PLAYER PROFILE VIEW (Original)
+  // ============================================
+  return (
+    <View style={styles.container}>
+      <LinearGradient
+        colors={["#0A0A0A", "#1A1A1A", "#050505"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+      <LinearGradient
+        colors={['rgba(126, 217, 87, 0.15)', 'transparent']}
+        style={[StyleSheet.absoluteFill, { height: 300 }]}
+      />
+
+      <SafeAreaView style={styles.safeArea} edges={["top"]}>
+        <View style={styles.headerBar}>
+          <Text style={styles.headerTitle}>Profile</Text>
+          <TouchableOpacity style={styles.settingsButton} onPress={handleSettingsPress}>
+            <Ionicons name="settings-outline" size={24} color="#FFF" />
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          {/* Identity Section */}
+          <View style={styles.identitySection}>
+            <View style={styles.avatarWrapper}>
+              <LinearGradient colors={['#7ED957', '#3B82F6']} style={styles.avatarRing}>
+                <View style={styles.avatarInner}>
+                  <Text style={styles.avatarText}>P</Text>
+                </View>
+              </LinearGradient>
+              <TouchableOpacity style={styles.editBadge}>
+                <Ionicons name="camera" size={12} color="#000" />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.userName}>{preferences.name || "Player"}</Text>
+            <View style={styles.roleBadge}>
+              <Text style={styles.roleText}>ELITE PLAYER</Text>
+            </View>
           </View>
 
-          {/* Logout Button */}
-          <TouchableOpacity style={styles.logoutButton} onPress={() => router.replace("/auth")}>
-            <Ionicons name="log-out-outline" size={22} color="#EF4444" />
-            <Text style={styles.logoutText}>Log Out</Text>
-          </TouchableOpacity>
+          {/* Liquid Stats Dashboard */}
+          <View style={styles.dashboardGrid}>
+            <GlassCard style={styles.mainStatCard}>
+              <View style={styles.cardHeader}>
+                <Ionicons name="flash" size={16} color="#7ED957" />
+                <Text style={styles.cardTitle}>Activity Score</Text>
+              </View>
+              <View style={styles.gaugeWrapper}>
+                <LiquidGauge score={ACTIVITY_SCORE} label="Excellent" color="#7ED957" size={110} />
+              </View>
+            </GlassCard>
 
-          {/* Version */}
-          <Text style={styles.version}>GoodRunss v1.0.0</Text>
+            <View style={styles.rightColumn}>
+              <GlassCard style={styles.smallStatCard}>
+                <Ionicons name="heart" size={16} color="#3B82F6" />
+                <Text style={styles.smallStatValue}>1,240</Text>
+                <Text style={styles.smallStatLabel}>KCAL BURNED</Text>
+              </GlassCard>
+
+              <GlassCard style={styles.smallStatCard}>
+                <Ionicons name="time" size={16} color="#FDB813" />
+                <Text style={styles.smallStatValue}>4.5h</Text>
+                <Text style={styles.smallStatLabel}>ACTIVE TIME</Text>
+              </GlassCard>
+            </View>
+          </View>
+
+          {/* Recovery Status */}
+          <GlassCard style={styles.recoveryCard}>
+            <View style={styles.recoveryHeader}>
+              <View style={styles.flexRow}>
+                <Ionicons name="battery-charging" size={18} color="#3B82F6" />
+                <Text style={styles.cardTitle}>Recovery Status</Text>
+              </View>
+              <Text style={styles.recoveryPercent}>{RECOVERY_SCORE}%</Text>
+            </View>
+            <View style={styles.progressBarBg}>
+              <LinearGradient
+                colors={['#3B82F6', '#60A5FA']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={[styles.progressBarFill, { width: `${RECOVERY_SCORE}%` }]}
+              />
+            </View>
+            <Text style={styles.recoveryContext}>Ready for light training. Suggested: Yoga or Shooting.</Text>
+          </GlassCard>
+
+          {/* Simple Stats Row */}
+          <View style={styles.simpleStatsRow}>
+            <TouchableOpacity style={styles.simpleStat} onPress={() => router.push("/groups")}>
+              <Text style={styles.simpleStatNum}>12</Text>
+              <Text style={styles.simpleStatSub}>Groups</Text>
+            </TouchableOpacity>
+            <View style={styles.simpleDivider} />
+            <TouchableOpacity style={styles.simpleStat} onPress={() => router.push("/leagues")}>
+              <Text style={styles.simpleStatNum}>4.9</Text>
+              <Text style={styles.simpleStatSub}>Leagues</Text>
+            </TouchableOpacity>
+            <View style={styles.simpleDivider} />
+            <TouchableOpacity style={styles.simpleStat} onPress={() => router.push("/friends/" as any)}>
+              <Text style={styles.simpleStatNum}>23</Text>
+              <Text style={styles.simpleStatSub}>Friends</Text>
+            </TouchableOpacity>
+          </View>
+
+          <Text style={styles.version}>v1.0.0 • Player ID: #8821</Text>
         </ScrollView>
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#000',
   },
   safeArea: {
     flex: 1,
+  },
+  headerBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontFamily: 'Inter_700Bold',
+    color: '#FFF',
+  },
+  settingsButton: {
+    padding: 8,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 20,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     paddingBottom: 40,
+    paddingHorizontal: 20,
   },
-  header: {
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 16,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-  },
-  profileCard: {
-    marginHorizontal: 24,
-    backgroundColor: "#1A1A1A",
-    borderRadius: 20,
-    padding: 24,
-    alignItems: "center",
+  identitySection: {
+    alignItems: 'center',
     marginBottom: 24,
+    marginTop: 10,
   },
-  avatarContainer: {
-    position: "relative",
+  avatarWrapper: {
     marginBottom: 16,
   },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: "rgba(132, 204, 22, 0.2)",
-    alignItems: "center",
-    justifyContent: "center",
+  avatarRing: {
+    width: 104,
+    height: 104,
+    borderRadius: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarInner: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: '#111',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   avatarText: {
     fontSize: 40,
-    fontWeight: "bold",
-    color: "#7ED957",
+    fontFamily: 'Inter_700Bold',
+    color: '#FFF',
   },
-  editAvatarButton: {
-    position: "absolute",
+  editBadge: {
+    position: 'absolute',
     bottom: 0,
     right: 0,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#7ED957",
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: '#7ED957',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#000',
   },
   userName: {
     fontSize: 24,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-    marginBottom: 4,
+    fontFamily: 'Inter_700Bold',
+    color: '#FFF',
+    marginBottom: 6,
   },
-  userType: {
-    fontSize: 16,
-    color: "#9CA3AF",
-    marginBottom: 24,
+  roleBadge: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
-  statsRow: {
-    flexDirection: "row",
-    width: "100%",
+  roleText: {
+    fontSize: 10,
+    fontFamily: 'Inter_700Bold',
+    color: '#CCC',
+    letterSpacing: 1,
   },
-  statItem: {
+  dashboardGrid: {
+    flexDirection: 'row',
+    height: 200,
+    marginBottom: 16,
+    gap: 12,
+  },
+  mainStatCard: {
+    flex: 1.2,
+    padding: 16,
+    justifyContent: 'space-between',
+  },
+  rightColumn: {
+    flex: 0.8,
+    gap: 12,
+  },
+  smallStatCard: {
     flex: 1,
-    alignItems: "center",
+    padding: 16,
+    justifyContent: 'center',
   },
-  statBorder: {
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-    borderColor: "#333",
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#7ED957",
-  },
-  statLabel: {
+  cardTitle: {
     fontSize: 14,
-    color: "#9CA3AF",
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FFF',
+  },
+  gaugeWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
+    marginTop: 10,
+  },
+  smallStatValue: {
+    fontSize: 20,
+    fontFamily: 'Inter_700Bold',
+    color: '#FFF',
     marginTop: 4,
   },
-  menuContainer: {
-    marginHorizontal: 24,
-    backgroundColor: "#1A1A1A",
-    borderRadius: 16,
-    overflow: "hidden",
+  smallStatLabel: {
+    fontSize: 10,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#666',
+    marginTop: 2,
+  },
+  recoveryCard: {
+    padding: 20,
     marginBottom: 24,
   },
-  menuItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#2A2A2A",
+  recoveryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
   },
-  menuItemLeft: {
-    flexDirection: "row",
-    alignItems: "center",
+  flexRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
-  menuIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: "rgba(132, 204, 22, 0.1)",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 12,
-  },
-  menuLabel: {
+  recoveryPercent: {
     fontSize: 16,
-    color: "#FFFFFF",
+    fontFamily: 'Inter_700Bold',
+    color: '#3B82F6',
   },
-  logoutButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginHorizontal: 24,
-    backgroundColor: "rgba(239, 68, 68, 0.1)",
-    borderRadius: 12,
+  progressBarBg: {
+    height: 6,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 3,
+    marginBottom: 8,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  recoveryContext: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    fontStyle: 'italic',
+  },
+  primaryAction: {
+    marginBottom: 24,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  actionGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 16,
     gap: 8,
+  },
+  actionText: {
+    fontSize: 16,
+    fontFamily: 'Inter_700Bold',
+    color: '#000',
+  },
+  simpleStatsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingVertical: 16,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: 16,
     marginBottom: 24,
   },
-  logoutText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#EF4444",
+  simpleStat: {
+    alignItems: 'center',
+  },
+  simpleStatNum: {
+    fontSize: 18,
+    fontFamily: 'Inter_700Bold',
+    color: '#FFF',
+  },
+  simpleStatSub: {
+    fontSize: 12,
+    color: '#666',
+  },
+  simpleDivider: {
+    width: 1,
+    height: 24,
+    backgroundColor: 'rgba(255,255,255,0.1)',
   },
   version: {
-    textAlign: "center",
-    fontSize: 14,
-    color: "#666",
+    textAlign: 'center',
+    color: '#333',
+    fontSize: 10,
+    marginTop: 24,
+    marginBottom: 40,
   },
-  shareProfileButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(126, 217, 87, 0.1)",
+  // ============================================
+  // TRAINER PROFILE STYLES
+  // ============================================
+  trainerCard: {
+    backgroundColor: '#111',
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 20,
     borderWidth: 1,
-    borderColor: "rgba(126, 217, 87, 0.3)",
-    borderRadius: 10,
-    paddingVertical: 12,
-    marginTop: 16,
-    gap: 8,
+    borderColor: '#1E1E1E',
   },
-  shareProfileText: {
+  trainerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  trainerAvatarWrap: {
+    marginRight: 16,
+  },
+  trainerAvatarRing: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  trainerAvatarInner: {
+    width: 66,
+    height: 66,
+    borderRadius: 33,
+    backgroundColor: '#0A0A0A',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  trainerAvatarText: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#FFF',
+  },
+  verifiedBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#0A0A0A',
+    borderRadius: 10,
+  },
+  trainerInfo: {
+    flex: 1,
+  },
+  trainerName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFF',
+    marginBottom: 2,
+  },
+  trainerRole: {
+    fontSize: 13,
+    color: '#7ED957',
+    marginBottom: 6,
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  ratingText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#FFF',
+  },
+  ratingCount: {
+    fontSize: 12,
+    color: '#666',
+  },
+  editProfileBtn: {
+    marginTop: 16,
+    backgroundColor: '#1E1E1E',
+    borderRadius: 12,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  editProfileText: {
     fontSize: 14,
-    fontWeight: "600",
-    color: "#7ED957",
+    fontWeight: '600',
+    color: '#FFF',
+  },
+  bookingLinkSection: {
+    marginBottom: 24,
+  },
+  sectionLabel: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#666',
+    letterSpacing: 1,
+    marginBottom: 10,
+  },
+  bookingLinkBox: {
+    backgroundColor: '#111',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#1E1E1E',
+  },
+  bookingLinkUrl: {
+    fontSize: 13,
+    color: '#7ED957',
+    fontFamily: 'monospace',
+  },
+  bookingLinkActions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  copyLinkBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#7ED957',
+    borderRadius: 12,
+    paddingVertical: 14,
+    gap: 6,
+  },
+  copyLinkText: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#000',
+  },
+  shareLinkBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(126,217,87,0.1)',
+    borderRadius: 12,
+    paddingVertical: 14,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(126,217,87,0.3)',
+  },
+  shareLinkText: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#7ED957',
+  },
+  businessStats: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 24,
+  },
+  bizStatCard: {
+    flex: 1,
+    backgroundColor: '#111',
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#1E1E1E',
+  },
+  bizStatValue: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#FFF',
+    marginBottom: 4,
+  },
+  bizStatLabel: {
+    fontSize: 11,
+    color: '#666',
+  },
+  quickActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 16,
+  },
+  actionItem: {
+    width: '47%',
+    backgroundColor: '#111',
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#1E1E1E',
+  },
+  actionIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+  actionLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#FFF',
   },
 })

@@ -13,7 +13,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { router } from "expo-router"
 import { useUserPreferences } from "@/lib/user-preferences"
 import { getActivityContent, getPrimaryActivity } from "@/lib/activity-content"
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import * as Haptics from "expo-haptics"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useInstructorBrowse, MODALITY_FILTERS } from "@/lib/hooks/useInstructorBrowse"
@@ -28,8 +28,13 @@ export default function TrainersScreen() {
     const primaryActivity = getPrimaryActivity(preferences.activities)
     const content = getActivityContent(primaryActivity as any)
 
-    // Check if user is a trainer/instructor
-    const isTrainer = preferences.userType === "trainer" || preferences.userType === "instructor" || preferences.userType === "both"
+    // For "both" users, check which mode they're in
+    const isBothUser = preferences.userType === "both"
+    const activeMode = preferences.activeMode || "trainer"
+
+    // Check if user is a trainer/instructor (and not in player mode)
+    const isTrainer = (preferences.userType === "trainer" || preferences.userType === "instructor" || isBothUser)
+        && !(isBothUser && activeMode === "player")
 
     // Only instructors see wellness instructor browse
     const isInstructor = preferences.userType === "instructor"
@@ -39,7 +44,7 @@ export default function TrainersScreen() {
         action()
     }
 
-    // Trainer/Instructor Dashboard View
+    // Trainer/Instructor Dashboard View (unless "both" user is in player mode)
     if (isTrainer) {
         return <TrainerDashboardView content={content} handlePress={handlePress} />
     }
@@ -49,7 +54,7 @@ export default function TrainersScreen() {
         return <InstructorBrowseView content={content} handlePress={handlePress} />
     }
 
-    // Players always see Rec Trainers (sports coaches)
+    // Players (and "both" users in player mode) see Rec Trainers browse
     return <RecTrainerBrowseView content={content} handlePress={handlePress} />
 }
 
@@ -291,6 +296,19 @@ function TrainerDashboardView({ content, handlePress }: { content: any; handlePr
                     {/* Quick Actions */}
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>Quick Actions</Text>
+
+                        {/* Go Live CTA */}
+                        <TouchableOpacity
+                            style={[styles.actionCard, { backgroundColor: 'rgba(126, 217, 87, 0.1)', borderColor: '#7ED957', borderWidth: 1 }]}
+                            onPress={() => handlePress(() => router.push("/business/setup"))}
+                        >
+                            <View style={[styles.actionIcon, { backgroundColor: '#7ED957' }]}>
+                                <Ionicons name="flash" size={20} color="#000" />
+                            </View>
+                            <Text style={[styles.actionText, { color: '#7ED957', fontWeight: 'bold' }]}>Go Live on Marketplace</Text>
+                            <Ionicons name="chevron-forward" size={20} color="#7ED957" />
+                        </TouchableOpacity>
+
                         <TouchableOpacity style={styles.actionCard} onPress={() => handlePress(() => router.push("/trainer-dashboard"))}>
                             <View style={styles.actionIcon}>
                                 <Ionicons name="stats-chart" size={20} color="#7ED957" />
@@ -354,6 +372,50 @@ function TrainerDashboardView({ content, handlePress }: { content: any; handlePr
 
 function RecTrainerBrowseView({ content, handlePress }: { content: any; handlePress: (action: () => void) => void }) {
     const [searchQuery, setSearchQuery] = useState("")
+    const [trainers, setTrainers] = useState<any[]>([])
+    const [loading, setLoading] = useState(true)
+
+    // Load trainers from Firestore
+    useEffect(() => {
+        loadTrainers()
+    }, [])
+
+    const loadTrainers = async () => {
+        setLoading(true)
+        try {
+            const { trainerProfileService } = await import("@/lib/services/trainer-profile-service")
+            const results = await trainerProfileService.searchTrainers({ limit: 10 })
+
+            // If no real trainers, fallback to sample
+            if (results.length === 0) {
+                setTrainers(content.sampleTrainers.map((t: any, i: number) => ({
+                    ...t,
+                    id: `sample_${i}`,
+                    hourlyRate: t.price * 100,
+                    reviewCount: t.reviews,
+                })))
+            } else {
+                setTrainers(results)
+            }
+        } catch (e) {
+            console.error("Error loading trainers:", e)
+            // Fallback to mock
+            setTrainers(content.sampleTrainers.map((t: any, i: number) => ({
+                ...t,
+                id: `sample_${i}`,
+                hourlyRate: t.price * 100,
+                reviewCount: t.reviews,
+            })))
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    // Filter by search
+    const filteredTrainers = trainers.filter(t =>
+        t.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        t.activities?.some((a: string) => a.toLowerCase().includes(searchQuery.toLowerCase()))
+    )
 
     return (
         <LinearGradient colors={["#0A0A0A", "#141414"]} style={styles.container}>
@@ -383,36 +445,53 @@ function RecTrainerBrowseView({ content, handlePress }: { content: any; handlePr
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>Top {content.trainerTitlePlural}</Text>
 
-                        {content.sampleTrainers.map((trainer: any, index: number) => (
-                            <TouchableOpacity
-                                key={index}
-                                style={styles.trainerCard}
-                                onPress={() => handlePress(() => router.push(`/trainers/${index}`))}
-                            >
-                                <View style={styles.trainerAvatar}>
-                                    <Text style={styles.trainerInitial}>{trainer.name.charAt(0)}</Text>
-                                </View>
-                                <View style={styles.trainerInfo}>
-                                    <Text style={styles.trainerName}>{trainer.name}</Text>
-                                    <View style={styles.trainerRating}>
-                                        <Ionicons name="star" size={14} color="#7ED957" />
-                                        <Text style={styles.trainerRatingText}>{trainer.rating} ({trainer.reviews} reviews)</Text>
+                        {loading ? (
+                            <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+                                <ActivityIndicator size="large" color="#7ED957" />
+                                <Text style={{ color: '#999', marginTop: 12 }}>Finding trainers...</Text>
+                            </View>
+                        ) : filteredTrainers.length === 0 ? (
+                            <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+                                <Ionicons name="people-outline" size={48} color="#666" />
+                                <Text style={{ color: '#FFF', fontSize: 16, fontWeight: '600', marginTop: 16 }}>No trainers found</Text>
+                                <Text style={{ color: '#999', marginTop: 4 }}>Be the first to list!</Text>
+                            </View>
+                        ) : (
+                            filteredTrainers.map((trainer: any) => (
+                                <TouchableOpacity
+                                    key={trainer.id}
+                                    style={styles.trainerCard}
+                                    onPress={() => handlePress(() => router.push(`/trainers/${trainer.id}`))}
+                                >
+                                    <View style={styles.trainerAvatar}>
+                                        <Text style={styles.trainerInitial}>{trainer.name?.charAt(0) || "?"}</Text>
                                     </View>
-                                    <Text style={styles.trainerLocation}>
-                                        <Ionicons name="location" size={14} color="#9CA3AF" /> {trainer.location}
-                                    </Text>
-                                </View>
-                                <View style={styles.trainerPricing}>
-                                    <Text style={styles.trainerPrice}>${trainer.price}/hr</Text>
-                                    <TouchableOpacity
-                                        style={styles.bookButton}
-                                        onPress={() => handlePress(() => router.push(`/trainers/${index}`))}
-                                    >
-                                        <Text style={styles.bookButtonText}>Book</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            </TouchableOpacity>
-                        ))}
+                                    <View style={styles.trainerInfo}>
+                                        <Text style={styles.trainerName}>{trainer.name}</Text>
+                                        <View style={styles.trainerRating}>
+                                            <Ionicons name="star" size={14} color="#7ED957" />
+                                            <Text style={styles.trainerRatingText}>
+                                                {trainer.rating?.toFixed(1) || "5.0"} ({trainer.reviewCount || 0} reviews)
+                                            </Text>
+                                        </View>
+                                        <Text style={styles.trainerLocation}>
+                                            <Ionicons name="location" size={14} color="#9CA3AF" /> {trainer.city || trainer.location || "Nearby"}
+                                        </Text>
+                                    </View>
+                                    <View style={styles.trainerPricing}>
+                                        <Text style={styles.trainerPrice}>
+                                            ${trainer.hourlyRate ? (trainer.hourlyRate / 100).toFixed(0) : trainer.price}/hr
+                                        </Text>
+                                        <TouchableOpacity
+                                            style={styles.bookButton}
+                                            onPress={() => handlePress(() => router.push(`/trainers/${trainer.id}`))}
+                                        >
+                                            <Text style={styles.bookButtonText}>Book</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                </TouchableOpacity>
+                            ))
+                        )}
                     </View>
 
                     {/* Browse All */}
