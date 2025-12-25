@@ -55,11 +55,11 @@ export default function MyBookingsScreen() {
 
         try {
             const [courts, classes, rentals, sessions, waitlist] = await Promise.all([
-                courtBookingService.getPlayerBookings(user.uid),
-                classService.getPlayerClassBookings(user.uid),
-                trainerRentalService.getTrainerAllRentals(user.uid),
-                getClientBookings(user.uid),
-                waitlistService.getUserWaitlist(user.uid),
+                courtBookingService.getPlayerBookings(user.id),
+                classService.getPlayerClassBookings(user.id),
+                trainerRentalService.getTrainerAllRentals(user.id),
+                getClientBookings(user.id),
+                waitlistService.getUserWaitlist(user.id),
             ])
 
             setCourtBookings(courts)
@@ -172,11 +172,11 @@ export default function MyBookingsScreen() {
 
                         let success = false
                         if (booking.type === "court" && user) {
-                            success = await courtBookingService.cancelBooking(booking.id, user.uid)
+                            success = await courtBookingService.cancelBooking(booking.id, user.id)
                         } else if (booking.type === "class" && user) {
-                            success = await classService.cancelBooking(booking.id, user.uid)
+                            success = await classService.cancelBooking(booking.id, user.id)
                         } else if (booking.type === "rental" && user) {
-                            success = await trainerRentalService.cancelRental(booking.id, user.uid)
+                            success = await trainerRentalService.cancelRental(booking.id, user.id)
                         }
 
                         if (success) {
@@ -236,7 +236,7 @@ export default function MyBookingsScreen() {
                 {
                     text: "Yes",
                     onPress: async () => {
-                        const success = await waitlistService.leaveWaitlist(entryId, user.uid)
+                        const success = await waitlistService.leaveWaitlist(entryId, user.id)
                         if (success) {
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
                             loadBookings()
