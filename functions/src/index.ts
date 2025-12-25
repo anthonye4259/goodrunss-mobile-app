@@ -2612,3 +2612,236 @@ export const handleFacilitySubscriptionWebhook = functions.https.onRequest(async
         res.status(400).send(`Webhook Error: ${error.message}`)
     }
 })
+
+// ============================================
+// AI-POWERED WAITLIST AUTO-NOTIFY (Premium)
+// ============================================
+
+/**
+ * Auto-notify waitlist when a booking is cancelled
+ * Triggered when court_bookings status changes to "cancelled"
+ */
+export const notifyWaitlistOnCancellation = functions.firestore
+    .document("court_bookings/{bookingId}")
+    .onUpdate(async (change, context) => {
+        const before = change.before.data()
+        const after = change.after.data()
+
+        // Only trigger when status changes to cancelled
+        if (before.status === "cancelled" || after.status !== "cancelled") {
+            return
+        }
+
+        const { courtId, date, startTime, facilityId } = after
+
+        try {
+            // Check if facility has premium (AI slot filling enabled)
+            const facilityDoc = await admin.firestore()
+                .collection("claimed_facilities")
+                .doc(facilityId)
+                .get()
+
+            const facility = facilityDoc.data()
+            if (facility?.subscriptionTier !== "premium") {
+                functions.logger.info("Waitlist notification skipped - not premium", { facilityId })
+                return
+            }
+
+            // Get waitlist entries for this slot
+            const waitlistQuery = admin.firestore()
+                .collection("court_waitlist")
+                .where("courtId", "==", courtId)
+                .where("date", "==", date)
+                .where("timeSlot", "==", startTime)
+                .where("status", "==", "waiting")
+                .orderBy("createdAt", "asc")
+                .limit(5) // Notify first 5 people
+
+            const waitlistSnapshot = await waitlistQuery.get()
+
+            if (waitlistSnapshot.empty) {
+                functions.logger.info("No waitlist entries for cancelled slot", { courtId, date, startTime })
+                return
+            }
+
+            // Send notifications to waitlist
+            const notifications: Promise<any>[] = []
+            const updates: Promise<any>[] = []
+
+            for (const doc of waitlistSnapshot.docs) {
+                const entry = doc.data()
+
+                // Update entry status
+                updates.push(doc.ref.update({
+                    status: "notified",
+                    notifiedAt: admin.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                }))
+
+                // Get user's push tokens
+                if (entry.userId) {
+                    const tokensSnapshot = await admin.firestore()
+                        .collection("users")
+                        .doc(entry.userId)
+                        .collection("deviceTokens")
+                        .get()
+
+                    const tokens = tokensSnapshot.docs
+                        .map(d => d.data().token)
+                        .filter(Boolean)
+
+                    if (tokens.length > 0) {
+                        notifications.push(
+                            admin.messaging().sendEachForMulticast({
+                                notification: {
+                                    title: "Slot Just Opened! ⏰",
+                                    body: `A court opened up for ${date} at ${startTime}. Book now before it's gone!`,
+                                },
+                                data: {
+                                    type: "waitlist_slot_available",
+                                    courtId,
+                                    date,
+                                    startTime,
+                                    waitlistEntryId: doc.id,
+                                },
+                                android: {
+                                    priority: "high",
+                                },
+                                apns: {
+                                    payload: {
+                                        aps: {
+                                            sound: "default",
+                                            badge: 1,
+                                        },
+                                    },
+                                },
+                                tokens,
+                            })
+                        )
+                    }
+                }
+            }
+
+            await Promise.all([...updates, ...notifications])
+
+            functions.logger.info("Waitlist notified of cancelled slot", {
+                courtId,
+                date,
+                startTime,
+                notifiedCount: waitlistSnapshot.size,
+            })
+        } catch (error) {
+            functions.logger.error("Error notifying waitlist:", error)
+        }
+    })
+
+/**
+ * Scheduled function: Daily demand insights summary for premium facilities
+ * Runs every day at 8am
+ */
+export const sendDailyDemandInsights = functions.pubsub
+    .schedule("0 8 * * *")
+    .timeZone("America/New_York")
+    .onRun(async () => {
+        try {
+            // Get all premium facilities with daily summary enabled
+            const facilitiesQuery = admin.firestore()
+                .collection("claimed_facilities")
+                .where("subscriptionTier", "==", "premium")
+                .where("dailySummary", "==", true)
+
+            const facilitiesSnapshot = await facilitiesQuery.get()
+
+            for (const facilityDoc of facilitiesSnapshot.docs) {
+                const facility = facilityDoc.data()
+
+                // Get yesterday's stats
+                const yesterday = new Date()
+                yesterday.setDate(yesterday.getDate() - 1)
+                const yesterdayStr = yesterday.toISOString().split("T")[0]
+
+                const bookingsQuery = admin.firestore()
+                    .collection("court_bookings")
+                    .where("facilityId", "==", facilityDoc.id)
+                    .where("date", "==", yesterdayStr)
+                    .where("paymentStatus", "==", "paid")
+
+                const bookingsSnapshot = await bookingsQuery.get()
+
+                let totalRevenue = 0
+                bookingsSnapshot.docs.forEach(doc => {
+                    totalRevenue += (doc.data().facilityPayout || 0) / 100
+                })
+
+                // Get owner's push tokens
+                if (facility.ownerId) {
+                    const tokensSnapshot = await admin.firestore()
+                        .collection("users")
+                        .doc(facility.ownerId)
+                        .collection("deviceTokens")
+                        .get()
+
+                    const tokens = tokensSnapshot.docs
+                        .map(d => d.data().token)
+                        .filter(Boolean)
+
+                    if (tokens.length > 0 && bookingsSnapshot.size > 0) {
+                        await admin.messaging().sendEachForMulticast({
+                            notification: {
+                                title: "📊 Yesterday's Summary",
+                                body: `${bookingsSnapshot.size} bookings, $${totalRevenue.toFixed(0)} earned`,
+                            },
+                            data: {
+                                type: "daily_summary",
+                                facilityId: facilityDoc.id,
+                            },
+                            tokens,
+                        })
+                    }
+                }
+            }
+
+            functions.logger.info("Daily demand insights sent", {
+                facilitiesCount: facilitiesSnapshot.size,
+            })
+        } catch (error) {
+            functions.logger.error("Error sending daily insights:", error)
+        }
+    })
+
+/**
+ * Cleanup: Expire old waitlist entries (runs daily)
+ */
+export const cleanupExpiredWaitlist = functions.pubsub
+    .schedule("0 2 * * *")
+    .timeZone("America/New_York")
+    .onRun(async () => {
+        try {
+            const yesterday = new Date()
+            yesterday.setDate(yesterday.getDate() - 1)
+            const yesterdayStr = yesterday.toISOString().split("T")[0]
+
+            const query = admin.firestore()
+                .collection("court_waitlist")
+                .where("status", "==", "waiting")
+                .where("date", "<", yesterdayStr)
+                .limit(500)
+
+            const snapshot = await query.get()
+
+            const batch = admin.firestore().batch()
+            snapshot.docs.forEach(doc => {
+                batch.update(doc.ref, {
+                    status: "expired",
+                    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                })
+            })
+            await batch.commit()
+
+            functions.logger.info("Expired waitlist entries cleaned up", {
+                count: snapshot.size,
+            })
+        } catch (error) {
+            functions.logger.error("Error cleaning up waitlist:", error)
+        }
+    })
