@@ -15,6 +15,8 @@ import { predictVenueTraffic } from "@/lib/traffic-prediction"
 import { router } from "expo-router"
 import * as Haptics from "expo-haptics"
 import { ActivityHeatMap } from "@/components/ActivityHeatMap"
+import { SmartDiscoveryFeed } from "@/components/SmartDiscoveryFeed"
+import { getLaunchCity, LaunchCityId } from "@/lib/launch-cities"
 
 
 export default function HomeScreen() {
@@ -83,6 +85,11 @@ export default function HomeScreen() {
               <Text className="flex-1 ml-3 text-muted-foreground">{t('explore.searchPlaceholder')}</Text>
             </TouchableOpacity>
           </View>
+
+          {/* Smart Discovery Feed */}
+          <SmartDiscoveryFeed
+            city={location?.city ? getLaunchCity(location.city, location.state)?.id || "atlanta" : "atlanta"}
+          />
 
           {/* Activity Heat Map */}
           <View className="px-6 mb-6">

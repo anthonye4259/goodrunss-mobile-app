@@ -30,6 +30,8 @@ import { RegularsInsights, type VenueInsight } from "@/components/RegularsInsigh
 import { ValidationPrompt } from "@/components/ValidationPrompt"
 import { getSportContext, type SportContext, type Sport } from "@/lib/services/sport-intelligence-service"
 import { QuickReportButton, QuickCourtReportModal } from "@/components/QuickCourtReport"
+import { VenueReviews } from "@/components/VenueReviews"
+import { CrowdLevelBadge, CrowdLevelChart, CheckInPrompt } from "@/components/CrowdLevelBadge"
 
 
 export default function VenueDetailScreen() {
@@ -748,6 +750,16 @@ export default function VenueDetailScreen() {
                   <Text className="text-primary text-xs font-bold">Earn $1-31</Text>
                 </View>
               </TouchableOpacity>
+            </View>
+
+            {/* Crowd Levels */}
+            <View className="px-6 mb-6">
+              <CrowdLevelChart venueId={typeof id === "string" ? id : ""} />
+            </View>
+
+            {/* Reviews Section */}
+            <View className="px-6 mb-6">
+              <VenueReviews venueId={typeof id === "string" ? id : ""} venueName={venue.name} />
             </View>
 
             <View className="px-6 mb-6">

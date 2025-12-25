@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Venue } from '@/lib/venue-data';
+import { crowdLevelService, CrowdLevel } from '@/lib/services/crowd-level-service';
 
 interface VenueListCardProps {
     venue: Venue;
@@ -11,10 +12,23 @@ interface VenueListCardProps {
 }
 
 export function VenueListCard({ venue, onPress }: VenueListCardProps) {
-    // Determine traffic color
+    const [crowdData, setCrowdData] = useState<{ level: CrowdLevel; label: string; color: string; message: string } | null>(null);
+
+    useEffect(() => {
+        loadCrowdLevel();
+    }, [venue.id]);
+
+    const loadCrowdLevel = async () => {
+        if (venue.id) {
+            const data = await crowdLevelService.getCurrentLevel(venue.id);
+            setCrowdData(data);
+        }
+    };
+
+    // Use crowd service data or fall back to player count
     const playerCount = venue.activePlayersNow || 0;
-    const trafficColor = playerCount > 10 ? '#EF4444' : playerCount > 4 ? '#EAB308' : '#22C55E';
-    const trafficLabel = playerCount > 10 ? 'Busy' : playerCount > 4 ? 'Active' : 'Quiet';
+    const trafficColor = crowdData?.color || (playerCount > 10 ? '#EF4444' : playerCount > 4 ? '#EAB308' : '#22C55E');
+    const trafficLabel = crowdData?.label || (playerCount > 10 ? 'Busy' : playerCount > 4 ? 'Active' : 'Quiet');
 
     return (
         <TouchableOpacity onPress={onPress} activeOpacity={0.9} style={styles.container}>
@@ -45,12 +59,12 @@ export function VenueListCard({ venue, onPress }: VenueListCardProps) {
                     <Ionicons name="chevron-forward" size={20} color="#666" />
                 </View>
 
-                {/* Live Data Badge */}
+                {/* Live Data Badge - Enhanced with Crowd Level */}
                 <View style={styles.liveSection}>
                     <View style={[styles.liveBadge, { backgroundColor: `${trafficColor}15` }]}>
                         <View style={[styles.liveDot, { backgroundColor: trafficColor }]} />
                         <Text style={[styles.liveText, { color: trafficColor }]}>
-                            {playerCount} players active
+                            {crowdData?.message || `${playerCount} players active`}
                         </Text>
                     </View>
                     <View style={styles.statusBadge}>
