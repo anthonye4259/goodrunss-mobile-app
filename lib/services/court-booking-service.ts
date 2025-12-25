@@ -410,6 +410,57 @@ export const courtBookingService = {
             return null
         }
     },
+
+    /**
+     * Get all bookings for a player
+     */
+    async getPlayerBookings(userId: string): Promise<CourtBooking[]> {
+        if (!db) return []
+
+        try {
+            const query = db.collection(BOOKINGS_COLLECTION)
+                .where("userId", "==", userId)
+                .orderBy("date", "desc")
+                .limit(100)
+
+            const snapshot = await query.get()
+            return snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                createdAt: doc.data().createdAt?.toDate?.() || new Date(),
+                updatedAt: doc.data().updatedAt?.toDate?.() || new Date(),
+            })) as CourtBooking[]
+        } catch (error) {
+            console.error("Error getting player bookings:", error)
+            return []
+        }
+    },
+
+    /**
+     * Cancel a booking
+     */
+    async cancelBooking(bookingId: string, userId: string): Promise<boolean> {
+        if (!db) return false
+
+        try {
+            const docRef = db.collection(BOOKINGS_COLLECTION).doc(bookingId)
+            const doc = await docRef.get()
+
+            if (!doc.exists) return false
+            if (doc.data()?.userId !== userId) return false
+
+            await docRef.update({
+                status: "cancelled",
+                paymentStatus: "refunded",
+                updatedAt: new Date(),
+            })
+
+            return true
+        } catch (error) {
+            console.error("Error cancelling booking:", error)
+            return false
+        }
+    },
 }
 
 export default courtBookingService
