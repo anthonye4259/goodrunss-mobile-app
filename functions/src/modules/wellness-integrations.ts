@@ -468,7 +468,7 @@ export const hourlyCalendarSync = functions.pubsub
     .schedule("every 1 hours")
     .onRun(async () => {
         // Sync both wellness and court calendar integrations
-        
+
         // Wellness calendars
         const wellnessIntegrations = await admin.firestore()
             .collection("studioIntegrations")
@@ -772,7 +772,7 @@ export const wellnessWebhook = functions.https.onRequest(async (req, res) => {
         return
     }
 
-    const { platform, event, data } = req.body
+    const { platform: _platform, event, data } = req.body
 
     try {
         switch (event) {

@@ -617,7 +617,7 @@ export const courtWebhook = functions.https.onRequest(async (req, res) => {
         return
     }
 
-    const { platform, event, data } = req.body
+    const { platform: _platform, event, data } = req.body
 
     try {
         switch (event) {
