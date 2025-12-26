@@ -10,6 +10,7 @@ type UserPreferences = {
   userType: "player" | "trainer" | "instructor" | "both" | null
   primaryActivity?: string
   onboardingComplete?: boolean // True if setup completed, false if skipped
+  trainerTagline?: string // For trainers/instructors
 
   // For "both" users - which mode they're currently in
   activeMode?: "player" | "trainer"

@@ -23,6 +23,8 @@ export interface RatingConfig {
 export interface RatingLevel {
   value: number
   label: string
+  name?: string   // Alias for label, used in some screens
+  range?: string  // Display range string (e.g., "3.0 - 3.5")
   description: string
   color: string
 }

@@ -21,18 +21,46 @@ import {
 import { getAuth } from "firebase/auth"
 
 // ============================================
+// CONSTANTS
+// ============================================
+
+export const TRAINER_BOOKING_FEE = 500 // $5.00 in cents
+
+// ============================================
+// HELPER FUNCTIONS
+// ============================================
+
+export function getRenterType(sport: string): "trainer" | "instructor" {
+    const studioSports = ["Pilates", "Yoga", "Lagree", "Barre", "Meditation"]
+    return studioSports.includes(sport) ? "instructor" : "trainer"
+}
+
+export function getRentalType(sport: string): "court" | "studio" {
+    const studioSports = ["Pilates", "Yoga", "Lagree", "Barre", "Meditation"]
+    return studioSports.includes(sport) ? "studio" : "court"
+}
+
+// ============================================
 // TYPES
 // ============================================
 
 export interface TrainerRental {
     id: string
     trainerId?: string
+    trainerName?: string
+    trainerEmail?: string
     playerId?: string
+    renterType?: "trainer" | "instructor"
+    facilityId?: string
+    venueId?: string
+    venueName?: string
+    rentalType?: "court" | "studio"
     type: "equipment" | "space" | "court" | "studio"
     name: string
     description?: string
     hourlyRate?: number // in cents
     dailyRate?: number
+    bookingFee?: number
     available?: boolean
     location?: string
     imageUrl?: string
@@ -40,10 +68,42 @@ export interface TrainerRental {
     date?: string
     startTime?: string
     endTime?: string
+    duration?: number
+    courtOrStudioId?: string
     courtOrStudioName?: string
     status?: "confirmed" | "cancelled" | "pending" | "completed"
+    paymentStatus?: "pending" | "paid" | "refunded"
+    purpose?: string
     totalCharged?: number
     createdAt?: string
+}
+
+export interface CreateRentalParams {
+    trainerId: string
+    trainerName: string
+    trainerEmail?: string
+    renterType: "trainer" | "instructor"
+    facilityId: string
+    venueId: string
+    venueName: string
+    rentalType: "court" | "studio"
+    courtOrStudioId: string
+    courtOrStudioName: string
+    date: string
+    startTime: string
+    endTime: string
+    duration: number
+    hourlyRate: number
+    bookingFee: number
+    paymentStatus: "pending" | "paid" | "refunded"
+    status: "confirmed" | "cancelled" | "pending" | "completed"
+    purpose?: string
+}
+
+export interface PricingResult {
+    totalAmount: number
+    bookingFee: number
+    totalCharged: number
 }
 
 // ============================================
@@ -54,6 +114,47 @@ class TrainerRentalService {
     private getCurrentUserId(): string | null {
         const auth = getAuth()
         return auth.currentUser?.uid || null
+    }
+
+    /**
+     * Calculate pricing for a rental
+     */
+    calculatePricing(hourlyRate: number, durationMinutes: number): PricingResult {
+        const hours = durationMinutes / 60
+        const totalAmount = Math.round(hourlyRate * hours)
+        const bookingFee = TRAINER_BOOKING_FEE
+        const totalCharged = totalAmount + bookingFee
+
+        return {
+            totalAmount,
+            bookingFee,
+            totalCharged,
+        }
+    }
+
+    /**
+     * Create a new rental booking
+     */
+    async createRental(params: CreateRentalParams): Promise<string | null> {
+        if (!db) return null
+
+        try {
+            const pricing = this.calculatePricing(params.hourlyRate, params.duration)
+
+            const rentalData = {
+                ...params,
+                type: params.rentalType,
+                name: params.courtOrStudioName,
+                totalCharged: pricing.totalCharged,
+                createdAt: Timestamp.now(),
+            }
+
+            const docRef = await addDoc(collection(db, "trainer_rentals"), rentalData)
+            return docRef.id
+        } catch (error) {
+            console.error("Error creating rental:", error)
+            return null
+        }
     }
 
     /**
@@ -175,3 +276,4 @@ class TrainerRentalService {
 }
 
 export const trainerRentalService = new TrainerRentalService()
+

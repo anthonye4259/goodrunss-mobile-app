@@ -40,6 +40,10 @@ export interface DiscoveredVenue {
     // Distance (calculated at runtime)
     distance?: number
 
+    // Live activity (optional, from GoodRunss data)
+    needsPlayers?: boolean
+    currentOccupancy?: "quiet" | "active" | "busy" | "packed"
+
     // Metadata
     lastVerified?: Date
     confidence: number // 0-100
