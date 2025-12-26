@@ -74,7 +74,7 @@ export default function FacilitySettingsScreen() {
         setLoading(true)
 
         try {
-            const facility = await facilityService.getFacility(facilityId)
+            const facility = await facilityService.getClaimedFacility(facilityId)
             if (facility) {
                 setFacilityName(facility.businessName || "")
                 setOperatingHours(facility.operatingHours || getDefaultHours())

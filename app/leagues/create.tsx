@@ -259,6 +259,7 @@ const styles = StyleSheet.create({
     divider: { height: 1, backgroundColor: '#222' },
     row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 16 },
     rowLabel: { color: '#FFF', fontSize: 16 },
+    rowDesc: { color: '#666', fontSize: 12, marginTop: 2 },
 
     selectBtn: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     selectText: { color: '#CCC' },

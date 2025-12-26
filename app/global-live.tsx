@@ -94,7 +94,6 @@ function VenueActivityRow({
                             className="flex-row items-center px-3 py-1.5 rounded-full"
                             style={{ backgroundColor: context.activityColor + "20" }}
                         >
-                            <Text className="text-lg mr-1">{context.activityEmoji}</Text>
                             <Text
                                 style={{ color: context.activityColor }}
                                 className="font-bold text-sm"
@@ -152,7 +151,7 @@ export default function GlobalLiveScreen() {
     const loadData = async () => {
         try {
             // Get nearby venues
-            const nearbyVenues = await venueService.getNearbyVenues(40.7, -74.0, 10)
+            const nearbyVenues = await venueService.getVenuesNearby({ latitude: 40.7, longitude: -74.0 }, 10)
             setVenues(nearbyVenues.slice(0, 20))
 
             // Load sport context for each
@@ -298,7 +297,7 @@ export default function GlobalLiveScreen() {
                                         }`}
                                     onPress={() => setSelectedSport(sport)}
                                 >
-                                    <Text className="mr-1">{config.emoji}</Text>
+                                    <Text className="mr-1">{config.icon}</Text>
                                     <Text className={selectedSport === sport ? "text-black font-bold" : "text-foreground"}>
                                         {config.name}
                                     </Text>

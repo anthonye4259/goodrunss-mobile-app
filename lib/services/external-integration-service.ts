@@ -302,6 +302,7 @@ export interface WellnessIntegrationConfig {
     calendarUrl?: string   // CalendarSync (iCal/Google)
     isActive: boolean
     lastSyncAt?: string
+    syncErrors?: string[]
 }
 
 class MindbodyClient {

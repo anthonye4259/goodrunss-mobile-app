@@ -130,7 +130,7 @@ export default function PendingBookingsScreen() {
                     onPress: async () => {
                         setProcessingId(bookingId)
                         try {
-                            const declineBooking = functions.httpsCallable("declineBooking")
+                            const declineBooking = functions!.httpsCallable("declineBooking")
                             await declineBooking({ bookingId, reason: "Slot no longer available" })
 
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning)
