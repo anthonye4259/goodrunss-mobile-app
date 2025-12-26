@@ -131,7 +131,7 @@ export function HourlyForecast({
                                     styles.bar,
                                     {
                                         backgroundColor: pred.color,
-                                        height: this.getBarHeight(pred.level),
+                                        height: getBarHeight(pred.level),
                                     }
                                 ]}
                             />

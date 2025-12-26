@@ -19,7 +19,7 @@ export default function AddVenueScreen() {
     const [submitting, setSubmitting] = useState(false)
 
     // Default to user location, but allow picking (mock picker for now)
-    const [coords, setCoords] = useState(location?.coords || { latitude: 0, longitude: 0 })
+    const [coords, setCoords] = useState(location ? { latitude: location.lat, longitude: location.lng } : { latitude: 0, longitude: 0 })
 
     const handleAddPhoto = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({

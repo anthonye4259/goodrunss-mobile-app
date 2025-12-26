@@ -600,7 +600,7 @@ export default function VenueDetailScreen() {
             <View className="bg-card border border-border rounded-2xl p-4 mb-6">
               <Text className="text-lg font-bold text-foreground mb-4">Amenities</Text>
               <View className="flex-row flex-wrap gap-2">
-                {venue.amenities.map((amenity, index) => (
+                {venue.amenities.map((amenity: string, index: number) => (
                   <View key={index} className="bg-primary/10 rounded-lg px-3 py-2">
                     <Text className="text-primary font-medium">{amenity}</Text>
                   </View>

@@ -1,10 +1,9 @@
 
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Modal } from "react-native"
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Modal, ActivityIndicator } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useState, useEffect } from "react"
 import { LinearGradient } from "expo-linear-gradient"
 import { SearchService, type SearchResult } from "@/lib/search-service"
-import { SkeletonLoader } from "./skeleton-loader"
 import { router } from "expo-router"
 import * as Haptics from "expo-haptics"
 
@@ -114,10 +113,9 @@ export function GlobalSearch({ visible, onClose }: GlobalSearchProps) {
             )}
 
             {loading && (
-              <View>
-                <SkeletonLoader width="100%" height={80} className="mb-3" />
-                <SkeletonLoader width="100%" height={80} className="mb-3" />
-                <SkeletonLoader width="100%" height={80} className="mb-3" />
+              <View className="items-center py-8">
+                <ActivityIndicator size="large" color="#7ED957" />
+                <Text className="text-muted-foreground mt-4">Searching...</Text>
               </View>
             )}
 

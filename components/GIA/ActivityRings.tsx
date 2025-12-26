@@ -42,11 +42,7 @@ export const ActivityRings: React.FC<ActivityRingsProps> = ({
                 duration: 1500,
                 delay,
                 easing: Easing.out(Easing.cubic),
-                useNativeDriver: true, // Native driver works with createAnimatedComponent for props? Actually usually mostly for transform/opacity. 
-                // Note: react-native-svg/Reanimated is better for this, but Animated with setNativeProps or state listeners is common.
-                // However, Animated.createAnimatedComponent works with native driver for certain props on some RN versions, 
-                // but for SVG props usually we need to set useNativeDriver: false or use a listener.
-                // Let's stick to useNativeDriver: false for SVG strokeDashoffset to be safe and compatible.
+                // useNativeDriver: false for SVG strokeDashoffset
                 useNativeDriver: false,
             }).start();
         };
