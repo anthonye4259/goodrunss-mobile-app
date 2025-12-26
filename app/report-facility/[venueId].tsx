@@ -46,7 +46,7 @@ export default function ReportFacilityScreen() {
       const imageService = ImageService.getInstance()
       const result = await imageService.pickImage()
       if (result) {
-        setPhotos([...photos, result.uri])
+        setPhotos([...photos, result])
       }
     } catch (error) {
       console.error("Photo error:", error)
@@ -116,9 +116,8 @@ export default function ReportFacilityScreen() {
               {categories.map((cat) => (
                 <TouchableOpacity
                   key={cat.key}
-                  className={`flex-1 min-w-[45%] rounded-xl p-4 border ${
-                    category === cat.key ? "border-primary bg-primary/10" : "border-border bg-card"
-                  }`}
+                  className={`flex-1 min-w-[45%] rounded-xl p-4 border ${category === cat.key ? "border-primary bg-primary/10" : "border-border bg-card"
+                    }`}
                   onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
                     setCategory(cat.key)
@@ -142,9 +141,8 @@ export default function ReportFacilityScreen() {
               {conditions.map((cond) => (
                 <TouchableOpacity
                   key={cond.key}
-                  className={`flex-1 rounded-xl p-4 border ${
-                    condition === cond.key ? "border-primary bg-primary/10" : "border-border bg-card"
-                  }`}
+                  className={`flex-1 rounded-xl p-4 border ${condition === cond.key ? "border-primary bg-primary/10" : "border-border bg-card"
+                    }`}
                   onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
                     setCondition(cond.key)

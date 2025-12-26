@@ -66,8 +66,8 @@ export default function NearMeScreen() {
             }
 
             // Discover courts
-            const sportFilter = selectedSport === "all" ? undefined : selectedSport
-            const discovered = await discoverVenues(lat, lng, sportFilter, 25)
+            const sportFilter = selectedSport === "all" ? "" : selectedSport
+            const discovered = await discoverVenues(lat, lng, sportFilter || "", 25)
             setCourts(discovered)
         } catch (err) {
             console.error("[NearMe] Error:", err)

@@ -260,9 +260,9 @@ export default function VenueDetailScreen() {
       await venueService.checkIn(id, userId)
 
       // Update local state to reflect +1 player
-      setVenue(prev => ({
+      setVenue((prev: any) => ({
         ...prev,
-        activePlayersNow: (prev.activePlayersNow || 0) + 1
+        activePlayersNow: (prev?.activePlayersNow || 0) + 1
       }))
     }
   }
@@ -292,9 +292,9 @@ export default function VenueDetailScreen() {
       const result = await imageService.pickImage()
 
       if (result) {
-        const compressed = await imageService.compressImage(result.uri)
+        // result is already a string URI from pickImage
         // Upload to your backend
-        console.log("[v0] Uploading venue photo:", compressed)
+        console.log("[v0] Uploading venue photo:", result)
 
         // Show success notification
         const notificationService = NotificationService.getInstance()

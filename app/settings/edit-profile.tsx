@@ -1,5 +1,5 @@
 
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert, Image } from "react-native"
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert, Image, ActivityIndicator } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { router } from "expo-router"
@@ -7,10 +7,9 @@ import { useState } from "react"
 import * as Haptics from "expo-haptics"
 import { useUserPreferences } from "@/lib/user-preferences"
 import { ImageService } from "@/lib/image-service"
-import { SkeletonLoader } from "@/components/skeleton-loader"
 
 export default function EditProfileScreen() {
-  const { preferences, updatePreferences } = useUserPreferences()
+  const { preferences, setPreferences } = useUserPreferences()
   const [name, setName] = useState(preferences.name || "")
   const [bio, setBio] = useState("")
   const [profileImage, setProfileImage] = useState<string | null>(null)
@@ -19,7 +18,7 @@ export default function EditProfileScreen() {
   const imageService = ImageService.getInstance()
 
   const handleSave = async () => {
-    await updatePreferences({ name })
+    setPreferences({ ...preferences, name })
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
     router.back()
   }
@@ -78,7 +77,9 @@ export default function EditProfileScreen() {
         <View className="px-6 mb-6 items-center">
           <TouchableOpacity onPress={handleImagePick} disabled={uploading}>
             {uploading ? (
-              <SkeletonLoader width={120} height={120} borderRadius={60} />
+              <View className="w-30 h-30 rounded-full bg-card items-center justify-center">
+                <ActivityIndicator size="large" color="#7ED957" />
+              </View>
             ) : profileImage ? (
               <Image source={{ uri: profileImage }} className="w-30 h-30 rounded-full" />
             ) : (

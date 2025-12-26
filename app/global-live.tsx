@@ -151,7 +151,7 @@ export default function GlobalLiveScreen() {
     const loadData = async () => {
         try {
             // Get nearby venues
-            const nearbyVenues = await venueService.getVenuesNearby({ latitude: 40.7, longitude: -74.0 }, 10)
+            const nearbyVenues = await venueService.getVenuesNearby({ lat: 40.7, lng: -74.0 }, 10)
             setVenues(nearbyVenues.slice(0, 20))
 
             // Load sport context for each
