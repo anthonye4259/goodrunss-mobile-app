@@ -155,7 +155,8 @@ export class NotificationService {
   async getPushToken(): Promise<string | null> {
     try {
       // projectId is required for Expo push tokens in SDK 52+
-      const projectId = "54c9b3c6-9f21-44cc-921b-0fa2db35b4a4"
+      // IMPORTANT: This must match the projectId in app.json
+      const projectId = "b63887f4-0f38-4414-8597-47548483ad9f"
       const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data
       console.log("[v0] Push token:", token)
       return token
