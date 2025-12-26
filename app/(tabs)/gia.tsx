@@ -31,7 +31,7 @@ type Message = {
   role: "user" | "assistant"
   content: string
   timestamp: Date
-  suggestions?: { label: string; icon?: keyof typeof Ionicons.glyphMap }[]
+  suggestions?: { label: string; icon?: string }[]
   widget?: string; // Type of widget to render (e.g. 'trainers', 'conditions')
 }
 
@@ -69,18 +69,18 @@ export default function GIAScreen() {
   }
 
   // Get smart suggestions with icons - context-aware
-  const getSuggestions = () => {
+  const getSuggestions = (): { label: string; icon?: string }[] => {
     const playerSuggestions = [
-      { label: "Find courts nearby", icon: "location-outline" as const },
-      { label: "Get a workout plan", icon: "fitness-outline" as const },
-      { label: "Can I play outside?", icon: "sunny-outline" as const },
-      { label: "Find a coach", icon: "search-outline" as const },
+      { label: "Find courts nearby", icon: "location-outline" },
+      { label: "Get a workout plan", icon: "fitness-outline" },
+      { label: "Can I play outside?", icon: "sunny-outline" },
+      { label: "Find a coach", icon: "search-outline" },
     ]
 
     const trainerSuggestions = [
-      { label: "Find leads", icon: "people-outline" as const },
-      { label: "Send invoice", icon: "receipt-outline" as const },
-      { label: "Blast message", icon: "megaphone-outline" as const },
+      { label: "Find leads", icon: "people-outline" },
+      { label: "Send invoice", icon: "receipt-outline" },
+      { label: "Blast message", icon: "megaphone-outline" },
     ]
 
     // For "both" users, return suggestions based on active mode

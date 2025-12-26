@@ -7,7 +7,7 @@ import { useUserPreferences } from "@/lib/user-preferences"
 import { useLocation } from "@/lib/location-context"
 import { getActivityContent, getPrimaryActivity, type Activity } from "@/lib/activity-content"
 import { GlobalSearch } from "@/components/global-search"
-import { SkeletonCard } from "@/components/ui/LoadingStates"
+import { SkeletonCard, SkeletonBox } from "@/components/ui/LoadingStates"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { locationService } from "@/lib/services/location-service"
 import { getVenuesForSport } from "@/lib/venue-data"
@@ -109,7 +109,10 @@ export default function HomeScreen() {
             <Text className="text-xl font-bold text-foreground mb-4">Featured {content.trainerTitle}</Text>
 
             {loading ? (
-              <TrainerCardSkeleton />
+              <View className="bg-card rounded-2xl p-4 border border-border">
+                <SkeletonBox width="100%" height={16} />
+                <SkeletonBox width="70%" height={12} />
+              </View>
             ) : (
               <TouchableOpacity className="bg-card rounded-2xl overflow-hidden border border-border">
                 <View className="p-4">

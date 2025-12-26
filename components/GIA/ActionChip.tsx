@@ -5,7 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 interface ActionChipProps {
     label: string;
-    icon?: keyof typeof Ionicons.glyphMap;
+    icon?: string;
     onPress: () => void;
 }
 
@@ -16,7 +16,7 @@ export const ActionChip: React.FC<ActionChipProps> = ({ label, icon, onPress }) 
                 colors={['#1A1A1A', '#2A2A2A']}
                 style={styles.gradient}
             >
-                {icon && <Ionicons name={icon} size={16} color="#7ED957" style={styles.icon} />}
+                {icon && <Ionicons name={icon as keyof typeof Ionicons.glyphMap} size={16} color="#7ED957" style={styles.icon} />}
                 <Text style={styles.label}>{label}</Text>
             </LinearGradient>
         </TouchableOpacity>

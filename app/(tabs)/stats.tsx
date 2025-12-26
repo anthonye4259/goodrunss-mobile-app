@@ -236,7 +236,7 @@ export default function StatsScreen() {
                   }}
                 >
                   <LinearGradient
-                    colors={metric.gradient}
+                    colors={metric.gradient as [string, string, ...string[]]}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     className="rounded-3xl p-5 h-48 justify-between"
