@@ -64,9 +64,9 @@ export default function QuickBlockScreen() {
 
         try {
             // Get facility courts
-            const facility = await facilityService.getClaimedFacility(facilityId as string)
-            if (facility?.venue?.courts) {
-                setCourts(facility.venue.courts.map((c: any, idx: number) => ({
+            const courtsData = await facilityService.getCourts(facilityId as string)
+            if (courtsData && courtsData.length > 0) {
+                setCourts(courtsData.map((c, idx) => ({
                     id: c.id || `court-${idx}`,
                     name: c.name || `Court ${idx + 1}`,
                     type: c.type || "pickleball",
@@ -103,7 +103,7 @@ export default function QuickBlockScreen() {
         const slotKey = `${selectedCourt.id}-${selectedDay}-${time}`
 
         try {
-            const quickBlockSlot = httpsCallable(functions, "quickBlockSlot")
+            const quickBlockSlot = functions!.httpsCallable("quickBlockSlot")
 
             // Calculate end time (1 hour later)
             const startHour = parseInt(time.split(":")[0])
@@ -150,7 +150,7 @@ export default function QuickBlockScreen() {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy)
                         setBlocking(true)
 
-                        const quickBlockSlot = functions.httpsCallable("quickBlockSlot")
+                        const quickBlockSlot = functions!.httpsCallable("quickBlockSlot")
 
                         for (const time of remainingSlots) {
                             try {

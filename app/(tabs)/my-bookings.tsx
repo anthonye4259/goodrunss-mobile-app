@@ -176,7 +176,7 @@ export default function MyBookingsScreen() {
                         } else if (booking.type === "class" && user) {
                             success = await classService.cancelBooking(booking.id, user.id)
                         } else if (booking.type === "rental" && user) {
-                            success = await trainerRentalService.cancelRental(booking.id, user.id)
+                            success = await trainerRentalService.cancelRental(booking.id)
                         }
 
                         if (success) {

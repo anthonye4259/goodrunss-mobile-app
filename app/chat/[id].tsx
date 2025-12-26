@@ -53,10 +53,11 @@ export default function ChatScreen() {
 
   // Listen for typing status
   useEffect(() => {
+    if (!db) return
     const convoRef = doc(db, "conversations", id as string)
-    const unsubscribe = onSnapshot(doc(db, "conversations", id as string), (doc) => {
-      if (doc.exists()) {
-        const data = doc.data()
+    const unsubscribe = onSnapshot(convoRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data()
         // Check if ANY other participant is typing
         // This assumes 'typing' field is a map: { [userId]: boolean }
         const typingMap = data.typing || {}

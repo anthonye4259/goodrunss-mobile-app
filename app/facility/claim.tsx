@@ -78,15 +78,13 @@ export default function ClaimFacilityScreen() {
             }
 
             // Claim the facility
-            const facilityId = await facilityService.claimFacility(
-                venueId as string,
-                user?.uid || "",
-                {
-                    businessName,
-                    businessPhone,
-                    businessEmail,
-                }
-            )
+            const facilityId = await facilityService.claimFacility({
+                venueId: venueId as string,
+                ownerId: user?.uid || "",
+                businessName,
+                businessPhone,
+                businessEmail,
+            })
 
             if (facilityId) {
                 // Mark as verified

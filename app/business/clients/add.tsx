@@ -50,8 +50,10 @@ export default function AddClientScreen() {
         let importedCount = 0
 
         try {
-            for (const contact of contacts) {
-                if (selectedIds.has(contact.id || '')) {
+            for (let i = 0; i < contacts.length; i++) {
+                const contact = contacts[i]
+                const contactId = (contact as any).id || `contact-${i}`
+                if (selectedIds.has(contactId)) {
                     const phone = contact.phoneNumbers?.[0]?.number
                     const email = contact.emails?.[0]?.email
 
@@ -83,12 +85,13 @@ export default function AddClientScreen() {
         }
     }
 
-    const renderItem = ({ item }: { item: Contacts.Contact }) => {
-        const isSelected = selectedIds.has(item.id || '')
+    const renderItem = ({ item, index }: { item: Contacts.Contact, index: number }) => {
+        const contactId = (item as any).id || `contact-${index}`
+        const isSelected = selectedIds.has(contactId)
         return (
             <TouchableOpacity
                 style={[styles.contactRow, isSelected && styles.selectedRow]}
-                onPress={() => item.id && toggleSelection(item.id)}
+                onPress={() => toggleSelection(contactId)}
             >
                 <View style={styles.left}>
                     <View style={styles.avatar}>
@@ -148,7 +151,7 @@ export default function AddClientScreen() {
             <FlatList
                 data={contacts}
                 renderItem={renderItem}
-                keyExtractor={item => item.id || Math.random().toString()}
+                keyExtractor={(item, index) => (item as any).id || `contact-${index}`}
                 contentContainerStyle={styles.list}
             />
         </SafeAreaView>

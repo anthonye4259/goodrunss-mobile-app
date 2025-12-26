@@ -5,7 +5,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { useState, useEffect } from "react"
 import { router } from "expo-router"
 import * as Haptics from "expo-haptics"
-import { SkeletonLoader } from "@/components/skeleton-loader"
+import { LoadingSpinner } from "@/components/ui/LoadingStates"
 import { socialService } from "@/lib/services/social-service"
 import { useAuth } from "@/lib/auth-context"
 
@@ -191,7 +191,7 @@ export default function FindPartnersScreen() {
           <Text className="text-foreground font-bold mb-3">{players.length} Players Found</Text>
 
           {loading ? (
-            <SkeletonLoader type="list" count={3} />
+            <LoadingSpinner message="Finding players nearby..." />
           ) : (
             players.map((player) => (
               <TouchableOpacity
