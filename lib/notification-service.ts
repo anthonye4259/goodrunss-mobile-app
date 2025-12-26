@@ -23,6 +23,8 @@ export type NotificationType =
   | "level_up"
   | "waitlist_spot"        // New: spot opened on waitlist
   | "availability_reminder" // New: remind trainer to update availability
+  | "general"              // Generic notification
+
 
 
 export interface NotificationData {
@@ -205,6 +207,7 @@ export class NotificationService {
       level_up: true,
       waitlist_spot: true,       // Client: spot opened
       availability_reminder: true, // Trainer: update availability
+      general: true,             // Generic notifications
     }
   }
 

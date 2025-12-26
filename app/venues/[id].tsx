@@ -405,10 +405,11 @@ export default function VenueDetailScreen() {
 
                   <RegularsInsights
                     venueId={id as string}
+                    userId={user?.id || "guest"}
                     insights={[
-                      { type: "pattern", icon: "time-outline", text: "Usually gets busy after 5 PM", confidence: 0.92 },
-                      { type: "tip", icon: "bulb-outline", text: "Locals act is friendly", confidence: 0.88 },
-                      { type: "trend", icon: "trending-up-outline", text: "Popularity rising this week", confidence: 0.75 }
+                      { id: "1", venueId: id as string, text: "Usually gets busy after 5 PM", category: "timing", upvotes: 12, downvotes: 0, verified: true, userId: "system", createdAt: new Date().toISOString() },
+                      { id: "2", venueId: id as string, text: "Locals are friendly", category: "community", upvotes: 8, downvotes: 1, verified: false, userId: "system", createdAt: new Date().toISOString() },
+                      { id: "3", venueId: id as string, text: "Popularity rising this week", category: "timing", upvotes: 5, downvotes: 0, verified: false, userId: "system", createdAt: new Date().toISOString() }
                     ]}
                   />
                 </View>

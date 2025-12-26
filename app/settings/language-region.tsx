@@ -11,6 +11,7 @@ import {
   getGlobalSettings,
   type Currency,
   type DistanceUnit,
+  type WeightUnit,
   formatCurrency,
   formatDistance,
 } from "@/lib/global-format"
@@ -55,7 +56,8 @@ export default function LanguageRegionSettings() {
 
   const updateDistanceUnit = (unit: DistanceUnit) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-    const newSettings = { ...settings, distanceUnit: unit, weightUnit: unit === "miles" ? "lbs" : "kg" }
+    const weightUnit = unit === "miles" ? "lbs" : "kg"
+    const newSettings = { ...settings, distanceUnit: unit, weightUnit: weightUnit as WeightUnit }
     setSettings(newSettings)
     setGlobalSettings(newSettings)
   }
@@ -78,9 +80,8 @@ export default function LanguageRegionSettings() {
             {languages.map((lang, index) => (
               <TouchableOpacity
                 key={lang.code}
-                className={`flex-row items-center justify-between p-4 ${
-                  index !== languages.length - 1 ? "border-b border-border" : ""
-                }`}
+                className={`flex-row items-center justify-between p-4 ${index !== languages.length - 1 ? "border-b border-border" : ""
+                  }`}
                 onPress={() => updateLanguage(lang.code)}
               >
                 <View className="flex-row items-center">
@@ -100,9 +101,8 @@ export default function LanguageRegionSettings() {
             {currencies.map((curr, index) => (
               <TouchableOpacity
                 key={curr.code}
-                className={`flex-row items-center justify-between p-4 ${
-                  index !== currencies.length - 1 ? "border-b border-border" : ""
-                }`}
+                className={`flex-row items-center justify-between p-4 ${index !== currencies.length - 1 ? "border-b border-border" : ""
+                  }`}
                 onPress={() => updateCurrency(curr.code)}
               >
                 <View>

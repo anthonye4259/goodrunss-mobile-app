@@ -167,7 +167,7 @@ export default function GlobalLiveScreen() {
 
             for (const venue of nearbyVenues.slice(0, 20)) {
                 try {
-                    const sport = sportMap[venue.type] || "basketball"
+                    const sport = sportMap[venue.type || ""] || "basketball"
                     const context = await getSportContext(venue.id, sport)
                     contexts.set(venue.id, context)
                 } catch (err) {
