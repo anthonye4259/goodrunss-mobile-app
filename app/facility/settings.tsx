@@ -53,6 +53,7 @@ export default function FacilitySettingsScreen() {
 
     // State
     const [facilityName, setFacilityName] = useState("")
+    const [autoAcceptBookings, setAutoAcceptBookings] = useState(true)
     const [operatingHours, setOperatingHours] = useState<OperatingHours>({})
     const [blockedDates, setBlockedDates] = useState<string[]>([])
     const [notifications, setNotifications] = useState<NotificationSettings>({
@@ -77,6 +78,7 @@ export default function FacilitySettingsScreen() {
             const facility = await facilityService.getClaimedFacility(facilityId)
             if (facility) {
                 setFacilityName(facility.businessName || "")
+                setAutoAcceptBookings(facility.autoAcceptBookings ?? true)
                 setOperatingHours(facility.operatingHours || getDefaultHours())
                 setBlockedDates(facility.blockedDates || [])
                 setNotifications({
@@ -90,6 +92,22 @@ export default function FacilitySettingsScreen() {
             console.error("Error loading settings:", error)
         } finally {
             setLoading(false)
+        }
+    }
+
+    const handleToggleAutoAccept = async (value: boolean) => {
+        if (!facilityId) return
+        setAutoAcceptBookings(value)
+        setSaving(true)
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+
+        try {
+            await facilityService.updateAutoAcceptSetting(facilityId, value)
+        } catch (error) {
+            setAutoAcceptBookings(!value) // Revert on error
+            Alert.alert("Error", "Failed to update setting")
+        } finally {
+            setSaving(false)
         }
     }
 
@@ -226,6 +244,34 @@ export default function FacilitySettingsScreen() {
                 </View>
 
                 <ScrollView contentContainerStyle={styles.content}>
+                    {/* Autopilot Mode - Premium Card */}
+                    <View style={styles.autopilotCard}>
+                        <View style={styles.autopilotHeader}>
+                            <View style={styles.autopilotBadge}>
+                                <Ionicons name="flash" size={16} color="#FFD700" />
+                                <Text style={styles.autopilotBadgeText}>Autopilot Mode</Text>
+                            </View>
+                            <Switch
+                                value={autoAcceptBookings}
+                                onValueChange={handleToggleAutoAccept}
+                                trackColor={{ false: "#333", true: "#7ED957" }}
+                                thumbColor="#FFF"
+                            />
+                        </View>
+                        <Text style={styles.autopilotTitle}>Auto-Accept All Bookings</Text>
+                        <Text style={styles.autopilotDescription}>
+                            {autoAcceptBookings
+                                ? "✓ Bookings are automatically confirmed. Zero work needed."
+                                : "Bookings require your approval within 5 minutes."}
+                        </Text>
+                        {autoAcceptBookings && (
+                            <View style={styles.autopilotActive}>
+                                <Ionicons name="checkmark-circle" size={18} color="#7ED957" />
+                                <Text style={styles.autopilotActiveText}>Running on autopilot</Text>
+                            </View>
+                        )}
+                    </View>
+
                     {/* Operating Hours Section */}
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>Operating Hours</Text>
@@ -557,5 +603,60 @@ const styles = StyleSheet.create({
     integrationInfo: {
         flexDirection: "row",
         alignItems: "center",
+    },
+
+    // Autopilot Mode Card Styles
+    autopilotCard: {
+        backgroundColor: "rgba(255, 215, 0, 0.08)",
+        borderWidth: 1,
+        borderColor: "rgba(255, 215, 0, 0.3)",
+        borderRadius: 16,
+        padding: 20,
+        marginBottom: 24,
+    },
+    autopilotHeader: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 12,
+    },
+    autopilotBadge: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "rgba(255, 215, 0, 0.15)",
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: 20,
+    },
+    autopilotBadgeText: {
+        color: "#FFD700",
+        fontSize: 12,
+        fontWeight: "700",
+        marginLeft: 6,
+    },
+    autopilotTitle: {
+        color: "#FFF",
+        fontSize: 18,
+        fontWeight: "700",
+        marginBottom: 8,
+    },
+    autopilotDescription: {
+        color: "#AAA",
+        fontSize: 14,
+        lineHeight: 20,
+    },
+    autopilotActive: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginTop: 12,
+        paddingTop: 12,
+        borderTopWidth: 1,
+        borderTopColor: "rgba(255, 215, 0, 0.2)",
+    },
+    autopilotActiveText: {
+        color: "#7ED957",
+        fontSize: 14,
+        fontWeight: "600",
+        marginLeft: 8,
     },
 })

@@ -15,14 +15,22 @@ export const FACILITY_SUBSCRIPTION = {
         price: 0,
         takeRate: 8, // 8% of bookings
         features: {
+            // Basic features
             listFacility: true,
             acceptBookings: true,
             basicAnalytics: true,
+            // Premium features
             featuredPlacement: false,
             prioritySearch: false,
+            reducedFees: false,
+            // AI Features (Premium only)
             aiSlotFilling: false,
             demandInsights: false,
-            reducedFees: false,
+            aiPricingOptimizer: false,
+            bookingPredictions: false,
+            automatedPromotions: false,
+            competitorAnalysis: false,
+            aiChatSupport: false,
         }
     },
     PREMIUM: {
@@ -31,16 +39,63 @@ export const FACILITY_SUBSCRIPTION = {
         priceMonthly: 50,
         takeRate: 5, // Reduced to 5%
         features: {
+            // Basic features
             listFacility: true,
             acceptBookings: true,
             basicAnalytics: true,
+            // Premium features
             featuredPlacement: true,
             prioritySearch: true,
-            aiSlotFilling: true,
-            demandInsights: true,
             reducedFees: true, // 5% instead of 8%
+            // AI Features ⭐
+            aiSlotFilling: true,        // AI fills empty slots with smart discounts
+            demandInsights: true,       // AI-powered demand forecasting
+            aiPricingOptimizer: true,   // Suggests optimal hourly rates
+            bookingPredictions: true,   // Predicts busy/slow periods
+            automatedPromotions: true,  // AI-generated deals for empty slots
+            competitorAnalysis: true,   // AI insights on nearby facilities
+            aiChatSupport: true,        // Priority AI assistant support
         }
     }
+}
+
+// AI Feature descriptions for UI
+export const AI_FEATURE_DESCRIPTIONS = {
+    aiSlotFilling: {
+        name: "AI Slot Filling",
+        description: "Automatically fills empty slots with smart discounts to maximize revenue",
+        icon: "flash",
+    },
+    demandInsights: {
+        name: "Demand Insights",
+        description: "AI-powered forecasting shows when players are most likely to book",
+        icon: "analytics",
+    },
+    aiPricingOptimizer: {
+        name: "AI Price Optimizer",
+        description: "Get personalized rate suggestions based on demand and competition",
+        icon: "trending-up",
+    },
+    bookingPredictions: {
+        name: "Booking Predictions",
+        description: "7-day forecast of expected bookings and revenue",
+        icon: "calendar",
+    },
+    automatedPromotions: {
+        name: "Smart Promotions",
+        description: "AI creates and sends deals to fill your slowest time slots",
+        icon: "megaphone",
+    },
+    competitorAnalysis: {
+        name: "Competitor Intel",
+        description: "See how your pricing and ratings compare to nearby facilities",
+        icon: "stats-chart",
+    },
+    aiChatSupport: {
+        name: "Priority AI Support",
+        description: "GIA prioritizes your questions and provides facility-specific insights",
+        icon: "sparkles",
+    },
 }
 
 export const facilitySubscriptionService = {

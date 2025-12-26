@@ -489,16 +489,15 @@ export default function AuthScreen() {
               </Text>
             </TouchableOpacity>
 
-            {/* Facility Owner Entry Point */}
             <TouchableOpacity
-              onPress={() => router.push("/facility/onboarding")}
+              onPress={() => router.push("/facility/onboarding-v2")}
               className="py-4 border-t border-border mt-2"
             >
               <Text className="text-center" style={{ color: "#FFD700" }}>
-                🏢 I'm a Facility Owner
+                🏢 I manage a Facility
               </Text>
               <Text className="text-center text-muted-foreground text-xs mt-1">
-                List your courts or studios and start earning
+                Owner or manager? List your courts or studios and start earning
               </Text>
             </TouchableOpacity>
           </View>

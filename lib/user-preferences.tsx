@@ -7,15 +7,24 @@ type UserPreferences = {
   activities: string[]
   isStudioUser: boolean
   isRecUser: boolean
-  userType: "player" | "trainer" | "instructor" | "both" | null
+  // 3 main user types: player, trainer (sports coach), instructor (wellness), facility (venues)
+  userType: "player" | "trainer" | "instructor" | "facility" | "both" | null
   primaryActivity?: string
   onboardingComplete?: boolean // True if setup completed, false if skipped
   trainerTagline?: string // For trainers/instructors
 
   // For "both" users - which mode they're currently in
-  activeMode?: "player" | "trainer"
+  activeMode?: "player" | "trainer" | "facility"
 
   userId?: string
+
+  // Location data (top-level for easy access)
+  zipCode?: string
+  city?: string
+  state?: string
+  isPhase1City?: boolean // True if user is in a Phase 1 launch city
+
+  // Legacy nested location (for coordinates)
   location?: {
     latitude: number
     longitude: number

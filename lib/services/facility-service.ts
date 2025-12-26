@@ -18,6 +18,19 @@ export interface OperatingHours {
 }
 
 export type SubscriptionTier = "free" | "premium"
+export type TeamRole = "owner" | "manager" | "staff"
+
+// Team member for facility access delegation
+export interface FacilityTeamMember {
+    id: string
+    email: string
+    name: string
+    role: TeamRole
+    userId?: string // Linked Firebase user ID when accepted
+    invitedAt: Date
+    acceptedAt?: Date
+    status: "pending" | "active"
+}
 
 export interface ClaimedFacility {
     id: string
@@ -45,6 +58,9 @@ export interface ClaimedFacility {
     subscriptionExpiresAt?: Date
     stripeSubscriptionId?: string
 
+    // Booking Settings
+    autoAcceptBookings: boolean // If true, skip pending flow and confirm immediately
+
     // Notifications
     notifyOnBooking: boolean
     notifyOnCancellation: boolean
@@ -52,6 +68,9 @@ export interface ClaimedFacility {
 
     // Cancellation Policy
     cancellationWindowHours: number // e.g., 24 = refund if cancelled 24h before
+
+    // Team (for employee access)
+    team?: FacilityTeamMember[]
 
     createdAt: Date
     updatedAt: Date
@@ -100,51 +119,48 @@ export const facilityService = {
             operatingHours?: OperatingHours
         }
     ): Promise<string | null> {
-        if (!db) return null
-
-        try {
-            // Check if already claimed (skip for new venues)
-            if (!data.venueId.startsWith("new-")) {
-                const existingQuery = db.collection(FACILITIES_COLLECTION)
-                    .where("venueId", "==", data.venueId)
-                    .limit(1)
-
-                const existing = await existingQuery.get()
-                if (!existing.empty) {
-                    console.warn("Facility already claimed:", data.venueId)
-                    return null
-                }
-            }
-
-            const facilityData: Omit<ClaimedFacility, "id"> = {
-                venueId: data.venueId,
-                ownerId: data.ownerId,
-                businessName: data.businessName,
-                businessPhone: data.businessPhone,
-                businessEmail: data.businessEmail,
-                address: data.address,
-                city: data.city,
-                state: data.state,
-                zipCode: data.zipCode,
-                sports: data.sports,
-                verified: false,
-                takeRatePercent: 8, // Default 8%, 5% for premium
-                operatingHours: data.operatingHours,
-                subscriptionTier: "free",
-                notifyOnBooking: true,
-                notifyOnCancellation: true,
-                dailySummary: false,
-                cancellationWindowHours: 24,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            const docRef = await db.collection(FACILITIES_COLLECTION).add(facilityData)
-            return docRef.id
-        } catch (error) {
-            console.error("Error claiming facility:", error)
-            return null
+        if (!db) {
+            throw new Error("Database not available")
         }
+
+        // Check if already claimed (skip for new venues)
+        if (!data.venueId.startsWith("new-")) {
+            const existingQuery = db.collection(FACILITIES_COLLECTION)
+                .where("venueId", "==", data.venueId)
+                .limit(1)
+
+            const existing = await existingQuery.get()
+            if (!existing.empty) {
+                throw new Error("This facility has already been claimed")
+            }
+        }
+
+        const facilityData: Omit<ClaimedFacility, "id"> = {
+            venueId: data.venueId,
+            ownerId: data.ownerId,
+            businessName: data.businessName,
+            businessPhone: data.businessPhone,
+            businessEmail: data.businessEmail,
+            address: data.address,
+            city: data.city,
+            state: data.state,
+            zipCode: data.zipCode,
+            sports: data.sports,
+            verified: false,
+            takeRatePercent: 8, // Default 8%, 5% for premium
+            operatingHours: data.operatingHours,
+            subscriptionTier: "free",
+            autoAcceptBookings: true, // Default to autopilot mode
+            notifyOnBooking: true,
+            notifyOnCancellation: true,
+            dailySummary: false,
+            cancellationWindowHours: 24,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        }
+
+        const docRef = await db.collection(FACILITIES_COLLECTION).add(facilityData)
+        return docRef.id
     },
 
     /**
@@ -490,6 +506,214 @@ export const facilityService = {
         } catch (error) {
             console.error("Error updating cancellation policy:", error)
             return false
+        }
+    },
+
+    /**
+     * Update auto-accept setting (autopilot mode)
+     */
+    async updateAutoAcceptSetting(
+        facilityId: string,
+        autoAccept: boolean
+    ): Promise<boolean> {
+        if (!db) return false
+
+        try {
+            await db.collection(FACILITIES_COLLECTION).doc(facilityId).update({
+                autoAcceptBookings: autoAccept,
+                updatedAt: new Date(),
+            })
+            return true
+        } catch (error) {
+            console.error("Error updating auto-accept:", error)
+            return false
+        }
+    },
+
+    /**
+     * Invite a team member to the facility
+     */
+    async inviteTeamMember(
+        facilityId: string,
+        email: string,
+        name: string,
+        role: TeamRole
+    ): Promise<string | null> {
+        if (!db) return null
+
+        try {
+            const docRef = db.collection(FACILITIES_COLLECTION).doc(facilityId)
+            const doc = await docRef.get()
+            const currentTeam = doc.data()?.team || []
+
+            // Check if already invited
+            if (currentTeam.find((m: FacilityTeamMember) => m.email === email)) {
+                console.warn("Team member already invited:", email)
+                return null
+            }
+
+            const memberId = `member-${Date.now()}`
+            const newMember: FacilityTeamMember = {
+                id: memberId,
+                email,
+                name,
+                role,
+                invitedAt: new Date(),
+                status: "pending",
+            }
+
+            await docRef.update({
+                team: [...currentTeam, newMember],
+                updatedAt: new Date(),
+            })
+
+            return memberId
+        } catch (error) {
+            console.error("Error inviting team member:", error)
+            return null
+        }
+    },
+
+    /**
+     * Remove a team member
+     */
+    async removeTeamMember(facilityId: string, memberId: string): Promise<boolean> {
+        if (!db) return false
+
+        try {
+            const docRef = db.collection(FACILITIES_COLLECTION).doc(facilityId)
+            const doc = await docRef.get()
+            const currentTeam = doc.data()?.team || []
+
+            await docRef.update({
+                team: currentTeam.filter((m: FacilityTeamMember) => m.id !== memberId),
+                updatedAt: new Date(),
+            })
+            return true
+        } catch (error) {
+            console.error("Error removing team member:", error)
+            return false
+        }
+    },
+
+    /**
+     * Update a team member's role
+     */
+    async updateTeamMemberRole(
+        facilityId: string,
+        memberId: string,
+        newRole: TeamRole
+    ): Promise<boolean> {
+        if (!db) return false
+
+        try {
+            const docRef = db.collection(FACILITIES_COLLECTION).doc(facilityId)
+            const doc = await docRef.get()
+            const currentTeam = doc.data()?.team || []
+
+            const updatedTeam = currentTeam.map((m: FacilityTeamMember) =>
+                m.id === memberId ? { ...m, role: newRole } : m
+            )
+
+            await docRef.update({
+                team: updatedTeam,
+                updatedAt: new Date(),
+            })
+            return true
+        } catch (error) {
+            console.error("Error updating team role:", error)
+            return false
+        }
+    },
+
+    /**
+     * Accept team invitation (link user to team member)
+     */
+    async acceptTeamInvite(
+        facilityId: string,
+        memberId: string,
+        userId: string
+    ): Promise<boolean> {
+        if (!db) return false
+
+        try {
+            const docRef = db.collection(FACILITIES_COLLECTION).doc(facilityId)
+            const doc = await docRef.get()
+            const currentTeam = doc.data()?.team || []
+
+            const updatedTeam = currentTeam.map((m: FacilityTeamMember) =>
+                m.id === memberId
+                    ? { ...m, userId, status: "active", acceptedAt: new Date() }
+                    : m
+            )
+
+            await docRef.update({
+                team: updatedTeam,
+                updatedAt: new Date(),
+            })
+            return true
+        } catch (error) {
+            console.error("Error accepting invite:", error)
+            return false
+        }
+    },
+
+    /**
+     * Get user's role for a facility (checks owner and team)
+     */
+    async getUserFacilityRole(
+        userId: string,
+        facilityId: string
+    ): Promise<TeamRole | null> {
+        if (!db) return null
+
+        try {
+            const docRef = db.collection(FACILITIES_COLLECTION).doc(facilityId)
+            const doc = await docRef.get()
+            if (!doc.exists) return null
+
+            const data = doc.data()
+
+            // Check if owner
+            if (data?.ownerId === userId) return "owner"
+
+            // Check team
+            const teamMember = data?.team?.find(
+                (m: FacilityTeamMember) => m.userId === userId && m.status === "active"
+            )
+            return teamMember?.role || null
+        } catch (error) {
+            console.error("Error getting user role:", error)
+            return null
+        }
+    },
+
+    /**
+     * Get all facilities a user has access to (owner or team member)
+     */
+    async getUserAccessibleFacilities(userId: string): Promise<ClaimedFacility[]> {
+        if (!db) return []
+
+        try {
+            // Get owned facilities
+            const ownedQuery = db.collection(FACILITIES_COLLECTION)
+                .where("ownerId", "==", userId)
+            const ownedSnapshot = await ownedQuery.get()
+
+            const owned = ownedSnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                createdAt: doc.data().createdAt?.toDate?.() || new Date(),
+                updatedAt: doc.data().updatedAt?.toDate?.() || new Date(),
+            })) as ClaimedFacility[]
+
+            // Note: Firestore doesn't support array-contains with nested objects well
+            // In production, you'd use a separate collection for team memberships
+            // For now, we return just owned facilities
+            return owned
+        } catch (error) {
+            console.error("Error getting accessible facilities:", error)
+            return []
         }
     },
 }

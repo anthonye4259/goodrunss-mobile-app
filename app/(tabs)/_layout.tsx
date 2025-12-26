@@ -5,7 +5,9 @@ import { useUserPreferences } from "@/lib/user-preferences"
 
 export default function TabLayout() {
   const { preferences } = useUserPreferences()
+  // 3 user types: player, trainer (includes instructor), facility
   const isTrainer = preferences.userType === "trainer" || preferences.userType === "instructor"
+  const isFacility = preferences.userType === "facility"
 
   return (
     <Tabs
@@ -39,13 +41,13 @@ export default function TabLayout() {
         }}
       />
 
-      {/* 2. Explore - Map + Live Mode */}
+      {/* 2. Discover - Venues, Trainers, Map */}
       <Tabs.Screen
-        name="explore"
+        name="discover"
         options={{
-          title: "Explore",
+          title: "Discover",
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? "map" : "map-outline"} size={24} color={color} />
+            <Ionicons name={focused ? "compass" : "compass-outline"} size={24} color={color} />
           ),
         }}
       />
@@ -68,16 +70,31 @@ export default function TabLayout() {
         }}
       />
 
-      {/* 4. Bookings - User's bookings hub */}
-      <Tabs.Screen
-        name="my-bookings"
-        options={{
-          title: "Bookings",
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? "calendar" : "calendar-outline"} size={24} color={color} />
-          ),
-        }}
-      />
+      {/* 4a. Sessions - TRAINER ONLY */}
+      {isTrainer && (
+        <Tabs.Screen
+          name="trainer"
+          options={{
+            title: "Sessions",
+            tabBarIcon: ({ color, focused }) => (
+              <Ionicons name={focused ? "calendar" : "calendar-outline"} size={24} color={color} />
+            ),
+          }}
+        />
+      )}
+
+      {/* 4b. Dashboard - FACILITY ONLY */}
+      {isFacility && (
+        <Tabs.Screen
+          name="facility-dashboard"
+          options={{
+            title: "Dashboard",
+            tabBarIcon: ({ color, focused }) => (
+              <Ionicons name={focused ? "grid" : "grid-outline"} size={24} color={color} />
+            ),
+          }}
+        />
+      )}
 
       {/* 5. Profile */}
       <Tabs.Screen
@@ -94,12 +111,17 @@ export default function TabLayout() {
       <Tabs.Screen name="SwipeableTabs" options={{ href: null }} />
       <Tabs.Screen name="activity" options={{ href: null }} />
       <Tabs.Screen name="bookings" options={{ href: null }} />
+      <Tabs.Screen name="my-bookings" options={{ href: null }} />
+      <Tabs.Screen name="explore" options={{ href: null }} />
       <Tabs.Screen name="home" options={{ href: null }} />
       <Tabs.Screen name="live" options={{ href: null }} />
       <Tabs.Screen name="messages" options={{ href: null }} />
       <Tabs.Screen name="report" options={{ href: null }} />
       <Tabs.Screen name="stats" options={{ href: null }} />
-      <Tabs.Screen name="trainer" options={{ href: null }} />
+      {/* trainer is visible for trainers only */}
+      {!isTrainer && <Tabs.Screen name="trainer" options={{ href: null }} />}
+      {/* facility-dashboard is visible for facilities only */}
+      {!isFacility && <Tabs.Screen name="facility-dashboard" options={{ href: null }} />}
       <Tabs.Screen name="trainers" options={{ href: null }} />
     </Tabs>
   )

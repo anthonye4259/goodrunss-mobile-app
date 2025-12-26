@@ -19,12 +19,17 @@ export default function BookingsScreen() {
   const primaryActivity = getPrimaryActivity(preferences.activities)
   const content = getActivityContent(primaryActivity)
   const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming")
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false) // Start with false
   const [courtBookings, setCourtBookings] = useState<CourtBooking[]>([])
   const [venueNames, setVenueNames] = useState<Record<string, string>>({})
 
   useEffect(() => {
-    loadBookings()
+    if (user) {
+      loadBookings()
+    }
+    // Auto-stop loading after 3 seconds as failsafe
+    const timeout = setTimeout(() => setLoading(false), 3000)
+    return () => clearTimeout(timeout)
   }, [user])
 
   const loadBookings = async () => {
@@ -34,20 +39,41 @@ export default function BookingsScreen() {
     }
 
     setLoading(true)
-    try {
-      const bookings = await courtBookingService.getPlayerBookings(user.uid)
-      setCourtBookings(bookings)
 
-      // Load venue names for each booking
-      const venueIds = [...new Set(bookings.map(b => b.venueId))]
-      const names: Record<string, string> = {}
-      for (const venueId of venueIds) {
-        const venue = await venueService.getVenueById(venueId)
-        if (venue) names[venueId] = venue.name
+    // Timeout wrapper to prevent infinite loading
+    const timeoutPromise = new Promise<null>((_, reject) =>
+      setTimeout(() => reject(new Error("Timeout")), 5000)
+    )
+
+    try {
+      const bookings = await Promise.race([
+        courtBookingService.getPlayerBookings(user.uid),
+        timeoutPromise
+      ]) as CourtBooking[]
+
+      setCourtBookings(bookings || [])
+
+      // Load venue names in parallel (skip if no bookings)
+      if (bookings && bookings.length > 0) {
+        const venueIds = [...new Set(bookings.map(b => b.venueId).filter(Boolean))]
+        const names: Record<string, string> = {}
+
+        // Quick parallel fetch with individual timeouts
+        await Promise.allSettled(
+          venueIds.map(async (venueId) => {
+            try {
+              const venue = await venueService.getVenueById(venueId)
+              if (venue) names[venueId] = venue.name
+            } catch (e) {
+              // Silently fail
+            }
+          })
+        )
+        setVenueNames(names)
       }
-      setVenueNames(names)
-    } catch (error) {
-      console.error("Error loading bookings:", error)
+    } catch (error: any) {
+      console.error("Error loading bookings:", error?.message || error)
+      setCourtBookings([]) // Show empty state on error
     } finally {
       setLoading(false)
     }

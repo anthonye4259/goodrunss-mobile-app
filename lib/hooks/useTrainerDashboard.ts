@@ -35,10 +35,6 @@ export function useClients() {
 
     useEffect(() => {
         refresh()
-
-        // Subscribe to real-time updates
-        const unsubscribe = trainerDashboardService.subscribeToClients(setClients)
-        return unsubscribe
     }, [refresh])
 
     const addClient = async (client: Omit<Client, "id">) => {
@@ -94,19 +90,6 @@ export function useBookings() {
 
     useEffect(() => {
         refresh()
-
-        // Subscribe to real-time updates
-        const unsubscribe = trainerDashboardService.subscribeToBookings((newBookings) => {
-            setBookings(newBookings)
-            // Filter for upcoming
-            const today = new Date().toISOString().split("T")[0]
-            setUpcomingBookings(
-                newBookings
-                    .filter(b => b.date >= today && b.status !== "canceled")
-                    .slice(0, 10)
-            )
-        })
-        return unsubscribe
     }, [refresh])
 
     const updateStatus = async (bookingId: string, status: Booking["status"]) => {

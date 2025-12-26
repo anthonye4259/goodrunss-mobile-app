@@ -64,8 +64,8 @@ export const createPendingBooking = functions.https.onCall(async (data, context)
     const playerDoc = await admin.firestore().collection("users").doc(playerId).get()
     const playerData = playerDoc.data() || {}
 
-    // Get facility owner
-    const facilityDoc = await admin.firestore().collection("claimedFacilities").doc(facilityId).get()
+    // Get facility owner and settings
+    const facilityDoc = await admin.firestore().collection("claimed_facilities").doc(facilityId).get()
     const facilityData = facilityDoc.data()
 
     if (!facilityData) {
@@ -73,6 +73,7 @@ export const createPendingBooking = functions.https.onCall(async (data, context)
     }
 
     const facilityOwnerId = facilityData.ownerId
+    const autoAcceptBookings = facilityData.autoAcceptBookings ?? true // Default to autopilot
 
     // Check for existing pending booking on same slot
     const existingPending = await admin.firestore()
@@ -108,13 +109,74 @@ export const createPendingBooking = functions.https.onCall(async (data, context)
         )
     }
 
+    const playerName = playerData.name || playerData.displayName || "Guest"
+    const playerEmail = playerData.email || ""
+
+    // ============================================
+    // AUTOPILOT MODE: Skip pending flow, confirm immediately
+    // ============================================
+    if (autoAcceptBookings) {
+        const bookingData = {
+            playerId,
+            playerName,
+            playerEmail,
+            facilityId,
+            facilityOwnerId,
+            courtId,
+            courtName,
+            date,
+            startTime,
+            endTime,
+            price,
+            status: "confirmed",
+            source: "goodrunss",
+            autoConfirmed: true,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            confirmedAt: admin.firestore.FieldValue.serverTimestamp(),
+        }
+
+        const bookingRef = await admin.firestore().collection("court_bookings").add(bookingData)
+
+        // Notify player
+        await sendPlayerNotification(playerId, {
+            type: "booking_confirmed",
+            title: "Booking Confirmed! 🎉",
+            body: `Your ${courtName} booking for ${date} at ${startTime} is confirmed!`,
+            bookingId: bookingRef.id,
+        })
+
+        // Notify facility owner (info only)
+        await sendBookingNotification(facilityOwnerId, {
+            bookingId: bookingRef.id,
+            courtName,
+            date,
+            startTime,
+            playerName,
+        })
+
+        functions.logger.info("Booking auto-confirmed (autopilot mode)", {
+            bookingId: bookingRef.id,
+            facilityId,
+            playerId,
+        })
+
+        return {
+            bookingId: bookingRef.id,
+            status: "confirmed",
+            autoConfirmed: true,
+        }
+    }
+
+    // ============================================
+    // MANUAL MODE: Create pending booking with 5-min TTL
+    // ============================================
     const now = admin.firestore.Timestamp.now()
     const expiresAt = admin.firestore.Timestamp.fromMillis(now.toMillis() + CONFIRMATION_TIMEOUT_MS)
 
     const pendingBooking: Omit<PendingBooking, "id"> = {
         playerId,
-        playerName: playerData.name || playerData.displayName || "Guest",
-        playerEmail: playerData.email || "",
+        playerName,
+        playerEmail,
         facilityId,
         facilityOwnerId,
         courtId,
@@ -155,6 +217,7 @@ export const createPendingBooking = functions.https.onCall(async (data, context)
         status: "pending",
     }
 })
+
 
 // ============================================
 // FACILITY CONFIRMS BOOKING

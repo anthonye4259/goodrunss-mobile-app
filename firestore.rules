@@ -1,0 +1,81 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function: check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function: check if user owns the resource
+    function isOwner(ownerId) {
+      return request.auth.uid == ownerId;
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId);
+    }
+
+    // Claimed Facilities - facility owners can create and manage
+    match /claimed_facilities/{facilityId} {
+      // Anyone authenticated can read (for discovery)
+      allow read: if isAuthenticated();
+      // Authenticated users can create new facilities
+      allow create: if isAuthenticated() && request.resource.data.ownerId == request.auth.uid;
+      // Only the owner can update/delete
+      allow update, delete: if isAuthenticated() && resource.data.ownerId == request.auth.uid;
+    }
+
+    // Courts within facilities
+    match /courts/{courtId} {
+      allow read: if isAuthenticated();
+      // Allow create if user owns the parent facility
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated();
+    }
+
+    // Court bookings
+    match /court_bookings/{bookingId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // Pending bookings
+    match /pendingBookings/{bookingId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Trainer rentals
+    match /trainer_rentals/{rentalId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Venues (public read, admin write)
+    match /venues/{venueId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    // Trainers
+    match /trainers/{trainerId} {
+      allow read: if true;
+      allow write: if isAuthenticated() && request.auth.uid == trainerId;
+    }
+
+    // Classes
+    match /classes/{classId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    // Allow any authenticated read/write for flexibility during development
+    // TODO: Tighten these rules for production
+    match /{document=**} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+  }
+}

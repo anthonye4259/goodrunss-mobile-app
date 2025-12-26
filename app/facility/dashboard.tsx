@@ -23,6 +23,10 @@ import * as Haptics from "expo-haptics"
 import { useAuth } from "@/lib/auth-context"
 import { facilityService, ClaimedFacility, Court } from "@/lib/services/facility-service"
 import { courtBookingService, CourtBooking } from "@/lib/services/court-booking-service"
+import { aiSlotFillingService, SlotSuggestion } from "@/lib/services/ai-slot-filling-service"
+import { FACILITY_SUBSCRIPTION } from "@/lib/services/facility-subscription-service"
+import { UpgradePrompt } from "@/components/Facility/UpgradePrompt"
+import { WarmLeads } from "@/components/Facility/WarmLeads"
 
 export default function FacilityDashboardScreen() {
     const { user } = useAuth()
@@ -32,13 +36,24 @@ export default function FacilityDashboardScreen() {
     const [courts, setCourts] = useState<Court[]>([])
     const [bookings, setBookings] = useState<CourtBooking[]>([])
     const [loading, setLoading] = useState(true)
-    const [activeTab, setActiveTab] = useState<"bookings" | "courts" | "earnings">("bookings")
+    const [activeTab, setActiveTab] = useState<"bookings" | "courts" | "earnings" | "leads">("bookings")
 
     // Add court modal state
     const [showAddCourt, setShowAddCourt] = useState(false)
     const [newCourtName, setNewCourtName] = useState("")
     const [newCourtType, setNewCourtType] = useState("Outdoor")
     const [newCourtRate, setNewCourtRate] = useState("40")
+
+    // AI & Upgrade state
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+    const [aiInsights, setAiInsights] = useState<{
+        emptySlots24h: number
+        emptySlots48h: number
+        potentialRevenue: number
+        topSuggestions: SlotSuggestion[]
+        urgentSlots: number
+    } | null>(null)
+    const isPremium = facility?.subscriptionTier === "premium"
 
     useEffect(() => {
         loadFacilityData()
@@ -62,6 +77,12 @@ export default function FacilityDashboardScreen() {
                 // Load recent bookings
                 const recentBookings = await courtBookingService.getFacilityBookings(fac.id)
                 setBookings(recentBookings)
+
+                // Load AI insights for premium facilities
+                if (fac.subscriptionTier === "premium") {
+                    const insights = await aiSlotFillingService.getAIInsights(fac.id)
+                    setAiInsights(insights)
+                }
             }
         } catch (error) {
             console.error("Error loading facility:", error)
@@ -180,6 +201,69 @@ export default function FacilityDashboardScreen() {
                     </View>
                 </View>
 
+                {/* Upgrade Banner (Free Tier) */}
+                {!isPremium && (
+                    <TouchableOpacity
+                        style={styles.upgradeBanner}
+                        onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+                            setShowUpgradeModal(true)
+                        }}
+                    >
+                        <LinearGradient
+                            colors={["#FFD700", "#FFA500"]}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 0 }}
+                            style={styles.upgradeBannerGradient}
+                        >
+                            <View style={styles.upgradeBannerContent}>
+                                <Ionicons name="star" size={24} color="#000" />
+                                <View style={styles.upgradeBannerText}>
+                                    <Text style={styles.upgradeBannerTitle}>Unlock 7 AI Features</Text>
+                                    <Text style={styles.upgradeBannerSubtitle}>
+                                        Fill more slots • Save 3% on fees • $50/mo
+                                    </Text>
+                                </View>
+                            </View>
+                            <Ionicons name="chevron-forward" size={20} color="#000" />
+                        </LinearGradient>
+                    </TouchableOpacity>
+                )}
+
+                {/* AI Insights Card (Premium) */}
+                {isPremium && aiInsights && (
+                    <View style={styles.aiInsightsCard}>
+                        <View style={styles.aiInsightsHeader}>
+                            <Ionicons name="sparkles" size={20} color="#7ED957" />
+                            <Text style={styles.aiInsightsTitle}>AI Slot Filling</Text>
+                        </View>
+                        <View style={styles.aiInsightsRow}>
+                            <View style={styles.aiInsightItem}>
+                                <Text style={styles.aiInsightValue}>{aiInsights.emptySlots24h}</Text>
+                                <Text style={styles.aiInsightLabel}>Empty (24h)</Text>
+                            </View>
+                            <View style={styles.aiInsightItem}>
+                                <Text style={[styles.aiInsightValue, { color: "#FF9500" }]}>{aiInsights.urgentSlots}</Text>
+                                <Text style={styles.aiInsightLabel}>Urgent</Text>
+                            </View>
+                            <View style={styles.aiInsightItem}>
+                                <Text style={[styles.aiInsightValue, { color: "#7ED957" }]}>${aiInsights.potentialRevenue}</Text>
+                                <Text style={styles.aiInsightLabel}>Potential</Text>
+                            </View>
+                        </View>
+                        {aiInsights.topSuggestions.length > 0 && (
+                            <TouchableOpacity
+                                style={styles.fillSlotsBtn}
+                                onPress={() => router.push(`/facility/ai-slots?facilityId=${facility.id}`)}
+                            >
+                                <Text style={styles.fillSlotsBtnText}>
+                                    Fill {aiInsights.urgentSlots} Urgent Slots →
+                                </Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
+                )}
+
                 {/* Quick Actions */}
                 <View style={styles.quickActionsRow}>
                     <TouchableOpacity
@@ -224,14 +308,14 @@ export default function FacilityDashboardScreen() {
 
                 {/* Tab Bar */}
                 <View style={styles.tabBar}>
-                    {(["bookings", "courts", "earnings"] as const).map((tab) => (
+                    {(["bookings", "courts", "earnings", "leads"] as const).map((tab) => (
                         <TouchableOpacity
                             key={tab}
                             style={[styles.tab, activeTab === tab && styles.tabActive]}
                             onPress={() => setActiveTab(tab)}
                         >
                             <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
-                                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                                {tab === "leads" ? "🔥 Leads" : tab.charAt(0).toUpperCase() + tab.slice(1)}
                             </Text>
                         </TouchableOpacity>
                     ))}
@@ -399,8 +483,31 @@ export default function FacilityDashboardScreen() {
                             </View>
                         </>
                     )}
+
+                    {/* Leads Tab */}
+                    {activeTab === "leads" && (
+                        <View style={{ flex: 1, minHeight: 400 }}>
+                            <WarmLeads
+                                targetId={facility.id}
+                                targetType="facility"
+                                businessName={facility.businessName}
+                            />
+                        </View>
+                    )}
                 </ScrollView>
             </SafeAreaView>
+
+            {/* Upgrade Modal */}
+            <UpgradePrompt
+                visible={showUpgradeModal}
+                onClose={() => setShowUpgradeModal(false)}
+                facilityId={facility.id}
+                monthlyRevenue={totalEarnings / 100 * 3} // Estimate monthly from recent
+                onUpgrade={() => {
+                    setShowUpgradeModal(false)
+                    // Would open Stripe checkout
+                }}
+            />
         </View>
     )
 }
@@ -624,4 +731,87 @@ const styles = StyleSheet.create({
         justifyContent: "center",
     },
     blockCard: { borderWidth: 1, borderColor: "rgba(255, 107, 107, 0.3)" },
+
+    // Upgrade Banner
+    upgradeBanner: {
+        marginHorizontal: 16,
+        marginBottom: 16,
+        borderRadius: 16,
+        overflow: "hidden",
+    },
+    upgradeBannerGradient: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: 16,
+    },
+    upgradeBannerContent: {
+        flexDirection: "row",
+        alignItems: "center",
+        flex: 1,
+    },
+    upgradeBannerText: {
+        marginLeft: 12,
+    },
+    upgradeBannerTitle: {
+        fontSize: 16,
+        fontWeight: "bold",
+        color: "#000",
+    },
+    upgradeBannerSubtitle: {
+        fontSize: 12,
+        color: "#333",
+        marginTop: 2,
+    },
+
+    // AI Insights Card
+    aiInsightsCard: {
+        backgroundColor: "#1A1A1A",
+        borderRadius: 16,
+        marginHorizontal: 16,
+        marginBottom: 16,
+        padding: 16,
+        borderWidth: 1,
+        borderColor: "rgba(126, 217, 87, 0.3)",
+    },
+    aiInsightsHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 16,
+    },
+    aiInsightsTitle: {
+        fontSize: 16,
+        fontWeight: "bold",
+        color: "#FFF",
+        marginLeft: 8,
+    },
+    aiInsightsRow: {
+        flexDirection: "row",
+        justifyContent: "space-around",
+        marginBottom: 16,
+    },
+    aiInsightItem: {
+        alignItems: "center",
+    },
+    aiInsightValue: {
+        fontSize: 24,
+        fontWeight: "bold",
+        color: "#FFF",
+    },
+    aiInsightLabel: {
+        fontSize: 12,
+        color: "#888",
+        marginTop: 4,
+    },
+    fillSlotsBtn: {
+        backgroundColor: "#7ED957",
+        borderRadius: 12,
+        paddingVertical: 12,
+        alignItems: "center",
+    },
+    fillSlotsBtnText: {
+        fontSize: 14,
+        fontWeight: "bold",
+        color: "#000",
+    },
 })

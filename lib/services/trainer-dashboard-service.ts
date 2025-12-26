@@ -228,6 +228,126 @@ class TrainerDashboardService {
             lastSessionAt: new Date().toISOString(),
         })
     }
+
+    // ============================================
+    // STUB METHODS FOR HOOKS (to be implemented)
+    // ============================================
+
+    async getBookings(): Promise<Booking[]> {
+        return []
+    }
+
+    async getUpcomingBookings(count: number): Promise<Booking[]> {
+        return []
+    }
+
+    async updateBookingStatus(bookingId: string, status: string): Promise<boolean> {
+        return false
+    }
+
+    async getEarnings(): Promise<Earnings> {
+        return {
+            today: 0,
+            thisWeek: 0,
+            thisMonth: 0,
+            lastMonth: 0,
+            total: 0,
+            pending: 0,
+        }
+    }
+
+    async getProfile(): Promise<TrainerProfile | null> {
+        return null
+    }
+
+    async updateProfile(updates: Partial<TrainerProfile>): Promise<boolean> {
+        return false
+    }
+
+    async getSettings(): Promise<TrainerSettings | null> {
+        return null
+    }
+
+    async updateSettings(updates: Partial<TrainerSettings>): Promise<boolean> {
+        return false
+    }
+
+    async getGIAMemories(): Promise<GIAMemory[]> {
+        return []
+    }
+
+    async getGIAConversations(count: number): Promise<GIAConversation[]> {
+        return []
+    }
+
+    async addGIAMemory(memory: Omit<GIAMemory, "id" | "createdAt">): Promise<GIAMemory> {
+        return { ...memory, id: "", createdAt: new Date().toISOString() } as GIAMemory
+    }
+
+    async saveGIAConversation(convo: Omit<GIAConversation, "id" | "createdAt">): Promise<GIAConversation> {
+        return { ...convo, id: "", createdAt: new Date().toISOString() } as GIAConversation
+    }
 }
 
 export const trainerDashboardService = new TrainerDashboardService()
+
+// ============================================
+// ADDITIONAL TYPES FOR HOOKS
+// ============================================
+
+export interface Booking {
+    id: string
+    trainerId: string
+    clientId: string
+    clientName: string
+    date: string
+    time: string
+    duration: number
+    status: "pending" | "confirmed" | "completed" | "canceled"
+    amount: number
+    notes?: string
+}
+
+export interface Earnings {
+    today: number
+    thisWeek: number
+    thisMonth: number
+    lastMonth: number
+    total: number
+    pending: number
+}
+
+export interface TrainerProfile {
+    id: string
+    name: string
+    email: string
+    phone?: string
+    bio?: string
+    avatar?: string
+    sports: string[]
+    hourlyRate: number
+    rating?: number
+    totalSessions?: number
+}
+
+export interface TrainerSettings {
+    notifications: boolean
+    autoAccept: boolean
+    availableHours: { start: string; end: string }
+    cancellationPolicy: string
+}
+
+export interface GIAMemory {
+    id: string
+    type: string
+    content: string
+    createdAt: string
+}
+
+export interface GIAConversation {
+    id: string
+    title: string
+    messages: any[]
+    createdAt: string
+}
+

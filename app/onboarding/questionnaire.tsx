@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, StyleSheet } from "react-native"
+import { useState, useEffect } from "react"
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, StyleSheet, TextInput, Animated } from "react-native"
 import { useRouter, useLocalSearchParams } from "expo-router"
 import { LinearGradient } from "expo-linear-gradient"
 import { useUserPreferences } from "@/lib/user-preferences"
@@ -13,6 +13,40 @@ import { TrainerTaglineSelector } from "@/components/TrainerTaglineSelector"
 const REC_ACTIVITIES = ["Basketball", "Tennis", "Pickleball", "Padel", "Racquetball", "Volleyball", "Golf", "Soccer", "Swimming"]
 const STUDIO_ACTIVITIES = ["Pilates", "Yoga", "Lagree", "Barre", "Meditation"]
 const ALL_ACTIVITIES = [...REC_ACTIVITIES, ...STUDIO_ACTIVITIES]
+
+// Phase 1 target cities - special experience for these users
+const PHASE_1_CITIES = [
+  { zip: "303", city: "Atlanta", state: "GA" },
+  { zip: "331", city: "Miami", state: "FL" },
+  { zip: "100", city: "New York", state: "NY" },
+  { zip: "101", city: "New York", state: "NY" },
+  { zip: "900", city: "Los Angeles", state: "CA" },
+  { zip: "902", city: "Los Angeles", state: "CA" },
+  { zip: "606", city: "Chicago", state: "IL" },
+]
+
+// ZIP to City/State lookup (first 3 digits)
+const ZIP_LOOKUP: Record<string, { city: string; state: string }> = {
+  "303": { city: "Atlanta", state: "GA" },
+  "300": { city: "Atlanta", state: "GA" },
+  "331": { city: "Miami", state: "FL" },
+  "330": { city: "Miami", state: "FL" },
+  "100": { city: "New York", state: "NY" },
+  "101": { city: "New York", state: "NY" },
+  "102": { city: "New York", state: "NY" },
+  "900": { city: "Los Angeles", state: "CA" },
+  "902": { city: "Los Angeles", state: "CA" },
+  "910": { city: "Pasadena", state: "CA" },
+  "606": { city: "Chicago", state: "IL" },
+  "605": { city: "Chicago", state: "IL" },
+  "770": { city: "Houston", state: "TX" },
+  "752": { city: "Dallas", state: "TX" },
+  "852": { city: "Phoenix", state: "AZ" },
+  "191": { city: "Philadelphia", state: "PA" },
+  "782": { city: "San Antonio", state: "TX" },
+  "921": { city: "San Diego", state: "CA" },
+  "750": { city: "Dallas", state: "TX" },
+}
 
 type UserType = "player" | "trainer" | "instructor" | "both"
 
@@ -63,10 +97,17 @@ export default function QuestionnaireScreen() {
   const { requestLocation, loading: locationLoading, error: locationError } = useLocation()
 
   const [selectedActivities, setSelectedActivities] = useState<string[]>([])
-  const [step, setStep] = useState<"activity" | "skill" | "tagline" | "location">("activity")
+  const [step, setStep] = useState<"activity" | "zip" | "skill" | "tagline" | "location">("activity")
   const [activityRatings, setActivityRatings] = useState<Record<string, number>>({})
   const [currentRatingIndex, setCurrentRatingIndex] = useState(0)
   const [trainerTagline, setTrainerTagline] = useState<string>("")
+
+  // ZIP state
+  const [zipCode, setZipCode] = useState("")
+  const [detectedCity, setDetectedCity] = useState("")
+  const [detectedState, setDetectedState] = useState("")
+  const [isPhase1City, setIsPhase1City] = useState(false)
+  const [zipAnimValue] = useState(new Animated.Value(0))
 
   const availableActivities = getActivitiesForUserType(userType)
   const { title: stepTitle, subtitle: stepSubtitle } = getTitleForUserType(userType)
@@ -93,6 +134,46 @@ export default function QuestionnaireScreen() {
 
   const handleActivityContinue = () => {
     if (selectedActivities.length > 0) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+      // Go to ZIP step first
+      setStep("zip")
+    }
+  }
+
+  // Auto-detect city/state from ZIP
+  useEffect(() => {
+    if (zipCode.length >= 3) {
+      const prefix = zipCode.substring(0, 3)
+      const location = ZIP_LOOKUP[prefix]
+      if (location) {
+        setDetectedCity(location.city)
+        setDetectedState(location.state)
+        // Check if Phase 1 city
+        const isPhase1 = PHASE_1_CITIES.some(p => p.zip === prefix)
+        setIsPhase1City(isPhase1)
+        if (isPhase1) {
+          // Animate the Phase 1 badge
+          Animated.spring(zipAnimValue, {
+            toValue: 1,
+            useNativeDriver: true,
+            tension: 50,
+            friction: 3,
+          }).start()
+        }
+      } else {
+        setDetectedCity("")
+        setDetectedState("")
+        setIsPhase1City(false)
+      }
+    } else {
+      setDetectedCity("")
+      setDetectedState("")
+      setIsPhase1City(false)
+    }
+  }, [zipCode])
+
+  const handleZipContinue = () => {
+    if (zipCode.length >= 5) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
       // Find all activities that need rating (only for non-teaching roles)
       const activitiesToRate = isTeachingRole(userType)
@@ -170,7 +251,12 @@ export default function QuestionnaireScreen() {
         userType: userType,
         primaryActivity: primaryActivity,
         playerRating: playerRating,
-        trainerTagline: trainerTagline || undefined, // Save tagline for trainers
+        trainerTagline: trainerTagline || undefined,
+        // Save location data
+        zipCode: zipCode,
+        city: detectedCity,
+        state: detectedState,
+        isPhase1City: isPhase1City,
       })
       // Navigate to feature discovery slides
       router.replace("/onboarding/features")
@@ -180,6 +266,110 @@ export default function QuestionnaireScreen() {
   // Get the current activity we are rating
   const activitiesToRate = selectedActivities.filter(a => RATING_CONFIGS[a])
   const currentActivityToRate = activitiesToRate[currentRatingIndex]
+
+  // ZIP step - cool animated input
+  if (step === "zip") {
+    return (
+      <LinearGradient colors={["#0A0A0A", "#141414"]} style={{ flex: 1 }}>
+        <SafeAreaView style={styles.safeArea}>
+          <ScrollView contentContainerStyle={styles.scrollContent}>
+            <View style={styles.progressContainer}>
+              <Text style={styles.progressText}>Question 2 of 4</Text>
+              <View style={styles.progressBar}>
+                <View style={[styles.progressFill, { width: "50%" }]} />
+              </View>
+            </View>
+
+            <View style={styles.zipIconContainer}>
+              <LinearGradient
+                colors={["#7ED957", "#4CAF50"]}
+                style={styles.zipIconCircle}
+              >
+                <Ionicons name="location" size={48} color="#000" />
+              </LinearGradient>
+            </View>
+
+            <Text style={styles.title}>Where are you located?</Text>
+            <Text style={styles.subtitle}>
+              We'll show you courts, trainers, and players near you
+            </Text>
+
+            <View style={styles.zipInputContainer}>
+              <TextInput
+                style={styles.zipInput}
+                value={zipCode}
+                onChangeText={(text) => setZipCode(text.replace(/[^0-9]/g, ""))}
+                placeholder="Enter ZIP Code"
+                placeholderTextColor="#666"
+                keyboardType="number-pad"
+                maxLength={5}
+                autoFocus
+              />
+              {detectedCity && (
+                <View style={styles.detectedLocation}>
+                  <Ionicons name="checkmark-circle" size={20} color="#7ED957" />
+                  <Text style={styles.detectedLocationText}>
+                    {detectedCity}, {detectedState}
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            {/* Phase 1 Exclusive Badge */}
+            {isPhase1City && (
+              <Animated.View
+                style={[
+                  styles.phase1Badge,
+                  {
+                    transform: [
+                      { scale: zipAnimValue.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1] }) },
+                    ],
+                    opacity: zipAnimValue,
+                  },
+                ]}
+              >
+                <LinearGradient
+                  colors={["#FFD700", "#FFA500"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.phase1BadgeGradient}
+                >
+                  <Ionicons name="star" size={20} color="#000" />
+                  <View style={styles.phase1BadgeText}>
+                    <Text style={styles.phase1Title}>🎉 You're in a Launch City!</Text>
+                    <Text style={styles.phase1Subtitle}>
+                      Exclusive early access to all features, local trainers, and priority bookings
+                    </Text>
+                  </View>
+                </LinearGradient>
+              </Animated.View>
+            )}
+
+            {!isPhase1City && detectedCity && (
+              <View style={styles.phase1Badge}>
+                <View style={styles.notPhase1Badge}>
+                  <Ionicons name="rocket-outline" size={20} color="#7ED957" />
+                  <View style={styles.phase1BadgeText}>
+                    <Text style={[styles.phase1Title, { color: "#FFF" }]}>Coming Soon to {detectedCity}!</Text>
+                    <Text style={[styles.phase1Subtitle, { color: "#888" }]}>
+                      You can still explore nearby courts and connect with players
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            )}
+
+            {zipCode.length >= 5 && (
+              <TouchableOpacity onPress={handleZipContinue} style={styles.continueButton}>
+                <Text style={styles.continueButtonText}>Continue</Text>
+                <Ionicons name="arrow-forward" size={20} color="#000" />
+              </TouchableOpacity>
+            )}
+          </ScrollView>
+        </SafeAreaView>
+      </LinearGradient>
+    )
+  }
 
   // Skill rating step
   if (step === "skill" && currentActivityToRate && RATING_CONFIGS[currentActivityToRate]) {
@@ -587,5 +777,85 @@ const styles = StyleSheet.create({
   skipText: {
     color: "#9CA3AF",
     fontSize: 16,
+  },
+  // ZIP step styles
+  zipIconContainer: {
+    alignItems: "center",
+    marginBottom: 24,
+    marginTop: 20,
+  },
+  zipIconCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  zipInputContainer: {
+    marginTop: 24,
+    marginBottom: 20,
+  },
+  zipInput: {
+    backgroundColor: "#1A1A1A",
+    borderRadius: 16,
+    padding: 20,
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    textAlign: "center",
+    borderWidth: 2,
+    borderColor: "#333",
+    letterSpacing: 8,
+  },
+  detectedLocation: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    backgroundColor: "rgba(126, 217, 87, 0.1)",
+    borderRadius: 12,
+  },
+  detectedLocationText: {
+    color: "#7ED957",
+    fontSize: 16,
+    fontWeight: "600",
+    marginLeft: 8,
+  },
+  phase1Badge: {
+    marginTop: 20,
+    marginBottom: 20,
+    borderRadius: 16,
+    overflow: "hidden",
+  },
+  phase1BadgeGradient: {
+    flexDirection: "row",
+    padding: 20,
+    alignItems: "flex-start",
+  },
+  notPhase1Badge: {
+    flexDirection: "row",
+    padding: 20,
+    backgroundColor: "#1A1A1A",
+    borderRadius: 16,
+    alignItems: "flex-start",
+    borderWidth: 1,
+    borderColor: "#333",
+  },
+  phase1BadgeText: {
+    marginLeft: 16,
+    flex: 1,
+  },
+  phase1Title: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#000",
+    marginBottom: 4,
+  },
+  phase1Subtitle: {
+    fontSize: 14,
+    color: "#333",
+    lineHeight: 20,
   },
 })

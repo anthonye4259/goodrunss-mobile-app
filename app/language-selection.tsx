@@ -128,6 +128,18 @@ export default function LanguageSelection() {
           <Text style={styles.continueText}>{t('continue')}</Text>
         </TouchableOpacity>
 
+        {/* Facility Owner Entry */}
+        <TouchableOpacity
+          onPress={() => router.push("/facility/onboarding-v2")}
+          style={styles.facilityButton}
+        >
+          <Ionicons name="business-outline" size={20} color="#FFD700" />
+          <View style={{ marginLeft: 12 }}>
+            <Text style={styles.facilityText}>I manage a Facility</Text>
+            <Text style={styles.facilitySubtext}>Owner or manager? List your courts or studios</Text>
+          </View>
+        </TouchableOpacity>
+
         {/* Footer Text */}
         <Text style={styles.footer}>{t('selectLanguage')}</Text>
       </View>
@@ -267,5 +279,28 @@ const styles = StyleSheet.create({
     color: "#666",
     marginTop: 24,
     textAlign: "center",
+  },
+  facilityButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255, 215, 0, 0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 215, 0, 0.3)",
+    borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    marginTop: 16,
+    width: "100%",
+  },
+  facilityText: {
+    color: "#FFD700",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  facilitySubtext: {
+    color: "#888",
+    fontSize: 12,
+    marginTop: 2,
   },
 })

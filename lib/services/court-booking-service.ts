@@ -259,18 +259,32 @@ export const courtBookingService = {
         if (!db) return []
 
         try {
-            const query = db.collection(BOOKINGS_COLLECTION)
-                .where("userId", "==", userId)
-                .orderBy("date", "desc")
-                .limit(50)
+            // First try with orderBy (requires composite index)
+            let snapshot
+            try {
+                const query = db.collection(BOOKINGS_COLLECTION)
+                    .where("userId", "==", userId)
+                    .orderBy("date", "desc")
+                    .limit(50)
+                snapshot = await query.get()
+            } catch (indexError: any) {
+                // Fallback if index doesn't exist - query without ordering
+                console.log("Falling back to unordered query:", indexError.message)
+                const fallbackQuery = db.collection(BOOKINGS_COLLECTION)
+                    .where("userId", "==", userId)
+                    .limit(50)
+                snapshot = await fallbackQuery.get()
+            }
 
-            const snapshot = await query.get()
-            return snapshot.docs.map(doc => ({
+            const bookings = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data(),
                 createdAt: doc.data().createdAt?.toDate?.() || new Date(),
                 updatedAt: doc.data().updatedAt?.toDate?.() || new Date(),
             })) as CourtBooking[]
+
+            // Sort in memory if we used fallback
+            return bookings.sort((a, b) => b.date.localeCompare(a.date))
         } catch (error) {
             console.error("Error getting player bookings:", error)
             return []

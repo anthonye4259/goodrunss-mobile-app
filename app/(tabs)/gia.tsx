@@ -11,12 +11,14 @@ import {
   StyleSheet,
   ActivityIndicator,
   LayoutAnimation,
+  Modal,
 } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useUserPreferences } from "@/lib/user-preferences"
 import * as Haptics from "expo-haptics"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { LinearGradient } from "expo-linear-gradient"
+import { router } from "expo-router"
 
 // New Premium Components
 import { AIOrb } from "@/components/GIA/AIOrb"
@@ -46,9 +48,12 @@ export default function GIAScreen() {
   // Effective user type for GIA context
   const userType = isBothUser ? activeMode : rawUserType
   const isTrainerMode = userType === "trainer" || userType === "instructor"
+  const isFacility = userType === "facility"
+  const isPremium = preferences.isPremium || false
 
   const [hasHealthAccess, setHasHealthAccess] = useState(false)
   const [showRings, setShowRings] = useState(true)
+  const [showPaywall, setShowPaywall] = useState(false)
 
   // Get personalized greeting - now context-aware for "both" users
   const getGreeting = () => {
@@ -369,6 +374,58 @@ export default function GIAScreen() {
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
+
+      {/* Facility Paywall Modal */}
+      <Modal visible={showPaywall} transparent animationType="fade">
+        <View style={styles.paywallOverlay}>
+          <View style={styles.paywallCard}>
+            <LinearGradient
+              colors={["#1A1A1A", "#111"]}
+              style={styles.paywallGradient}
+            >
+              <View style={styles.paywallIconWrap}>
+                <Ionicons name="lock-closed" size={32} color="#FFD700" />
+              </View>
+              <Text style={styles.paywallTitle}>Unlock GIA for Your Facility</Text>
+              <Text style={styles.paywallSubtitle}>
+                AI-powered assistant to help manage your venue, answer customer questions, and grow your business.
+              </Text>
+
+              <View style={styles.paywallFeatures}>
+                <View style={styles.paywallFeature}>
+                  <Ionicons name="chatbubbles" size={20} color="#7ED957" />
+                  <Text style={styles.paywallFeatureText}>AI Customer Support</Text>
+                </View>
+                <View style={styles.paywallFeature}>
+                  <Ionicons name="analytics" size={20} color="#7ED957" />
+                  <Text style={styles.paywallFeatureText}>Business Insights</Text>
+                </View>
+                <View style={styles.paywallFeature}>
+                  <Ionicons name="flash" size={20} color="#7ED957" />
+                  <Text style={styles.paywallFeatureText}>AI Slot Filling</Text>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={styles.paywallUpgradeBtn}
+                onPress={() => {
+                  setShowPaywall(false)
+                  router.push("/settings/subscription")
+                }}
+              >
+                <Text style={styles.paywallUpgradeText}>Upgrade for $50/mo</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.paywallCloseBtn}
+                onPress={() => setShowPaywall(false)}
+              >
+                <Text style={styles.paywallCloseText}>Maybe Later</Text>
+              </TouchableOpacity>
+            </LinearGradient>
+          </View>
+        </View>
+      </Modal>
     </LinearGradient>
   )
 }
@@ -565,5 +622,86 @@ const styles = StyleSheet.create({
   },
   sendButtonDisabled: {
     backgroundColor: "#333",
+  },
+
+  // Paywall Modal
+  paywallOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.85)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+  },
+  paywallCard: {
+    width: "100%",
+    maxWidth: 360,
+    borderRadius: 24,
+    overflow: "hidden",
+  },
+  paywallGradient: {
+    padding: 32,
+    alignItems: "center",
+  },
+  paywallIconWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "rgba(255, 215, 0, 0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+  },
+  paywallTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#FFF",
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  paywallSubtitle: {
+    fontSize: 14,
+    color: "#888",
+    textAlign: "center",
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  paywallFeatures: {
+    width: "100%",
+    gap: 12,
+    marginBottom: 24,
+  },
+  paywallFeature: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: "#1A1A1A",
+    padding: 12,
+    borderRadius: 12,
+  },
+  paywallFeatureText: {
+    color: "#FFF",
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  paywallUpgradeBtn: {
+    backgroundColor: "#FFD700",
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    width: "100%",
+    marginBottom: 12,
+  },
+  paywallUpgradeText: {
+    color: "#000",
+    fontSize: 16,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  paywallCloseBtn: {
+    paddingVertical: 12,
+  },
+  paywallCloseText: {
+    color: "#666",
+    fontSize: 14,
   },
 })
