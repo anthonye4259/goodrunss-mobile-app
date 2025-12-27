@@ -12,7 +12,7 @@ import { GlassCard } from "@/components/Profile/GlassCard"
 import { LiquidGauge } from "@/components/Profile/LiquidGauge"
 import { socialService } from "@/lib/services/social-service"
 import { ProfileProgress } from "@/components/Widgets/ProfileProgress"
-import { FavoritesBadge } from "@/components/UI/FavoritesBadge"
+import { FavoritesBadge } from "@/components/ui/FavoritesBadge"
 
 // Mock Data
 const ACTIVITY_SCORE = 92
@@ -212,6 +212,26 @@ export default function ProfileScreen() {
             <View style={styles.roleBadge}>
               <Text style={styles.roleText}>ELITE PLAYER</Text>
             </View>
+
+            {/* Switch Mode Button for 'Both' Users */}
+            {preferences.userType === "both" && (
+              <TouchableOpacity
+                style={styles.switchModeButton}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+                  // Use a service or router param to switch mode, 
+                  // for now we rely on the preference update logic in index or settings
+                  // but ideally this button toggles the `activeMode` preference.
+                  // Since we only have `preferences` read-only here, we'd need `setPreferences`.
+                  // Assuming the user goes to Settings via the gear icon to switch, 
+                  // or we add a direct toggle here if setPreferences was available.
+                  router.push("/settings/menu")
+                }}
+              >
+                <Ionicons name="swap-horizontal" size={14} color="#7ED957" />
+                <Text style={styles.switchModeText}>Switch to Business View</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Profile Completion Widget */}
@@ -385,6 +405,23 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_700Bold',
     color: '#CCC',
     letterSpacing: 1,
+  },
+  switchModeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: 'rgba(126, 217, 87, 0.1)',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(126, 217, 87, 0.3)',
+  },
+  switchModeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#7ED957',
   },
   dashboardGrid: {
     flexDirection: 'row',

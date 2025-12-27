@@ -195,19 +195,7 @@ export default function HomeScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Mode Toggle for "Both" Users in Player Mode */}
-          {showBothModeToggle && (
-            <TouchableOpacity
-              style={styles.modeToggle}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-                setViewMode("trainer")
-              }}
-            >
-              <Ionicons name="swap-horizontal" size={16} color="#7ED957" />
-              <Text style={styles.modeToggleText}>Switch to Trainer Mode</Text>
-            </TouchableOpacity>
-          )}
+
 
           {/* ===== HEADER ===== */}
           <View style={styles.header}>
