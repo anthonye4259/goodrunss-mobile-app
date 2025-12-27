@@ -25,6 +25,7 @@ export type EngagementNotificationType =
     | "weekly_recap"
     | "progress_update"
     | "challenge"
+    | "recommendation"
 
 interface ScheduledNotification {
     id: string
@@ -325,7 +326,7 @@ class DailyEngagementService {
      */
     private async scheduleNotification(
         notification: ScheduledNotification,
-        userType: "player" | "trainer"
+        userType: "player" | "trainer" | "instructor"
     ) {
         try {
             const message = await this.getPersonalizedMessage(notification.type, userType)
@@ -362,7 +363,7 @@ class DailyEngagementService {
      */
     private async getPersonalizedMessage(
         type: EngagementNotificationType,
-        userType: "player" | "trainer"
+        userType: "player" | "trainer" | "instructor"
     ): Promise<{ title: string; body: string }> {
         const storedSport = await AsyncStorage.getItem("user_primary_sport")
         const sport = storedSport || this.userSport
@@ -376,7 +377,7 @@ class DailyEngagementService {
         }
 
         // Use trainer messages for trainers
-        if (userType === "trainer") {
+        if (userType === "trainer" || userType === "instructor") {
             const trainerMsgs = TRAINER_MESSAGES[type as keyof typeof TRAINER_MESSAGES]
             if (trainerMsgs && trainerMsgs.length > 0) {
                 return trainerMsgs[Math.floor(Math.random() * trainerMsgs.length)]
@@ -413,6 +414,7 @@ class DailyEngagementService {
             case "progress_update":
                 return "/stats/detailed"
             case "challenge":
+            case "recommendation":
                 return "/(tabs)"
             default:
                 return "/(tabs)"
@@ -466,6 +468,72 @@ class DailyEngagementService {
         const userType = await AsyncStorage.getItem("engagement_notifications_userType")
         if (userType) {
             await this.scheduleAllNotifications(userType as "player" | "trainer")
+        }
+    }
+
+    /**
+     * SMART NUDGE SYSTEM (Context Aware)
+     * Checks environment and usage stats to trigger immediate "smart" pushes
+     */
+    async checkContextualNudges() {
+        try {
+            const now = Date.now()
+            const lastActiveStr = await AsyncStorage.getItem("last_active_timestamp")
+            const lastActive = lastActiveStr ? parseInt(lastActiveStr) : now
+
+            // 1. INACTIVITY TRIGGER (Streak Risk)
+            // If inactive for > 24 hours but < 48 hours (Streak at risk)
+            const hoursSinceActive = (now - lastActive) / (1000 * 60 * 60)
+
+            if (hoursSinceActive > 24 && hoursSinceActive < 48) {
+                // Check if we already nudged about this
+                const lastNudge = await AsyncStorage.getItem("last_streak_nudge")
+                if (!lastNudge || (now - parseInt(lastNudge) > 86400000)) { // 24h cooldown
+                    await this.sendImmediateNotification(
+                        "streak_reminder",
+                        "❄️ Streak Freezing...",
+                        "You haven't checked in for 24h. Don't let your progress freeze!"
+                    )
+                    await AsyncStorage.setItem("last_streak_nudge", now.toString())
+                    return // Prioritize streak nudge
+                }
+            }
+
+            // 2. GOOD WEATHER TRIGGER (Simulated for now, would connect to WeatherWidget)
+            // 20% chance to trigger if it's "nice out" (afternoon hours)
+            const hour = new Date().getHours()
+            const isAfternoon = hour >= 14 && hour <= 18
+            const activeCity = "Atlanta" // Default
+
+            if (isAfternoon && Math.random() < 0.2) {
+                const lastWeatherNudge = await AsyncStorage.getItem("last_weather_nudge")
+                if (!lastWeatherNudge || (now - parseInt(lastWeatherNudge) > 172800000)) { // 48h cooldown
+                    await this.sendImmediateNotification(
+                        "recommendation", // Reuse nearby_activity type
+                        `☀️ Perfect Setup in ${activeCity}`,
+                        "72°F and sunny. The courts are calling. Go play!"
+                    )
+                    await AsyncStorage.setItem("last_weather_nudge", now.toString())
+                    return
+                }
+            }
+
+            // 3. SOCIAL FOMO TRIGGER
+            // "3 friends are playing right now"
+            if (Math.random() < 0.15) {
+                const lastSocial = await AsyncStorage.getItem("last_social_nudge_generated")
+                if (!lastSocial || (now - parseInt(lastSocial) > 86400000)) {
+                    await this.sendImmediateNotification(
+                        "social_nudge",
+                        "👀 They're playing without you",
+                        "3 friends checked into courts nearby. Join the run!"
+                    )
+                    await AsyncStorage.setItem("last_social_nudge_generated", now.toString())
+                }
+            }
+
+        } catch (error) {
+            console.log("[Engagement] Smart check failed", error)
         }
     }
 }

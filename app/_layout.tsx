@@ -41,6 +41,12 @@ function AppContent({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!user?.id) return
 
+    // Initialize Active Engagement Service (Duolingo-style notifications)
+    const role = user.role === "trainer" ? "trainer" : "player"
+    dailyEngagementService.scheduleAllNotifications(role).catch(err =>
+      console.log("[Engagement] Failed to schedule:", err)
+    )
+
     // Set up client sync (works for both clients and trainers for now)
     const cleanup = setupClientRealTimeSync(user.id)
 
@@ -48,7 +54,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
       if (cleanup) cleanup()
       unsubscribeAll()
     }
-  }, [user?.id])
+  }, [user?.id, user?.role])
 
   return <>{children}</>
 }
