@@ -217,101 +217,98 @@ export default function FacilityDashboardScreen() {
             {/* Court Status */}
             <Text style={styles.sectionTitle}>Court Status</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.courtsRow}>
-                {/* Court Status */}
-                <Text style={styles.sectionTitle}>Court Status</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.courtsRow}>
-                    {courts.length === 0 ? (
-                        <Text style={{ color: '#666', padding: 10 }}>No courts found. Add one in Courts tab.</Text>
-                    ) : courts.map(court => (
-                        <View
-                            key={court.id}
-                            style={[
-                                styles.courtCard,
-                                court.status === "booked" && styles.courtBooked,
-                                court.status === "maintenance" && styles.courtMaintenance,
-                            ]}
-                        >
-                            <Text style={styles.courtName}>{court.name}</Text>
-                            <Text style={styles.courtType}>{court.type}</Text>
-                            <View style={[
-                                styles.courtStatusBadge,
-                                court.status === "available" && { backgroundColor: "#7ED957" },
-                                court.status === "booked" && { backgroundColor: "#3B82F6" },
-                                court.status === "maintenance" && { backgroundColor: "#F97316" },
-                            ]}>
-                                <Text style={styles.courtStatusText}>
-                                    {court.status === "available" ? "Open" :
-                                        court.status === "booked" ? "In Use" : "Closed"}
-                                </Text>
-                            </View>
-                            {court.nextBooking && (
-                                <Text style={styles.courtNext}>Next: {court.nextBooking}</Text>
-                            )}
+                {courts.length === 0 ? (
+                    <Text style={{ color: '#666', padding: 10 }}>No courts found. Add one in Courts tab.</Text>
+                ) : courts.map(court => (
+                    <View
+                        key={court.id}
+                        style={[
+                            styles.courtCard,
+                            court.status === "booked" && styles.courtBooked,
+                            court.status === "maintenance" && styles.courtMaintenance,
+                        ]}
+                    >
+                        <Text style={styles.courtName}>{court.name}</Text>
+                        <Text style={styles.courtType}>{court.type}</Text>
+                        <View style={[
+                            styles.courtStatusBadge,
+                            court.status === "available" && { backgroundColor: "#7ED957" },
+                            court.status === "booked" && { backgroundColor: "#3B82F6" },
+                            court.status === "maintenance" && { backgroundColor: "#F97316" },
+                        ]}>
+                            <Text style={styles.courtStatusText}>
+                                {court.status === "available" ? "Open" :
+                                    court.status === "booked" ? "In Use" : "Closed"}
+                            </Text>
                         </View>
-                    ))}
-                </ScrollView>
-
-                {/* Today's Schedule */}
-                <Text style={styles.sectionTitle}>Recent Bookings</Text>
-                {bookings.length === 0 ? (
-                    <Text style={{ color: '#666', marginBottom: 20 }}>No bookings yet today.</Text>
-                ) : bookings.slice(0, 3).map(booking => (
-                    <View key={booking.id} style={styles.bookingCard}>
-                        <View style={styles.bookingTime}>
-                            <Text style={styles.bookingTimeText}>{booking.time}</Text>
-                            <Text style={styles.bookingDuration}>{booking.duration}</Text>
-                        </View>
-                        <View style={styles.bookingInfo}>
-                            <Text style={styles.bookingPlayer}>{booking.player}</Text>
-                            <Text style={styles.bookingCourt}>{booking.court}</Text>
-                        </View>
-                        <View style={styles.bookingAmount}>
-                            <Text style={styles.bookingAmountText}>${booking.amount}</Text>
-                            {booking.status === "pending" && (
-                                <View style={styles.pendingBadge}>
-                                    <Text style={styles.pendingText}>Pending</Text>
-                                </View>
-                            )}
-                        </View>
+                        {court.nextBooking && (
+                            <Text style={styles.courtNext}>Next: {court.nextBooking}</Text>
+                        )}
                     </View>
                 ))}
+            </ScrollView>
 
-                {/* AI Features (Premium) */}
-                <Text style={styles.sectionTitle}>AI Tools</Text>
-                {isPremium ? (
-                    <View style={styles.aiToolsGrid}>
-                        <TouchableOpacity style={styles.aiTool}>
-                            <Ionicons name="flash" size={24} color="#8B5CF6" />
-                            <Text style={styles.aiToolText}>AI Slot Filling</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.aiTool}>
-                            <Ionicons name="trending-up" size={24} color="#3B82F6" />
-                            <Text style={styles.aiToolText}>Demand Forecast</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.aiTool}>
-                            <Ionicons name="pricetag" size={24} color="#F97316" />
-                            <Text style={styles.aiToolText}>Smart Pricing</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.aiTool}>
-                            <Ionicons name="megaphone" size={24} color="#EC4899" />
-                            <Text style={styles.aiToolText}>Auto Promotions</Text>
-                        </TouchableOpacity>
+            {/* Today's Schedule */}
+            <Text style={styles.sectionTitle}>Recent Bookings</Text>
+            {bookings.length === 0 ? (
+                <Text style={{ color: '#666', marginBottom: 20 }}>No bookings yet today.</Text>
+            ) : bookings.slice(0, 3).map(booking => (
+                <View key={booking.id} style={styles.bookingCard}>
+                    <View style={styles.bookingTime}>
+                        <Text style={styles.bookingTimeText}>{booking.time}</Text>
+                        <Text style={styles.bookingDuration}>{booking.duration}</Text>
                     </View>
-                ) : (
-                    <TouchableOpacity
-                        style={styles.premiumBanner}
-                        onPress={() => router.push("/settings/subscription")}
-                    >
-                        <LinearGradient colors={["#FFD700", "#FF8C00"]} style={styles.premiumGradient}>
-                            <Ionicons name="sparkles" size={24} color="#000" />
-                            <View style={styles.premiumText}>
-                                <Text style={styles.premiumTitle}>Unlock AI Features</Text>
-                                <Text style={styles.premiumSubtitle}>Auto-fill empty slots & boost revenue</Text>
+                    <View style={styles.bookingInfo}>
+                        <Text style={styles.bookingPlayer}>{booking.player}</Text>
+                        <Text style={styles.bookingCourt}>{booking.court}</Text>
+                    </View>
+                    <View style={styles.bookingAmount}>
+                        <Text style={styles.bookingAmountText}>${booking.amount}</Text>
+                        {booking.status === "pending" && (
+                            <View style={styles.pendingBadge}>
+                                <Text style={styles.pendingText}>Pending</Text>
                             </View>
-                            <Text style={styles.premiumPrice}>$50/mo</Text>
-                        </LinearGradient>
+                        )}
+                    </View>
+                </View>
+            ))}
+
+            {/* AI Features (Premium) */}
+            <Text style={styles.sectionTitle}>AI Tools</Text>
+            {isPremium ? (
+                <View style={styles.aiToolsGrid}>
+                    <TouchableOpacity style={styles.aiTool}>
+                        <Ionicons name="flash" size={24} color="#8B5CF6" />
+                        <Text style={styles.aiToolText}>AI Slot Filling</Text>
                     </TouchableOpacity>
-                )}
+                    <TouchableOpacity style={styles.aiTool}>
+                        <Ionicons name="trending-up" size={24} color="#3B82F6" />
+                        <Text style={styles.aiToolText}>Demand Forecast</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.aiTool}>
+                        <Ionicons name="pricetag" size={24} color="#F97316" />
+                        <Text style={styles.aiToolText}>Smart Pricing</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.aiTool}>
+                        <Ionicons name="megaphone" size={24} color="#EC4899" />
+                        <Text style={styles.aiToolText}>Auto Promotions</Text>
+                    </TouchableOpacity>
+                </View>
+            ) : (
+                <TouchableOpacity
+                    style={styles.premiumBanner}
+                    onPress={() => router.push("/settings/subscription")}
+                >
+                    <LinearGradient colors={["#FFD700", "#FF8C00"]} style={styles.premiumGradient}>
+                        <Ionicons name="sparkles" size={24} color="#000" />
+                        <View style={styles.premiumText}>
+                            <Text style={styles.premiumTitle}>Unlock AI Features</Text>
+                            <Text style={styles.premiumSubtitle}>Auto-fill empty slots & boost revenue</Text>
+                        </View>
+                        <Text style={styles.premiumPrice}>$50/mo</Text>
+                    </LinearGradient>
+                </TouchableOpacity>
+            )}
         </View>
     )
 

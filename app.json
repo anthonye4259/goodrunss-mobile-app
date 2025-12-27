@@ -27,13 +27,18 @@
       ],
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "GoodRunss uses your location to find basketball courts, tennis courts, and trainers near you. For example, when you open the map, we show courts within 10 miles of your current location so you can see which ones are active.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "GoodRunss uses your location to find nearby courts and trainers, and to send you notifications when courts near you become active. For example, we'll alert you when a basketball court within 5 miles has players looking for games.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "GoodRunss uses your location to send you 'Radar' alerts when you are near active courts or gyms, even when the app is closed. For example, we'll notify you if a court nearby is buzzing with players.",
         "NSCameraUsageDescription": "GoodRunss uses your camera to take profile photos and report court conditions. For example, you can snap a photo of a court to share its current status with other players.",
         "NSPhotoLibraryUsageDescription": "GoodRunss accesses your photo library to let you upload profile pictures and court condition photos. For example, you can select an existing photo to use as your profile picture.",
         "NSMicrophoneUsageDescription": "GoodRunss uses your microphone to record voice messages when chatting with trainers or other players.",
         "NSHealthShareUsageDescription": "GoodRunss reads your workout data from Apple Health to track your activity history and provide personalized court recommendations based on your fitness level.",
         "NSHealthUpdateUsageDescription": "GoodRunss saves your court sessions and training activities to Apple Health so you can track your fitness progress across all your apps.",
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIBackgroundModes": [
+          "location",
+          "fetch",
+          "remote-notification"
+        ]
       },
       "usesAppleSignIn": true
     },

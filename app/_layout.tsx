@@ -128,6 +128,7 @@ export default function RootLayout() {
         <AppContent>
           <UserPreferencesProvider>
             <LocationProvider>
+              <RadarInitializer />
               <StripeProvider>
                 <ToastProvider>
                   <NudgesProvider>
@@ -167,5 +168,48 @@ export default function RootLayout() {
       </AuthProvider>
     </GestureHandlerRootView>
   )
+}
+
+// Separate component to access LocationContext
+import { useLocation } from "@/lib/location-context"
+import { geofenceService } from "@/lib/services/geofence-service"
+import { venueService } from "@/lib/services/venue-service"
+
+function RadarInitializer() {
+  const { location } = useLocation()
+
+  useEffect(() => {
+    if (!location) return
+
+    const initRadar = async () => {
+      // Find venues within 5km to monitor
+      // Note: In real app, we'd act smarter about which ones to specificially watch
+      // For now, we watch the top 10 nearest
+      try {
+        const center = { lat: location.latitude, lng: location.longitude }
+        const venues = await venueService.getVenuesNearby(center, 5) // 5km radius
+
+        if (venues.length > 0) {
+          const regions = venues.slice(0, 10).map(v => ({
+            identifier: v.name, // using name as ID for readable notifications
+            latitude: v.lat,
+            longitude: v.lng,
+            radius: 150, // 150 meters
+            notifyOnEnter: true,
+            notifyOnExit: false,
+          }))
+
+          // Only start if we have permission (handled inside startMonitoring)
+          await geofenceService.startMonitoring(regions)
+        }
+      } catch (err) {
+        console.log("[Radar] Init failed", err)
+      }
+    }
+
+    initRadar()
+  }, [location])
+
+  return null
 }
 

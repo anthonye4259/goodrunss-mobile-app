@@ -13,7 +13,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
 import { useEffect, useRef, useState } from "react"
 import * as Haptics from "expo-haptics"
-import { useUserLocation } from "@/lib/services/location-service"
+import { useUserLocation } from "@/lib/location-context"
 import { venueService } from "@/lib/services/venue-service"
 import { QuickCourtReportModal } from "@/components/QuickCourtReport"
 

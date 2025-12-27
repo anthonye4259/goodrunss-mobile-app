@@ -392,7 +392,7 @@ export const venueService = {
         })
 
         return venuesWithActivity
-    }
+    },
     /**
      * Get courts for a specific facility
      */
