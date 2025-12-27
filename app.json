@@ -4,6 +4,7 @@
     "slug": "goodrunss-mobile",
     "owner": "tony4080",
     "version": "1.0.0",
+    "runtimeVersion": "1.0.0",
     "scheme": "goodrunss",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
