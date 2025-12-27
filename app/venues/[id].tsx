@@ -79,7 +79,8 @@ export default function VenueDetailScreen() {
         price: fetchedVenue.price || "Free",
         hours: fetchedVenue.hours || "6:00 AM - 10:00 PM",
         amenities: fetchedVenue.amenities || ["Parking", "Restrooms"],
-        images: fetchedVenue.photos && fetchedVenue.photos.length > 0 ? fetchedVenue.photos : ["/outdoor-basketball-court.png"]
+        images: fetchedVenue.photos && fetchedVenue.photos.length > 0 ? fetchedVenue.photos : ["/outdoor-basketball-court.png"],
+        isBookable: fetchedVenue.isBookable !== false
       }
       setVenue(enrichedVenue)
 
@@ -385,9 +386,11 @@ export default function VenueDetailScreen() {
                   <Text className="text-muted-foreground ml-1">{venue.distance} away</Text>
                 </View>
               </View>
-              <View className="bg-primary/20 rounded-xl px-4 py-2">
-                <Text className="text-primary font-bold">{venue.price}</Text>
-              </View>
+              {venue.isBookable && (
+                <View className="bg-primary/20 rounded-xl px-4 py-2">
+                  <Text className="text-primary font-bold">{venue.price}</Text>
+                </View>
+              )}
             </View>
 
             {/* 🎯 REAL-TIME STATUS - THE EDGE (Sport-specific intelligence) */}
@@ -733,6 +736,11 @@ export default function VenueDetailScreen() {
                   >
                     <Text className="text-black text-center font-bold">Join Waitlist</Text>
                   </TouchableOpacity>
+                </View>
+              ) : !venue.isBookable ? (
+                <View className="bg-muted/20 rounded-xl py-4 items-center justify-center">
+                  <Text className="text-muted-foreground font-semibold">Booking Unavailable</Text>
+                  <Text className="text-xs text-muted-foreground mt-1">View-only listing</Text>
                 </View>
               ) : (
                 <TouchableOpacity

@@ -21,42 +21,7 @@ type Conversation = {
   isOnline?: boolean
 }
 
-const MOCK_CONVERSATIONS: Conversation[] = [
-  {
-    id: "1",
-    name: "Coach Mike",
-    lastMessage: "Great session today! See you next week.",
-    time: "2m ago",
-    unread: 2,
-    avatar: "M",
-    isOnline: true,
-  },
-  {
-    id: "2",
-    name: "Sarah Johnson",
-    lastMessage: "Are you free for a match tomorrow?",
-    time: "1h ago",
-    unread: 0,
-    avatar: "S",
-    isOnline: true,
-  },
-  {
-    id: "3",
-    name: "Downtown Courts",
-    lastMessage: "Your booking is confirmed for Saturday.",
-    time: "3h ago",
-    unread: 1,
-    avatar: "D",
-  },
-  {
-    id: "4",
-    name: "Alex Chen",
-    lastMessage: "Thanks for the tip!",
-    time: "Yesterday",
-    unread: 0,
-    avatar: "A",
-  },
-]
+// MOCK_CONVERSATIONS removed
 
 export default function MessagesScreen() {
   const { t } = useTranslation()

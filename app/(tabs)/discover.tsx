@@ -47,28 +47,7 @@ const PHASE_1_CITIES = [
     { name: "Chicago", lat: 41.8781, lng: -87.6298, intensity: 0.82 },
 ]
 
-// Mock data for sections
-const TRENDING_DATA = [
-    { id: "1", name: "Piedmont Tennis Center", type: "venue", rating: 4.9, bookings: 127, price: 45, image: null },
-    { id: "2", name: "Mike Chen", type: "trainer", rating: 5.0, sessions: 89, price: 85, sport: "Tennis", image: null },
-    { id: "3", name: "Buckhead Padel Club", type: "venue", rating: 4.8, bookings: 98, price: 55, image: null },
-]
-
-const VENUES_DATA = [
-    { id: "v1", name: "Atlanta Tennis Club", distance: 1.2, rating: 4.7, price: 40, courts: 8, image: null },
-    { id: "v2", name: "Midtown Courts", distance: 2.4, rating: 4.5, price: 35, courts: 6, image: null },
-    { id: "v3", name: "Buckhead Sports Complex", distance: 3.1, rating: 4.8, price: 50, courts: 12, image: null },
-    { id: "v4", name: "Sandy Springs Tennis", distance: 5.2, rating: 4.6, price: 38, courts: 4, image: null },
-]
-
-const TRAINERS_DATA = [
-    { id: "t1", name: "Sarah Williams", sport: "Tennis", rating: 4.9, price: 75, available: true, image: null },
-    { id: "t2", name: "Marcus Johnson", sport: "Pickleball", rating: 4.8, price: 65, available: true, image: null },
-    { id: "t3", name: "Emily Davis", sport: "Padel", rating: 5.0, price: 90, available: false, image: null },
-    { id: "t4", name: "James Brown", sport: "Tennis", rating: 4.7, price: 70, available: true, image: null },
-]
-
-// Mock data for warm leads (players interested in this trainer)
+// Authorized mock data for warm leads
 const WARM_LEADS_DATA = [
     { id: "l1", name: "Alex Turner", sport: "Tennis", level: 4.2, signal: "Viewed your profile 2x", isHot: true },
     { id: "l2", name: "Maya Chen", sport: "Tennis", level: 3.8, signal: "Checked availability", isHot: true },
@@ -76,34 +55,9 @@ const WARM_LEADS_DATA = [
     { id: "l4", name: "Sarah Kim", sport: "Tennis", level: 4.0, signal: "Added you to favorites", isHot: true },
 ]
 
-// FREE PUBLIC COURTS - Essential for players (with live traffic)
-const FREE_COURTS_DATA = [
-    { id: "f1", name: "Piedmont Park Courts", type: "public", sport: "Tennis", courts: 12, condition: "Good", distance: 0.8, hasLights: true, liveStatus: "busy", playersNow: 8 },
-    { id: "f2", name: "Grant Park Recreation", type: "public", sport: "Basketball", courts: 4, condition: "Fair", distance: 1.2, hasLights: false, liveStatus: "quiet", playersNow: 2 },
-    { id: "f3", name: "Chastain Park", type: "public", sport: "Tennis", courts: 8, condition: "Excellent", distance: 2.1, hasLights: true, liveStatus: "moderate", playersNow: 5 },
-    { id: "f4", name: "Candler Park", type: "public", sport: "Pickleball", courts: 6, condition: "Good", distance: 1.8, hasLights: true, liveStatus: "packed", playersNow: 14 },
-]
-
-// COLLEGE COURTS - Essential for launch cities targeting students (with live traffic)
-const COLLEGE_COURTS_DATA = [
-    { id: "c1", name: "Georgia Tech Recreation Center", university: "Georgia Tech", sport: "All", access: "Student/Alumni", distance: 1.5, courts: 16, liveStatus: "moderate", playersNow: 12 },
-    { id: "c2", name: "Emory University Courts", university: "Emory", sport: "Tennis", access: "Student Only", distance: 3.2, courts: 10, liveStatus: "quiet", playersNow: 3 },
-    { id: "c3", name: "Georgia State Recreation", university: "GSU", sport: "Basketball", access: "Student/Public", distance: 0.9, courts: 8, liveStatus: "busy", playersNow: 9 },
-    { id: "c4", name: "Spelman College Gym", university: "Spelman", sport: "Basketball", access: "Student Only", distance: 2.4, courts: 4, liveStatus: "quiet", playersNow: 1 },
-]
-
-// MEMBERSHIP GYMS - LA Fitness, Lifetime, etc. (with live traffic)
-const MEMBERSHIP_COURTS_DATA = [
-    { id: "m1", name: "LA Fitness - Buckhead", chain: "LA Fitness", sport: "Basketball", membershipReq: true, courts: 2, distance: 1.1, monthlyFee: 35, liveStatus: "moderate", playersNow: 4 },
-    { id: "m2", name: "Lifetime Fitness - Perimeter", chain: "Lifetime", sport: "Tennis", membershipReq: true, courts: 6, distance: 4.8, monthlyFee: 180, liveStatus: "quiet", playersNow: 2 },
-    { id: "m3", name: "24 Hour Fitness - Midtown", chain: "24 Hour", sport: "Basketball", membershipReq: true, courts: 1, distance: 0.6, monthlyFee: 45, liveStatus: "busy", playersNow: 6 },
-    { id: "m4", name: "Equinox - Buckhead", chain: "Equinox", sport: "Tennis", membershipReq: true, courts: 2, distance: 2.3, monthlyFee: 250, liveStatus: "quiet", playersNow: 1 },
-]
-
 export default function DiscoverScreen() {
     const { preferences } = useUserPreferences()
     const { location } = useLocation()
-    const [loading, setLoading] = useState(false)
     const [refreshing, setRefreshing] = useState(false)
     const mapRef = useRef<MapView>(null)
 
@@ -115,20 +69,50 @@ export default function DiscoverScreen() {
     const isTrainer = userType === "trainer"
     const isFacility = userType === "facility"
 
+    // State for real data
+    const [nearbyVenues, setNearbyVenues] = useState<any[]>([])
+    const [trendingVenues, setTrendingVenues] = useState<any[]>([])
+    const [trainers, setTrainers] = useState<any[]>([])
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        loadData()
+    }, [location])
+
+    const loadData = async () => {
+        setLoading(true)
+        try {
+            // Fetch real venues depending on user location
+            // Adapt location context (latitude/longitude) to service format (lat/lng)
+            const lat = location?.latitude || 33.749
+            const lng = location?.longitude || -84.388
+
+            const venues = await venueService.getVenuesNearby({ lat, lng })
+
+            setNearbyVenues(venues)
+
+            // For now, trending is just the top rated ones
+            const trending = [...venues].sort((a, b) => b.rating - a.rating).slice(0, 5)
+            setTrendingVenues(trending)
+
+            // Trainers - empty for now until trainerService exists
+            setTrainers([])
+        } catch (error) {
+            console.error("Error loading discover data", error)
+        } finally {
+            setLoading(false)
+        }
+    }
+
     // Pull-to-refresh handler
     const onRefresh = useCallback(() => {
-        setRefreshing(true)
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-
-        // Simulate data refresh - in production would refetch from APIs
-        setTimeout(() => {
-            setRefreshing(false)
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
-        }, 1500)
-    }, [])
+        loadData()
+    }, [location])
 
     // Venue Card Component
-    const VenueCard = ({ item }: { item: typeof VENUES_DATA[0] }) => (
+    // @ts-ignore
+    const VenueCard = ({ item }: { item: any }) => (
         <TouchableOpacity
             style={styles.venueCard}
             onPress={() => {
@@ -141,19 +125,19 @@ export default function DiscoverScreen() {
                 style={styles.venueCardGradient}
             >
                 <View style={styles.venueImagePlaceholder}>
-                    <Ionicons name="tennisball" size={32} color="#7ED957" />
+                    {item.images?.[0] ? <Image source={{ uri: item.images[0] }} style={{ width: '100%', height: '100%' }} /> : <Ionicons name="tennisball" size={32} color="#7ED957" />}
                 </View>
                 <View style={styles.venueCardContent}>
                     <Text style={styles.venueCardName} numberOfLines={1}>{item.name}</Text>
                     <View style={styles.venueCardMeta}>
                         <Ionicons name="location-outline" size={14} color="#888" />
-                        <Text style={styles.venueCardDistance}>{item.distance} mi</Text>
+                        <Text style={styles.venueCardDistance}>{item.distance?.toFixed(1)} mi</Text>
                         <Ionicons name="star" size={14} color="#FFD700" style={{ marginLeft: 8 }} />
                         <Text style={styles.venueCardRating}>{item.rating}</Text>
                     </View>
                     <View style={styles.venueCardFooter}>
-                        <Text style={styles.venueCardPrice}>${item.price}/hr</Text>
-                        <Text style={styles.venueCardCourts}>{item.courts} courts</Text>
+                        {item.isBookable !== false && <Text style={styles.venueCardPrice}>{item.price ? `$${item.price}/hr` : ' prices vary'}</Text>}
+                        <Text style={styles.venueCardCourts}>{item.courts || '?'} courts</Text>
                     </View>
                 </View>
             </LinearGradient>
@@ -161,7 +145,7 @@ export default function DiscoverScreen() {
     )
 
     // Trainer Card Component
-    const TrainerCard = ({ item }: { item: typeof TRAINERS_DATA[0] }) => (
+    const TrainerCard = ({ item }: { item: any }) => (
         <TouchableOpacity
             style={styles.trainerCard}
             onPress={() => {
@@ -225,42 +209,6 @@ export default function DiscoverScreen() {
         </TouchableOpacity>
     )
 
-    // Trending Card Component
-    const TrendingCard = ({ item }: { item: typeof TRENDING_DATA[0] }) => (
-        <TouchableOpacity
-            style={styles.trendingCard}
-            onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-            }}
-        >
-            <LinearGradient
-                colors={["#7ED957", "#4CAF50"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.trendingCardGradient}
-            >
-                <View style={styles.trendingIcon}>
-                    <Ionicons
-                        name={item.type === "venue" ? "business" : "person"}
-                        size={24}
-                        color="#000"
-                    />
-                </View>
-                <View style={styles.trendingContent}>
-                    <Text style={styles.trendingName} numberOfLines={1}>{item.name}</Text>
-                    <View style={styles.trendingMeta}>
-                        <Ionicons name="star" size={12} color="#000" />
-                        <Text style={styles.trendingRating}>{item.rating}</Text>
-                        <Text style={styles.trendingStats}>
-                            • {item.type === "venue" ? `${item.bookings} bookings` : `${item.sessions} sessions`}
-                        </Text>
-                    </View>
-                </View>
-                <Ionicons name="arrow-forward" size={20} color="#000" />
-            </LinearGradient>
-        </TouchableOpacity>
-    )
-
     // Section Header Component
     const SectionHeader = ({
         title,
@@ -293,15 +241,9 @@ export default function DiscoverScreen() {
 
             <SafeAreaView style={styles.safeArea} edges={["top"]}>
                 <ScrollView
+                    contentContainerStyle={{ paddingBottom: 100 }}
+                    refreshControl={<RefreshControl refreshing={loading} onRefresh={loadData} tintColor="#7ED957" />}
                     showsVerticalScrollIndicator={false}
-                    refreshControl={
-                        <RefreshControl
-                            refreshing={refreshing}
-                            onRefresh={onRefresh}
-                            tintColor="#7ED957"
-                            colors={["#7ED957"]}
-                        />
-                    }
                 >
                     {/* Location Header */}
                     <View style={styles.header}>
@@ -352,56 +294,52 @@ export default function DiscoverScreen() {
                         />
                     )}
 
-                    {/* Trending Section - STAYS AT TOP */}
+                    {/* Trending / Recommended */}
+                    {trendingVenues.length > 0 && (
+                        <View style={styles.section}>
+                            <SectionHeader title="🔥 TRENDING NEARBY" icon="flame" color="#F97316" onSeeAll={() => { }} />
+                            <FlatList
+                                horizontal
+                                data={trendingVenues}
+                                keyExtractor={(item) => item.id}
+                                renderItem={({ item }) => (
+                                    <View style={{ width: CARD_WIDTH, marginRight: CARD_SPACING }}>
+                                        <VenueCard item={item} />
+                                    </View>
+                                )}
+                                showsHorizontalScrollIndicator={false}
+                                contentContainerStyle={styles.horizontalList}
+                                snapToInterval={CARD_WIDTH + CARD_SPACING}
+                                decelerationRate="fast"
+                            />
+                        </View>
+                    )}
+
+                    {/* Nearby Venues (Replaces Free/College/Membership lists for now) */}
                     <View style={styles.section}>
-                        <SectionHeader title="🔥 TRENDING NEAR YOU" icon="flame" color="#F97316" onSeeAll={() => { }} />
+                        <SectionHeader title="📍 NEARBY COURTS" icon="location" color="#22C55E" onSeeAll={() => { }} />
                         <FlatList
                             horizontal
-                            data={TRENDING_DATA}
-                            keyExtractor={(item) => item.id}
-                            renderItem={({ item }) => <TrendingCard item={item} />}
-                            showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={styles.horizontalList}
-                            snapToInterval={SCREEN_WIDTH - 40}
-                            decelerationRate="fast"
-                        />
-                    </View>
-
-                    {/* =========== COURTS SECTION - MOVED TO TOP =========== */}
-
-                    {/* FREE PUBLIC COURTS */}
-                    <View style={styles.section}>
-                        <SectionHeader title="🆓 FREE COURTS NEARBY" icon="tennisball" color="#22C55E" onSeeAll={() => router.push("/(tabs)/live")} />
-                        <FlatList
-                            horizontal
-                            data={FREE_COURTS_DATA}
+                            data={nearbyVenues}
                             keyExtractor={(item) => item.id}
                             renderItem={({ item }) => (
                                 <TouchableOpacity
                                     style={styles.courtCardPremium}
                                     onPress={() => {
                                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-                                        router.push("/(tabs)/live")
+                                        // router.push(`/venue/${item.id}`)
                                     }}
                                 >
                                     <LinearGradient
                                         colors={["#0D260D", "#0A0A0A"]}
                                         style={styles.courtCardGradient}
                                     >
-                                        {/* FREE Badge */}
-                                        <View style={styles.courtTypeBadge}>
-                                            <Ionicons name="checkmark-circle" size={12} color="#22C55E" />
-                                            <Text style={[styles.courtTypeBadgeText, { color: "#22C55E" }]}>FREE</Text>
-                                        </View>
-
-                                        {/* Live Traffic */}
                                         <LiveTrafficBadge
-                                            level={item.liveStatus as "quiet" | "moderate" | "busy" | "packed"}
-                                            playersNow={item.playersNow}
+                                            level={item.crowdLevel || "quiet"}
+                                            playersNow={item.activePlayersNow || 0}
                                             size="small"
                                         />
 
-                                        {/* Court Icon */}
                                         <View style={[styles.courtIconCircle, { backgroundColor: "rgba(34, 197, 94, 0.15)", borderColor: "#22C55E40" }]}>
                                             <Ionicons name="tennisball" size={28} color="#22C55E" />
                                         </View>
@@ -412,79 +350,7 @@ export default function DiscoverScreen() {
                                         <View style={styles.courtCardFooter}>
                                             <View style={styles.courtCardMeta}>
                                                 <Ionicons name="location" size={12} color="#666" />
-                                                <Text style={styles.courtCardDistance}>{item.distance} mi</Text>
-                                            </View>
-                                            <View style={styles.courtCardMeta}>
-                                                <Ionicons name="grid" size={12} color="#666" />
-                                                <Text style={styles.courtCardCourts}>{item.courts}</Text>
-                                            </View>
-                                            {item.hasLights && (
-                                                <Ionicons name="bulb" size={14} color="#FBBF24" />
-                                            )}
-                                        </View>
-                                    </LinearGradient>
-                                </TouchableOpacity>
-                            )}
-                            showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={styles.horizontalList}
-                            snapToInterval={180}
-                            decelerationRate="fast"
-                        />
-                    </View>
-
-                    {/* COLLEGE COURTS */}
-                    <View style={styles.section}>
-                        <SectionHeader title="🎓 COLLEGE COURTS" icon="school" color="#3B82F6" onSeeAll={() => { }} />
-                        <FlatList
-                            horizontal
-                            data={COLLEGE_COURTS_DATA}
-                            keyExtractor={(item) => item.id}
-                            renderItem={({ item }) => (
-                                <TouchableOpacity
-                                    style={styles.courtCardPremium}
-                                    onPress={() => {
-                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-                                    }}
-                                >
-                                    <LinearGradient
-                                        colors={["#0D1526", "#0A0A0A"]}
-                                        style={styles.courtCardGradient}
-                                    >
-                                        {/* University Badge */}
-                                        <View style={[styles.courtTypeBadge, { backgroundColor: "#3B82F620", borderColor: "#3B82F640" }]}>
-                                            <Ionicons name="school" size={12} color="#3B82F6" />
-                                            <Text style={[styles.courtTypeBadgeText, { color: "#3B82F6" }]}>{item.university}</Text>
-                                        </View>
-
-                                        {/* Live Traffic */}
-                                        <LiveTrafficBadge
-                                            level={item.liveStatus as "quiet" | "moderate" | "busy" | "packed"}
-                                            playersNow={item.playersNow}
-                                            size="small"
-                                        />
-
-                                        {/* Court Icon */}
-                                        <View style={[styles.courtIconCircle, { backgroundColor: "rgba(59, 130, 246, 0.15)", borderColor: "#3B82F640" }]}>
-                                            <Ionicons name="school" size={28} color="#3B82F6" />
-                                        </View>
-
-                                        <Text style={styles.courtCardName} numberOfLines={2}>{item.name}</Text>
-                                        <Text style={[styles.courtCardSport, { color: "#3B82F6" }]}>{item.sport}</Text>
-
-                                        {/* Access Badge */}
-                                        <View style={[styles.accessBadge, { backgroundColor: item.access.includes("Public") ? "#22C55E15" : "#F9731615" }]}>
-                                            <Ionicons name={item.access.includes("Public") ? "lock-open" : "lock-closed"} size={10} color={item.access.includes("Public") ? "#22C55E" : "#F97316"} />
-                                            <Text style={{ color: item.access.includes("Public") ? "#22C55E" : "#F97316", fontSize: 10, fontWeight: "600" }}>{item.access}</Text>
-                                        </View>
-
-                                        <View style={styles.courtCardFooter}>
-                                            <View style={styles.courtCardMeta}>
-                                                <Ionicons name="location" size={12} color="#666" />
-                                                <Text style={styles.courtCardDistance}>{item.distance} mi</Text>
-                                            </View>
-                                            <View style={styles.courtCardMeta}>
-                                                <Ionicons name="grid" size={12} color="#666" />
-                                                <Text style={styles.courtCardCourts}>{item.courts}</Text>
+                                                <Text style={styles.courtCardDistance}>{item.distance?.toFixed(1)} mi</Text>
                                             </View>
                                         </View>
                                     </LinearGradient>
@@ -497,87 +363,11 @@ export default function DiscoverScreen() {
                         />
                     </View>
 
-                    {/* GYM MEMBERSHIP COURTS */}
-                    <View style={styles.section}>
-                        <SectionHeader title="💪 GYM COURTS" icon="fitness" color="#EC4899" onSeeAll={() => { }} />
-                        <FlatList
-                            horizontal
-                            data={MEMBERSHIP_COURTS_DATA}
-                            keyExtractor={(item) => item.id}
-                            renderItem={({ item }) => (
-                                <TouchableOpacity
-                                    style={styles.courtCardPremium}
-                                    onPress={() => {
-                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-                                    }}
-                                >
-                                    <LinearGradient
-                                        colors={["#260D1A", "#0A0A0A"]}
-                                        style={styles.courtCardGradient}
-                                    >
-                                        {/* Chain Badge */}
-                                        <View style={[styles.courtTypeBadge, { backgroundColor: "#EC489920", borderColor: "#EC489940" }]}>
-                                            <Ionicons name="fitness" size={12} color="#EC4899" />
-                                            <Text style={[styles.courtTypeBadgeText, { color: "#EC4899" }]}>{item.chain}</Text>
-                                        </View>
 
-                                        {/* Live Traffic */}
-                                        <LiveTrafficBadge
-                                            level={item.liveStatus as "quiet" | "moderate" | "busy" | "packed"}
-                                            playersNow={item.playersNow}
-                                            size="small"
-                                        />
-
-                                        {/* Court Icon */}
-                                        <View style={[styles.courtIconCircle, { backgroundColor: "rgba(236, 72, 153, 0.15)", borderColor: "#EC489940" }]}>
-                                            <Ionicons name="barbell" size={28} color="#EC4899" />
-                                        </View>
-
-                                        <Text style={styles.courtCardName} numberOfLines={1}>{item.name}</Text>
-                                        <Text style={[styles.courtCardSport, { color: "#EC4899" }]}>{item.sport}</Text>
-
-                                        {/* Membership Fee */}
-                                        <View style={[styles.membershipBadge]}>
-                                            <Ionicons name="card" size={12} color="#EC4899" />
-                                            <Text style={styles.membershipText}>${item.monthlyFee}/mo</Text>
-                                        </View>
-
-                                        <View style={styles.courtCardFooter}>
-                                            <View style={styles.courtCardMeta}>
-                                                <Ionicons name="location" size={12} color="#666" />
-                                                <Text style={styles.courtCardDistance}>{item.distance} mi</Text>
-                                            </View>
-                                            <View style={styles.courtCardMeta}>
-                                                <Ionicons name="grid" size={12} color="#666" />
-                                                <Text style={styles.courtCardCourts}>{item.courts}</Text>
-                                            </View>
-                                        </View>
-                                    </LinearGradient>
-                                </TouchableOpacity>
-                            )}
-                            showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={styles.horizontalList}
-                            snapToInterval={180}
-                            decelerationRate="fast"
-                        />
-                    </View>
 
                     {/* =========== OTHER SECTIONS =========== */}
 
-                    {/* Venues Section */}
-                    <View style={styles.section}>
-                        <SectionHeader title="BOOK A VENUE" icon="business" onSeeAll={() => { }} />
-                        <FlatList
-                            horizontal
-                            data={VENUES_DATA}
-                            keyExtractor={(item) => item.id}
-                            renderItem={({ item }) => <VenueCard item={item} />}
-                            showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={styles.horizontalList}
-                            snapToInterval={CARD_WIDTH + CARD_SPACING}
-                            decelerationRate="fast"
-                        />
-                    </View>
+
 
                     {/* Conditional Section: Warm Leads (trainer) or Top Trainers (player) */}
                     <View style={styles.section}>
@@ -601,19 +391,21 @@ export default function DiscoverScreen() {
                                 />
                             </>
                         ) : (
-                            <>
-                                <SectionHeader title="TOP TRAINERS" icon="fitness" color="#8B5CF6" onSeeAll={() => { }} />
-                                <FlatList
-                                    horizontal
-                                    data={TRAINERS_DATA}
-                                    keyExtractor={(item) => item.id}
-                                    renderItem={({ item }) => <TrainerCard item={item} />}
-                                    showsHorizontalScrollIndicator={false}
-                                    contentContainerStyle={styles.horizontalList}
-                                    snapToInterval={140}
-                                    decelerationRate="fast"
-                                />
-                            </>
+                            trainers.length > 0 ? (
+                                <>
+                                    <SectionHeader title="TOP TRAINERS" icon="fitness" color="#8B5CF6" onSeeAll={() => { }} />
+                                    <FlatList
+                                        horizontal
+                                        data={trainers}
+                                        keyExtractor={(item) => item.id}
+                                        renderItem={({ item }) => <TrainerCard item={item} />}
+                                        showsHorizontalScrollIndicator={false}
+                                        contentContainerStyle={styles.horizontalList}
+                                        snapToInterval={140}
+                                        decelerationRate="fast"
+                                    />
+                                </>
+                            ) : null
                         )}
                     </View>
 

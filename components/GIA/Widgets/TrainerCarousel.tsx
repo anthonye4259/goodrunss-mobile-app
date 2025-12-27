@@ -3,18 +3,18 @@ import { View, Text, Image, ScrollView, TouchableOpacity, StyleSheet } from 'rea
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
-const MOCK_TRAINERS = [
-    { id: 1, name: "Sarah Connor", sport: "Tennis", rating: 4.9, image: "https://i.pravatar.cc/150?u=a042581f4e29026024d" },
-    { id: 2, name: "Mike Ross", sport: "Basketball", rating: 4.8, image: "https://i.pravatar.cc/150?u=a042581f4e29026704d" },
-    { id: 3, name: "Jessica P.", sport: "Yoga", rating: 5.0, image: "https://i.pravatar.cc/150?u=a042581f4e29026704e" },
-];
+interface TrainerCarouselProps {
+    trainers?: any[];
+}
 
-export const TrainerCarousel = () => {
+export const TrainerCarousel = ({ trainers = [] }: TrainerCarouselProps) => {
+    if (!trainers.length) return null;
+
     return (
         <View style={styles.container}>
             <Text style={styles.headerTitle}>Top Available Coaches</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-                {MOCK_TRAINERS.map((trainer) => (
+                {trainers.map((trainer) => (
                     <TouchableOpacity key={trainer.id} style={styles.card} activeOpacity={0.8}>
                         <Image source={{ uri: trainer.image }} style={styles.image} />
                         <LinearGradient

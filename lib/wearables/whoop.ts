@@ -125,29 +125,16 @@ export class WhoopService implements WearableService {
   async connect(): Promise<boolean> {
     try {
       console.log('🟢 Initiating WHOOP OAuth flow...')
-      
+
       // In production, this would:
       // 1. Open OAuth URL in browser/WebView
       // 2. User authorizes
       // 3. Receive auth code
       // 4. Exchange for access token
-      
-      // const authUrl = `${WHOOP_AUTH_URL}?` + new URLSearchParams({
-      //   client_id: WHOOP_CLIENT_ID,
-      //   redirect_uri: WHOOP_REDIRECT_URI,
-      //   scope: WHOOP_SCOPES.join(' '),
-      //   response_type: 'code',
-      //   state: generateState(),
-      // })
-      // await Linking.openURL(authUrl)
 
-      // Mock successful connection
-      this.connected = true
-      this.accessToken = 'mock_whoop_token'
-      this.lastSync = new Date()
-      
-      console.log('✅ WHOOP connected successfully')
-      return true
+      console.warn('WHOOP OAuth not configured. Cannot connect.')
+      this.connected = false
+      return false
     } catch (error) {
       console.error('❌ Failed to connect to WHOOP:', error)
       this.connected = false
@@ -191,31 +178,8 @@ export class WhoopService implements WearableService {
       // const recovery = await this.fetchRecovery(date)
       // const sleep = await this.fetchSleepData(date)
 
-      // Mock WHOOP data
-      const metrics: HealthMetrics = {
-        heartRateVariability: 52,
-        restingHeartRate: 54,
-        bloodOxygen: 97,
-        
-        sleepDuration: 7.2 * 60, // minutes
-        sleepScore: 78,
-        deepSleep: 85,
-        remSleep: 95,
-        lightSleep: 210,
-        awakeTime: 42,
-        sleepEfficiency: 88,
-        
-        recoveryScore: 72,      // WHOOP's key metric!
-        strainScore: 12.5,      // WHOOP strain 0-21
-        
-        respiratoryRate: 14.2,
-        
-        date: date,
-        syncedAt: new Date(),
-      }
-
-      this.lastSync = new Date()
-      return metrics
+      // No mock data - return null until API integrated
+      return null
     } catch (error) {
       console.error('Error fetching WHOOP metrics:', error)
       return null
@@ -239,14 +203,14 @@ export class WhoopService implements WearableService {
         endTime: new Date(date.setHours(6, 15, 0, 0)),
         duration: 450,
         score: 78,
-        
+
         stages: {
           deep: 85,      // Slow wave sleep
           rem: 95,
           light: 210,
           awake: 42,
         },
-        
+
         metrics: {
           efficiency: 88,
           latency: 15,
@@ -259,7 +223,7 @@ export class WhoopService implements WearableService {
           },
           hrv: 52,
         },
-        
+
         source: 'whoop',
       }
 
@@ -349,7 +313,7 @@ export class WhoopService implements WearableService {
     }
 
     console.log('🔄 Syncing all WHOOP data...')
-    
+
     await this.fetchHealthMetrics()
     await this.fetchSleepData()
     await this.fetchRecovery()

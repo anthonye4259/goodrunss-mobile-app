@@ -120,19 +120,10 @@ export class OuraService implements WearableService {
   async connect(): Promise<boolean> {
     try {
       console.log('💍 Initiating Oura OAuth flow...')
-      
-      // In production:
-      // 1. Open OAuth URL
-      // 2. User authorizes
-      // 3. Exchange code for token
 
-      // Mock successful connection
-      this.connected = true
-      this.accessToken = 'mock_oura_token'
-      this.lastSync = new Date()
-      
-      console.log('✅ Oura Ring connected successfully')
-      return true
+      console.warn('Oura OAuth not configured. Cannot connect.')
+      this.connected = false
+      return false
     } catch (error) {
       console.error('❌ Failed to connect to Oura:', error)
       this.connected = false
@@ -171,40 +162,14 @@ export class OuraService implements WearableService {
 
     try {
       const dateStr = date.toISOString().split('T')[0]
-      
+
       // In production:
       // const readiness = await this.fetchReadiness(dateStr)
       // const sleep = await this.fetchSleepData(date)
       // const activity = await this.fetchActivity(dateStr)
 
-      // Mock Oura data
-      const metrics: HealthMetrics = {
-        heartRateVariability: 48,
-        restingHeartRate: 56,
-        
-        sleepDuration: 7.8 * 60, // minutes
-        sleepScore: 85,
-        deepSleep: 95,
-        remSleep: 110,
-        lightSleep: 240,
-        awakeTime: 23,
-        sleepEfficiency: 92,
-        
-        steps: 9245,
-        activeCalories: 485,
-        totalCalories: 2280,
-        
-        readinessScore: 78,     // Oura's key metric!
-        
-        bodyTemperature: -0.2,  // Deviation from baseline
-        respiratoryRate: 13.8,
-        
-        date: date,
-        syncedAt: new Date(),
-      }
-
-      this.lastSync = new Date()
-      return metrics
+      // No mock data - return null until API integrated
+      return null
     } catch (error) {
       console.error('Error fetching Oura metrics:', error)
       return null
@@ -216,7 +181,7 @@ export class OuraService implements WearableService {
 
     try {
       const dateStr = date.toISOString().split('T')[0]
-      
+
       // In production:
       // const response = await fetch(`${OURA_API_BASE}/usercollection/sleep?start_date=${dateStr}&end_date=${dateStr}`, {
       //   headers: { Authorization: `Bearer ${this.accessToken}` },
@@ -229,14 +194,14 @@ export class OuraService implements WearableService {
         endTime: new Date(date.setHours(6, 45, 0, 0)),
         duration: 495, // 8.25 hours
         score: 85,
-        
+
         stages: {
           deep: 95,
           rem: 110,
           light: 240,
           awake: 23,
         },
-        
+
         metrics: {
           efficiency: 92,
           latency: 8,
@@ -249,7 +214,7 @@ export class OuraService implements WearableService {
           },
           hrv: 48,
         },
-        
+
         source: 'oura',
       }
 
@@ -375,9 +340,9 @@ export class OuraService implements WearableService {
     }
 
     console.log('🔄 Syncing all Oura data...')
-    
+
     const today = new Date().toISOString().split('T')[0]
-    
+
     await this.fetchHealthMetrics()
     await this.fetchSleepData()
     await this.fetchReadiness(today)

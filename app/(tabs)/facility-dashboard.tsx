@@ -29,34 +29,36 @@ import { router } from "expo-router"
 import * as Haptics from "expo-haptics"
 import * as Clipboard from "expo-clipboard"
 import { useUserPreferences } from "@/lib/user-preferences"
+import { venueService } from "@/lib/services/venue-service"
+import { facilityAnalyticsService } from "@/lib/services/facility-analytics-service"
 
-// Mock data - replace with real data from services
-const MOCK_COURTS = [
-    { id: "1", name: "Court 1", type: "Indoor", status: "available", nextBooking: null },
-    { id: "2", name: "Court 2", type: "Indoor", status: "booked", nextBooking: "2:00 PM - Alex J." },
-    { id: "3", name: "Court 3", type: "Outdoor", status: "available", nextBooking: "4:30 PM - Sarah W." },
-    { id: "4", name: "Court 4", type: "Indoor", status: "maintenance", nextBooking: null },
-]
-
-const MOCK_BOOKINGS = [
-    { id: "1", court: "Court 2", player: "Alex Johnson", time: "2:00 PM", duration: "1hr", amount: 45, status: "confirmed" },
-    { id: "2", court: "Court 3", player: "Sarah Williams", time: "4:30 PM", duration: "1.5hr", amount: 67, status: "pending" },
-    { id: "3", court: "Court 1", player: "Mike Davis", time: "6:00 PM", duration: "2hr", amount: 90, status: "confirmed" },
-]
-
-const MOCK_STATS = {
-    todayRevenue: 342,
-    weekRevenue: 2450,
-    monthRevenue: 8900,
-    occupancyRate: 72,
-    totalBookings: 18,
-    pendingBookings: 3,
+// Data Interfaces
+interface Court {
+    id: string;
+    name: string;
+    type: string;
+    status: 'available' | 'booked' | 'maintenance';
+    nextBooking: string | null;
 }
 
-const MOCK_EMPLOYEES = [
-    { id: "1", name: "John Manager", email: "john@facility.com", role: "manager", status: "active" },
-    { id: "2", name: "Sarah Staff", email: "sarah@facility.com", role: "staff", status: "active" },
-]
+interface Booking {
+    id: string;
+    court: string;
+    player: string;
+    time: string;
+    duration: string;
+    amount: number;
+    status: 'confirmed' | 'pending';
+    date?: string;
+}
+
+interface Employee {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    status: 'active' | 'invited';
+}
 
 const EMPLOYEE_ROLES = [
     { id: "manager", label: "Manager", description: "Full access - bookings, courts, analytics" },
@@ -77,17 +79,67 @@ export default function FacilityDashboardScreen() {
     const [refreshing, setRefreshing] = useState(false)
     const [activeTab, setActiveTab] = useState<"overview" | "courts" | "bookings" | "analytics">("overview")
 
+    // State for real data
+    const [courts, setCourts] = useState<Court[]>([])
+    const [bookings, setBookings] = useState<Booking[]>([])
+    const [employees, setEmployees] = useState<Employee[]>([])
+    const [stats, setStats] = useState({
+        todayRevenue: 0,
+        weekRevenue: 0,
+        monthRevenue: 0,
+        occupancyRate: 0,
+        totalBookings: 0,
+        pendingBookings: 0
+    })
+    const [loading, setLoading] = useState(true)
+
     // Invite Employee Modal
     const [showInviteModal, setShowInviteModal] = useState(false)
     const [inviteContact, setInviteContact] = useState("")
     const [inviteRole, setInviteRole] = useState<string>("staff")
     const [inviteCode, setInviteCode] = useState("")
 
+    useEffect(() => {
+        loadFacilityData()
+    }, [preferences.facilityId])
+
+    const loadFacilityData = async () => {
+        // Fallback to a test facility ID if not in preferences
+        // @ts-ignore
+        const facilityId = preferences.facilityId || "test_facility_1"
+
+        setLoading(true)
+        try {
+            const [fetchedCourts, fetchedBookings, revenueData, occupancyData] = await Promise.all([
+                // @ts-ignore - venueService updated
+                venueService.getFacilityCourts(facilityId),
+                facilityAnalyticsService.getRecentBookings(facilityId),
+                facilityAnalyticsService.getDailyRevenue(facilityId),
+                // @ts-ignore
+                facilityAnalyticsService.getOccupancyRate(facilityId, 10) // hardcoded slots for now
+            ])
+
+            setCourts(fetchedCourts || [])
+            setBookings(fetchedBookings || [])
+            setStats({
+                todayRevenue: revenueData.todayRevenue,
+                weekRevenue: revenueData.todayRevenue * 7, // Estimate for now or fetch
+                monthRevenue: revenueData.todayRevenue * 30, // Estimate
+                occupancyRate: occupancyData.occupancyPercent,
+                totalBookings: revenueData.bookingsToday,
+                pendingBookings: 0 // Need explicit pending count
+            })
+        } catch (error) {
+            console.error("Failed to load facility data", error)
+        } finally {
+            setLoading(false)
+        }
+    }
+
     const onRefresh = async () => {
         setRefreshing(true)
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-        // Simulate refresh
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        await loadFacilityData()
         setRefreshing(false)
     }
 
@@ -135,28 +187,28 @@ export default function FacilityDashboardScreen() {
             {/* Quick Stats */}
             <View style={styles.statsGrid}>
                 <View style={[styles.statCard, { backgroundColor: "#7ED95720" }]}>
-                    <Text style={styles.statValue}>${MOCK_STATS.todayRevenue}</Text>
+                    <Text style={styles.statValue}>${stats.todayRevenue}</Text>
                     <Text style={styles.statLabel}>Today</Text>
                 </View>
                 <View style={[styles.statCard, { backgroundColor: "#3B82F620" }]}>
-                    <Text style={styles.statValue}>{MOCK_STATS.totalBookings}</Text>
+                    <Text style={styles.statValue}>{stats.totalBookings}</Text>
                     <Text style={styles.statLabel}>Bookings</Text>
                 </View>
                 <View style={[styles.statCard, { backgroundColor: "#F9731620" }]}>
-                    <Text style={styles.statValue}>{MOCK_STATS.occupancyRate}%</Text>
+                    <Text style={styles.statValue}>{stats.occupancyRate}%</Text>
                     <Text style={styles.statLabel}>Occupancy</Text>
                 </View>
             </View>
 
             {/* Pending Bookings Alert */}
-            {MOCK_STATS.pendingBookings > 0 && (
+            {stats.pendingBookings > 0 && (
                 <TouchableOpacity
                     style={styles.alertBanner}
                     onPress={() => setActiveTab("bookings")}
                 >
                     <Ionicons name="notifications" size={20} color="#000" />
                     <Text style={styles.alertText}>
-                        {MOCK_STATS.pendingBookings} pending booking{MOCK_STATS.pendingBookings > 1 ? 's' : ''} need approval
+                        {stats.pendingBookings} pending booking{stats.pendingBookings > 1 ? 's' : ''} need approval
                     </Text>
                     <Ionicons name="chevron-forward" size={16} color="#000" />
                 </TouchableOpacity>
@@ -165,94 +217,101 @@ export default function FacilityDashboardScreen() {
             {/* Court Status */}
             <Text style={styles.sectionTitle}>Court Status</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.courtsRow}>
-                {MOCK_COURTS.map(court => (
-                    <View
-                        key={court.id}
-                        style={[
-                            styles.courtCard,
-                            court.status === "booked" && styles.courtBooked,
-                            court.status === "maintenance" && styles.courtMaintenance,
-                        ]}
-                    >
-                        <Text style={styles.courtName}>{court.name}</Text>
-                        <Text style={styles.courtType}>{court.type}</Text>
-                        <View style={[
-                            styles.courtStatusBadge,
-                            court.status === "available" && { backgroundColor: "#7ED957" },
-                            court.status === "booked" && { backgroundColor: "#3B82F6" },
-                            court.status === "maintenance" && { backgroundColor: "#F97316" },
-                        ]}>
-                            <Text style={styles.courtStatusText}>
-                                {court.status === "available" ? "Open" :
-                                    court.status === "booked" ? "In Use" : "Closed"}
-                            </Text>
+                {/* Court Status */}
+                <Text style={styles.sectionTitle}>Court Status</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.courtsRow}>
+                    {courts.length === 0 ? (
+                        <Text style={{ color: '#666', padding: 10 }}>No courts found. Add one in Courts tab.</Text>
+                    ) : courts.map(court => (
+                        <View
+                            key={court.id}
+                            style={[
+                                styles.courtCard,
+                                court.status === "booked" && styles.courtBooked,
+                                court.status === "maintenance" && styles.courtMaintenance,
+                            ]}
+                        >
+                            <Text style={styles.courtName}>{court.name}</Text>
+                            <Text style={styles.courtType}>{court.type}</Text>
+                            <View style={[
+                                styles.courtStatusBadge,
+                                court.status === "available" && { backgroundColor: "#7ED957" },
+                                court.status === "booked" && { backgroundColor: "#3B82F6" },
+                                court.status === "maintenance" && { backgroundColor: "#F97316" },
+                            ]}>
+                                <Text style={styles.courtStatusText}>
+                                    {court.status === "available" ? "Open" :
+                                        court.status === "booked" ? "In Use" : "Closed"}
+                                </Text>
+                            </View>
+                            {court.nextBooking && (
+                                <Text style={styles.courtNext}>Next: {court.nextBooking}</Text>
+                            )}
                         </View>
-                        {court.nextBooking && (
-                            <Text style={styles.courtNext}>Next: {court.nextBooking}</Text>
-                        )}
+                    ))}
+                </ScrollView>
+
+                {/* Today's Schedule */}
+                <Text style={styles.sectionTitle}>Recent Bookings</Text>
+                {bookings.length === 0 ? (
+                    <Text style={{ color: '#666', marginBottom: 20 }}>No bookings yet today.</Text>
+                ) : bookings.slice(0, 3).map(booking => (
+                    <View key={booking.id} style={styles.bookingCard}>
+                        <View style={styles.bookingTime}>
+                            <Text style={styles.bookingTimeText}>{booking.time}</Text>
+                            <Text style={styles.bookingDuration}>{booking.duration}</Text>
+                        </View>
+                        <View style={styles.bookingInfo}>
+                            <Text style={styles.bookingPlayer}>{booking.player}</Text>
+                            <Text style={styles.bookingCourt}>{booking.court}</Text>
+                        </View>
+                        <View style={styles.bookingAmount}>
+                            <Text style={styles.bookingAmountText}>${booking.amount}</Text>
+                            {booking.status === "pending" && (
+                                <View style={styles.pendingBadge}>
+                                    <Text style={styles.pendingText}>Pending</Text>
+                                </View>
+                            )}
+                        </View>
                     </View>
                 ))}
-            </ScrollView>
 
-            {/* Today's Schedule */}
-            <Text style={styles.sectionTitle}>Today's Schedule</Text>
-            {MOCK_BOOKINGS.slice(0, 3).map(booking => (
-                <View key={booking.id} style={styles.bookingCard}>
-                    <View style={styles.bookingTime}>
-                        <Text style={styles.bookingTimeText}>{booking.time}</Text>
-                        <Text style={styles.bookingDuration}>{booking.duration}</Text>
+                {/* AI Features (Premium) */}
+                <Text style={styles.sectionTitle}>AI Tools</Text>
+                {isPremium ? (
+                    <View style={styles.aiToolsGrid}>
+                        <TouchableOpacity style={styles.aiTool}>
+                            <Ionicons name="flash" size={24} color="#8B5CF6" />
+                            <Text style={styles.aiToolText}>AI Slot Filling</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.aiTool}>
+                            <Ionicons name="trending-up" size={24} color="#3B82F6" />
+                            <Text style={styles.aiToolText}>Demand Forecast</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.aiTool}>
+                            <Ionicons name="pricetag" size={24} color="#F97316" />
+                            <Text style={styles.aiToolText}>Smart Pricing</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.aiTool}>
+                            <Ionicons name="megaphone" size={24} color="#EC4899" />
+                            <Text style={styles.aiToolText}>Auto Promotions</Text>
+                        </TouchableOpacity>
                     </View>
-                    <View style={styles.bookingInfo}>
-                        <Text style={styles.bookingPlayer}>{booking.player}</Text>
-                        <Text style={styles.bookingCourt}>{booking.court}</Text>
-                    </View>
-                    <View style={styles.bookingAmount}>
-                        <Text style={styles.bookingAmountText}>${booking.amount}</Text>
-                        {booking.status === "pending" && (
-                            <View style={styles.pendingBadge}>
-                                <Text style={styles.pendingText}>Pending</Text>
+                ) : (
+                    <TouchableOpacity
+                        style={styles.premiumBanner}
+                        onPress={() => router.push("/settings/subscription")}
+                    >
+                        <LinearGradient colors={["#FFD700", "#FF8C00"]} style={styles.premiumGradient}>
+                            <Ionicons name="sparkles" size={24} color="#000" />
+                            <View style={styles.premiumText}>
+                                <Text style={styles.premiumTitle}>Unlock AI Features</Text>
+                                <Text style={styles.premiumSubtitle}>Auto-fill empty slots & boost revenue</Text>
                             </View>
-                        )}
-                    </View>
-                </View>
-            ))}
-
-            {/* AI Features (Premium) */}
-            <Text style={styles.sectionTitle}>AI Tools</Text>
-            {isPremium ? (
-                <View style={styles.aiToolsGrid}>
-                    <TouchableOpacity style={styles.aiTool}>
-                        <Ionicons name="flash" size={24} color="#8B5CF6" />
-                        <Text style={styles.aiToolText}>AI Slot Filling</Text>
+                            <Text style={styles.premiumPrice}>$50/mo</Text>
+                        </LinearGradient>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.aiTool}>
-                        <Ionicons name="trending-up" size={24} color="#3B82F6" />
-                        <Text style={styles.aiToolText}>Demand Forecast</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.aiTool}>
-                        <Ionicons name="pricetag" size={24} color="#F97316" />
-                        <Text style={styles.aiToolText}>Smart Pricing</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.aiTool}>
-                        <Ionicons name="megaphone" size={24} color="#EC4899" />
-                        <Text style={styles.aiToolText}>Auto Promotions</Text>
-                    </TouchableOpacity>
-                </View>
-            ) : (
-                <TouchableOpacity
-                    style={styles.premiumBanner}
-                    onPress={() => router.push("/settings/subscription")}
-                >
-                    <LinearGradient colors={["#FFD700", "#FF8C00"]} style={styles.premiumGradient}>
-                        <Ionicons name="sparkles" size={24} color="#000" />
-                        <View style={styles.premiumText}>
-                            <Text style={styles.premiumTitle}>Unlock AI Features</Text>
-                            <Text style={styles.premiumSubtitle}>Auto-fill empty slots & boost revenue</Text>
-                        </View>
-                        <Text style={styles.premiumPrice}>$50/mo</Text>
-                    </LinearGradient>
-                </TouchableOpacity>
-            )}
+                )}
         </View>
     )
 
@@ -264,7 +323,11 @@ export default function FacilityDashboardScreen() {
                 <Text style={styles.addCourtBtnText}>Add New Court</Text>
             </TouchableOpacity>
 
-            {MOCK_COURTS.map(court => (
+            {courts.length === 0 ? (
+                <View style={{ padding: 40, alignItems: 'center' }}>
+                    <Text style={{ color: '#666' }}>No courts added yet.</Text>
+                </View>
+            ) : courts.map(court => (
                 <TouchableOpacity key={court.id} style={styles.courtFullCard}>
                     <View style={styles.courtHeader}>
                         <Text style={styles.courtFullName}>{court.name}</Text>
@@ -324,7 +387,11 @@ export default function FacilityDashboardScreen() {
                 </TouchableOpacity>
             </View>
 
-            {MOCK_BOOKINGS.map(booking => (
+            {bookings.length === 0 ? (
+                <View style={{ padding: 40, alignItems: 'center' }}>
+                    <Text style={{ color: '#666' }}>No bookings found.</Text>
+                </View>
+            ) : bookings.map(booking => (
                 <View key={booking.id} style={styles.bookingFullCard}>
                     <View style={styles.bookingFullHeader}>
                         <View>
@@ -357,11 +424,11 @@ export default function FacilityDashboardScreen() {
             <View style={styles.revenueGrid}>
                 <View style={styles.revenueCard}>
                     <Text style={styles.revenueLabel}>This Week</Text>
-                    <Text style={styles.revenueValue}>${MOCK_STATS.weekRevenue}</Text>
+                    <Text style={styles.revenueValue}>${stats.weekRevenue}</Text>
                 </View>
                 <View style={styles.revenueCard}>
                     <Text style={styles.revenueLabel}>This Month</Text>
-                    <Text style={styles.revenueValue}>${MOCK_STATS.monthRevenue}</Text>
+                    <Text style={styles.revenueValue}>${stats.monthRevenue}</Text>
                 </View>
             </View>
 
@@ -375,11 +442,11 @@ export default function FacilityDashboardScreen() {
             <Text style={styles.sectionTitle}>Performance</Text>
             <View style={styles.performanceRow}>
                 <View style={styles.performanceItem}>
-                    <Text style={styles.performanceValue}>{MOCK_STATS.occupancyRate}%</Text>
+                    <Text style={styles.performanceValue}>{stats.occupancyRate}%</Text>
                     <Text style={styles.performanceLabel}>Occupancy Rate</Text>
                 </View>
                 <View style={styles.performanceItem}>
-                    <Text style={styles.performanceValue}>{MOCK_STATS.totalBookings}</Text>
+                    <Text style={styles.performanceValue}>{stats.totalBookings}</Text>
                     <Text style={styles.performanceLabel}>Total Bookings</Text>
                 </View>
                 <View style={styles.performanceItem}>

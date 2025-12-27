@@ -3,18 +3,18 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image } from 'rea
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 
-const MOCK_LEADS = [
-    { id: '1', name: 'Sarah Chen', interest: 'Tennis', match: 95, image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=150&auto=format&fit=crop' },
-    { id: '2', name: 'Marcus Jo', interest: 'Strength', match: 88, image: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=150&auto=format&fit=crop' },
-    { id: '3', name: 'Emma W.', interest: 'Yoga', match: 82, image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150&auto=format&fit=crop' },
-];
+interface LeadListWidgetProps {
+    leads?: any[];
+}
 
-export const LeadListWidget = () => {
+export const LeadListWidget = ({ leads = [] }: LeadListWidgetProps) => {
+    if (!leads.length) return null;
+
     return (
         <View>
-            <Text style={styles.headerTitle}>Found 3 potential clients matches:</Text>
+            <Text style={styles.headerTitle}>Found {leads.length} potential clients matches:</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-                {MOCK_LEADS.map(lead => (
+                {leads.map(lead => (
                     <TouchableOpacity key={lead.id} style={styles.card} activeOpacity={0.8} onPress={() => router.push('/business/crm')}>
                         <Image source={{ uri: lead.image }} style={styles.avatar} />
                         <View style={styles.matchBadge}>

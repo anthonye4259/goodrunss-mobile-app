@@ -393,6 +393,25 @@ export const venueService = {
 
         return venuesWithActivity
     }
+    /**
+     * Get courts for a specific facility
+     */
+    async getFacilityCourts(facilityId: string): Promise<any[]> {
+        if (!db) return []
+
+        try {
+            const courtsRef = collection(db, VENUES_COLLECTION, facilityId, "courts")
+            const snapshot = await getDocs(courtsRef)
+
+            return snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }))
+        } catch (error) {
+            console.error("Error fetching facility courts:", error)
+            return []
+        }
+    }
 }
 
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {

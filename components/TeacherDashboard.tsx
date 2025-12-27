@@ -12,23 +12,39 @@ interface TeacherDashboardProps {
     name?: string
 }
 
-// Mock data for immediate rendering
-const MOCK_DATA = {
-    clients: [],
-    totalClients: 3,
-    activeClients: 3,
-    upcomingBookings: [],
-    todayBookings: [],
-    pendingCount: 0,
-    earnings: { today: 0, thisWeek: 125, thisMonth: 890, lastMonth: 650, total: 2450, pending: 0 },
-    profile: { rating: 4.9 },
-    isLoading: false,
+// Data Interfaces
+interface DashboardData {
+    clients: any[];
+    totalClients: number;
+    activeClients: number;
+    upcomingBookings: any[];
+    todayBookings: any[];
+    pendingCount: number;
+    earnings: {
+        today: number;
+        thisWeek: number;
+        thisMonth: number;
+        lastMonth: number;
+        total: number;
+        pending: number;
+    };
+    profile: { rating: number };
 }
 
 export function TeacherDashboard({ userType, name }: TeacherDashboardProps) {
     const { user } = useAuth()
+    const [isLoading, setIsLoading] = useState(false)
+    const [data, setData] = useState<DashboardData>({
+        clients: [],
+        totalClients: 0,
+        activeClients: 0,
+        upcomingBookings: [],
+        todayBookings: [],
+        pendingCount: 0,
+        earnings: { today: 0, thisWeek: 0, thisMonth: 0, lastMonth: 0, total: 0, pending: 0 },
+        profile: { rating: 5.0 }, // Default new user rating
+    })
 
-    // Use mock data to prevent loading issues
     const {
         clients,
         totalClients,
@@ -38,8 +54,11 @@ export function TeacherDashboard({ userType, name }: TeacherDashboardProps) {
         pendingCount,
         earnings,
         profile,
-        isLoading,
-    } = MOCK_DATA
+    } = data
+
+    useEffect(() => {
+        // TODO: Load real trainer data
+    }, [])
 
     const refreshAll = () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
@@ -129,6 +148,42 @@ export function TeacherDashboard({ userType, name }: TeacherDashboardProps) {
                             <Text style={styles.alertText}>{pendingCount} new session request{pendingCount > 1 ? 's' : ''}</Text>
                             <Ionicons name="chevron-forward" size={16} color="#000" />
                         </TouchableOpacity>
+                    )}
+
+                    {/* Zero State / Onboarding - Show when new */}
+                    {totalClients === 0 && (
+                        <View style={[styles.card, { padding: 24, alignItems: 'center', marginBottom: 24 }]}>
+                            <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(126, 217, 87, 0.1)', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+                                <Ionicons name="rocket-outline" size={32} color="#7ED957" />
+                            </View>
+                            <Text style={{ color: '#FFF', fontSize: 20, fontWeight: 'bold', marginBottom: 8 }}>Welcome, {name?.split(' ')[0] || roleTitle}!</Text>
+                            <Text style={{ color: '#9CA3AF', textAlign: 'center', marginBottom: 20 }}>
+                                You're all set to start accepting bookings. Here are 3 steps to get your first client:
+                            </Text>
+
+                            <View style={{ width: '100%', gap: 12 }}>
+                                <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#222', padding: 16, borderRadius: 12 }} onPress={() => router.push("/settings/schedule")}>
+                                    <Ionicons name="calendar-outline" size={20} color="#7ED957" />
+                                    <Text style={{ color: '#FFF', fontWeight: '600', marginLeft: 12 }}>1. Set Availability</Text>
+                                    <View style={{ flex: 1 }} />
+                                    <Ionicons name="chevron-forward" size={16} color="#666" />
+                                </TouchableOpacity>
+
+                                <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#222', padding: 16, borderRadius: 12 }} onPress={() => router.push("/(tabs)/profile")}>
+                                    <Ionicons name="camera-outline" size={20} color="#7ED957" />
+                                    <Text style={{ color: '#FFF', fontWeight: '600', marginLeft: 12 }}>2. Add Photos & Bio</Text>
+                                    <View style={{ flex: 1 }} />
+                                    <Ionicons name="chevron-forward" size={16} color="#666" />
+                                </TouchableOpacity>
+
+                                <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#222', padding: 16, borderRadius: 12 }} onPress={handleShareLink}>
+                                    <Ionicons name="share-social-outline" size={20} color="#7ED957" />
+                                    <Text style={{ color: '#FFF', fontWeight: '600', marginLeft: 12 }}>3. Share Your Link</Text>
+                                    <View style={{ flex: 1 }} />
+                                    <Ionicons name="chevron-forward" size={16} color="#666" />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
                     )}
 
                     {/* Earnings Summary */}
@@ -512,6 +567,12 @@ const styles = StyleSheet.create({
         color: '#666',
         fontSize: 11,
         marginTop: -8,
+    },
+    card: {
+        backgroundColor: '#1A1A1A',
+        borderRadius: 16,
+        padding: 24,
+        marginBottom: 24,
     },
     // Booking Link Card Styles
     bookingLinkCard: {

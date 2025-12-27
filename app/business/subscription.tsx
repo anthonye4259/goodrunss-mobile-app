@@ -72,16 +72,8 @@ export default function SubscriptionScreen() {
         </View>
     )
 
-    // Fallback Package (Mock) if RevenueCat not configured
-    const monthlyPackage = offering?.availablePackages?.find((p: any) => p.packageType === "MONTHLY") || {
-        product: {
-            priceString: "$29.00",
-            price: 29.00,
-            title: "Pro Trainer Access",
-            description: "Full access to CRM, Invoicing, and Leads"
-        },
-        identifier: "mock_monthly"
-    }
+    // Fallback Package if RevenueCat not configured
+    const monthlyPackage = offering?.availablePackages?.find((p: any) => p.packageType === "MONTHLY")
 
     return (
         <View style={styles.container}>
@@ -139,7 +131,7 @@ export default function SubscriptionScreen() {
                         </View>
                         <Text style={styles.planName}>Pro Trainer SaaS</Text>
                         <View style={styles.priceRow}>
-                            <Text style={styles.amount}>{monthlyPackage.product.priceString}</Text>
+                            <Text style={styles.amount}>{monthlyPackage?.product?.priceString || "..."}</Text>
                             <Text style={styles.period}>/month</Text>
                         </View>
                         <Text style={styles.cancelText}>Cancel anytime. No lock-in.</Text>
@@ -165,7 +157,7 @@ export default function SubscriptionScreen() {
                                 )}
                             </LinearGradient>
                         </TouchableOpacity>
-                        <Text style={styles.trialText}>Then {monthlyPackage.product.priceString} / month</Text>
+                        <Text style={styles.trialText}>Then {monthlyPackage?.product?.priceString || "$29.00"} / month</Text>
                     </View>
 
                     <Text style={styles.footerText}>

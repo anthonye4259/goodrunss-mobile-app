@@ -175,6 +175,28 @@ function getDb() {
 export const facilityAnalyticsService = {
 
     /**
+     * Get recent bookings for facility
+     */
+    async getRecentBookings(facilityId: string, limitCount: number = 20): Promise<any[]> {
+        try {
+            const bookingsRef = getDb().collection(BOOKINGS_COLLECTION)
+            const snapshot = await bookingsRef
+                .where("facilityId", "==", facilityId)
+                .orderBy("date", "desc")
+                .limit(limitCount)
+                .get()
+
+            return snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }))
+        } catch (error) {
+            console.error("Error fetching bookings:", error)
+            return []
+        }
+    },
+
+    /**
      * Get daily revenue metrics
      */
     async getDailyRevenue(facilityId: string): Promise<DailyRevenueData> {

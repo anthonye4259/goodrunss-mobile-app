@@ -32,6 +32,7 @@ export interface Venue {
     isOpen?: boolean
     source?: string
     distance?: number
+    isBookable?: boolean
 }
 
 // Map sport names from Google Places format to our Activity format

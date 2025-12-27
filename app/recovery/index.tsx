@@ -27,25 +27,25 @@ import {
   RecoveryRoutine,
 } from '@/lib/types/recovery-prevention'
 
-// Mock recovery score (in production, calculate from actual data)
-const MOCK_RECOVERY_SCORE: RecoveryScore = {
-  id: 'score-1',
-  userId: 'user-1',
+// Default recovery score (empty state)
+const DEFAULT_RECOVERY_SCORE: RecoveryScore = {
+  id: 'default',
+  userId: 'current',
   date: new Date(),
-  overallScore: 72,
+  overallScore: 0,
   components: {
-    sleep: 78,
-    soreness: 65,
-    hrv: 70,
-    activity: 80,
-    stress: 68,
-    hydration: 75,
+    sleep: 0,
+    soreness: 0,
+    hrv: 0,
+    activity: 0,
+    stress: 0,
+    hydration: 0,
   },
   recommendation: {
-    intensity: 'moderate',
-    message: 'Your body is recovering well. You can train at moderate intensity today.',
-    suggestedActivities: ['Basketball', 'Running', 'Yoga'],
-    suggestedRecovery: ['foam_rolling', 'stretching', 'hydration'],
+    intensity: 'light',
+    message: 'Connect wearables to track recovery.',
+    suggestedActivities: [],
+    suggestedRecovery: [],
     warnings: [],
   },
   createdAt: new Date(),
@@ -85,7 +85,7 @@ export default function RecoveryScreen() {
             <Text className="text-white text-2xl font-bold">Recovery Hub</Text>
             <Text className="text-gray-400">Prevent injuries. Recover faster.</Text>
           </View>
-          <MiniRecoveryScore score={MOCK_RECOVERY_SCORE.overallScore} />
+          <MiniRecoveryScore score={DEFAULT_RECOVERY_SCORE.overallScore} />
         </View>
       </LinearGradient>
 
@@ -127,7 +127,7 @@ export default function RecoveryScreen() {
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {activeTab === 'home' && (
           <HomeTab
-            recoveryScore={MOCK_RECOVERY_SCORE}
+            recoveryScore={DEFAULT_RECOVERY_SCORE}
             soreness={soreness}
             onLogSoreness={() => setShowBodyMap(true)}
             onStartWarmup={() => setActiveTab('warmups')}
@@ -304,15 +304,13 @@ function HomeTab({
             {soreness.map(s => (
               <View
                 key={s.bodyPart}
-                className={`px-3 py-1 rounded-full mr-2 mb-2 ${
-                  s.severity <= 3 ? 'bg-green-500/20' :
+                className={`px-3 py-1 rounded-full mr-2 mb-2 ${s.severity <= 3 ? 'bg-green-500/20' :
                   s.severity <= 6 ? 'bg-yellow-500/20' : 'bg-red-500/20'
-                }`}
+                  }`}
               >
-                <Text className={`text-sm ${
-                  s.severity <= 3 ? 'text-green-400' :
+                <Text className={`text-sm ${s.severity <= 3 ? 'text-green-400' :
                   s.severity <= 6 ? 'text-yellow-400' : 'text-red-400'
-                }`}>
+                  }`}>
                   {s.bodyPart.replace(/_/g, ' ')} ({s.severity}/10)
                 </Text>
               </View>
