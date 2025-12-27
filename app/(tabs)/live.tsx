@@ -23,6 +23,9 @@ import { DemandHeatmap } from "@/components/Live/DemandHeatmap"
 
 // Sample venues for fallback (always available)
 import { GiaSpaceFinder } from "@/components/Live/GiaSpaceFinder"
+import { PlayersAlsoLiked } from "@/components/Widgets/PlayersAlsoLiked"
+import { ShareCourtButton } from "@/components/UI/ShareCourtButton"
+import { SkeletonCard } from "@/components/UI/SkeletonLoader"
 
 const SAMPLE_VENUES: Venue[] = [
   {
@@ -392,8 +395,10 @@ export default function LiveScreen() {
             </View>
 
             {loading ? (
-              <View style={{ height: 200, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ color: '#666' }}>Loading live data...</Text>
+              <View style={{ gap: 12 }}>
+                <SkeletonCard height={80} />
+                <SkeletonCard height={80} />
+                <SkeletonCard height={80} />
               </View>
             ) : filteredVenues.length === 0 ? (
               <EmptyState icon="search" title="No venues found" message="Try searching for a different area." />
@@ -407,6 +412,9 @@ export default function LiveScreen() {
               ))
             )}
           </View>
+
+          {/* Players Also Liked Recommendations */}
+          <PlayersAlsoLiked sport={primaryActivity} />
 
           <View style={{ height: 40 }} />
         </ScrollView>

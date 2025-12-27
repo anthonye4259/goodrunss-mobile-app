@@ -33,6 +33,11 @@ import { QuickReportButton, QuickCourtReportModal } from "@/components/QuickCour
 import { VenueReviews } from "@/components/VenueReviews"
 import { CrowdLevelBadge, CrowdLevelChart, CheckInPrompt } from "@/components/CrowdLevelBadge"
 
+// Social Sharing
+import { ShareCourtTraffic } from "@/components/Social/ShareCourtTraffic"
+import { PlayInvite } from "@/components/Social/PlayInvite"
+import { WhereImHeaded } from "@/components/Social/WhereImHeaded"
+
 
 export default function VenueDetailScreen() {
   const { id } = useLocalSearchParams()
@@ -761,6 +766,34 @@ export default function VenueDetailScreen() {
             {/* Reviews Section */}
             <View className="px-6 mb-6">
               <VenueReviews venueId={typeof id === "string" ? id : ""} venueName={venue.name} />
+            </View>
+
+            {/* Social Sharing - Let friends know about this court */}
+            <View className="px-6 mb-6">
+              <ShareCourtTraffic
+                courtName={venue.name}
+                courtId={typeof id === "string" ? id : ""}
+                playersNow={activePlayers.reduce((sum, p) => sum + p.count, 0)}
+                sport={primaryActivity}
+              />
+              <View className="flex-row gap-3 mt-3">
+                <View className="flex-1">
+                  <PlayInvite
+                    courtName={venue.name}
+                    courtId={typeof id === "string" ? id : ""}
+                    sport={primaryActivity}
+                  />
+                </View>
+              </View>
+              {isCheckedIn && (
+                <View className="mt-3">
+                  <WhereImHeaded
+                    courtName={venue.name}
+                    courtId={typeof id === "string" ? id : ""}
+                    sport={primaryActivity}
+                  />
+                </View>
+              )}
             </View>
 
             <View className="px-6 mb-6">

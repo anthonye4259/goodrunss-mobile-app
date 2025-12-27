@@ -29,8 +29,14 @@ import { useInstructorRevenueShare, TRAINER_PRICING } from "@/lib/services/pro-r
 import { ProPriorityToggle } from "@/components/ProPrioritySettings"
 import { AvailabilityToggle } from "@/components/AvailabilityToggle"
 import { useAuth } from "@/lib/auth-context"
-
 import { useUserPreferences } from "@/lib/user-preferences"
+
+// New Trainer UX Components
+import { WeeklyEarnings } from "@/components/Trainer/WeeklyEarnings"
+import { MissedSessionNudge } from "@/components/Trainer/MissedSessionNudge"
+import { ClientBirthdayReminder } from "@/components/Trainer/ClientBirthdayReminder"
+import { ShareBookingLink } from "@/components/Social/ShareBookingLink"
+import { ShareMilestone } from "@/components/Social/ShareMilestone"
 
 export default function TrainerDashboardScreen() {
     const { user } = useAuth()
@@ -124,6 +130,16 @@ export default function TrainerDashboardScreen() {
                     </View>
                 </View>
 
+                {/* Weekly Earnings Hero Widget */}
+                <View style={styles.section}>
+                    <WeeklyEarnings
+                        currentWeek={(analytics?.monthlyRevenue || 0) / 400} // Approximate weekly
+                        previousWeek={(analytics?.monthlyRevenue || 0) / 500}
+                        sessionsThisWeek={upcomingSessions.filter(s => isToday(s.date)).length + 3}
+                        onPress={() => router.push("/pro-dashboard")}
+                    />
+                </View>
+
                 {/* Quick Stats */}
                 <View style={styles.statsGrid}>
                     <StatCard
@@ -150,6 +166,24 @@ export default function TrainerDashboardScreen() {
                         value={pendingRevenueFormatted}
                         color="#F59E0B"
                         subtitle="from Pro clients"
+                    />
+                </View>
+
+                {/* Client Attention Nudges */}
+                <View style={styles.section}>
+                    <MissedSessionNudge
+                        clients={[
+                            { id: "1", name: "John D.", lastSessionDate: new Date(), daysSince: 14, totalSessions: 12 },
+                            { id: "2", name: "Sarah M.", lastSessionDate: new Date(), daysSince: 21, totalSessions: 8 },
+                        ]}
+                        onReachOut={(id) => router.push(`/messages/${id}` as any)}
+                        onDismiss={(id) => console.log("Dismissed", id)}
+                    />
+                    <ClientBirthdayReminder
+                        birthdays={[
+                            { clientId: "1", clientName: "Alex K.", birthday: new Date(), daysUntil: 2 },
+                        ]}
+                        onSendWishes={(id) => router.push(`/messages/${id}` as any)}
                     />
                 </View>
 
@@ -250,6 +284,23 @@ export default function TrainerDashboardScreen() {
                     <Text style={styles.subscriptionInfo}>
                         Or save with ${TRAINER_PRICING.quarterly.price / 100}/3mo or ${TRAINER_PRICING.biannual.price / 100}/6mo
                     </Text>
+                </View>
+
+                {/* Marketing & Social Sharing */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Grow Your Business</Text>
+                    <ShareBookingLink
+                        trainerId={user?.id || ""}
+                        trainerName={preferences.name || "Trainer"}
+                        specialty={isInstructor ? "Wellness" : "Training"}
+                    />
+                    {(analytics?.totalSessions || 0) >= 100 && (
+                        <ShareMilestone
+                            type="sessions_100"
+                            trainerId={user?.id || ""}
+                            trainerName={preferences.name || "Trainer"}
+                        />
+                    )}
                 </View>
 
                 <View style={styles.bottomPadding} />

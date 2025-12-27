@@ -12,6 +12,7 @@ import { TeacherDashboard } from "@/components/TeacherDashboard"
 import { useUserLocation } from "@/lib/services/location-service"
 import { FriendActivityRail } from "@/components/Live/FriendActivityRail"
 import { SEED_VENUES } from "@/lib/services/smart-data-service"
+import { WeatherWidget } from "@/components/Widgets/WeatherWidget"
 
 const { width } = Dimensions.get("window")
 
@@ -99,6 +100,16 @@ export default function HomeScreen() {
   const { location } = useUserLocation()
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
   const [currentHour] = useState(new Date().getHours())
+
+  // Mock upcoming booking for player (would come from real service)
+  const upcomingBooking = user ? {
+    id: "1",
+    venue: "Riverside Courts",
+    court: "Court 2",
+    date: "Today",
+    time: "4:30 PM",
+    duration: "1 hr",
+  } : null
 
   // For "both" users - read from preferences for persistence across screens (including GIA)
   const viewMode = preferences.activeMode || "trainer"
@@ -207,6 +218,17 @@ export default function HomeScreen() {
               </Text>
             </View>
             <View style={styles.headerRight}>
+              {/* CHAT BUTTON - Easy access to trainers & friends */}
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={() => handlePress(() => router.push("/(tabs)/messages"))}
+              >
+                <Ionicons name="chatbubbles-outline" size={22} color={colors.textPrimary} />
+                {/* Unread badge */}
+                <View style={styles.unreadBadge}>
+                  <Text style={styles.unreadText}>2</Text>
+                </View>
+              </TouchableOpacity>
               <TouchableOpacity
                 style={styles.iconButton}
                 onPress={() => handlePress(() => router.push("/(tabs)/activity"))}
@@ -223,6 +245,40 @@ export default function HomeScreen() {
               </TouchableOpacity>
             </View>
           </View>
+
+          {/* ===== UPCOMING BOOKING (if player has one) ===== */}
+          {upcomingBooking && (
+            <TouchableOpacity
+              style={styles.upcomingBooking}
+              onPress={() => handlePress(() => router.push("/(tabs)/bookings"))}
+              activeOpacity={0.9}
+            >
+              <LinearGradient
+                colors={["#1A2A1A", "#0A0A0A"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.upcomingGradient}
+              >
+                <View style={styles.upcomingLeft}>
+                  <View style={styles.upcomingBadge}>
+                    <Ionicons name="calendar" size={14} color="#7ED957" />
+                    <Text style={styles.upcomingBadgeText}>UPCOMING</Text>
+                  </View>
+                  <Text style={styles.upcomingVenue}>{upcomingBooking.venue}</Text>
+                  <Text style={styles.upcomingDetails}>
+                    {upcomingBooking.court} • {upcomingBooking.date} at {upcomingBooking.time}
+                  </Text>
+                </View>
+                <View style={styles.upcomingRight}>
+                  <Text style={styles.upcomingTime}>{upcomingBooking.time}</Text>
+                  <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
+          )}
+
+          {/* ===== WEATHER WIDGET ===== */}
+          <WeatherWidget />
 
           {/* ===== HERO CARD - GIA PREDICTION (WOW FACTOR) ===== */}
           <TouchableOpacity
@@ -502,6 +558,24 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     alignItems: "center",
     justifyContent: "center",
+  },
+  unreadBadge: {
+    position: "absolute",
+    top: 6,
+    right: 6,
+    backgroundColor: "#EF4444",
+    borderRadius: 10,
+    minWidth: 16,
+    height: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: colors.bg,
+  },
+  unreadText: {
+    fontSize: 9,
+    fontWeight: "700",
+    color: "#FFFFFF",
   },
   avatarButton: {
     width: 44,
@@ -831,6 +905,56 @@ const styles = StyleSheet.create({
   modeToggleText: {
     fontSize: 13,
     fontWeight: "600",
+    color: "#7ED957",
+  },
+
+  // Upcoming Booking Card
+  upcomingBooking: {
+    borderRadius: 16,
+    overflow: "hidden",
+    marginBottom: 16,
+  },
+  upcomingGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "rgba(126, 217, 87, 0.3)",
+    borderRadius: 16,
+  },
+  upcomingLeft: {
+    flex: 1,
+  },
+  upcomingBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 8,
+  },
+  upcomingBadgeText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#7ED957",
+    letterSpacing: 1,
+  },
+  upcomingVenue: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#FFF",
+    marginBottom: 4,
+  },
+  upcomingDetails: {
+    fontSize: 14,
+    color: "#888",
+  },
+  upcomingRight: {
+    alignItems: "center",
+    gap: 4,
+  },
+  upcomingTime: {
+    fontSize: 20,
+    fontWeight: "700",
     color: "#7ED957",
   },
 })

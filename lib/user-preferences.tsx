@@ -24,6 +24,10 @@ type UserPreferences = {
   state?: string
   isPhase1City?: boolean // True if user is in a Phase 1 launch city
 
+  // DISTANCE/SEARCH RADIUS - like Tinder (in miles)
+  searchRadius?: number // Default: 10 miles, max: 100 miles
+  locationAlwaysOn?: boolean // User enabled "always" location permission
+
   // Legacy nested location (for coordinates)
   location?: {
     latitude: number

@@ -11,6 +11,8 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { GlassCard } from "@/components/Profile/GlassCard"
 import { LiquidGauge } from "@/components/Profile/LiquidGauge"
 import { socialService } from "@/lib/services/social-service"
+import { ProfileProgress } from "@/components/Widgets/ProfileProgress"
+import { FavoritesBadge } from "@/components/UI/FavoritesBadge"
 
 // Mock Data
 const ACTIVITY_SCORE = 92
@@ -211,6 +213,15 @@ export default function ProfileScreen() {
               <Text style={styles.roleText}>ELITE PLAYER</Text>
             </View>
           </View>
+
+          {/* Profile Completion Widget */}
+          <ProfileProgress
+            name={preferences.name}
+            hasPhoto={false}
+            hasBio={false}
+            hasPreferredSport={true}
+            hasLocation={true}
+          />
 
           {/* Liquid Stats Dashboard */}
           <View style={styles.dashboardGrid}>

@@ -1,169 +1,475 @@
-
-import { View, Text, ScrollView, TouchableOpacity, Switch } from "react-native"
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Linking } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { router } from "expo-router"
+import { SafeAreaView } from "react-native-safe-area-context"
 import * as Haptics from "expo-haptics"
+import * as Location from "expo-location"
+import Slider from "@react-native-community/slider"
+
+import { useUserPreferences } from "@/lib/user-preferences"
+import { useLocation } from "@/lib/location-context"
+
+const DISTANCE_OPTIONS = [1, 5, 10, 25, 50, 100]
 
 export default function LocationSettingsScreen() {
-  const [locationEnabled, setLocationEnabled] = useState(true)
-  const [backgroundLocation, setBackgroundLocation] = useState(false)
-  const [highAccuracy, setHighAccuracy] = useState(true)
+  const { preferences, setPreferences } = useUserPreferences()
+  const { location, requestLocation, loading } = useLocation()
+  const [searchRadius, setSearchRadius] = useState(preferences.searchRadius || 10)
+  const [locationPermission, setLocationPermission] = useState<"denied" | "foreground" | "always">("denied")
+  const [checkingPermission, setCheckingPermission] = useState(true)
 
-  const toggleLocation = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-    setLocationEnabled(!locationEnabled)
+  useEffect(() => {
+    checkLocationPermission()
+  }, [])
+
+  const checkLocationPermission = async () => {
+    setCheckingPermission(true)
+    try {
+      const { status: foreground } = await Location.getForegroundPermissionsAsync()
+      const { status: background } = await Location.getBackgroundPermissionsAsync()
+
+      if (background === "granted") {
+        setLocationPermission("always")
+      } else if (foreground === "granted") {
+        setLocationPermission("foreground")
+      } else {
+        setLocationPermission("denied")
+      }
+    } catch (error) {
+      console.log("Permission check error:", error)
+    }
+    setCheckingPermission(false)
   }
 
-  const toggleBackground = () => {
+  const handleRequestAlwaysLocation = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-    setBackgroundLocation(!backgroundLocation)
+
+    // First request foreground if not granted
+    const { status: foreground } = await Location.requestForegroundPermissionsAsync()
+    if (foreground !== "granted") {
+      Alert.alert(
+        "Location Required",
+        "GoodRunss needs your location to find courts and players near you. Please enable location in Settings.",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Open Settings", onPress: () => Linking.openSettings() }
+        ]
+      )
+      return
+    }
+
+    // Then request background (always)
+    const { status: background } = await Location.requestBackgroundPermissionsAsync()
+    if (background === "granted") {
+      setLocationPermission("always")
+      setPreferences({ locationAlwaysOn: true })
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+      Alert.alert("🎉 Perfect!", "You'll now see the most accurate nearby courts and players, even when the app is in the background.")
+    } else {
+      // Direct to settings if they declined
+      Alert.alert(
+        "Enable 'Always' Location",
+        "For the best experience, allow GoodRunss to access your location 'Always'. This helps us:\n\n• Show nearby courts in real-time\n• Alert you when friends are playing\n• Find pickup games automatically",
+        [
+          { text: "Not Now", style: "cancel" },
+          { text: "Open Settings", onPress: () => Linking.openSettings() }
+        ]
+      )
+    }
   }
 
-  const toggleAccuracy = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-    setHighAccuracy(!highAccuracy)
+  const handleSaveRadius = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    setPreferences({ searchRadius })
+    Alert.alert("Saved!", `Showing courts and players within ${searchRadius} miles.`)
+  }
+
+  const getPermissionColor = () => {
+    switch (locationPermission) {
+      case "always": return "#22C55E"
+      case "foreground": return "#FBBF24"
+      default: return "#EF4444"
+    }
+  }
+
+  const getPermissionLabel = () => {
+    switch (locationPermission) {
+      case "always": return "Always On ✓"
+      case "foreground": return "While Using App"
+      default: return "Denied"
+    }
   }
 
   return (
-    <LinearGradient colors={["#0A0A0A", "#141414"]} style={{ flex: 1 }}>
-      <ScrollView className="flex-1" contentContainerClassName="pb-10">
-        <View className="px-6 pt-16 pb-6">
-          <View className="flex-row items-center mb-4">
-            <TouchableOpacity onPress={() => router.back()} className="mr-4">
-              <Ionicons name="arrow-back" size={24} color="#fff" />
+    <LinearGradient colors={["#0A0A0A", "#141414"]} style={styles.container}>
+      <SafeAreaView style={styles.safeArea} edges={["top"]}>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {/* Header */}
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => router.back()}>
+              <Ionicons name="arrow-back" size={24} color="#FFF" />
             </TouchableOpacity>
-            <Text className="text-3xl font-bold text-foreground">Location Services</Text>
+            <Text style={styles.headerTitle}>Location Settings</Text>
+            <View style={{ width: 24 }} />
           </View>
-          <Text className="text-muted-foreground">
-            Control how GoodRunss uses your location to find nearby courts and players
-          </Text>
-        </View>
 
-        <View className="px-6">
-          {/* Location Permission */}
-          <View className="bg-card border border-border rounded-2xl p-6 mb-4">
-            <View className="flex-row items-center justify-between mb-4">
-              <View className="flex-1 mr-4">
-                <Text className="text-foreground font-bold text-lg mb-2">Enable Location Services</Text>
-                <Text className="text-muted-foreground text-sm">
-                  Allow GoodRunss to access your location to find nearby courts, trainers, and players
+          {/* Location Permission Card */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>📍 Location Access</Text>
+            <View style={styles.permissionCard}>
+              <View style={styles.permissionHeader}>
+                <View style={[styles.permissionDot, { backgroundColor: getPermissionColor() }]} />
+                <Text style={[styles.permissionStatus, { color: getPermissionColor() }]}>
+                  {getPermissionLabel()}
                 </Text>
               </View>
-              <Switch
-                value={locationEnabled}
-                onValueChange={toggleLocation}
-                trackColor={{ false: "#3e3e3e", true: "#7ED957" }}
-                thumbColor={locationEnabled ? "#fff" : "#f4f3f4"}
-              />
-            </View>
 
-            {locationEnabled && (
-              <View className="bg-primary/10 rounded-xl p-3">
-                <View className="flex-row items-center">
-                  <Ionicons name="checkmark-circle" size={16} color="#7ED957" />
-                  <Text className="text-primary text-sm ml-2">Location services enabled</Text>
-                </View>
-              </View>
-            )}
-          </View>
-
-          {/* Background Location */}
-          {locationEnabled && (
-            <View className="bg-card border border-border rounded-2xl p-6 mb-4">
-              <View className="flex-row items-center justify-between mb-4">
-                <View className="flex-1 mr-4">
-                  <Text className="text-foreground font-bold text-lg mb-2">Background Location</Text>
-                  <Text className="text-muted-foreground text-sm">
-                    Get notified when you're near courts you've saved, even when the app is closed
+              {locationPermission !== "always" && (
+                <>
+                  <Text style={styles.permissionDescription}>
+                    {locationPermission === "foreground"
+                      ? "Upgrade to 'Always' for the best experience. Get real-time alerts when friends are playing nearby!"
+                      : "Enable location to find courts, players, and trainers near you."
+                    }
                   </Text>
-                </View>
-                <Switch
-                  value={backgroundLocation}
-                  onValueChange={toggleBackground}
-                  trackColor={{ false: "#3e3e3e", true: "#7ED957" }}
-                  thumbColor={backgroundLocation ? "#fff" : "#f4f3f4"}
-                />
-              </View>
 
-              {backgroundLocation && (
-                <View className="bg-accent/10 rounded-xl p-3">
-                  <View className="flex-row items-start">
-                    <Ionicons name="information-circle" size={16} color="#FF6B6B" className="mt-0.5" />
-                    <Text className="text-accent text-xs ml-2 flex-1">
-                      Background location may affect battery life. We only use it to notify you about nearby courts.
-                    </Text>
+                  <View style={styles.benefitsList}>
+                    <View style={styles.benefitRow}>
+                      <Ionicons name="checkmark-circle" size={18} color="#7ED957" />
+                      <Text style={styles.benefitText}>See courts within your radius</Text>
+                    </View>
+                    <View style={styles.benefitRow}>
+                      <Ionicons name="checkmark-circle" size={18} color="#7ED957" />
+                      <Text style={styles.benefitText}>Get notified when friends play</Text>
+                    </View>
+                    <View style={styles.benefitRow}>
+                      <Ionicons name="checkmark-circle" size={18} color="#7ED957" />
+                      <Text style={styles.benefitText}>Auto-detect court for reports</Text>
+                    </View>
                   </View>
+
+                  <TouchableOpacity
+                    style={styles.enableButton}
+                    onPress={handleRequestAlwaysLocation}
+                  >
+                    <LinearGradient
+                      colors={["#7ED957", "#65A30D"]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.enableButtonGradient}
+                    >
+                      <Ionicons name="location" size={20} color="#000" />
+                      <Text style={styles.enableButtonText}>
+                        {locationPermission === "foreground" ? "Enable Always On" : "Enable Location"}
+                      </Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </>
+              )}
+
+              {locationPermission === "always" && (
+                <View style={styles.enabledCheck}>
+                  <Ionicons name="checkmark-circle" size={48} color="#22C55E" />
+                  <Text style={styles.enabledText}>Location is set up perfectly!</Text>
                 </View>
               )}
             </View>
-          )}
+          </View>
 
-          {/* High Accuracy */}
-          {locationEnabled && (
-            <View className="bg-card border border-border rounded-2xl p-6 mb-4">
-              <View className="flex-row items-center justify-between mb-4">
-                <View className="flex-1 mr-4">
-                  <Text className="text-foreground font-bold text-lg mb-2">High Accuracy Mode</Text>
-                  <Text className="text-muted-foreground text-sm">
-                    Use GPS for more precise location. May use more battery.
-                  </Text>
+          {/* Distance Radius Slider - Like Tinder */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>🎯 Search Radius</Text>
+            <View style={styles.radiusCard}>
+              <View style={styles.radiusHeader}>
+                <Text style={styles.radiusLabel}>Show courts within</Text>
+                <Text style={styles.radiusValue}>{searchRadius} miles</Text>
+              </View>
+
+              <Slider
+                style={styles.slider}
+                minimumValue={1}
+                maximumValue={100}
+                step={1}
+                value={searchRadius}
+                onValueChange={(value) => setSearchRadius(value)}
+                minimumTrackTintColor="#7ED957"
+                maximumTrackTintColor="#333"
+                thumbTintColor="#7ED957"
+              />
+
+              <View style={styles.radiusMarkers}>
+                <Text style={styles.radiusMarker}>1 mi</Text>
+                <Text style={styles.radiusMarker}>25 mi</Text>
+                <Text style={styles.radiusMarker}>50 mi</Text>
+                <Text style={styles.radiusMarker}>100 mi</Text>
+              </View>
+
+              {/* Quick preset buttons */}
+              <View style={styles.presetContainer}>
+                {DISTANCE_OPTIONS.map((distance) => (
+                  <TouchableOpacity
+                    key={distance}
+                    style={[
+                      styles.presetButton,
+                      searchRadius === distance && styles.presetButtonActive
+                    ]}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                      setSearchRadius(distance)
+                    }}
+                  >
+                    <Text style={[
+                      styles.presetText,
+                      searchRadius === distance && styles.presetTextActive
+                    ]}>{distance} mi</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <TouchableOpacity
+                style={styles.saveButton}
+                onPress={handleSaveRadius}
+              >
+                <Text style={styles.saveButtonText}>Save Distance</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Current Location */}
+          {location && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>📌 Current Location</Text>
+              <View style={styles.locationCard}>
+                <View style={styles.locationRow}>
+                  <Ionicons name="navigate" size={20} color="#7ED957" />
+                  <View style={styles.locationInfo}>
+                    <Text style={styles.locationCity}>
+                      {location.city || preferences.city || "Unknown City"}
+                    </Text>
+                    <Text style={styles.locationState}>
+                      {location.state || preferences.state || ""}
+                    </Text>
+                  </View>
                 </View>
-                <Switch
-                  value={highAccuracy}
-                  onValueChange={toggleAccuracy}
-                  trackColor={{ false: "#3e3e3e", true: "#7ED957" }}
-                  thumbColor={highAccuracy ? "#fff" : "#f4f3f4"}
-                />
+                <TouchableOpacity
+                  style={styles.refreshButton}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                    requestLocation()
+                  }}
+                >
+                  <Ionicons name="refresh" size={20} color="#7ED957" />
+                </TouchableOpacity>
               </View>
             </View>
           )}
 
-          {/* How We Use Location */}
-          <View className="bg-card border border-border rounded-2xl p-6 mb-4">
-            <View className="flex-row items-center mb-4">
-              <Ionicons name="shield-checkmark" size={24} color="#7ED957" />
-              <Text className="text-foreground font-bold text-lg ml-3">How We Use Your Location</Text>
-            </View>
-
-            <View className="space-y-3">
-              <View className="flex-row items-start py-2">
-                <Ionicons name="navigate" size={16} color="#7ED957" className="mt-1" />
-                <Text className="text-foreground text-sm ml-3 flex-1">Find courts, trainers, and players near you</Text>
-              </View>
-              <View className="flex-row items-start py-2">
-                <Ionicons name="map" size={16} color="#7ED957" className="mt-1" />
-                <Text className="text-foreground text-sm ml-3 flex-1">Show you on the map when you check in</Text>
-              </View>
-              <View className="flex-row items-start py-2">
-                <Ionicons name="people" size={16} color="#7ED957" className="mt-1" />
-                <Text className="text-foreground text-sm ml-3 flex-1">
-                  Help you connect with players at the same location
-                </Text>
-              </View>
-              <View className="flex-row items-start py-2">
-                <Ionicons name="stats-chart" size={16} color="#7ED957" className="mt-1" />
-                <Text className="text-foreground text-sm ml-3 flex-1">Track your workout locations and stats</Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Privacy Note */}
-          <View className="bg-muted/30 rounded-2xl p-6">
-            <View className="flex-row items-start">
-              <Ionicons name="lock-closed" size={20} color="#7ED957" className="mt-0.5" />
-              <View className="flex-1 ml-3">
-                <Text className="text-foreground font-semibold mb-2">Your Privacy Matters</Text>
-                <Text className="text-muted-foreground text-sm">
-                  Your location data is encrypted and never shared with third parties. You can disable location services
-                  at any time in your device settings.
-                </Text>
-              </View>
-            </View>
-          </View>
-        </View>
-      </ScrollView>
+          <View style={{ height: 100 }} />
+        </ScrollView>
+      </SafeAreaView>
     </LinearGradient>
   )
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  safeArea: { flex: 1 },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#FFF",
+  },
+  section: {
+    paddingHorizontal: 20,
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#FFF",
+    marginBottom: 12,
+  },
+  permissionCard: {
+    backgroundColor: "#1A1A1A",
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: "#252525",
+  },
+  permissionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  permissionDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 8,
+  },
+  permissionStatus: {
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  permissionDescription: {
+    fontSize: 14,
+    color: "#9CA3AF",
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  benefitsList: {
+    marginBottom: 20,
+  },
+  benefitRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  benefitText: {
+    color: "#FFF",
+    fontSize: 14,
+    marginLeft: 10,
+  },
+  enableButton: {
+    borderRadius: 12,
+    overflow: "hidden",
+  },
+  enableButtonGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 14,
+    gap: 8,
+  },
+  enableButtonText: {
+    color: "#000",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  enabledCheck: {
+    alignItems: "center",
+    paddingVertical: 16,
+  },
+  enabledText: {
+    color: "#22C55E",
+    fontSize: 16,
+    fontWeight: "600",
+    marginTop: 12,
+  },
+  radiusCard: {
+    backgroundColor: "#1A1A1A",
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: "#252525",
+  },
+  radiusHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  radiusLabel: {
+    fontSize: 16,
+    color: "#9CA3AF",
+  },
+  radiusValue: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#7ED957",
+  },
+  slider: {
+    width: "100%",
+    height: 40,
+  },
+  radiusMarkers: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 20,
+  },
+  radiusMarker: {
+    fontSize: 11,
+    color: "#666",
+  },
+  presetContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 20,
+  },
+  presetButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: "#252525",
+    borderWidth: 1,
+    borderColor: "#333",
+  },
+  presetButtonActive: {
+    backgroundColor: "rgba(126, 217, 87, 0.2)",
+    borderColor: "#7ED957",
+  },
+  presetText: {
+    color: "#888",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  presetTextActive: {
+    color: "#7ED957",
+  },
+  saveButton: {
+    backgroundColor: "#7ED957",
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: "center",
+  },
+  saveButtonText: {
+    color: "#000",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  locationCard: {
+    backgroundColor: "#1A1A1A",
+    borderRadius: 16,
+    padding: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderWidth: 1,
+    borderColor: "#252525",
+  },
+  locationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  locationInfo: {
+    marginLeft: 12,
+  },
+  locationCity: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FFF",
+  },
+  locationState: {
+    fontSize: 13,
+    color: "#888",
+    marginTop: 2,
+  },
+  refreshButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(126, 217, 87, 0.1)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+})

@@ -108,12 +108,9 @@ export default function TabLayout() {
       />
 
       {/* ===== HIDDEN SCREENS (accessible via router.push) ===== */}
-      <Tabs.Screen name="SwipeableTabs" options={{ href: null }} />
       <Tabs.Screen name="activity" options={{ href: null }} />
       <Tabs.Screen name="bookings" options={{ href: null }} />
       <Tabs.Screen name="my-bookings" options={{ href: null }} />
-      <Tabs.Screen name="explore" options={{ href: null }} />
-      <Tabs.Screen name="home" options={{ href: null }} />
       <Tabs.Screen name="live" options={{ href: null }} />
       <Tabs.Screen name="messages" options={{ href: null }} />
       <Tabs.Screen name="report" options={{ href: null }} />

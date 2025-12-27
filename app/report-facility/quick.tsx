@@ -1,15 +1,28 @@
 import { View, Text, ScrollView, TouchableOpacity, TextInput, Image, Alert } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
-import { useState } from "react"
-import { router } from "expo-router"
+import { useState, useEffect } from "react"
+import { router, useLocalSearchParams } from "expo-router"
 import { useAuth } from "@/lib/auth-context"
 import { venueService } from "@/lib/services/venue-service"
 import * as Haptics from "expo-haptics"
 import { ImageService } from "@/lib/image-service"
+import { useUserLocation } from "@/lib/services/location-service"
+
+// Quick nearby courts for selection
+const NEARBY_COURTS = [
+    { id: "1", name: "Piedmont Park Tennis Courts", distance: "0.3 mi" },
+    { id: "2", name: "Grant Park Recreation", distance: "0.8 mi" },
+    { id: "3", name: "Chastain Park Courts", distance: "1.2 mi" },
+    { id: "4", name: "Other / Not Listed", distance: "" },
+]
 
 export default function QuickReportScreen() {
     const { user } = useAuth()
+    const { location } = useUserLocation()
+    const params = useLocalSearchParams()
+    const [selectedCourt, setSelectedCourt] = useState(params.courtName ? String(params.courtName) : "")
+    const [showCourtPicker, setShowCourtPicker] = useState(!params.courtName)
     const [crowdLevel, setCrowdLevel] = useState<"empty" | "light" | "moderate" | "busy" | "packed">("moderate")
     const [ageGroup, setAgeGroup] = useState<"kids" | "teens" | "adults" | "mixed">("adults")
     const [skillLevel, setSkillLevel] = useState<"beginner" | "intermediate" | "advanced" | "mixed">("intermediate")
@@ -57,6 +70,11 @@ export default function QuickReportScreen() {
             return
         }
 
+        if (!selectedCourt) {
+            Alert.alert("Select Court", "Please select which court you're reporting.")
+            return
+        }
+
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
         setSubmitting(true)
 
@@ -77,7 +95,7 @@ export default function QuickReportScreen() {
         if (success) {
             Alert.alert(
                 "Report Submitted!",
-                "Thank you for helping the community. You earned $15!",
+                `Thank you for reporting ${selectedCourt}! You earned $15.`,
                 [{ text: "OK", onPress: () => router.back() }]
             )
         } else {
@@ -98,7 +116,58 @@ export default function QuickReportScreen() {
                         >
                             <Ionicons name="arrow-back" size={24} color="#FFF" />
                         </TouchableOpacity>
-                        <Text className="text-2xl font-bold text-foreground ml-4">Quick Report</Text>
+                        <Text className="text-2xl font-bold text-foreground ml-4">Court Report</Text>
+                    </View>
+
+                    {/* COURT SELECTION - Show which court they're reporting */}
+                    <View className="mb-6">
+                        <Text className="text-foreground font-bold text-lg mb-3">📍 Which Court?</Text>
+
+                        {selectedCourt ? (
+                            <TouchableOpacity
+                                className="bg-primary/10 border border-primary rounded-xl p-4 flex-row items-center justify-between"
+                                onPress={() => setShowCourtPicker(true)}
+                            >
+                                <View className="flex-row items-center flex-1">
+                                    <View className="w-10 h-10 rounded-full bg-primary/20 items-center justify-center mr-3">
+                                        <Ionicons name="location" size={20} color="#7ED957" />
+                                    </View>
+                                    <View className="flex-1">
+                                        <Text className="text-primary font-bold text-base" numberOfLines={1}>{selectedCourt}</Text>
+                                        <Text className="text-muted-foreground text-xs">Tap to change court</Text>
+                                    </View>
+                                </View>
+                                <Ionicons name="chevron-down" size={20} color="#7ED957" />
+                            </TouchableOpacity>
+                        ) : (
+                            <View className="gap-2">
+                                {NEARBY_COURTS.map((court) => (
+                                    <TouchableOpacity
+                                        key={court.id}
+                                        className="bg-card border border-border rounded-xl p-4 flex-row items-center"
+                                        onPress={() => {
+                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                                            if (court.name === "Other / Not Listed") {
+                                                setSelectedCourt("")
+                                                // Could prompt for custom input
+                                            } else {
+                                                setSelectedCourt(court.name)
+                                                setShowCourtPicker(false)
+                                            }
+                                        }}
+                                    >
+                                        <View className="w-10 h-10 rounded-full bg-primary/20 items-center justify-center mr-3">
+                                            <Ionicons name="location-outline" size={20} color="#7ED957" />
+                                        </View>
+                                        <View className="flex-1">
+                                            <Text className="text-foreground font-semibold">{court.name}</Text>
+                                            {court.distance && <Text className="text-muted-foreground text-xs">{court.distance}</Text>}
+                                        </View>
+                                        <Ionicons name="chevron-forward" size={18} color="#666" />
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        )}
                     </View>
 
                     {/* Crowd Level */}

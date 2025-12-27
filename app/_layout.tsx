@@ -13,6 +13,8 @@ import { AuthProvider, useAuth } from "@/lib/auth-context"
 import { useDeepLinking } from "@/lib/services/deep-linking"
 import { setupTrainerRealTimeSync, setupClientRealTimeSync, unsubscribeAll } from "@/lib/services/realtime-sync"
 import { View, ActivityIndicator, Text } from "react-native"
+import { ToastProvider } from "@/components/UI/Toast"
+import { NudgesProvider } from "@/components/UI/OnboardingNudges"
 import {
   useFonts,
   Inter_400Regular,
@@ -127,35 +129,37 @@ export default function RootLayout() {
           <UserPreferencesProvider>
             <LocationProvider>
               <StripeProvider>
-                <Stack screenOptions={{ headerShown: false }}>
-                  <Stack.Screen name="index" />
-                  <Stack.Screen name="language-selection" />
-                  <Stack.Screen name="auth" />
-                  <Stack.Screen name="onboarding" />
-                  <Stack.Screen name="(tabs)" />
-                  <Stack.Screen name="referrals" />
-                  <Stack.Screen name="rating/[sport]" />
-                  <Stack.Screen name="venues/[id]" />
-                  <Stack.Screen name="trainers/[id]" />
-                  <Stack.Screen name="instructors/[id]" />
-                  <Stack.Screen name="chat/[id]" />
-                  <Stack.Screen name="need-players/[venueId]" />
-                  <Stack.Screen name="alerts/index" />
-                  <Stack.Screen name="settings/edit-profile" />
-                  <Stack.Screen name="settings/payment-methods" />
-                  <Stack.Screen name="settings/privacy" />
-                  <Stack.Screen name="settings/help" />
-                  <Stack.Screen name="settings/terms" />
-                  <Stack.Screen name="booking/[id]" />
-                  <Stack.Screen name="review/[id]" />
-                  <Stack.Screen name="friends/[friendshipId]/settings" />
-                  <Stack.Screen name="settings/notifications/friends" />
-                  <Stack.Screen name="waitlist/claim/[classId]" />
-                  <Stack.Screen name="instructor-dashboard" />
-                  <Stack.Screen name="trainer-dashboard" />
-                </Stack>
-
-
+                <ToastProvider>
+                  <NudgesProvider>
+                    <Stack screenOptions={{ headerShown: false }}>
+                      <Stack.Screen name="index" />
+                      <Stack.Screen name="language-selection" />
+                      <Stack.Screen name="auth" />
+                      <Stack.Screen name="onboarding" />
+                      <Stack.Screen name="(tabs)" />
+                      <Stack.Screen name="referrals" />
+                      <Stack.Screen name="rating/[sport]" />
+                      <Stack.Screen name="venues/[id]" />
+                      <Stack.Screen name="trainers/[id]" />
+                      <Stack.Screen name="instructors/[id]" />
+                      <Stack.Screen name="chat/[id]" />
+                      <Stack.Screen name="need-players/[venueId]" />
+                      <Stack.Screen name="alerts/index" />
+                      <Stack.Screen name="settings/edit-profile" />
+                      <Stack.Screen name="settings/payment-methods" />
+                      <Stack.Screen name="settings/privacy" />
+                      <Stack.Screen name="settings/help" />
+                      <Stack.Screen name="settings/terms" />
+                      <Stack.Screen name="booking/[id]" />
+                      <Stack.Screen name="review/[id]" />
+                      <Stack.Screen name="friends/[friendshipId]/settings" />
+                      <Stack.Screen name="settings/notifications/friends" />
+                      <Stack.Screen name="waitlist/claim/[classId]" />
+                      <Stack.Screen name="instructor-dashboard" />
+                      <Stack.Screen name="trainer-dashboard" />
+                    </Stack>
+                  </NudgesProvider>
+                </ToastProvider>
               </StripeProvider>
             </LocationProvider>
           </UserPreferencesProvider>

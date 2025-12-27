@@ -109,10 +109,53 @@ export default function TrainerDashboard() {
         <ScrollView className="flex-1">
           {/* Header */}
           <View className="px-6 pt-16 pb-6">
-            <Text className="text-white text-3xl font-bold mb-2">Trainer Dashboard</Text>
-            <Text className="text-zinc-400 text-base">
-              {preferences.userType === "instructor" ? "Wellness Instructor" : "Sports Coach"}
-            </Text>
+            <View className="flex-row justify-between items-start mb-4">
+              <View>
+                <Text className="text-white text-3xl font-bold mb-2">Trainer Dashboard</Text>
+                <Text className="text-zinc-400 text-base">
+                  {preferences.userType === "instructor" ? "Wellness Instructor" : "Sports Coach"}
+                </Text>
+              </View>
+              {/* Header Buttons - Chat & Notifications */}
+              <View className="flex-row gap-2">
+                <TouchableOpacity
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                    router.push("/(tabs)/messages")
+                  }}
+                  className="w-11 h-11 rounded-full bg-zinc-800 items-center justify-center"
+                >
+                  <Ionicons name="chatbubbles-outline" size={22} color="#fff" />
+                  {/* Unread badge */}
+                  <View className="absolute -top-1 -right-1 bg-red-500 rounded-full min-w-[18px] h-[18px] items-center justify-center border-2 border-black">
+                    <Text className="text-white text-[10px] font-bold">3</Text>
+                  </View>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                    router.push("/(tabs)/activity")
+                  }}
+                  className="w-11 h-11 rounded-full bg-zinc-800 items-center justify-center"
+                >
+                  <Ionicons name="notifications-outline" size={22} color="#fff" />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+
+          {/* Search Bar - Find Facilities to Book */}
+          <View className="px-6 mb-6">
+            <TouchableOpacity
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                router.push("/search")
+              }}
+              className="flex-row items-center bg-zinc-900 rounded-2xl px-4 py-3 border border-zinc-800"
+            >
+              <Ionicons name="search" size={20} color="#888" />
+              <Text className="text-zinc-500 text-base ml-3">Find facilities to book...</Text>
+            </TouchableOpacity>
           </View>
 
           {/* Stats Cards */}

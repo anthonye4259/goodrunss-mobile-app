@@ -3,7 +3,7 @@
  * Shows confirmation after successful court booking
  */
 
-import React, { useEffect } from "react"
+import React, { useEffect, useState } from "react"
 import {
   View,
   Text,
@@ -18,19 +18,26 @@ import { router, useLocalSearchParams } from "expo-router"
 import * as Haptics from "expo-haptics"
 import * as Calendar from "expo-calendar"
 
+// Celebration!
+import { ConfettiOverlay, useConfetti } from "@/components/UI/Confetti"
+
 export default function BookingConfirmationScreen() {
-  const { 
-    venueName, 
-    courtName, 
-    date, 
-    startTime, 
-    endTime, 
+  const {
+    venueName,
+    courtName,
+    date,
+    startTime,
+    endTime,
     total,
     bookingId,
   } = useLocalSearchParams()
 
+  const confetti = useConfetti()
+
   useEffect(() => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+    // Trigger confetti on mount
+    confetti.trigger()
   }, [])
 
   const handleAddToCalendar = async () => {
@@ -45,7 +52,7 @@ export default function BookingConfirmationScreen() {
       // Get default calendar
       const calendars = await Calendar.getCalendarsAsync(Calendar.EntityTypes.EVENT)
       const defaultCalendar = calendars.find(cal => cal.allowsModifications) || calendars[0]
-      
+
       if (!defaultCalendar) {
         Alert.alert("Error", "No calendar found")
         return
@@ -55,7 +62,7 @@ export default function BookingConfirmationScreen() {
       const [year, month, day] = (date as string).split("-").map(Number)
       const [startHour, startMin] = (startTime as string).split(":").map(Number)
       const [endHour, endMin] = (endTime as string).split(":").map(Number)
-      
+
       const startDate = new Date(year, month - 1, day, startHour, startMin)
       const endDate = new Date(year, month - 1, day, endHour, endMin)
 
@@ -79,6 +86,9 @@ export default function BookingConfirmationScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient colors={["#0A0A0A", "#111"]} style={StyleSheet.absoluteFill} />
+
+      {/* Confetti celebration! */}
+      <ConfettiOverlay isActive={confetti.isActive} />
 
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.content}>
