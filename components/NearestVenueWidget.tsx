@@ -142,7 +142,7 @@ export function NearestVenueWidget() {
             {/* Section Header */}
             <View style={styles.sectionHeader}>
                 <View style={styles.headerLeft}>
-                    <Text style={styles.sectionTitle}>📍 Nearest {content.facilityName}</Text>
+                    <Text style={styles.sectionTitle}>📍 Nearest {content.locationPrefix}</Text>
                     <View style={styles.liveIndicator}>
                         <Animated.View style={[styles.liveDot, { transform: [{ scale: pulseAnim }] }]} />
                         <Text style={styles.liveText}>LIVE</Text>
@@ -181,6 +181,11 @@ export function NearestVenueWidget() {
                             <Text style={[styles.trafficText, { color: trafficColor }]}>
                                 {trafficLabel}
                             </Text>
+                        </View>
+                        {/* Social Proof Badge */}
+                        <View style={styles.reportedByBadge}>
+                            <Ionicons name="checkmark-circle" size={12} color="#7ED957" />
+                            <Text style={styles.reportedByText}>Verified by Anthony</Text>
                         </View>
                     </View>
 
@@ -378,6 +383,25 @@ const styles = StyleSheet.create({
     trafficText: {
         fontSize: 14,
         fontWeight: "bold",
+    },
+    reportedByBadge: {
+        position: "absolute",
+        top: -8,
+        right: 0,
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "rgba(20, 20, 20, 0.9)",
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 12,
+        gap: 4,
+        borderWidth: 1,
+        borderColor: "#252525"
+    },
+    reportedByText: {
+        fontSize: 10,
+        fontWeight: "600",
+        color: "#9CA3AF"
     },
     trafficSection: {
         marginBottom: 16,
