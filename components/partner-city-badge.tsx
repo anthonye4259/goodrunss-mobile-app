@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
-import { useUserLocation } from "@/lib/services/location-service"
+import { useUserLocation } from "@/lib/location-context"
 
 export function PartnerCityBadge() {
     const { location } = useUserLocation()

@@ -10,6 +10,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import type { SportContext, Sport } from "@/lib/services/sport-intelligence-service"
+import { MiniWidget } from "./Widgets/MiniWidget"
 
 // ============================================
 // TYPES
@@ -149,17 +150,31 @@ export function SportStatusCard({
                 </View>
             </View>
 
-            {/* Stats */}
-            <View style={styles.statsRow}>
-                <StatItem icon="time-outline" label="Best time" value={bestTime} />
-                <View style={styles.statDivider} />
-                <StatItem icon="partly-sunny-outline" label="Conditions" value={`${weatherScore}%`} />
-                {waitTime && (
-                    <>
-                        <View style={styles.statDivider} />
-                        <StatItem icon="hourglass-outline" label="Wait" value={waitTime} />
-                    </>
-                )}
+            {/* Stats - Now using Mini Widgets */}
+            <View style={styles.statsGrid}>
+                <MiniWidget
+                    icon="partly-sunny"
+                    label="Conditions"
+                    value={`${weatherScore}%`}
+                    subValue="Perfect"
+                    gradient="blue"
+                />
+                <View style={{ width: 10 }} />
+                <MiniWidget
+                    icon="trophy"
+                    label="Run Quality"
+                    value={context.runQuality || "Good"}
+                    subValue={`${context.runQualityScore || 9.0}/10`}
+                    gradient="purple"
+                />
+                <View style={{ width: 10 }} />
+                <MiniWidget
+                    icon="time"
+                    label="Wait Time"
+                    value={waitTime || "0 min"}
+                    subValue="Est."
+                    gradient="dark"
+                />
             </View>
         </View>
     )
@@ -274,6 +289,12 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: "600",
     },
+    statsGrid: {
+        flexDirection: "row",
+        alignItems: "stretch",
+        marginTop: 8,
+    },
+    // Remnants of old statsRow
     statsRow: {
         flexDirection: "row",
         alignItems: "center",

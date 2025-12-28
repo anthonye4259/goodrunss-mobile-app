@@ -18,6 +18,7 @@ type Props = {
     playersNow: number
     lastUpdated?: string // e.g., "2m ago"
     size?: "small" | "medium" | "large"
+    trend?: "rising" | "falling" | "stable" // Activity trend
 }
 
 const LEVEL_CONFIG = {
@@ -47,8 +48,9 @@ const LEVEL_CONFIG = {
     },
 }
 
-export function LiveTrafficBadge({ level, playersNow, lastUpdated, size = "medium" }: Props) {
-    const config = LEVEL_CONFIG[level]
+export function LiveTrafficBadge({ level, playersNow, lastUpdated, size = "medium", trend }: Props) {
+    // Defensive fallback: if level doesn't match config, default to "quiet"
+    const config = LEVEL_CONFIG[level] || LEVEL_CONFIG["quiet"]
     const pulseAnim = useRef(new Animated.Value(1)).current
 
     // Pulse animation for the live dot
@@ -110,6 +112,19 @@ export function LiveTrafficBadge({ level, playersNow, lastUpdated, size = "mediu
                             <View style={[styles.statusBadge, { backgroundColor: config.color + "20" }]}>
                                 <Text style={[styles.statusLabel, { color: config.color }]}>{config.label}</Text>
                             </View>
+                            {/* Trend Arrow */}
+                            {trend && (
+                                <View style={[styles.trendBadge, { backgroundColor: trend === "rising" ? "#EF444420" : trend === "falling" ? "#22C55E20" : "#6B728020" }]}>
+                                    <Ionicons
+                                        name={trend === "rising" ? "trending-up" : trend === "falling" ? "trending-down" : "remove"}
+                                        size={12}
+                                        color={trend === "rising" ? "#EF4444" : trend === "falling" ? "#22C55E" : "#6B7280"}
+                                    />
+                                    <Text style={[styles.trendText, { color: trend === "rising" ? "#EF4444" : trend === "falling" ? "#22C55E" : "#6B7280" }]}>
+                                        {trend === "rising" ? "Getting busy" : trend === "falling" ? "Emptying out" : "Stable"}
+                                    </Text>
+                                </View>
+                            )}
                             {lastUpdated && (
                                 <Text style={styles.timestamp}>• {lastUpdated}</Text>
                             )}
@@ -221,6 +236,21 @@ const styles = StyleSheet.create({
         fontSize: 9,
         fontWeight: "700",
         color: "#8B5CF6",
+    },
+
+    // Trend Badge
+    trendBadge: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 3,
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 4,
+        marginLeft: 6,
+    },
+    trendText: {
+        fontSize: 9,
+        fontWeight: "600",
     },
 })
 

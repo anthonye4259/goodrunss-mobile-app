@@ -19,7 +19,7 @@ import * as Haptics from "expo-haptics"
 import * as Calendar from "expo-calendar"
 
 // Celebration!
-import { ConfettiOverlay, useConfetti } from "@/components/UI/Confetti"
+import { ConfettiOverlay, useConfetti } from "@/components/ui/Confetti"
 
 export default function BookingConfirmationScreen() {
   const {

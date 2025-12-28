@@ -4,6 +4,7 @@
  * Simple, fast way to report court conditions:
  * - Tap crowd level (empty/some/busy)
  * - Optional: Add conditions (lights, wet, etc.)
+ * - Optional: Add photo/video from camera
  * - Submit in under 5 seconds
  */
 
@@ -16,10 +17,12 @@ import {
     Modal,
     TextInput,
     ActivityIndicator,
+    Image,
 } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import * as Haptics from "expo-haptics"
+import * as ImagePicker from "expo-image-picker"
 import { BlurView } from "expo-blur"
 import {
     submitQuickReport,
@@ -30,21 +33,81 @@ interface QuickCourtReportProps {
     venueId: string
     venueName: string
     userId: string
+    sport?: string // Sport-specific language
     onReportSubmitted?: (crowdLevel: CrowdLevel) => void
     visible?: boolean
     onClose?: () => void
 }
 
-// Crowd level options
-const CROWD_OPTIONS: { level: CrowdLevel; emoji: string; label: string; sublabel: string; color: string }[] = [
-    { level: "empty", emoji: "🟢", label: "Empty", sublabel: "Courts available", color: "#22C55E" },
-    { level: "light", emoji: "🟡", label: "Light", sublabel: "A few people", color: "#EAB308" },
-    { level: "moderate", emoji: "🟠", label: "Some", sublabel: "Half full", color: "#F97316" },
-    { level: "busy", emoji: "🔴", label: "Busy", sublabel: "Mostly full", color: "#EF4444" },
-    { level: "packed", emoji: "💥", label: "Packed", sublabel: "All courts taken", color: "#DC2626" },
-]
+// Sport-specific language configuration
+const SPORT_LANGUAGE: Record<string, {
+    courtTerm: string
+    playerTerm: string
+    activityTerm: string
+    emoji: string
+    conditionOptions: typeof CONDITION_OPTIONS
+}> = {
+    Basketball: {
+        courtTerm: "Court", playerTerm: "players", activityTerm: "Games running", emoji: "🏀",
+        conditionOptions: [
+            { id: "lights_on", label: "💡 Lights On", positive: true },
+            { id: "lights_off", label: "🌙 Lights Off", positive: false },
+            { id: "wet_courts", label: "💧 Wet", positive: false },
+            { id: "games_running", label: "🏀 Games", positive: true },
+            { id: "clean", label: "✨ Clean", positive: true },
+        ]
+    },
+    Tennis: {
+        courtTerm: "Court", playerTerm: "players", activityTerm: "Matches in progress", emoji: "🎾",
+        conditionOptions: [
+            { id: "lights_on", label: "💡 Lights On", positive: true },
+            { id: "wet_courts", label: "💧 Wet", positive: false },
+            { id: "nets_up", label: "🎾 Nets Up", positive: true },
+            { id: "matches_running", label: "🎾 Matches", positive: true },
+            { id: "clean", label: "✨ Clean", positive: true },
+        ]
+    },
+    Pickleball: {
+        courtTerm: "Court", playerTerm: "players", activityTerm: "Games in progress", emoji: "🏓",
+        conditionOptions: [
+            { id: "lights_on", label: "💡 Lights On", positive: true },
+            { id: "wet_courts", label: "💧 Wet", positive: false },
+            { id: "nets_up", label: "🏓 Nets Up", positive: true },
+            { id: "games_running", label: "🏓 Games", positive: true },
+            { id: "clean", label: "✨ Clean", positive: true },
+        ]
+    },
+    Soccer: {
+        courtTerm: "Field", playerTerm: "players", activityTerm: "Matches in progress", emoji: "⚽",
+        conditionOptions: [
+            { id: "lights_on", label: "💡 Lights On", positive: true },
+            { id: "wet_field", label: "💧 Wet Field", positive: false },
+            { id: "goals_up", label: "⚽ Goals Up", positive: true },
+            { id: "matches_running", label: "⚽ Matches", positive: true },
+            { id: "lined", label: "📐 Lines Visible", positive: true },
+        ]
+    },
+    Volleyball: {
+        courtTerm: "Court", playerTerm: "players", activityTerm: "Games in progress", emoji: "🏐",
+        conditionOptions: [
+            { id: "lights_on", label: "💡 Lights On", positive: true },
+            { id: "wet_sand", label: "💧 Wet Sand", positive: false },
+            { id: "nets_up", label: "🏐 Nets Up", positive: true },
+            { id: "games_running", label: "🏐 Games", positive: true },
+        ]
+    },
+    Golf: {
+        courtTerm: "Course", playerTerm: "golfers", activityTerm: "Rounds in progress", emoji: "⛳",
+        conditionOptions: [
+            { id: "course_open", label: "⛳ Course Open", positive: true },
+            { id: "wet_fairways", label: "💧 Wet Fairways", positive: false },
+            { id: "cart_path_only", label: "🛒 Cart Path Only", positive: false },
+            { id: "good_conditions", label: "✨ Good Conditions", positive: true },
+        ]
+    },
+}
 
-// Condition toggles
+// Default condition options (fallback)
 const CONDITION_OPTIONS = [
     { id: "lights_on", label: "💡 Lights On", positive: true },
     { id: "lights_off", label: "🌙 Lights Off", positive: false },
@@ -54,10 +117,34 @@ const CONDITION_OPTIONS = [
     { id: "clean", label: "✨ Clean", positive: true },
 ]
 
+// Sport-specific player count thresholds
+const SPORT_THRESHOLDS: Record<string, { empty: string; light: string; some: string; busy: string; packed: string }> = {
+    Basketball: { empty: "0-3", light: "4-6", some: "7-10", busy: "11-14", packed: "15+" },
+    Tennis: { empty: "0-1", light: "2", some: "3-4", busy: "4-6", packed: "6+" },
+    Pickleball: { empty: "0-2", light: "3-4", some: "5-8", busy: "9-12", packed: "12+" },
+    Soccer: { empty: "0-5", light: "6-10", some: "11-16", busy: "17-22", packed: "22+" },
+    Volleyball: { empty: "0-3", light: "4-6", some: "7-10", busy: "11-14", packed: "14+" },
+    Golf: { empty: "0-1", light: "2", some: "3", busy: "4", packed: "4+ (backed up)" },
+}
+
+// Crowd level options - with sport-specific player count ranges and actionable language
+const getCrowdOptions = (sport: string) => {
+    const lang = SPORT_LANGUAGE[sport] || { courtTerm: "Court", playerTerm: "players", emoji: "🏀" }
+    const thresholds = SPORT_THRESHOLDS[sport] || SPORT_THRESHOLDS["Basketball"]
+    return [
+        { level: "empty" as CrowdLevel, emoji: "🟢", label: "Wide Open", sublabel: `${thresholds.empty} ${lang.playerTerm} • Grab a ${lang.courtTerm.toLowerCase()}!`, color: "#22C55E" },
+        { level: "light" as CrowdLevel, emoji: "🟡", label: "Easy to Join", sublabel: `${thresholds.light} ${lang.playerTerm} • Jump in anytime`, color: "#EAB308" },
+        { level: "moderate" as CrowdLevel, emoji: "🟠", label: "Active", sublabel: `${thresholds.some} ${lang.playerTerm} • Games happening`, color: "#F97316" },
+        { level: "busy" as CrowdLevel, emoji: "🔴", label: "Crowded", sublabel: `${thresholds.busy} ${lang.playerTerm} • Expect a wait`, color: "#EF4444" },
+        { level: "packed" as CrowdLevel, emoji: "💥", label: "Full House", sublabel: `${thresholds.packed} ${lang.playerTerm} • All ${lang.courtTerm.toLowerCase()}s taken`, color: "#DC2626" },
+    ]
+}
+
 export function QuickCourtReport({
     venueId,
     venueName,
     userId,
+    sport = "Basketball",
     onReportSubmitted,
     visible = true,
     onClose,
@@ -68,6 +155,35 @@ export function QuickCourtReport({
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [submitted, setSubmitted] = useState(false)
     const [showConditions, setShowConditions] = useState(false)
+    const [capturedImage, setCapturedImage] = useState<string | null>(null)
+
+    // Get sport-specific options
+    const sportLang = SPORT_LANGUAGE[sport] || SPORT_LANGUAGE["Basketball"]
+    const crowdOptions = getCrowdOptions(sport)
+    const conditionOptions = sportLang.conditionOptions || CONDITION_OPTIONS
+
+    // Camera capture function
+    const handleCameraPress = useCallback(async () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+
+        const { status } = await ImagePicker.requestCameraPermissionsAsync()
+        if (status !== "granted") {
+            alert("Camera permission is required to take photos")
+            return
+        }
+
+        const result = await ImagePicker.launchCameraAsync({
+            mediaTypes: "images",
+            allowsEditing: false,
+            quality: 0.7,
+            // Video support: uncomment when ready
+            // videoMaxDuration: 5,
+        })
+
+        if (!result.canceled && result.assets[0]) {
+            setCapturedImage(result.assets[0].uri)
+        }
+    }, [])
 
     const handleLevelSelect = useCallback((level: CrowdLevel) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
@@ -126,7 +242,7 @@ export function QuickCourtReport({
                 <View style={styles.successContainer}>
                     <Text style={styles.successEmoji}>✅</Text>
                     <Text style={styles.successText}>Thanks for reporting!</Text>
-                    <Text style={styles.successSubtext}>Helping local players 🏀</Text>
+                    <Text style={styles.successSubtext}>Helping local {sportLang.playerTerm} {sportLang.emoji}</Text>
                 </View>
             </View>
         )
@@ -152,7 +268,7 @@ export function QuickCourtReport({
 
             {/* Crowd Level Selection */}
             <View style={styles.levelContainer}>
-                {CROWD_OPTIONS.map(option => (
+                {crowdOptions.map(option => (
                     <TouchableOpacity
                         key={option.level}
                         style={[
@@ -183,7 +299,7 @@ export function QuickCourtReport({
                     </Text>
 
                     <View style={styles.conditionsGrid}>
-                        {CONDITION_OPTIONS.map(option => (
+                        {conditionOptions.map(option => (
                             <TouchableOpacity
                                 key={option.id}
                                 style={[
@@ -202,7 +318,29 @@ export function QuickCourtReport({
                         ))}
                     </View>
 
-                    {/* Submit Buttons */}
+                    {/* Camera Capture Button */}
+                    <View style={styles.cameraSection}>
+                        <Text style={styles.cameraSectionTitle}>
+                            Add a photo <Text style={styles.optional}>(optional)</Text>
+                        </Text>
+                        <View style={styles.cameraRow}>
+                            <TouchableOpacity style={styles.cameraButton} onPress={handleCameraPress}>
+                                <Ionicons name="camera" size={24} color="#8B5CF6" />
+                                <Text style={styles.cameraButtonText}>Take Photo</Text>
+                            </TouchableOpacity>
+                            {capturedImage && (
+                                <View style={styles.imagePreview}>
+                                    <Image source={{ uri: capturedImage }} style={styles.previewImage} />
+                                    <TouchableOpacity
+                                        style={styles.removeImageBtn}
+                                        onPress={() => setCapturedImage(null)}
+                                    >
+                                        <Ionicons name="close-circle" size={20} color="#EF4444" />
+                                    </TouchableOpacity>
+                                </View>
+                            )}
+                        </View>
+                    </View>
                     <View style={styles.buttonRow}>
                         <TouchableOpacity
                             style={styles.skipButton}
@@ -451,5 +589,53 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: "600",
         color: "#8B5CF6",
+    },
+
+    // Camera Section Styles
+    cameraSection: {
+        marginTop: 8,
+        marginBottom: 16,
+    },
+    cameraSectionTitle: {
+        fontSize: 14,
+        fontWeight: "600",
+        color: "#fff",
+        marginBottom: 8,
+    },
+    cameraRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+    },
+    cameraButton: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        borderRadius: 12,
+        backgroundColor: "rgba(139, 92, 246, 0.15)",
+        borderWidth: 1,
+        borderColor: "rgba(139, 92, 246, 0.3)",
+    },
+    cameraButtonText: {
+        fontSize: 14,
+        fontWeight: "600",
+        color: "#8B5CF6",
+    },
+    imagePreview: {
+        position: "relative",
+    },
+    previewImage: {
+        width: 60,
+        height: 60,
+        borderRadius: 8,
+    },
+    removeImageBtn: {
+        position: "absolute",
+        top: -6,
+        right: -6,
+        backgroundColor: "#1A1A2E",
+        borderRadius: 10,
     },
 })

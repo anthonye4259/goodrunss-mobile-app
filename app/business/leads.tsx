@@ -8,7 +8,7 @@ import { LinearGradient } from "expo-linear-gradient"
 import * as Haptics from "expo-haptics"
 
 import { socialService } from "@/lib/services/social-service"
-import { useUserLocation } from "@/lib/services/location-service"
+import { useUserLocation } from "@/lib/location-context"
 
 export default function LeadsScreen() {
     const { location } = useUserLocation()

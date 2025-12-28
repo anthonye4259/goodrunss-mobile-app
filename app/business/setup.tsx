@@ -8,7 +8,7 @@ import * as Haptics from "expo-haptics"
 import Slider from "@react-native-community/slider"
 
 import { useUserPreferences } from "@/lib/user-preferences"
-import { useUserLocation } from "@/lib/services/location-service"
+import { useUserLocation } from "@/lib/location-context"
 import { trainerProfileService, TrainerListing } from "@/lib/services/trainer-profile-service"
 import { ImageService } from "@/lib/image-service"
 

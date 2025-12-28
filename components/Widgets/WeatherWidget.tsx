@@ -8,7 +8,7 @@
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native"
 import { useState, useEffect } from "react"
 import { Ionicons } from "@expo/vector-icons"
-import { LinearGradient } from "expo-linear-gradient"
+
 import { router } from "expo-router"
 import * as Haptics from "expo-haptics"
 
@@ -66,37 +66,35 @@ export function WeatherWidget() {
 
     const handlePress = () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-        // If rainy, navigate to gym courts section
         if (weather.condition === "rainy" || weather.condition === "stormy") {
             router.push("/(tabs)/discover")
         }
     }
 
+    // Gradient colors are now used for accent only, not full background
     return (
         <TouchableOpacity onPress={handlePress} activeOpacity={0.9}>
-            <LinearGradient
-                colors={config.gradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.container}
-            >
+            <View style={styles.container}>
                 <View style={styles.leftSection}>
-                    <Ionicons name={config.icon as any} size={32} color={config.textColor} />
+                    {/* Icon container with subtle tinted background */}
+                    <View style={[styles.iconContainer, { backgroundColor: `${config.gradient[0]}20` }]}>
+                        <Ionicons name={config.icon as any} size={24} color={config.gradient[0]} />
+                    </View>
                     <View style={styles.tempInfo}>
-                        <Text style={[styles.temp, { color: config.textColor }]}>{weather.temp}°</Text>
-                        <Text style={[styles.humidity, { color: config.textColor + "99" }]}>{weather.humidity}% humidity</Text>
+                        <Text style={styles.temp}>{weather.temp}°</Text>
+                        <Text style={styles.conditionName}>{weather.condition.charAt(0).toUpperCase() + weather.condition.slice(1)}</Text>
                     </View>
                 </View>
                 <View style={styles.rightSection}>
-                    <Text style={[styles.suggestion, { color: config.textColor }]}>{weather.suggestion}</Text>
+                    <Text style={styles.suggestion}>{weather.suggestion}</Text>
                     {(weather.condition === "rainy" || weather.condition === "stormy") && (
                         <View style={styles.indoorBadge}>
-                            <Ionicons name="business" size={12} color="#FFF" />
-                            <Text style={styles.indoorText}>Indoor</Text>
+                            <Text style={styles.indoorText}>Indoor Suggested</Text>
+                            <Ionicons name="arrow-forward" size={12} color="#FFF" />
                         </View>
                     )}
                 </View>
-            </LinearGradient>
+            </View>
         </TouchableOpacity>
     )
 }
@@ -106,47 +104,68 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        padding: 16,
-        borderRadius: 20,
+        padding: 20,
+        borderRadius: 24,
         marginHorizontal: 20,
-        marginBottom: 16,
+        marginBottom: 24,
+        backgroundColor: '#171717', // Flat Subtle Card
     },
     leftSection: {
         flexDirection: "row",
         alignItems: "center",
-        gap: 12,
+        gap: 16,
     },
-    tempInfo: {},
+    iconContainer: {
+        width: 48,
+        height: 48,
+        borderRadius: 16,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    tempInfo: {
+        justifyContent: 'center',
+    },
     temp: {
         fontSize: 24,
-        fontWeight: "800",
+        fontFamily: "Inter_700Bold",
+        color: "#FFFFFF",
+        letterSpacing: -1,
+    },
+    conditionName: {
+        fontSize: 13,
+        fontFamily: "Inter_500Medium",
+        color: "#A3A3A3",
     },
     humidity: {
         fontSize: 12,
+        color: "#737373",
     },
     rightSection: {
         flex: 1,
         alignItems: "flex-end",
+        gap: 4,
     },
     suggestion: {
         fontSize: 13,
-        fontWeight: "600",
+        fontFamily: "Inter_500Medium",
+        color: "#E5E5E5",
         textAlign: "right",
+        maxWidth: 160,
     },
     indoorBadge: {
         flexDirection: "row",
         alignItems: "center",
         gap: 4,
-        backgroundColor: "rgba(0,0,0,0.3)",
-        paddingHorizontal: 8,
-        paddingVertical: 4,
+        backgroundColor: "rgba(59, 130, 246, 0.15)", // Blue tint for indoor
+        paddingHorizontal: 10,
+        paddingVertical: 6,
         borderRadius: 12,
         marginTop: 6,
     },
     indoorText: {
-        color: "#FFF",
+        color: "#3B82F6",
         fontSize: 11,
-        fontWeight: "600",
+        fontFamily: "Inter_600SemiBold",
     },
 })
 

@@ -51,6 +51,21 @@ export default function AuthScreen() {
     try {
       const success = await loginWithBiometrics()
       if (success) {
+        // Check user type from Firestore to route correctly
+        if (db && auth?.currentUser) {
+          try {
+            const userDoc = await db.collection("users").doc(auth.currentUser.uid).get()
+            if (userDoc.exists) {
+              const userData = userDoc.data() || {}
+              if (userData.userType === "facility") {
+                router.replace("/facility/dashboard")
+                return
+              }
+            }
+          } catch (e) {
+            console.log("Could not check user type:", e)
+          }
+        }
         router.replace("/(tabs)")
       }
     } catch (error: any) {
@@ -114,7 +129,7 @@ export default function AuthScreen() {
               if (userDoc.exists) {
                 const userData = userDoc.data() || {}
 
-                // If user has userType set (trainer/instructor from dashboard), sync and skip onboarding
+                // If user has userType set (trainer/instructor/facility from dashboard), sync and skip onboarding
                 if (userData.userType) {
                   setPreferences({
                     userType: userData.userType,
@@ -123,7 +138,14 @@ export default function AuthScreen() {
                     isStudioUser: userData.userType === "instructor",
                     isRecUser: userData.userType === "trainer",
                     name: userData.name,
+                    onboardingComplete: true,
                   })
+
+                  // Route facility users to facility dashboard
+                  if (userData.userType === "facility") {
+                    router.replace("/facility/dashboard")
+                    return
+                  }
 
                   // Skip to main app - they're a returning trainer/instructor
                   router.replace("/(tabs)")
@@ -322,7 +344,15 @@ export default function AuthScreen() {
                 isStudioUser: userData.userType === "instructor",
                 isRecUser: userData.userType === "trainer",
                 name: userData.name || userName,
+                onboardingComplete: true,
               })
+
+              // Route facility users to facility dashboard
+              if (userData.userType === "facility") {
+                router.replace("/facility/dashboard")
+                return
+              }
+
               router.replace("/(tabs)")
               return
             }

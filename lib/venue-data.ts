@@ -4,7 +4,7 @@
  */
 
 import { Activity } from "./activity-content"
-import realVenuesData from "../data/venues-google-places.json"
+import realVenuesData from "../data/venues-enhanced.json"
 
 export interface Venue {
     id: string
@@ -32,7 +32,10 @@ export interface Venue {
     isOpen?: boolean
     source?: string
     distance?: number
+    distance?: number
     isBookable?: boolean
+    runQuality?: string
+    runQualityScore?: string | number
 }
 
 // Map sport names from Google Places format to our Activity format

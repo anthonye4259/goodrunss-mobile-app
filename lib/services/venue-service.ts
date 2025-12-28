@@ -84,6 +84,14 @@ export const venueService = {
    * Get a single venue by ID
    */
     async getVenueById(id: string): Promise<Venue | null> {
+        // First try local data (works without Firestore)
+        const { getVenueById: getLocalVenue, getAllVenues } = await import("../venue-data")
+        const localVenue = getLocalVenue(id) || getAllVenues().find(v => v.id === id)
+        if (localVenue) {
+            return localVenue
+        }
+
+        // Fallback to Firestore if local not found
         if (!db) return null
 
         try {

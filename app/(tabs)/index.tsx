@@ -1,5 +1,5 @@
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Dimensions } from "react-native"
-import { LinearGradient } from "expo-linear-gradient"
+
 import { Ionicons } from "@expo/vector-icons"
 import { useUserPreferences } from "@/lib/user-preferences"
 import { router } from "expo-router"
@@ -13,6 +13,7 @@ import { useUserLocation } from "@/lib/location-context"
 import { FriendActivityRail } from "@/components/Live/FriendActivityRail"
 import { SEED_VENUES } from "@/lib/services/smart-data-service"
 import { WeatherWidget } from "@/components/Widgets/WeatherWidget"
+import { PlayRequestModal } from "@/components/Social/PlayRequest"
 
 const { width } = Dimensions.get("window")
 
@@ -99,6 +100,7 @@ export default function HomeScreen() {
   const { isGuest, user } = useAuth()
   const { location } = useUserLocation()
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
+  const [showPlayRequest, setShowPlayRequest] = useState(false)
   const [currentHour] = useState(new Date().getHours())
 
   // Mock upcoming booking for player (would come from real service)
@@ -163,7 +165,7 @@ export default function HomeScreen() {
   // For teachers (including guests testing the app), show their dashboard
   if (isTeachingRole) {
     return (
-      <LinearGradient colors={[colors.bg, "#141414"]} style={styles.container}>
+      <View style={[styles.container, { backgroundColor: colors.bg }]}>
         <SafeAreaView style={styles.safeArea} edges={["top"]}>
           {/* Mode Toggle for "Both" Users */}
           {isBothUser && (
@@ -180,7 +182,7 @@ export default function HomeScreen() {
           )}
           <TeacherDashboard userType={preferences.userType === "both" ? "trainer" : preferences.userType as "trainer" | "instructor"} />
         </SafeAreaView>
-      </LinearGradient>
+      </View>
     )
   }
 
@@ -188,7 +190,7 @@ export default function HomeScreen() {
   const showBothModeToggle = isBothUser && viewMode === "player"
 
   return (
-    <LinearGradient colors={[colors.bg, "#141414"]} style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.bg }]}>
       <SafeAreaView style={styles.safeArea} edges={["top"]}>
         <ScrollView
           style={styles.scrollView}
@@ -283,23 +285,58 @@ export default function HomeScreen() {
           {/* ===== WEATHER WIDGET ===== */}
           <WeatherWidget />
 
+          {/* ===== RECOVERY HUB - Tap to open full screen ===== */}
+          <TouchableOpacity
+            style={styles.recoveryHub}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+              router.push("/recovery-hub")
+            }}
+            activeOpacity={0.8}
+          >
+            <View style={styles.recoveryHubHeader}>
+              <View style={styles.recoveryHubLeft}>
+                <Ionicons name="heart" size={18} color="#EF4444" />
+                <Text style={styles.recoveryHubTitle}>Recovery Hub</Text>
+              </View>
+              <View style={styles.recoveryScoreBadge}>
+                <Text style={styles.recoveryScoreText}>85</Text>
+              </View>
+            </View>
+            <View style={styles.recoveryQuickStats}>
+              <View style={styles.recoveryQuickStat}>
+                <Text style={styles.recoveryQuickValue}>7.5h</Text>
+                <Text style={styles.recoveryQuickLabel}>Sleep</Text>
+              </View>
+              <View style={styles.recoveryQuickDivider} />
+              <View style={styles.recoveryQuickStat}>
+                <Text style={styles.recoveryQuickValue}>92%</Text>
+                <Text style={styles.recoveryQuickLabel}>Recovery</Text>
+              </View>
+              <View style={styles.recoveryQuickDivider} />
+              <View style={styles.recoveryQuickStat}>
+                <Text style={styles.recoveryQuickValue}>68</Text>
+                <Text style={styles.recoveryQuickLabel}>HRV</Text>
+              </View>
+            </View>
+            <View style={styles.recoveryTapHint}>
+              <Text style={styles.recoveryTapText}>Tap to view full dashboard</Text>
+              <Ionicons name="chevron-forward" size={14} color="#666" />
+            </View>
+          </TouchableOpacity>
+
           {/* ===== HERO CARD - GIA PREDICTION (WOW FACTOR) ===== */}
           <TouchableOpacity
             style={styles.heroCard}
             onPress={() => handlePress(() => router.push("/(tabs)/live"))}
             activeOpacity={0.9}
           >
-            <LinearGradient
-              colors={["#0D1F0A", "#0A0A0A", "#1A0A2E"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.heroGradient}
-            >
+            <View style={styles.heroContent}>
               {/* Top Row: Badge + Live Indicator */}
               <View style={styles.heroTopRow}>
                 <View style={styles.giaBadge}>
                   <Ionicons name="sparkles" size={14} color="#8B5CF6" />
-                  <Text style={styles.giaBadgeText}>GIA</Text>
+                  <Text style={styles.giaBadgeText}>GIA INSIGHT</Text>
                 </View>
                 <View style={styles.liveIndicator}>
                   <View style={styles.liveDot} />
@@ -310,58 +347,48 @@ export default function HomeScreen() {
               {/* Main Content: Venue-Specific Prediction */}
               <View style={styles.heroMain}>
                 <View style={styles.venueRow}>
-                  <Ionicons name="location" size={16} color={colors.primary} />
                   <Text style={styles.venueName}>{nearestCourt.name}</Text>
                   <Text style={styles.venueDistance}>
-                    {nearestCourt.distance ? `${nearestCourt.distance.toFixed(1)} mi` : "nearby"}
+                    • {nearestCourt.distance ? `${nearestCourt.distance.toFixed(1)} mi` : "nearby"}
                   </Text>
                 </View>
                 <Text style={styles.heroBigText}>
-                  {predictions[0]?.level === 'quiet' ? "QUIET" :
-                    predictions[0]?.level === 'active' ? "ACTIVE" :
-                      predictions[0]?.level === 'busy' ? "BUSY" : "PACKED"}
+                  {predictions[0]?.level === 'quiet' ? "Quiet" :
+                    predictions[0]?.level === 'active' ? "Active" :
+                      predictions[0]?.level === 'busy' ? "Busy" : "Packed"}
                 </Text>
                 <Text style={styles.heroConfidence}>
-                  {predictions[0]?.level === 'quiet' ? '2 players • Perfect for pickup' :
-                    predictions[0]?.level === 'active' ? '5 players • Games happening' :
-                      predictions[0]?.level === 'busy' ? '8 players • Getting crowded' :
-                        '12+ players • Full courts'}
+                  {predictions[0]?.level === 'quiet' ? 'Perfect for pickup games.' :
+                    predictions[0]?.level === 'active' ? 'Games happening now.' :
+                      predictions[0]?.level === 'busy' ? 'Getting crowded.' :
+                        'Full courts expected.'}
                 </Text>
               </View>
 
               {/* Activity Timeline - Horizontal bars */}
               <View style={styles.heroTimeline}>
-                <Text style={styles.timelineTitle}>Next 6 hours</Text>
                 <View style={styles.timelineBars}>
                   {predictions.map((pred, index) => (
                     <View key={index} style={styles.timelineItem}>
                       <View style={[
                         styles.timelineBar,
                         {
-                          height: pred.level === 'quiet' ? 20 :
-                            pred.level === 'active' ? 28 :
-                              pred.level === 'busy' ? 38 : 48,
-                          backgroundColor: pred.color,
-                          opacity: pred.isNow ? 1 : 0.7,
+                          height: pred.level === 'quiet' ? 24 :
+                            pred.level === 'active' ? 32 :
+                              pred.level === 'busy' ? 44 : 56,
+                          backgroundColor: pred.isNow ? '#FFFFFF' : '#333333',
+                          opacity: 1,
                         },
-                        pred.isNow && styles.timelineBarNow,
                       ]} />
                       <Text style={[
                         styles.timelineLabel,
-                        pred.isNow && styles.timelineLabelNow
+                        pred.isNow && { color: '#FFF', fontFamily: 'Inter_700Bold' }
                       ]}>{pred.hour}</Text>
                     </View>
                   ))}
                 </View>
               </View>
-
-              {/* Bottom: Tap hint */}
-              <View style={styles.heroBottom}>
-                <Ionicons name="map-outline" size={16} color={colors.textMuted} />
-                <Text style={styles.heroHint}>Tap to see live court map</Text>
-                <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-              </View>
-            </LinearGradient>
+            </View>
           </TouchableOpacity>
 
           {/* ===== FRIENDS ACTIVE ===== */}
@@ -378,32 +405,25 @@ export default function HomeScreen() {
 
             {/* Court List */}
             <View style={styles.courtList}>
-              {[
-                { name: "Riverside Park", distance: "0.3 mi", activity: "high" },
-                { name: "Central Courts", distance: "0.7 mi", activity: "medium" },
-                { name: "Oak Street Park", distance: "1.2 mi", activity: "low" },
-              ].map((court, i) => (
-                <TouchableOpacity
-                  key={i}
-                  style={[styles.courtItem, i === 2 && { borderBottomWidth: 0 }]}
-                  onPress={() => handlePress(() => router.push("/(tabs)/live"))}
-                >
-                  <View style={styles.courtLeft}>
-                    <View style={[
-                      styles.activityIndicator,
-                      {
-                        backgroundColor: court.activity === "high" ? "#7ED957" :
-                          court.activity === "medium" ? "#FBBF24" : "#6B7280"
-                      }
-                    ]} />
-                    <View>
-                      <Text style={styles.courtName}>{court.name}</Text>
-                      <Text style={styles.courtDistance}>{court.distance}</Text>
+              {SAMPLE_COURTS.slice(0, 3).map((court, i) => {
+                const dist = location ? calculateDistance(location.lat, location.lng, court.lat, court.lng) : 0
+                return (
+                  <TouchableOpacity
+                    key={court.id}
+                    style={[styles.courtItem, i === 2 && { borderBottomWidth: 0 }]}
+                    onPress={() => handlePress(() => router.push(`/venues/${court.id}`))}
+                  >
+                    <View style={styles.courtLeft}>
+                      <View style={[styles.activityIndicator, { backgroundColor: "#7ED957" }]} />
+                      <View>
+                        <Text style={styles.courtName}>{court.name}</Text>
+                        <Text style={styles.courtDistance}>{dist.toFixed(1)} mi</Text>
+                      </View>
                     </View>
-                  </View>
-                  <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-                </TouchableOpacity>
-              ))}
+                    <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                  </TouchableOpacity>
+                )
+              })}
             </View>
           </View>
 
@@ -512,7 +532,15 @@ export default function HomeScreen() {
         feature=""
         description=""
       />
-    </LinearGradient >
+
+      {/* Play Request Modal */}
+      <PlayRequestModal
+        sport={primaryActivity}
+        visible={showPlayRequest}
+        onClose={() => setShowPlayRequest(false)}
+        location={nearestCourt?.name}
+      />
+    </View>
   )
 }
 
@@ -596,102 +624,206 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
 
+  // Recovery Hub
+  recoveryHub: {
+    backgroundColor: "#141414",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#1F1F1F",
+  },
+  recoveryHubHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  recoveryHubLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  recoveryHubTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#FFF",
+  },
+  recoveryScoreBadge: {
+    backgroundColor: "rgba(126, 217, 87, 0.2)",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  recoveryScoreText: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#7ED957",
+  },
+  recoveryQuickStats: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+    paddingVertical: 16,
+  },
+  recoveryQuickStat: {
+    alignItems: "center",
+  },
+  recoveryQuickValue: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#FFF",
+  },
+  recoveryQuickLabel: {
+    fontSize: 11,
+    color: "#888",
+    marginTop: 2,
+  },
+  recoveryQuickDivider: {
+    width: 1,
+    height: 30,
+    backgroundColor: "#333",
+  },
+  recoveryTapHint: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: "#222",
+  },
+  recoveryTapText: {
+    fontSize: 12,
+    color: "#666",
+  },
+  recoveryHubDesc: {
+    fontSize: 13,
+    color: "#9CA3AF",
+    lineHeight: 18,
+  },
+  connectHealthBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#7ED957",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  connectHealthText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#000",
+  },
+
+  // Need Players Button
+  needPlayersBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    backgroundColor: "#EF4444",
+    paddingVertical: 14,
+    borderRadius: 16,
+    marginBottom: 24,
+  },
+  needPlayersText: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#FFF",
+    flex: 1,
+    textAlign: "center",
+  },
+
   // Hero Card
   heroCard: {
     borderRadius: 24,
-    overflow: "hidden",
-    marginBottom: 24,
+    marginBottom: 32,
+    backgroundColor: '#171717', // Subtle card bg
   },
-  heroGradient: {
-    padding: 20,
-    borderWidth: 1,
-    borderColor: "rgba(139, 92, 246, 0.3)",
-    borderRadius: 24,
+  heroContent: {
+    padding: 24,
   },
   heroTopRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 24,
   },
   giaBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(139, 92, 246, 0.2)",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
     gap: 6,
   },
   giaBadgeText: {
-    fontSize: 13,
+    fontSize: 12,
     fontFamily: "Inter_700Bold",
-    color: "#8B5CF6",
+    color: "#A78BFA",
+    letterSpacing: 0.5,
   },
   liveIndicator: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
   liveDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
     backgroundColor: "#EF4444",
   },
   liveText: {
-    fontSize: 11,
+    fontSize: 10,
     fontFamily: "Inter_700Bold",
     color: "#EF4444",
-    letterSpacing: 1,
+    letterSpacing: 0.5,
   },
   heroMain: {
-    alignItems: "center",
-    marginBottom: 24,
+    alignItems: "flex-start", // Left align for more serious data feel
+    marginBottom: 32,
   },
   venueRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "baseline",
     gap: 6,
-    marginBottom: 12,
+    marginBottom: 8,
   },
   venueName: {
     fontSize: 16,
     fontFamily: "Inter_600SemiBold",
-    color: colors.textPrimary,
+    color: '#FFF',
   },
   venueDistance: {
     fontSize: 14,
     fontFamily: "Inter_400Regular",
-    color: colors.textMuted,
+    color: '#737373',
   },
   heroBigText: {
-    fontSize: 56,
+    fontSize: 48,
     fontFamily: "Inter_700Bold",
-    color: colors.primary,
-    letterSpacing: -2,
+    color: '#FFF', // White instead of Green for clean look
+    letterSpacing: -1.5,
+    marginBottom: 4,
   },
   heroConfidence: {
-    fontSize: 14,
-    fontFamily: "Inter_500Medium",
-    color: colors.textSecondary,
-    marginTop: 8,
+    fontSize: 15,
+    fontFamily: "Inter_400Regular",
+    color: '#A3A3A3',
   },
   heroTimeline: {
-    marginBottom: 16,
-  },
-  timelineTitle: {
-    fontSize: 12,
-    fontFamily: "Inter_500Medium",
-    color: colors.textMuted,
-    marginBottom: 12,
+    marginBottom: 0,
   },
   timelineBars: {
     flexDirection: "row",
     alignItems: "flex-end",
     justifyContent: "space-between",
     height: 60,
-    gap: 6,
+    gap: 4,
   },
   timelineItem: {
     flex: 1,
@@ -699,95 +831,65 @@ const styles = StyleSheet.create({
   },
   timelineBar: {
     width: "100%",
-    borderRadius: 6,
-    minHeight: 20,
-  },
-  timelineBarNow: {
-    borderWidth: 2,
-    borderColor: "#FFFFFF",
-  },
-  timelineLabel: {
-    fontSize: 10,
-    fontFamily: "Inter_500Medium",
-    color: colors.textMuted,
-    marginTop: 8,
-  },
-  timelineLabelNow: {
-    color: "#FFFFFF",
-    fontFamily: "Inter_700Bold",
-  },
-  heroBottom: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: "rgba(255, 255, 255, 0.1)",
-  },
-  heroHint: {
-    fontSize: 13,
-    fontFamily: "Inter_400Regular",
-    color: colors.textMuted,
+    borderRadius: 4,
+    minHeight: 4,
   },
 
 
   // Section
   section: {
-    marginBottom: 24,
+    marginBottom: 32,
   },
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 16, // Increased spacing
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 16, // Smaller, more refined headers
     fontFamily: "Inter_600SemiBold",
-    color: colors.textPrimary,
-    marginBottom: 12,
+    color: '#FFF',
+    letterSpacing: -0.3,
   },
   seeAll: {
     fontSize: 14,
     fontFamily: "Inter_500Medium",
-    color: colors.primary,
+    color: colors.primary, // Keep actionable color
   },
 
   // Court List
   courtList: {
-    backgroundColor: colors.card,
-    borderRadius: 16,
-    overflow: "hidden",
+    backgroundColor: 'transparent', // Remove container background
+    gap: 16, // Spacing between items instead of borders
   },
   courtItem: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.cardBorder,
+    padding: 0, // Remove padding
+    borderBottomWidth: 0, // Remove dividers
   },
   courtLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 16,
   },
   activityIndicator: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   courtName: {
     fontSize: 16,
     fontFamily: "Inter_500Medium",
-    color: colors.textPrimary,
+    color: '#E5E5E5',
+    marginBottom: 2,
   },
   courtDistance: {
     fontSize: 13,
     fontFamily: "Inter_400Regular",
-    color: colors.textMuted,
-    marginTop: 2,
+    color: '#737373',
   },
 
   // Actions Grid
@@ -798,23 +900,23 @@ const styles = StyleSheet.create({
   },
   actionCard: {
     width: (width - 52) / 2,
-    backgroundColor: colors.card,
-    borderRadius: 16,
-    padding: 20,
-    alignItems: "center",
+    backgroundColor: '#171717', // Subtle card
+    borderRadius: 20,
+    padding: 24,
+    alignItems: "flex-start", // Left align content
   },
   actionIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 12,
+    marginBottom: 16,
   },
   actionLabel: {
-    fontSize: 14,
+    fontSize: 15,
     fontFamily: "Inter_500Medium",
-    color: colors.textPrimary,
+    color: '#FFF',
   },
 
   // Earn Banner
@@ -822,68 +924,68 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: colors.card,
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    marginBottom: 24,
+    backgroundColor: '#171717',
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 40,
   },
   earnLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 16,
   },
   earnIconContainer: {
-    width: 44,
-    height: 44,
+    width: 40,
+    height: 40,
     borderRadius: 12,
-    backgroundColor: "rgba(126, 217, 87, 0.15)",
+    backgroundColor: "rgba(34, 197, 94, 0.1)", // Subtle green background
     alignItems: "center",
     justifyContent: "center",
   },
   earnTitle: {
     fontSize: 16,
     fontFamily: "Inter_600SemiBold",
-    color: colors.textPrimary,
+    color: '#FFF',
   },
   earnSubtitle: {
     fontSize: 13,
     fontFamily: "Inter_400Regular",
-    color: colors.textMuted,
+    color: '#737373',
     marginTop: 2,
   },
 
   // Guest Banner
   guestBanner: {
     position: "absolute",
-    bottom: 100,
+    bottom: 40,
     left: 20,
     right: 20,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "rgba(126, 217, 87, 0.1)",
-    borderRadius: 12,
+    backgroundColor: '#262626',
+    borderRadius: 16,
     padding: 16,
-    borderWidth: 1,
-    borderColor: "rgba(126, 217, 87, 0.2)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
   },
   guestLabel: {
-    fontSize: 12,
+    fontSize: 13,
     fontFamily: "Inter_600SemiBold",
-    color: colors.primary,
+    color: '#FFF',
   },
   guestDesc: {
-    fontSize: 12,
+    fontSize: 13,
     fontFamily: "Inter_400Regular",
-    color: colors.textSecondary,
+    color: '#A3A3A3',
   },
   signUpButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: '#FFF',
     paddingHorizontal: 20,
     paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: 10,
   },
   signUpText: {
     fontSize: 14,
@@ -895,36 +997,33 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(126, 217, 87, 0.1)",
+    backgroundColor: "transparent",
     borderRadius: 10,
     paddingVertical: 10,
     paddingHorizontal: 16,
-    marginHorizontal: 20,
+    marginHorizontal: 0,
     marginBottom: 12,
     gap: 8,
-    borderWidth: 1,
-    borderColor: "rgba(126, 217, 87, 0.2)",
   },
   modeToggleText: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#7ED957",
+    color: colors.primary,
   },
 
   // Upcoming Booking Card
   upcomingBooking: {
-    borderRadius: 16,
+    borderRadius: 24,
     overflow: "hidden",
-    marginBottom: 16,
+    marginBottom: 24,
   },
   upcomingGradient: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "rgba(126, 217, 87, 0.3)",
-    borderRadius: 16,
+    padding: 24,
+    backgroundColor: '#171717', // Flat subtle bg
+    borderRadius: 24,
   },
   upcomingLeft: {
     flex: 1,
@@ -938,18 +1037,19 @@ const styles = StyleSheet.create({
   upcomingBadgeText: {
     fontSize: 11,
     fontWeight: "700",
-    color: "#7ED957",
+    color: colors.primary,
     letterSpacing: 1,
   },
   upcomingVenue: {
     fontSize: 18,
-    fontWeight: "700",
+    fontWeight: "600",
     color: "#FFF",
     marginBottom: 4,
+    letterSpacing: -0.5,
   },
   upcomingDetails: {
     fontSize: 14,
-    color: "#888",
+    color: "#737373",
   },
   upcomingRight: {
     alignItems: "center",
@@ -957,7 +1057,8 @@ const styles = StyleSheet.create({
   },
   upcomingTime: {
     fontSize: 20,
-    fontWeight: "700",
-    color: "#7ED957",
+    fontWeight: "600",
+    color: colors.primary,
+    letterSpacing: -0.5,
   },
 })

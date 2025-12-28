@@ -8,7 +8,6 @@
 import { View, Text, TouchableOpacity, StyleSheet, Share, Alert, Modal, TextInput } from "react-native"
 import { useState } from "react"
 import { Ionicons } from "@expo/vector-icons"
-import * as SMS from "expo-sms"
 import * as Haptics from "expo-haptics"
 import { LinearGradient } from "expo-linear-gradient"
 
@@ -34,24 +33,19 @@ export function PlayInvite({ courtName, courtId, sport = "Basketball", onInviteS
         return `🏀 Yo! I'm heading ${courtText}${timeText}. Come play ${sport.toLowerCase()} with me!${custom}\n\n${deepLink}`
     }
 
+    // Use native Share API (opens share sheet where user can choose Messages)
     const handleSendSMS = async () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
 
-        const isAvailable = await SMS.isAvailableAsync()
-        if (!isAvailable) {
-            Alert.alert("SMS not available", "Your device doesn't support SMS")
-            return
-        }
-
-        const { result } = await SMS.sendSMSAsync(
-            [], // Empty - user chooses contacts
-            getInviteMessage()
-        )
-
-        if (result === "sent") {
+        try {
+            await Share.share({
+                message: getInviteMessage(),
+            })
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
             setModalVisible(false)
             onInviteSent?.()
+        } catch (error) {
+            Alert.alert("Error", "Failed to share. Please try again.")
         }
     }
 

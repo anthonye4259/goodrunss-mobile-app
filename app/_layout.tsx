@@ -13,8 +13,8 @@ import { AuthProvider, useAuth } from "@/lib/auth-context"
 import { useDeepLinking } from "@/lib/services/deep-linking"
 import { setupTrainerRealTimeSync, setupClientRealTimeSync, unsubscribeAll } from "@/lib/services/realtime-sync"
 import { View, ActivityIndicator, Text } from "react-native"
-import { ToastProvider } from "@/components/UI/Toast"
-import { NudgesProvider } from "@/components/UI/OnboardingNudges"
+import { ToastProvider } from "@/components/ui/Toast"
+import { NudgesProvider } from "@/components/ui/OnboardingNudges"
 import {
   useFonts,
   Inter_400Regular,

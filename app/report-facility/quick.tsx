@@ -7,7 +7,7 @@ import { useAuth } from "@/lib/auth-context"
 import { venueService } from "@/lib/services/venue-service"
 import * as Haptics from "expo-haptics"
 import { ImageService } from "@/lib/image-service"
-import { useUserLocation } from "@/lib/services/location-service"
+import { useUserLocation } from "@/lib/location-context"
 
 // Quick nearby courts for selection
 const NEARBY_COURTS = [

@@ -125,7 +125,7 @@ export default function TabLayout() {
         <Tabs.Screen name="trainers" options={{ href: null }} />
       </Tabs>
 
-      {/* Floating Action Buttons */}
+      {/* Floating Action Buttons - Cal.ai Aesthetic */}
       <GIAFloatingButton hidden={isFacility || isTrainer} />
       <QuickReportFloatingButton hidden={isFacility} />
     </>

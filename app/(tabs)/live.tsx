@@ -7,7 +7,7 @@ import { useUserPreferences } from "@/lib/user-preferences"
 import { getActivityContent, getPrimaryActivity, type Activity } from "@/lib/activity-content"
 import { getVenuesForSport, Venue } from "@/lib/venue-data"
 import { venueService } from "@/lib/services/venue-service"
-import { useUserLocation } from "@/lib/services/location-service"
+import { useUserLocation } from "@/lib/location-context"
 import { router } from "expo-router"
 import * as Haptics from "expo-haptics"
 import { SafeAreaView } from "react-native-safe-area-context"
@@ -24,8 +24,8 @@ import { DemandHeatmap } from "@/components/Live/DemandHeatmap"
 // Sample venues for fallback (always available)
 import { GiaSpaceFinder } from "@/components/Live/GiaSpaceFinder"
 import { PlayersAlsoLiked } from "@/components/Widgets/PlayersAlsoLiked"
-import { ShareCourtButton } from "@/components/UI/ShareCourtButton"
-import { SkeletonCard } from "@/components/UI/SkeletonLoader"
+import { ShareCourtButton } from "@/components/ui/ShareCourtButton"
+import { SkeletonCard } from "@/components/ui/SkeletonLoader"
 
 const SAMPLE_VENUES: Venue[] = [
   {

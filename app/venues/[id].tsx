@@ -37,6 +37,11 @@ import { CrowdLevelBadge, CrowdLevelChart, CheckInPrompt } from "@/components/Cr
 import { ShareCourtTraffic } from "@/components/Social/ShareCourtTraffic"
 import { PlayInvite } from "@/components/Social/PlayInvite"
 import { WhereImHeaded } from "@/components/Social/WhereImHeaded"
+import { ShareCourtStatus } from "@/components/Social/ShareCourtStatus"
+
+// Live Data Components
+import { HistoricalComparison } from "@/components/Live/HistoricalComparison"
+import { QuickReportSheet } from "@/components/QuickReportSheet"
 
 
 export default function VenueDetailScreen() {
@@ -398,7 +403,13 @@ export default function VenueDetailScreen() {
               <View className="mb-6">
                 <SportStatusCard
                   context={sportContext}
-                  onReportPress={() => setShowQuickReport(true)}
+                  onReportPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+                    router.push({
+                      pathname: "/report/[id]",
+                      params: { id: typeof id === "string" ? id : "", name: venue.name }
+                    })
+                  }}
                 />
 
                 {/* 🤖 GIA Predictions */}
@@ -485,6 +496,16 @@ export default function VenueDetailScreen() {
                   <View className="bg-primary rounded-full w-3 h-3 animate-pulse" />
                 </View>
 
+                {/* Historical Comparison */}
+                <View className="mb-3">
+                  <HistoricalComparison
+                    playersNow={activePlayers.reduce((sum, p) => sum + p.count, 0)}
+                    historicalAverage={8} // TODO: Get from analytics
+                    dayName={new Date().toLocaleDateString('en-US', { weekday: 'long' })}
+                    timeLabel={new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                  />
+                </View>
+
                 {activePlayers.map((player) => (
                   <View key={player.id} className="flex-row items-center justify-between py-2 border-t border-border">
                     <View className="flex-row items-center">
@@ -498,6 +519,16 @@ export default function VenueDetailScreen() {
                     </Text>
                   </View>
                 ))}
+
+                {/* Share Status Button */}
+                <View className="mt-3 pt-3 border-t border-border">
+                  <ShareCourtStatus
+                    venueName={venue.name}
+                    sport={primaryActivity}
+                    playersNow={activePlayers.reduce((sum, p) => sum + p.count, 0)}
+                    status={activePlayers.reduce((sum, p) => sum + p.count, 0) > 10 ? "busy" : activePlayers.reduce((sum, p) => sum + p.count, 0) > 5 ? "moderate" : "quiet"}
+                  />
+                </View>
               </View>
             )}
 
@@ -857,20 +888,7 @@ export default function VenueDetailScreen() {
           venueName={venue.name}
         />
 
-        {/* Quick Report Modal */}
-        <QuickCourtReportModal
-          venueId={typeof id === "string" ? id : ""}
-          venueName={venue.name}
-          userId={user?.id || "guest"}
-          visible={showQuickReport}
-          onClose={() => setShowQuickReport(false)}
-          onReportSubmitted={() => {
-            // Refresh sport context after report
-            if (typeof id === "string") {
-              loadSportContext(id, venue)
-            }
-          }}
-        />
+
       </LinearGradient>
     </ErrorBoundary>
   )

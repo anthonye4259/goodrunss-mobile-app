@@ -135,9 +135,6 @@
         "projectId": "b63887f4-0f38-4414-8597-47548483ad9f"
       }
     },
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
     "updates": {
       "url": ""
     }

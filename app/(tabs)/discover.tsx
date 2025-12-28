@@ -33,6 +33,8 @@ import { useLocation } from "@/lib/location-context"
 import { venueService } from "@/lib/services/venue-service"
 import { PremiumVisibilityCard } from "@/components/Premium/PremiumVisibilityCard"
 import { LiveTrafficBadge } from "@/components/Live/LiveTrafficBadge"
+import { SwipeReportCard } from "@/components/Live/SwipeReportCard"
+import { QuickReportSheet } from "@/components/QuickReportSheet"
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window")
 const CARD_WIDTH = SCREEN_WIDTH * 0.7
@@ -45,6 +47,8 @@ const PHASE_1_CITIES = [
     { name: "New York", lat: 40.7128, lng: -74.006, intensity: 0.95 },
     { name: "Los Angeles", lat: 34.0522, lng: -118.2437, intensity: 0.88 },
     { name: "Chicago", lat: 41.8781, lng: -87.6298, intensity: 0.82 },
+    { name: "Houston", lat: 29.7604, lng: -95.3698, intensity: 0.85 },
+    { name: "Dallas", lat: 32.7767, lng: -96.7970, intensity: 0.84 },
 ]
 
 // Authorized mock data for warm leads
@@ -72,8 +76,12 @@ export default function DiscoverScreen() {
     // State for real data
     const [nearbyVenues, setNearbyVenues] = useState<any[]>([])
     const [trendingVenues, setTrendingVenues] = useState<any[]>([])
+    const [giaOpenFacilities, setGiaOpenFacilities] = useState<any[]>([])
     const [trainers, setTrainers] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
+
+    // Quick Report Sheet state
+    const [reportVenue, setReportVenue] = useState<{ id: string; name: string } | null>(null)
 
     useEffect(() => {
         loadData()
@@ -89,11 +97,25 @@ export default function DiscoverScreen() {
 
             const venues = await venueService.getVenuesNearby({ lat, lng })
 
-            setNearbyVenues(venues)
+            // Fallback demo venues if service returns empty
+            const FALLBACK_VENUES = [
+                { id: "demo1", name: "Piedmont Park Courts", sport: "Tennis", distance: 0.8, rating: 4.7, activePlayersNow: 4, crowdLevel: "active" },
+                { id: "demo2", name: "Chastain Park Tennis", sport: "Tennis", distance: 1.2, rating: 4.9, activePlayersNow: 6, crowdLevel: "busy" },
+                { id: "demo3", name: "Grant Park Recreation", sport: "Basketball", distance: 1.5, rating: 4.5, activePlayersNow: 2, crowdLevel: "quiet" },
+                { id: "demo4", name: "Brookhaven Pickleball", sport: "Pickleball", distance: 2.1, rating: 4.6, activePlayersNow: 8, crowdLevel: "packed" },
+                { id: "demo5", name: "Morningside Fitness", sport: "Tennis", distance: 2.5, rating: 4.4, activePlayersNow: 3, crowdLevel: "active" },
+            ]
+
+            const finalVenues = venues.length > 0 ? venues : FALLBACK_VENUES
+            setNearbyVenues(finalVenues)
 
             // For now, trending is just the top rated ones
-            const trending = [...venues].sort((a, b) => b.rating - a.rating).slice(0, 5)
+            const trending = [...finalVenues].sort((a, b) => b.rating - a.rating).slice(0, 5)
             setTrendingVenues(trending)
+
+            // GIA Intelligence: Filter for open facilities (quiet/active)
+            const openFacilities = finalVenues.filter(v => v.crowdLevel === "quiet" || v.crowdLevel === "active")
+            setGiaOpenFacilities(openFacilities)
 
             // Trainers - empty for now until trainerService exists
             setTrainers([])
@@ -150,7 +172,7 @@ export default function DiscoverScreen() {
             style={styles.trainerCard}
             onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-                router.push(`/trainers/${item.id}`)
+                router.push(`/trainer/${item.id}`)
             }}
         >
             <LinearGradient
@@ -172,6 +194,21 @@ export default function DiscoverScreen() {
                     <Text style={styles.trainerRating}>{item.rating}</Text>
                 </View>
                 <Text style={styles.trainerPrice}>${item.price}/session</Text>
+
+                {/* Book Button - Separate action */}
+                <TouchableOpacity
+                    style={styles.trainerBookBtn}
+                    onPress={(e) => {
+                        e.stopPropagation()
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+                        router.push({
+                            pathname: "/book/[id]",
+                            params: { id: item.id, name: item.name }
+                        })
+                    }}
+                >
+                    <Text style={styles.trainerBookText}>Book</Text>
+                </TouchableOpacity>
             </LinearGradient>
         </TouchableOpacity>
     )
@@ -283,98 +320,16 @@ export default function DiscoverScreen() {
                         </TouchableOpacity>
                     </View>
 
-                    {/* Premium Visibility Card for Trainers/Facilities */}
-                    {(isTrainer || isFacility) && (
-                        <PremiumVisibilityCard
-                            userType={isFacility ? "facility" : "trainer"}
-                            onUpgrade={() => {
-                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy)
-                                router.push("/settings/subscription")
-                            }}
-                        />
-                    )}
-
-                    {/* Trending / Recommended */}
-                    {trendingVenues.length > 0 && (
-                        <View style={styles.section}>
-                            <SectionHeader title="🔥 TRENDING NEARBY" icon="flame" color="#F97316" onSeeAll={() => { }} />
-                            <FlatList
-                                horizontal
-                                data={trendingVenues}
-                                keyExtractor={(item) => item.id}
-                                renderItem={({ item }) => (
-                                    <View style={{ width: CARD_WIDTH, marginRight: CARD_SPACING }}>
-                                        <VenueCard item={item} />
-                                    </View>
-                                )}
-                                showsHorizontalScrollIndicator={false}
-                                contentContainerStyle={styles.horizontalList}
-                                snapToInterval={CARD_WIDTH + CARD_SPACING}
-                                decelerationRate="fast"
-                            />
-                        </View>
-                    )}
-
-                    {/* Nearby Venues (Replaces Free/College/Membership lists for now) */}
-                    <View style={styles.section}>
-                        <SectionHeader title="📍 NEARBY COURTS" icon="location" color="#22C55E" onSeeAll={() => { }} />
-                        <FlatList
-                            horizontal
-                            data={nearbyVenues}
-                            keyExtractor={(item) => item.id}
-                            renderItem={({ item }) => (
-                                <TouchableOpacity
-                                    style={styles.courtCardPremium}
-                                    onPress={() => {
-                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-                                        // router.push(`/venue/${item.id}`)
-                                    }}
-                                >
-                                    <LinearGradient
-                                        colors={["#0D260D", "#0A0A0A"]}
-                                        style={styles.courtCardGradient}
-                                    >
-                                        <LiveTrafficBadge
-                                            level={item.crowdLevel || "quiet"}
-                                            playersNow={item.activePlayersNow || 0}
-                                            size="small"
-                                        />
-
-                                        <View style={[styles.courtIconCircle, { backgroundColor: "rgba(34, 197, 94, 0.15)", borderColor: "#22C55E40" }]}>
-                                            <Ionicons name="tennisball" size={28} color="#22C55E" />
-                                        </View>
-
-                                        <Text style={styles.courtCardName} numberOfLines={1}>{item.name}</Text>
-                                        <Text style={styles.courtCardSport}>{item.sport}</Text>
-
-                                        <View style={styles.courtCardFooter}>
-                                            <View style={styles.courtCardMeta}>
-                                                <Ionicons name="location" size={12} color="#666" />
-                                                <Text style={styles.courtCardDistance}>{item.distance?.toFixed(1)} mi</Text>
-                                            </View>
-                                        </View>
-                                    </LinearGradient>
-                                </TouchableOpacity>
-                            )}
-                            showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={styles.horizontalList}
-                            snapToInterval={180}
-                            decelerationRate="fast"
-                        />
-                    </View>
-
-
-
-                    {/* =========== OTHER SECTIONS =========== */}
-
-
-
-                    {/* Conditional Section: Warm Leads (trainer) or Top Trainers (player) */}
-                    <View style={styles.section}>
-                        {isTrainer || isFacility ? (
-                            <>
+                    {/* Main Content Area - Conditional based on Persona */}
+                    {isTrainer ? (
+                        // ============================================
+                        // 🏋️ TRAINER DISCOVER FEED
+                        // ============================================
+                        <>
+                            {/* 1. Player Hot Leads (Top) */}
+                            <View style={styles.section}>
                                 <SectionHeader
-                                    title="🔥 WARM LEADS"
+                                    title="🔥 PLAYER HOT LEADS"
                                     icon="flame"
                                     color="#FF6B6B"
                                     onSeeAll={() => router.push("/facility/dashboard")}
@@ -389,25 +344,284 @@ export default function DiscoverScreen() {
                                     snapToInterval={150}
                                     decelerationRate="fast"
                                 />
-                            </>
-                        ) : (
-                            trainers.length > 0 ? (
-                                <>
-                                    <SectionHeader title="TOP TRAINERS" icon="fitness" color="#8B5CF6" onSeeAll={() => { }} />
+                            </View>
+
+                            {/* 2. Top Facilities Near You */}
+                            <View style={styles.section}>
+                                <SectionHeader title="⭐ TOP FACILITIES NEAR YOU" icon="star" color="#FBBF24" />
+                                <FlatList
+                                    horizontal
+                                    data={trendingVenues}
+                                    keyExtractor={(item) => item.id}
+                                    renderItem={({ item }) => (
+                                        <View style={{ width: CARD_WIDTH, marginRight: CARD_SPACING }}>
+                                            <VenueCard item={item} />
+                                        </View>
+                                    )}
+                                    showsHorizontalScrollIndicator={false}
+                                    contentContainerStyle={styles.horizontalList}
+                                    snapToInterval={CARD_WIDTH + CARD_SPACING}
+                                    decelerationRate="fast"
+                                />
+                            </View>
+
+                            {/* 3. GIA Predicted Open Facilities (Avail to Train) */}
+                            <View style={styles.section}>
+                                <SectionHeader title="🔮 GIA OPEN FACILITIES" icon="sparkles" color="#8B5CF6" />
+                                <FlatList
+                                    horizontal
+                                    data={giaOpenFacilities}
+                                    keyExtractor={(item) => item.id}
+                                    renderItem={({ item }) => (
+                                        <TouchableOpacity
+                                            style={styles.courtCardPremium}
+                                            onPress={() => router.push(`/venues/${item.id}`)}
+                                        >
+                                            <LinearGradient
+                                                colors={["#1E1B4B", "#0A0A0A"]}
+                                                style={styles.courtCardGradient}
+                                            >
+                                                <LiveTrafficBadge
+                                                    level={item.crowdLevel}
+                                                    playersNow={item.activePlayersNow || 0}
+                                                    size="small"
+                                                    trend="quiet"
+                                                />
+                                                <Text style={styles.courtCardName} numberOfLines={1}>{item.name}</Text>
+                                                <View style={styles.vibeRow}>
+                                                    <Text style={[styles.vibeLabel, { color: "#8B5CF6" }]}>🔮 Predicted Open</Text>
+                                                </View>
+                                                <View style={styles.courtCardFooter}>
+                                                    <Text style={styles.courtCardDistance}>{item.distance?.toFixed(1)} mi</Text>
+                                                    <Ionicons name="arrow-forward" size={14} color="#8B5CF6" />
+                                                </View>
+                                            </LinearGradient>
+                                        </TouchableOpacity>
+                                    )}
+                                    showsHorizontalScrollIndicator={false}
+                                    contentContainerStyle={styles.horizontalList}
+                                    snapToInterval={180}
+                                    decelerationRate="fast"
+                                />
+                            </View>
+
+                            {/* 4. Facilities Available to Book */}
+                            <View style={styles.section}>
+                                <SectionHeader title="🏟️ FACILITIES TO BOOK" icon="business" color="#3B82F6" onSeeAll={() => router.push("/facilities")} />
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList}>
+                                    {nearbyVenues.filter(v => v.isBookable).map(item => (
+                                        <TouchableOpacity key={item.id} style={styles.miniCourtCard} onPress={() => router.push(`/venues/${item.id}`)}>
+                                            <View style={[styles.miniCourtIcon, { backgroundColor: "rgba(59, 130, 246, 0.15)" }]}><Ionicons name="business" size={20} color="#3B82F6" /></View>
+                                            <Text style={styles.miniCourtName} numberOfLines={1}>{item.name}</Text>
+                                            <Text style={styles.miniCourtMeta}>{item.distance?.toFixed(1)} mi</Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </ScrollView>
+                            </View>
+                        </>
+                    ) : (
+                        // ============================================
+                        // 🏀 PLAYER DISCOVER FEED
+                        // ============================================
+                        <>
+                            {/* Premium Visibility Card */}
+                            {(isFacility) && (
+                                <PremiumVisibilityCard
+                                    userType="facility"
+                                    onUpgrade={() => router.push("/settings/subscription")}
+                                />
+                            )}
+
+                            {/* Trending / Recommended */}
+                            {trendingVenues.length > 0 && (
+                                <View style={styles.section}>
+                                    <SectionHeader title="🔥 TRENDING NEARBY" icon="flame" color="#F97316" onSeeAll={() => { }} />
                                     <FlatList
                                         horizontal
-                                        data={trainers}
+                                        data={trendingVenues}
                                         keyExtractor={(item) => item.id}
-                                        renderItem={({ item }) => <TrainerCard item={item} />}
+                                        renderItem={({ item }) => (
+                                            <View style={{ width: CARD_WIDTH, marginRight: CARD_SPACING }}>
+                                                <VenueCard item={item} />
+                                            </View>
+                                        )}
                                         showsHorizontalScrollIndicator={false}
                                         contentContainerStyle={styles.horizontalList}
-                                        snapToInterval={140}
+                                        snapToInterval={CARD_WIDTH + CARD_SPACING}
                                         decelerationRate="fast"
                                     />
-                                </>
-                            ) : null
-                        )}
-                    </View>
+                                </View>
+                            )}
+
+                            {/* Nearby Venues */}
+                            <View style={styles.section}>
+                                <SectionHeader title="📍 NEARBY COURTS" icon="location" color="#22C55E" onSeeAll={() => { }} />
+                                <FlatList
+                                    horizontal
+                                    data={nearbyVenues}
+                                    keyExtractor={(item) => item.id}
+                                    renderItem={({ item }) => (
+                                        <TouchableOpacity
+                                            style={styles.courtCardPremium}
+                                            onPress={() => {
+                                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                                                router.push(`/venues/${item.id}`)
+                                            }}
+                                            onLongPress={() => {
+                                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+                                                router.push({
+                                                    pathname: "/report/[id]",
+                                                    params: { id: item.id, name: item.name }
+                                                })
+                                            }}
+                                        >
+                                            <LinearGradient
+                                                colors={["#0D260D", "#0A0A0A"]}
+                                                style={styles.courtCardGradient}
+                                            >
+                                                <LiveTrafficBadge
+                                                    level={item.crowdLevel || "quiet"}
+                                                    playersNow={item.activePlayersNow || 0}
+                                                    size="small"
+                                                    trend={item.trend || "stable"}
+                                                />
+                                                <View style={[styles.courtIconCircle, { backgroundColor: "rgba(34, 197, 94, 0.15)", borderColor: "#22C55E40" }]}>
+                                                    <Ionicons name="tennisball" size={28} color="#22C55E" />
+                                                </View>
+                                                <Text style={styles.courtCardName} numberOfLines={1}>{item.name}</Text>
+                                                <View style={styles.vibeRow}>
+                                                    <Text style={[styles.vibeLabel, { color: item.crowdLevel === "quiet" ? "#22C55E" : item.crowdLevel === "busy" ? "#F97316" : "#FBBF24" }]}>
+                                                        {item.crowdLevel === "quiet" ? "🟢 Wide Open" :
+                                                            item.crowdLevel === "busy" ? "🔴 Crowded" : "🟡 Active"}
+                                                    </Text>
+                                                    {item.runQuality && (
+                                                        <View style={{ marginLeft: 8, backgroundColor: "rgba(139, 92, 246, 0.2)", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+                                                            <Text style={{ color: "#A78BFA", fontSize: 10, fontWeight: "700" }}>{item.runQuality}</Text>
+                                                        </View>
+                                                    )}
+                                                </View>
+                                                <View style={styles.courtCardFooter}>
+                                                    <View style={styles.courtCardMeta}>
+                                                        <Ionicons name="location" size={12} color="#666" />
+                                                        <Text style={styles.courtCardDistance}>{item.distance?.toFixed(1)} mi</Text>
+                                                    </View>
+                                                    <View style={styles.liveTrafficFooter}>
+                                                        <View style={[styles.liveTrafficDotSmall, {
+                                                            backgroundColor: item.crowdLevel === "quiet" ? "#22C55E" :
+                                                                item.crowdLevel === "busy" ? "#F97316" : "#FBBF24"
+                                                        }]} />
+                                                        <Text style={styles.liveTrafficFooterText}>
+                                                            {item.activePlayersNow || 0} now
+                                                        </Text>
+                                                    </View>
+                                                </View>
+                                            </LinearGradient>
+                                        </TouchableOpacity>
+                                    )}
+                                    showsHorizontalScrollIndicator={false}
+                                    contentContainerStyle={styles.horizontalList}
+                                    snapToInterval={180}
+                                    decelerationRate="fast"
+                                />
+                            </View>
+
+                            {/* Book Trainers */}
+                            <View style={styles.section}>
+                                <SectionHeader title="🏋️ TRAINERS TO BOOK" icon="fitness" color="#EC4899" onSeeAll={() => router.push("/trainers")} />
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList}>
+                                    {trainers.length > 0 ? (
+                                        trainers.map(item => (
+                                            <TouchableOpacity key={item.id} style={styles.miniCourtCard} onPress={() => router.push(`/trainer/${item.id}`)}>
+                                                <View style={[styles.miniCourtIcon, { backgroundColor: "rgba(236, 72, 153, 0.15)" }]}><Ionicons name="person" size={20} color="#EC4899" /></View>
+                                                <Text style={styles.miniCourtName} numberOfLines={1}>{item.name}</Text>
+                                                <Text style={styles.miniCourtMeta}>${item.price}/hr</Text>
+                                            </TouchableOpacity>
+                                        ))
+                                    ) : (
+                                        <View style={styles.comingSoonCard}>
+                                            <Ionicons name="time-outline" size={24} color="#666" />
+                                            <Text style={styles.comingSoonText}>Trainers coming soon</Text>
+                                        </View>
+                                    )}
+                                </ScrollView>
+                            </View>
+
+                            {/* Book Facilities */}
+                            <View style={styles.section}>
+                                <SectionHeader title="🏟️ FACILITIES TO BOOK" icon="business" color="#3B82F6" onSeeAll={() => router.push("/facilities")} />
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList}>
+                                    {nearbyVenues.filter(v => v.isBookable).length > 0 ? (
+                                        nearbyVenues.filter(v => v.isBookable).map(item => (
+                                            <TouchableOpacity key={item.id} style={styles.miniCourtCard} onPress={() => router.push(`/venues/${item.id}`)}>
+                                                <View style={[styles.miniCourtIcon, { backgroundColor: "rgba(59, 130, 246, 0.15)" }]}><Ionicons name="business" size={20} color="#3B82F6" /></View>
+                                                <Text style={styles.miniCourtName} numberOfLines={1}>{item.name}</Text>
+                                                <Text style={styles.miniCourtMeta}>{item.distance?.toFixed(1)} mi</Text>
+                                            </TouchableOpacity>
+                                        ))
+                                    ) : (
+                                        <View style={styles.comingSoonCard}>
+                                            <Ionicons name="time-outline" size={24} color="#666" />
+                                            <Text style={styles.comingSoonText}>Bookable facilities coming soon</Text>
+                                        </View>
+                                    )}
+                                </ScrollView>
+                            </View>
+
+                            {/* Free Courts */}
+                            <View style={styles.section}>
+                                <SectionHeader title="🆓 FREE COURTS" icon="tennisball" color="#22C55E" />
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList}>
+                                    {nearbyVenues.filter(v => !v.price || v.price === "Free" || v.price === "$0").slice(0, 6).map(item => (
+                                        <TouchableOpacity key={item.id} style={styles.miniCourtCard} onPress={() => router.push(`/venues/${item.id}`)}>
+                                            <View style={[styles.miniCourtIcon, { backgroundColor: "rgba(34, 197, 94, 0.15)" }]}><Ionicons name="tennisball" size={20} color="#22C55E" /></View>
+                                            <Text style={styles.miniCourtName} numberOfLines={1}>{item.name}</Text>
+                                            <Text style={styles.miniCourtMeta}>Free • {item.distance?.toFixed(1)} mi</Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </ScrollView>
+                            </View>
+
+                            {/* Paid Courts */}
+                            <View style={styles.section}>
+                                <SectionHeader title="💳 PAID COURTS" icon="card" color="#8B5CF6" />
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList}>
+                                    {nearbyVenues.filter(v => v.price && v.price !== "Free" && v.price !== "$0").slice(0, 6).map(item => (
+                                        <TouchableOpacity key={item.id} style={styles.miniCourtCard} onPress={() => router.push(`/venues/${item.id}`)}>
+                                            <View style={[styles.miniCourtIcon, { backgroundColor: "rgba(139, 92, 246, 0.15)" }]}><Ionicons name="card" size={20} color="#8B5CF6" /></View>
+                                            <Text style={styles.miniCourtName} numberOfLines={1}>{item.name}</Text>
+                                            <Text style={styles.miniCourtMeta}>{item.price} • {item.distance?.toFixed(1)} mi</Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                    {nearbyVenues.filter(v => v.price && v.price !== "Free" && v.price !== "$0").length === 0 && (
+                                        <View style={styles.comingSoonCard}>
+                                            <Ionicons name="card-outline" size={24} color="#666" />
+                                            <Text style={styles.comingSoonText}>Paid courts coming soon</Text>
+                                        </View>
+                                    )}
+                                </ScrollView>
+                            </View>
+
+                            {/* College Courts */}
+                            <View style={styles.section}>
+                                <SectionHeader title="🎓 COLLEGE COURTS" icon="school" color="#F59E0B" />
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList}>
+                                    {nearbyVenues.filter(v => v.name?.toLowerCase().includes("university") || v.name?.toLowerCase().includes("college") || v.type?.toLowerCase().includes("campus")).slice(0, 6).map(item => (
+                                        <TouchableOpacity key={item.id} style={styles.miniCourtCard} onPress={() => router.push(`/venues/${item.id}`)}>
+                                            <View style={[styles.miniCourtIcon, { backgroundColor: "rgba(245, 158, 11, 0.15)" }]}><Ionicons name="school" size={20} color="#F59E0B" /></View>
+                                            <Text style={styles.miniCourtName} numberOfLines={1}>{item.name}</Text>
+                                            <Text style={styles.miniCourtMeta}>{item.distance?.toFixed(1)} mi</Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                    {nearbyVenues.filter(v => v.name?.toLowerCase().includes("university") || v.name?.toLowerCase().includes("college")).length === 0 && (
+                                        <View style={styles.comingSoonCard}>
+                                            <Ionicons name="school-outline" size={24} color="#666" />
+                                            <Text style={styles.comingSoonText}>College courts in your area coming soon</Text>
+                                        </View>
+                                    )}
+                                </ScrollView>
+                            </View>
+                        </>
+                    )}
 
                     {/* Global Map with Heat Signals */}
                     <View style={styles.section}>
@@ -471,6 +685,32 @@ export default function DiscoverScreen() {
                     <View style={{ height: 100 }} />
                 </ScrollView>
             </SafeAreaView>
+
+            {/* Need Players FAB - Only for players, not trainers */}
+            {!isTrainer && (
+                <TouchableOpacity
+                    style={styles.needPlayersFab}
+                    onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+                        router.push("/need-players")
+                    }}
+                >
+                    <Ionicons name="people" size={18} color="#FFF" />
+                    <Text style={styles.needPlayersFabText}>Need Players?</Text>
+                </TouchableOpacity>
+            )}
+
+            {/* Quick Report Sheet Modal */}
+            <QuickReportSheet
+                visible={reportVenue !== null}
+                onClose={() => setReportVenue(null)}
+                venueName={reportVenue?.name || ""}
+                venueId={reportVenue?.id || ""}
+                onReportSubmitted={(level, imageUri) => {
+                    console.log("[Discover] Report submitted:", level, imageUri)
+                    // TODO: Send to backend
+                }}
+            />
         </View>
     )
 }
@@ -750,6 +990,19 @@ const styles = StyleSheet.create({
         fontSize: 13,
         fontWeight: "600",
         marginTop: 8,
+    },
+    trainerBookBtn: {
+        backgroundColor: "#7ED957",
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderRadius: 16,
+        marginTop: 12,
+        alignItems: "center",
+    },
+    trainerBookText: {
+        color: "#000",
+        fontSize: 12,
+        fontWeight: "700",
     },
 
     // Map
@@ -1067,6 +1320,68 @@ const styles = StyleSheet.create({
         color: "#888",
         fontSize: 11,
     },
+
+    // Vibe & Report Hint
+    vibeRow: {
+        marginTop: 4,
+        marginBottom: 6,
+    },
+    vibeLabel: {
+        fontSize: 11,
+        fontWeight: "600",
+    },
+    tapToReport: {
+        fontSize: 10,
+        color: "#666",
+        fontStyle: "italic",
+    },
+    liveTrafficFooter: {
+        flex: 1,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "flex-end",
+        gap: 6,
+    },
+    liveTrafficDotSmall: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+    },
+    liveTrafficFooterText: {
+        fontSize: 11,
+        fontWeight: "600",
+        color: "#FFF",
+    },
+    tapToReport: {
+        fontSize: 9,
+        color: "#555",
+        fontStyle: "italic",
+    },
+
+    // Need Players FAB
+    needPlayersFab: {
+        position: "absolute",
+        bottom: 100,
+        right: 20,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        backgroundColor: "#EF4444",
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        borderRadius: 24,
+        shadowColor: "#EF4444",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 8,
+    },
+    needPlayersFabText: {
+        color: "#FFF",
+        fontSize: 14,
+        fontWeight: "700",
+    },
+
     accessBadge: {
         flexDirection: "row",
         alignItems: "center",
@@ -1087,5 +1402,55 @@ const styles = StyleSheet.create({
         color: "#EC4899",
         fontSize: 11,
         fontWeight: "600",
+    },
+
+    // Mini Court Cards (for horizontal wheels)
+    miniCourtCard: {
+        width: 140,
+        backgroundColor: "#1A1A1A",
+        borderRadius: 16,
+        padding: 14,
+        marginRight: 12,
+        alignItems: "center",
+    },
+    miniCourtIcon: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: "rgba(34, 197, 94, 0.15)",
+        alignItems: "center",
+        justifyContent: "center",
+        marginBottom: 10,
+    },
+    miniCourtName: {
+        color: "#FFF",
+        fontSize: 13,
+        fontWeight: "600",
+        textAlign: "center",
+        marginBottom: 4,
+    },
+    miniCourtMeta: {
+        color: "#888",
+        fontSize: 11,
+    },
+
+    // Coming Soon Placeholder
+    comingSoonCard: {
+        width: 200,
+        height: 100,
+        backgroundColor: "#1A1A1A",
+        borderRadius: 16,
+        padding: 16,
+        alignItems: "center",
+        justifyContent: "center",
+        borderWidth: 1,
+        borderColor: "#252525",
+        borderStyle: "dashed",
+    },
+    comingSoonText: {
+        color: "#666",
+        fontSize: 13,
+        marginTop: 8,
+        textAlign: "center",
     },
 })

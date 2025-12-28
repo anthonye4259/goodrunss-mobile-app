@@ -89,6 +89,10 @@ export interface SportContext {
     // Weather context
     weatherImpact: string | null  // "Perfect conditions" / "Windy - affects play"
     weatherScore: number          // 0-100
+
+    // Run Quality (New)
+    runQuality?: string
+    runQualityScore?: string | number
 }
 
 export interface SportCondition {

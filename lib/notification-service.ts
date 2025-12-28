@@ -23,6 +23,8 @@ export type NotificationType =
   | "level_up"
   | "waitlist_spot"        // New: spot opened on waitlist
   | "availability_reminder" // New: remind trainer to update availability
+  | "court_status_change"  // Court status changed (favorite courts)
+  | "court_nearby_quiet"   // Nearby court is quiet (geofence trigger)
   | "general"              // Generic notification
 
 
@@ -208,6 +210,8 @@ export class NotificationService {
       level_up: true,
       waitlist_spot: true,       // Client: spot opened
       availability_reminder: true, // Trainer: update availability
+      court_status_change: true,  // Favorite court status changed
+      court_nearby_quiet: true,   // Nearby court is quiet
       general: true,             // Generic notifications
     }
   }

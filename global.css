@@ -3,24 +3,30 @@
 @tailwind utilities;
 
 :root {
-  --background: 0 0% 4%;
+  --background: 0 0% 0%;
+  /* True Black */
   --foreground: 0 0% 98%;
-  --card: 0 0% 8%;
+  --card: 0 0% 9%;
+  /* Subtle lift */
   --card-foreground: 0 0% 98%;
-  --popover: 0 0% 8%;
+  --popover: 0 0% 9%;
   --popover-foreground: 0 0% 98%;
-  --primary: 84 81% 44%;
+  --primary: 142 70% 50%;
+  /* Sharper, cleaner Signal Green */
   --primary-foreground: 0 0% 4%;
   --secondary: 0 0% 12%;
   --secondary-foreground: 0 0% 98%;
   --muted: 0 0% 16%;
   --muted-foreground: 0 0% 64%;
-  --accent: 168 58% 63%;
+  --accent: 142 70% 50%;
+  /* Match primary for consistency */
   --accent-foreground: 0 0% 4%;
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 98%;
-  --border: 0 0% 20%;
+  --border: 0 0% 16%;
+  /* Darker borders for subtle separation */
   --input: 0 0% 20%;
-  --ring: 84 81% 44%;
-  --radius: 0.5rem;
+  --ring: 142 70% 50%;
+  --radius: 1rem;
+  /* More rounded, softer UI */
 }

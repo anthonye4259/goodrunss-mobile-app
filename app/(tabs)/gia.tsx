@@ -230,7 +230,7 @@ export default function GIAScreen() {
             <View style={styles.headerTextContainer}>
               <Text style={styles.headerTitle}>GIA</Text>
               <Text style={styles.headerSubtitle}>
-                {isTyping ? "Thinking..." : "AI Assistant"}
+                {isTyping ? "Thinking..." : "Goodrunss Intelligence Assistant"}
               </Text>
             </View>
             {/* Context/Version Badge */}

@@ -7,7 +7,6 @@
 
 import { View, Text, TouchableOpacity, StyleSheet, Share, Alert } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
-import * as SMS from "expo-sms"
 import * as Haptics from "expo-haptics"
 
 type Props = {
@@ -54,23 +53,18 @@ export function ShareCourtTraffic({ courtName, courtId, playersNow, sport, varia
         }
     }
 
+    // Use native Share for SMS as well (opens share sheet where user can choose Messages)
     const handleShareSMS = async () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
 
-        const isAvailable = await SMS.isAvailableAsync()
-        if (!isAvailable) {
-            Alert.alert("SMS not available", "Your device doesn't support SMS")
-            return
-        }
-
-        const { result } = await SMS.sendSMSAsync(
-            [], // Empty recipients - user will choose
-            getShareMessage()
-        )
-
-        if (result === "sent") {
+        try {
+            await Share.share({
+                message: getShareMessage(),
+            })
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
             onShared?.()
+        } catch (error) {
+            Alert.alert("Error", "Failed to share. Please try again.")
         }
     }
 

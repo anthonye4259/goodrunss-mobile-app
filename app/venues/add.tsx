@@ -6,7 +6,7 @@ import { router } from "expo-router"
 import { LinearGradient } from "expo-linear-gradient"
 import * as Haptics from "expo-haptics"
 import * as ImagePicker from "expo-image-picker"
-import { useUserLocation } from "@/lib/services/location-service"
+import { useUserLocation } from "@/lib/location-context"
 import { venueService } from "@/lib/services/venue-service"
 import { socialService } from "@/lib/services/social-service"
 

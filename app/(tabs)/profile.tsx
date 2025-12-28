@@ -10,6 +10,7 @@ import * as Clipboard from "expo-clipboard"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { GlassCard } from "@/components/Profile/GlassCard"
 import { LiquidGauge } from "@/components/Profile/LiquidGauge"
+import { WidgetCard } from "@/components/Profile/WidgetCard"
 import { socialService } from "@/lib/services/social-service"
 import { ProfileProgress } from "@/components/Widgets/ProfileProgress"
 import { FavoritesBadge } from "@/components/ui/FavoritesBadge"
@@ -118,20 +119,61 @@ export default function ProfileScreen() {
               </View>
             </View>
 
-            {/* Business Stats */}
-            <View style={styles.businessStats}>
-              <View style={styles.bizStatCard}>
-                <Text style={styles.bizStatValue}>$1,240</Text>
-                <Text style={styles.bizStatLabel}>This Month</Text>
-              </View>
-              <View style={styles.bizStatCard}>
-                <Text style={styles.bizStatValue}>8</Text>
-                <Text style={styles.bizStatLabel}>Active Clients</Text>
-              </View>
-              <View style={styles.bizStatCard}>
-                <Text style={styles.bizStatValue}>24</Text>
-                <Text style={styles.bizStatLabel}>Sessions</Text>
-              </View>
+            {/* ===== TRAINER STATS GRID - Apple Watch Inspired ===== */}
+            <View style={styles.widgetGrid}>
+              {/* Row 1: Revenue & Clients */}
+              <WidgetCard
+                title="REVENUE"
+                subtitle="This Month"
+                value="$2.4K"
+                gradient="green"
+                visualization="bars"
+                status="↑ 18% vs last month"
+              />
+              <WidgetCard
+                title="CLIENTS"
+                subtitle="Active"
+                value={12}
+                gradient="blue"
+                visualization="dots"
+                status="Growing"
+              />
+
+              {/* Row 2: Sessions & Rating */}
+              <WidgetCard
+                title="SESSIONS"
+                subtitle="This Week"
+                value={18}
+                gradient="purple"
+                visualization="wave"
+                status="Busy"
+              />
+              <WidgetCard
+                title="RATING"
+                subtitle="Client Score"
+                value="4.9"
+                gradient="amber"
+                visualization="pulse"
+                status="⭐ Top Rated"
+              />
+
+              {/* Row 3: Bookings & Retention */}
+              <WidgetCard
+                title="BOOKINGS"
+                subtitle="Upcoming"
+                value={6}
+                gradient="coral"
+                visualization="bars"
+                status="Next: Today 3pm"
+              />
+              <WidgetCard
+                title="RETENTION"
+                subtitle="Repeat Clients"
+                value="87%"
+                gradient="teal"
+                visualization="wave"
+                status="Excellent"
+              />
             </View>
 
             {/* Quick Actions */}
@@ -243,52 +285,80 @@ export default function ProfileScreen() {
             hasLocation={true}
           />
 
-          {/* Liquid Stats Dashboard */}
-          <View style={styles.dashboardGrid}>
-            <GlassCard style={styles.mainStatCard}>
-              <View style={styles.cardHeader}>
-                <Ionicons name="flash" size={16} color="#7ED957" />
-                <Text style={styles.cardTitle}>Activity Score</Text>
-              </View>
-              <View style={styles.gaugeWrapper}>
-                <LiquidGauge score={ACTIVITY_SCORE} label="Excellent" color="#7ED957" size={110} />
-              </View>
-            </GlassCard>
+          {/* ===== PLAYER STATS GRID - Apple Watch Inspired ===== */}
+          <View style={styles.widgetGrid}>
+            {/* Row 1: Performance */}
+            <WidgetCard
+              title="GAMES"
+              subtitle="This Month"
+              value={23}
+              gradient="green"
+              visualization="bars"
+              status="🔥 On Fire"
+            />
+            <WidgetCard
+              title="WIN STREAK"
+              subtitle="Current"
+              value={5}
+              gradient="coral"
+              visualization="wave"
+              status="Hot"
+            />
 
-            <View style={styles.rightColumn}>
-              <GlassCard style={styles.smallStatCard}>
-                <Ionicons name="heart" size={16} color="#3B82F6" />
-                <Text style={styles.smallStatValue}>1,240</Text>
-                <Text style={styles.smallStatLabel}>KCAL BURNED</Text>
-              </GlassCard>
+            {/* Row 2: Skill & Time */}
+            <WidgetCard
+              title="SKILL"
+              subtitle="Rating"
+              value="4.2"
+              gradient="purple"
+              visualization="pulse"
+              status="Intermediate"
+            />
+            <WidgetCard
+              title="COURT TIME"
+              subtitle="This Week"
+              value="8h"
+              gradient="blue"
+              visualization="wave"
+              status="Active"
+            />
 
-              <GlassCard style={styles.smallStatCard}>
-                <Ionicons name="time" size={16} color="#FDB813" />
-                <Text style={styles.smallStatValue}>4.5h</Text>
-                <Text style={styles.smallStatLabel}>ACTIVE TIME</Text>
-              </GlassCard>
-            </View>
+            {/* Row 3: Community */}
+            <WidgetCard
+              title="REPORTS"
+              subtitle="Made"
+              value={47}
+              gradient="teal"
+              visualization="dots"
+              status="MVP Contributor"
+            />
+            <WidgetCard
+              title="REP"
+              subtitle="Community"
+              value="92"
+              gradient="amber"
+              visualization="bars"
+              status="Trusted"
+            />
           </View>
 
-          {/* Recovery Status */}
-          <GlassCard style={styles.recoveryCard}>
-            <View style={styles.recoveryHeader}>
-              <View style={styles.flexRow}>
-                <Ionicons name="battery-charging" size={18} color="#3B82F6" />
-                <Text style={styles.cardTitle}>Recovery Status</Text>
+          {/* Connect Health Prompt if not connected */}
+          <TouchableOpacity
+            style={styles.connectHealthBanner}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+              router.push("/settings/health-sync")
+            }}
+          >
+            <View style={styles.connectHealthLeft}>
+              <Ionicons name="fitness" size={20} color="#7ED957" />
+              <View>
+                <Text style={styles.connectHealthTitle}>Sync Apple Health</Text>
+                <Text style={styles.connectHealthSubtitle}>See real activity data</Text>
               </View>
-              <Text style={styles.recoveryPercent}>{RECOVERY_SCORE}%</Text>
             </View>
-            <View style={styles.progressBarBg}>
-              <LinearGradient
-                colors={['#3B82F6', '#60A5FA']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={[styles.progressBarFill, { width: `${RECOVERY_SCORE}%` }]}
-              />
-            </View>
-            <Text style={styles.recoveryContext}>Ready for light training. Suggested: Yoga or Shooting.</Text>
-          </GlassCard>
+            <Ionicons name="chevron-forward" size={20} color="#666" />
+          </TouchableOpacity>
 
           {/* Simple Stats Row */}
           <View style={styles.simpleStatsRow}>
@@ -423,6 +493,43 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#7ED957',
   },
+  // Widget Grid - Apple Watch Style
+  widgetGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 16,
+  },
+
+  // Connect Health Banner
+  connectHealthBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(126, 217, 87, 0.2)',
+  },
+  connectHealthLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  connectHealthTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFF',
+  },
+  connectHealthSubtitle: {
+    fontSize: 12,
+    color: '#888',
+    marginTop: 2,
+  },
+
+  // Legacy styles kept for backwards compat
   dashboardGrid: {
     flexDirection: 'row',
     height: 200,
@@ -507,6 +614,40 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
     fontStyle: 'italic',
   },
+
+  // Placeholder Stats
+  placeholderGauge: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 4,
+    borderColor: 'rgba(126, 217, 87, 0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  placeholderScore: {
+    fontSize: 28,
+    fontFamily: 'Inter_700Bold',
+    color: '#666',
+  },
+  placeholderLabel: {
+    fontSize: 10,
+    color: '#666',
+    marginTop: 2,
+  },
+  connectHealthInline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 8,
+  },
+  connectHealthInlineText: {
+    fontSize: 12,
+    color: '#7ED957',
+    fontWeight: '500',
+  },
+
   primaryAction: {
     marginBottom: 24,
     borderRadius: 16,
@@ -557,6 +698,36 @@ const styles = StyleSheet.create({
     marginTop: 24,
     marginBottom: 40,
   },
+
+  // Health Connect Card
+  healthConnectCard: {
+    padding: 20,
+    marginBottom: 24,
+  },
+  healthConnectHeader: {
+    marginBottom: 12,
+  },
+  healthConnectDesc: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  connectHealthBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#7ED957',
+    paddingVertical: 14,
+    borderRadius: 12,
+  },
+  connectHealthText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#000',
+  },
+
   // ============================================
   // TRAINER PROFILE STYLES
   // ============================================

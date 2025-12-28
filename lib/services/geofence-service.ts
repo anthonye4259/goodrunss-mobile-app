@@ -23,13 +23,19 @@ TaskManager.defineTask(RADAR_TASK_NAME, async ({ data, error }) => {
             const lastNotified = await AsyncStorage.getItem(`last_notified_${region.identifier}`)
             const now = Date.now()
 
-            // Cooldown: 1 hour
-            if (!lastNotified || now - parseInt(lastNotified) > 3600000) {
+            // Cooldown: 2 hours
+            if (!lastNotified || now - parseInt(lastNotified) > 7200000) {
+                // TODO: Fetch actual status from realtime service
+                // For now, we'll send a generic prompt with encouraging language
                 await Notifications.scheduleNotificationAsync({
                     content: {
-                        title: "🎾 Court Nearby!",
-                        body: `You're near ${region.identifier}. Report status?`,
-                        data: { venueId: region.identifier, type: "geofence_enter" },
+                        title: "🏀 You're Near a Court!",
+                        body: `${region.identifier} is nearby - tap to check if it's open!`,
+                        data: {
+                            venueId: region.identifier,
+                            type: "court_nearby_quiet",
+                            action: "check_status"
+                        },
                         sound: true,
                     },
                     trigger: null, // Send immediately
