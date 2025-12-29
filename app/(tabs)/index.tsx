@@ -14,6 +14,7 @@ import { FriendActivityRail } from "@/components/Live/FriendActivityRail"
 import { SEED_VENUES } from "@/lib/services/smart-data-service"
 import { WeatherWidget } from "@/components/Widgets/WeatherWidget"
 import { PlayRequestModal } from "@/components/Social/PlayRequest"
+import { MiniCourtCardSkeleton } from "@/components/ui/Skeleton"
 
 const { width } = Dimensions.get("window")
 

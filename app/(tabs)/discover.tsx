@@ -35,6 +35,8 @@ import { PremiumVisibilityCard } from "@/components/Premium/PremiumVisibilityCar
 import { LiveTrafficBadge } from "@/components/Live/LiveTrafficBadge"
 import { SwipeReportCard } from "@/components/Live/SwipeReportCard"
 import { QuickReportSheet } from "@/components/QuickReportSheet"
+import { SectionSkeleton, VenueCardSkeleton } from "@/components/ui/Skeleton"
+import { EmptyState, EMPTY_STATE_PRESETS } from "@/components/ui/EmptyState"
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window")
 const CARD_WIDTH = SCREEN_WIDTH * 0.7
@@ -321,7 +323,16 @@ export default function DiscoverScreen() {
                     </View>
 
                     {/* Main Content Area - Conditional based on Persona */}
-                    {isTrainer ? (
+                    {loading && nearbyVenues.length === 0 ? (
+                        // ============================================
+                        // 💀 LOADING SKELETONS
+                        // ============================================
+                        <>
+                            <SectionSkeleton count={3} />
+                            <SectionSkeleton count={3} />
+                            <SectionSkeleton count={3} />
+                        </>
+                    ) : isTrainer ? (
                         // ============================================
                         // 🏋️ TRAINER DISCOVER FEED
                         // ============================================
