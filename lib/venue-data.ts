@@ -1,10 +1,10 @@
 /**
  * Real Venue Data from Google Places API
- * Loaded from data/venues-partner-cities.json (8 partner cities deep dive)
+ * Loaded from data/venues-partner-cities-enhanced.json (8 partner cities with premium data)
  */
 
 import { Activity } from "./activity-content"
-import realVenuesData from "../data/venues-partner-cities.json"
+import realVenuesData from "../data/venues-partner-cities-enhanced.json"
 
 export interface Venue {
     id: string

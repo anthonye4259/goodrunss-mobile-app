@@ -1,15 +1,16 @@
 const fs = require('fs');
 const path = require('path');
 
-// Target 7 Cities
+// 8 Partner Cities
 const TARGET_CITIES = [
-    "New York, NY",
-    "Los Angeles, CA",
-    "Chicago, IL",
-    "Miami, FL",
     "Atlanta, GA",
-    "Houston, TX",
-    "Dallas, TX"
+    "Myrtle Beach, SC",
+    "San Francisco, CA",
+    "New York, NY",
+    "Miami, FL",
+    "Scottsdale, AZ",
+    "Austin, TX",
+    "Los Angeles, CA"
 ];
 
 // Premium Image Sets (Unsplash IDs)
@@ -49,8 +50,8 @@ function getRandomExample(arr) {
 }
 
 function enhanceVenues() {
-    const inputPath = path.join(__dirname, '../data/venues-google-places.json');
-    const outputPath = path.join(__dirname, '../data/venues-enhanced.json');
+    const inputPath = path.join(__dirname, '../data/venues-partner-cities.json');
+    const outputPath = path.join(__dirname, '../data/venues-partner-cities-enhanced.json');
 
     console.log(`Reading from ${inputPath}...`);
 
