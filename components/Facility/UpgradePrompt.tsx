@@ -4,7 +4,7 @@
  * Compelling modal to upgrade free facilities to premium:
  * - Revenue increase calculator
  * - Feature comparison
- * - One-tap upgrade flow
+ * - One-tap upgrade flow via In-App Purchase
  */
 
 import React, { useState, useEffect } from "react"
@@ -16,11 +16,14 @@ import {
     Modal,
     ScrollView,
     Animated,
+    Alert,
 } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { BlurView } from "expo-blur"
 import * as Haptics from "expo-haptics"
+import { revenueCatService } from "@/lib/revenue-cat"
+import { PurchasesPackage } from "react-native-purchases"
 
 import {
     FACILITY_SUBSCRIPTION,
@@ -45,6 +48,7 @@ export function UpgradePrompt({
 }: UpgradePromptProps) {
     const [scaleAnim] = useState(new Animated.Value(0.8))
     const [loading, setLoading] = useState(false)
+    const [offering, setOffering] = useState<any>(null)
 
     // Calculate savings
     const monthlySavings = facilitySubscriptionService.calculateMonthlySavings(monthlyRevenue)
@@ -59,22 +63,42 @@ export function UpgradePrompt({
                 friction: 7,
                 useNativeDriver: true,
             }).start()
+            // Load RevenueCat offerings
+            loadOfferings()
         } else {
             scaleAnim.setValue(0.8)
         }
     }, [visible])
+
+    const loadOfferings = async () => {
+        try {
+            await revenueCatService.initialize()
+            const currentOffering = await revenueCatService.getOfferings()
+            setOffering(currentOffering)
+        } catch (e) {
+            console.error("Error loading offerings:", e)
+        }
+    }
+
+    // Get monthly package from RevenueCat
+    const monthlyPackage = offering?.availablePackages?.find((p: any) => p.packageType === "MONTHLY")
 
     const handleUpgrade = async () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy)
         setLoading(true)
 
         try {
-            // Create Stripe checkout session
-            const result = await facilitySubscriptionService.createSubscription(facilityId)
-            if (result?.sessionUrl) {
-                onUpgrade()
-                // Open Stripe checkout
-                // router.push(result.sessionUrl) - handled by parent
+            if (!monthlyPackage) {
+                Alert.alert("Not Available", "Subscription packages are loading. Please try again.")
+                return
+            }
+
+            // Use RevenueCat In-App Purchase (Apple StoreKit)
+            const success = await revenueCatService.purchasePackage(monthlyPackage)
+            if (success) {
+                Alert.alert("You're Premium! 🏆", "You now have full access to AI features and reduced fees.", [
+                    { text: "Let's Go!", onPress: () => { onUpgrade(); onClose(); } }
+                ])
             }
         } catch (error) {
             console.error("Upgrade error:", error)

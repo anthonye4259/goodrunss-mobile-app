@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback, createContext, useContext, ReactNode } from "react"
+import { Alert } from "react-native"
 import {
     subscriptionService,
     type Subscription,
     type ProFeature,
     type SubscriptionPeriod
 } from "@/lib/services/subscription-service"
+import { revenueCatService } from "@/lib/revenue-cat"
 
 // ============================================
 // CONTEXT
@@ -76,11 +78,21 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     }
 
     const subscribe = async (period: SubscriptionPeriod) => {
-        // This would open Stripe checkout
-        const sessionUrl = await subscriptionService.createStripeCheckoutSession(period)
-        if (sessionUrl) {
-            // Open in browser
-            // Linking.openURL(sessionUrl)
+        // Use RevenueCat In-App Purchase (Apple StoreKit compliant)
+        try {
+            await revenueCatService.initialize()
+            const offering = await revenueCatService.getOfferings()
+            const packageType = period === "monthly" ? "MONTHLY" : "ANNUAL"
+            const pack = offering?.availablePackages?.find((p: any) => p.packageType === packageType)
+
+            if (pack) {
+                const success = await revenueCatService.purchasePackage(pack)
+                if (success) {
+                    Alert.alert("Success!", "You're now a Pro member! 🎉")
+                }
+            }
+        } catch (e) {
+            console.error("Subscribe error:", e)
         }
         await refresh()
     }
@@ -173,7 +185,19 @@ function useStandaloneSubscription() {
     }
 
     const subscribe = async (period: SubscriptionPeriod) => {
-        await subscriptionService.createStripeCheckoutSession(period)
+        // Use RevenueCat In-App Purchase
+        try {
+            await revenueCatService.initialize()
+            const offering = await revenueCatService.getOfferings()
+            const packageType = period === "monthly" ? "MONTHLY" : "ANNUAL"
+            const pack = offering?.availablePackages?.find((p: any) => p.packageType === packageType)
+
+            if (pack) {
+                await revenueCatService.purchasePackage(pack)
+            }
+        } catch (e) {
+            console.error("Subscribe error:", e)
+        }
         await refresh()
     }
 

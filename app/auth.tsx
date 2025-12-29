@@ -293,6 +293,17 @@ export default function AuthScreen() {
 
       console.log("🔥 Signing in with Firebase...")
 
+      // Critical: Check if auth is available before using it
+      if (!auth) {
+        console.error("❌ Firebase auth not available")
+        Alert.alert(
+          "Service Unavailable",
+          "Authentication service is not available. Please try email/password sign in or restart the app.",
+          [{ text: "OK" }]
+        )
+        return
+      }
+
       let userCredential
       try {
         userCredential = await auth.signInWithCredential(oAuthCredential)

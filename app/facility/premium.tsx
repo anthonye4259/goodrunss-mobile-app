@@ -1,6 +1,7 @@
 /**
  * Facility Premium Subscription Screen
  * Upgrade to Premium for reduced fees + AI features
+ * Uses RevenueCat for In-App Purchase (App Store compliant)
  */
 
 import React, { useState, useEffect } from "react"
@@ -11,81 +12,86 @@ import {
     TouchableOpacity,
     StyleSheet,
     ActivityIndicator,
+    Alert,
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { router, useLocalSearchParams } from "expo-router"
 import * as Haptics from "expo-haptics"
-import * as WebBrowser from "expo-web-browser"
+import { revenueCatService } from "@/lib/revenue-cat"
+import { PurchasesPackage } from "react-native-purchases"
 
 import { useAuth } from "@/lib/auth-context"
-import { facilityService } from "@/lib/services/facility-service"
-import {
-    facilitySubscriptionService,
-    FACILITY_SUBSCRIPTION
-} from "@/lib/services/facility-subscription-service"
 
 export default function FacilityPremiumScreen() {
     const { facilityId } = useLocalSearchParams()
     const { user } = useAuth()
 
+    const [offering, setOffering] = useState<any>(null)
     const [loading, setLoading] = useState(true)
-    const [upgrading, setUpgrading] = useState(false)
+    const [processing, setProcessing] = useState(false)
     const [currentTier, setCurrentTier] = useState<"free" | "premium">("free")
-    const [monthlyRevenue, setMonthlyRevenue] = useState(2000) // Estimated $2000/mo
-    const [savings, setSavings] = useState(0)
+    const [monthlyRevenue, setMonthlyRevenue] = useState(2000)
+    const savings = Math.round(monthlyRevenue * 0.03) // 3% savings on premium
 
     useEffect(() => {
-        loadSubscriptionStatus()
-    }, [facilityId])
+        loadOfferings()
+    }, [])
 
-    useEffect(() => {
-        const calculatedSavings = facilitySubscriptionService.calculateMonthlySavings(monthlyRevenue)
-        setSavings(calculatedSavings)
-    }, [monthlyRevenue])
-
-    const loadSubscriptionStatus = async () => {
-        if (!facilityId) return
-        setLoading(true)
-
+    const loadOfferings = async () => {
         try {
-            const status = await facilitySubscriptionService.getSubscriptionStatus(facilityId as string)
-            setCurrentTier(status.tier)
-        } catch (error) {
-            console.error("Error loading subscription:", error)
+            await revenueCatService.initialize()
+            const currentOffering = await revenueCatService.getOfferings()
+            setOffering(currentOffering)
+
+            // Check if already premium
+            const customerInfo = await revenueCatService.getCustomerInfo()
+            if (customerInfo && revenueCatService.isPro(customerInfo)) {
+                setCurrentTier("premium")
+            }
+        } catch (e) {
+            console.error("Error loading offerings:", e)
         } finally {
             setLoading(false)
         }
     }
 
-    const handleUpgrade = async () => {
-        if (!facilityId) return
-
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy)
-        setUpgrading(true)
-
-        try {
-            const result = await facilitySubscriptionService.createSubscription(facilityId as string)
-            if (result?.sessionUrl) {
-                await WebBrowser.openBrowserAsync(result.sessionUrl)
-                // Reload status after returning from Stripe
-                loadSubscriptionStatus()
-            }
-        } catch (error) {
-            console.error("Upgrade error:", error)
-        } finally {
-            setUpgrading(false)
+    const handleRestore = async () => {
+        setProcessing(true)
+        const success = await revenueCatService.restorePurchases()
+        setProcessing(false)
+        if (success) {
+            setCurrentTier("premium")
+            Alert.alert("Success!", "Your subscription has been restored. Welcome back! 🏆", [
+                { text: "OK", onPress: () => router.back() }
+            ])
+        } else {
+            Alert.alert("No Subscription Found", "We couldn't find an active Premium subscription for this Apple ID.")
         }
     }
 
-    if (loading) {
-        return (
-            <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#FFD700" />
-            </View>
-        )
+    const handlePurchase = async (pack: PurchasesPackage) => {
+        setProcessing(true)
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+
+        try {
+            const success = await revenueCatService.purchasePackage(pack)
+            if (success) {
+                setCurrentTier("premium")
+                Alert.alert("You're Premium! 🏆", "You now have full access to AI features, reduced fees, and priority placement.", [
+                    { text: "Let's Go!", onPress: () => router.back() }
+                ])
+            }
+        } catch (e) {
+            console.log("Purchase failed or cancelled")
+        } finally {
+            setProcessing(false)
+        }
     }
+
+    // Get the monthly package from RevenueCat
+    const monthlyPackage = offering?.availablePackages?.find((p: any) => p.packageType === "MONTHLY")
 
     const features = [
         {
@@ -251,31 +257,48 @@ export default function FacilityPremiumScreen() {
                     ))}
                 </ScrollView>
 
-                {/* Upgrade Button */}
+                {/* Upgrade Button - In-App Purchase via RevenueCat */}
                 {currentTier !== "premium" && (
                     <View style={styles.footer}>
                         <TouchableOpacity
                             style={styles.upgradeBtn}
-                            disabled={upgrading}
-                            onPress={handleUpgrade}
+                            disabled={processing || !monthlyPackage}
+                            onPress={() => monthlyPackage && handlePurchase(monthlyPackage)}
                         >
                             <LinearGradient
                                 colors={["#FFD700", "#FFA500"]}
                                 style={styles.upgradeBtnGradient}
                             >
-                                {upgrading ? (
+                                {processing ? (
                                     <ActivityIndicator color="#000" />
                                 ) : (
                                     <>
                                         <Ionicons name="rocket" size={20} color="#000" />
                                         <Text style={styles.upgradeBtnText}>
-                                            Upgrade to Premium - $50/mo
+                                            Upgrade to Premium - {monthlyPackage?.product?.priceString || "$50/mo"}
                                         </Text>
                                     </>
                                 )}
                             </LinearGradient>
                         </TouchableOpacity>
-                        <Text style={styles.footerNote}>Cancel anytime. No commitment.</Text>
+                        <TouchableOpacity onPress={handleRestore} disabled={processing}>
+                            <Text style={styles.footerNote}>Restore Purchases</Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
+
+                {/* Already Premium Badge */}
+                {currentTier === "premium" && (
+                    <View style={styles.footer}>
+                        <View style={[styles.upgradeBtn, { opacity: 0.7 }]}>
+                            <LinearGradient
+                                colors={["#7ED957", "#4CAF50"]}
+                                style={styles.upgradeBtnGradient}
+                            >
+                                <Ionicons name="checkmark-circle" size={20} color="#000" />
+                                <Text style={styles.upgradeBtnText}>You're Premium!</Text>
+                            </LinearGradient>
+                        </View>
                     </View>
                 )}
             </SafeAreaView>

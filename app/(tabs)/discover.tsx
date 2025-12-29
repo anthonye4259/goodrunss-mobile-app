@@ -248,6 +248,73 @@ export default function DiscoverScreen() {
         </TouchableOpacity>
     )
 
+    // Safe MapView wrapper component to prevent iPad crashes
+    // MapView with customMapStyle can crash on certain iPad configurations
+    const SafeMapView = ({ mapRef }: { mapRef: React.RefObject<MapView> }) => {
+        const [mapError, setMapError] = useState(false)
+
+        if (mapError) {
+            // Fallback UI when MapView crashes
+            return (
+                <View style={[styles.map, { backgroundColor: "#1d2c4d", alignItems: "center", justifyContent: "center" }]}>
+                    <Ionicons name="map-outline" size={48} color="#7ED957" />
+                    <Text style={{ color: "#FFF", marginTop: 12, fontWeight: "bold" }}>Activity Heat Map</Text>
+                    <Text style={{ color: "#888", marginTop: 4, fontSize: 12 }}>Available in Phase 1 cities</Text>
+                    <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center", marginTop: 16, gap: 8 }}>
+                        {PHASE_1_CITIES.map((city) => (
+                            <View key={city.name} style={{ backgroundColor: "rgba(255,107,107,0.2)", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 }}>
+                                <Text style={{ color: "#FF6B6B", fontSize: 12, fontWeight: "600" }}>{city.name}</Text>
+                            </View>
+                        ))}
+                    </View>
+                </View>
+            )
+        }
+
+        try {
+            return (
+                <MapView
+                    ref={mapRef}
+                    style={styles.map}
+                    provider={PROVIDER_DEFAULT}
+                    initialRegion={{
+                        latitude: 37.0902,
+                        longitude: -95.7129,
+                        latitudeDelta: 40,
+                        longitudeDelta: 40,
+                    }}
+                    onMapReady={() => console.log("Map ready")}
+                    onError={() => setMapError(true)}
+                >
+                    {/* Heat map signals for Phase 1 cities */}
+                    {PHASE_1_CITIES.map((city) => {
+                        const size = 20 + city.intensity * 30
+                        return (
+                            <Marker
+                                key={city.name}
+                                coordinate={{ latitude: city.lat, longitude: city.lng }}
+                                title={city.name}
+                                description={`${Math.round(city.intensity * 100)}% activity`}
+                            >
+                                <View style={[styles.heatSignal, { width: size, height: size }]}>
+                                    <LinearGradient
+                                        colors={["#FF6B6B", "#FF6B6B80", "#FF6B6B40", "transparent"]}
+                                        style={[styles.heatSignalGradient, { width: size, height: size, borderRadius: size / 2 }]}
+                                    />
+                                    <View style={styles.heatSignalCenter} />
+                                </View>
+                            </Marker>
+                        )
+                    })}
+                </MapView>
+            )
+        } catch (error) {
+            console.error("MapView error:", error)
+            setMapError(true)
+            return null
+        }
+    }
+
     // Section Header Component
     const SectionHeader = ({
         title,
@@ -638,44 +705,8 @@ export default function DiscoverScreen() {
                     <View style={styles.section}>
                         <SectionHeader title="ACTIVITY HEAT MAP" icon="flame" color="#F97316" />
                         <View style={styles.mapContainer}>
-                            <MapView
-                                ref={mapRef}
-                                style={styles.map}
-                                provider={PROVIDER_DEFAULT}
-                                initialRegion={{
-                                    latitude: 37.0902,
-                                    longitude: -95.7129,
-                                    latitudeDelta: 40,
-                                    longitudeDelta: 40,
-                                }}
-                                customMapStyle={[
-                                    { elementType: "geometry", stylers: [{ color: "#1d2c4d" }] },
-                                    { elementType: "labels.text.fill", stylers: [{ color: "#8ec3b9" }] },
-                                    { elementType: "labels.text.stroke", stylers: [{ color: "#1a3646" }] },
-                                    { featureType: "water", stylers: [{ color: "#0e1626" }] },
-                                ]}
-                            >
-                                {/* Heat map signals for Phase 1 cities */}
-                                {PHASE_1_CITIES.map((city) => {
-                                    const size = 20 + city.intensity * 30 // Size based on intensity
-                                    return (
-                                        <Marker
-                                            key={city.name}
-                                            coordinate={{ latitude: city.lat, longitude: city.lng }}
-                                            title={city.name}
-                                            description={`${Math.round(city.intensity * 100)}% activity`}
-                                        >
-                                            <View style={[styles.heatSignal, { width: size, height: size }]}>
-                                                <LinearGradient
-                                                    colors={["#FF6B6B", "#FF6B6B80", "#FF6B6B40", "transparent"]}
-                                                    style={[styles.heatSignalGradient, { width: size, height: size, borderRadius: size / 2 }]}
-                                                />
-                                                <View style={styles.heatSignalCenter} />
-                                            </View>
-                                        </Marker>
-                                    )
-                                })}
-                            </MapView>
+                            {/* Safe MapView wrapper for iPad compatibility */}
+                            <SafeMapView mapRef={mapRef} />
                             <View style={styles.mapLegend}>
                                 <View style={styles.legendItem}>
                                     <View style={[styles.legendDot, { backgroundColor: "#FF6B6B" }]} />
