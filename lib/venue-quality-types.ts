@@ -198,7 +198,7 @@ export function getVerifiedRatingColor(tier: GoodRunssVerifiedRating["tier"]): s
     case "Elite":
       return "#FFD700" // Gold
     case "Premium":
-      return "#7ED957" // Lime green
+      return "#6B9B5A" // Lime green
     case "Good":
       return "#4A9EFF" // Blue
     case "Fair":

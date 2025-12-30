@@ -222,7 +222,7 @@ function getMockVenuesWithTraffic(): VenueWithTraffic[] {
     const mockTraffic: VenueTraffic = {
         level: mockLevel as VenueTraffic["level"],
         emoji: mockLevel === "busy" ? "🔴" : mockLevel === "quiet" ? "🟢" : "🟡",
-        color: mockLevel === "busy" ? "#FF6B6B" : mockLevel === "quiet" ? "#7ED957" : "#FBBF24",
+        color: mockLevel === "busy" ? "#FF6B6B" : mockLevel === "quiet" ? "#6B9B5A" : "#FBBF24",
         label: mockLevel === "busy" ? "Busy" : mockLevel === "quiet" ? "Quiet" : "Moderate",
         waitTime: mockLevel === "busy" ? "15-20 min wait" : mockLevel === "moderate" ? "5-10 min" : null,
         weatherImpact: null,

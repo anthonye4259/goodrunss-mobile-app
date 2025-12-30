@@ -77,13 +77,13 @@ export default function ProfileScreen() {
             <View style={styles.trainerCard}>
               <View style={styles.trainerHeader}>
                 <View style={styles.trainerAvatarWrap}>
-                  <LinearGradient colors={['#7ED957', '#22C55E']} style={styles.trainerAvatarRing}>
+                  <LinearGradient colors={['#6B9B5A', '#22C55E']} style={styles.trainerAvatarRing}>
                     <View style={styles.trainerAvatarInner}>
                       <Text style={styles.trainerAvatarText}>{isInstructor ? "I" : "T"}</Text>
                     </View>
                   </LinearGradient>
                   <View style={styles.verifiedBadge}>
-                    <Ionicons name="checkmark-circle" size={20} color="#7ED957" />
+                    <Ionicons name="checkmark-circle" size={20} color="#6B9B5A" />
                   </View>
                 </View>
                 <View style={styles.trainerInfo}>
@@ -113,7 +113,7 @@ export default function ProfileScreen() {
                   <Text style={styles.copyLinkText}>Copy</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.shareLinkBtn} onPress={handleShareProfile}>
-                  <Ionicons name="share-social-outline" size={18} color="#7ED957" />
+                  <Ionicons name="share-social-outline" size={18} color="#6B9B5A" />
                   <Text style={styles.shareLinkText}>Share</Text>
                 </TouchableOpacity>
               </View>
@@ -181,7 +181,7 @@ export default function ProfileScreen() {
             <View style={styles.quickActions}>
               <TouchableOpacity style={styles.actionItem} onPress={() => router.push("/trainer-dashboard")}>
                 <View style={[styles.actionIcon, { backgroundColor: 'rgba(126,217,87,0.15)' }]}>
-                  <Ionicons name="stats-chart" size={20} color="#7ED957" />
+                  <Ionicons name="stats-chart" size={20} color="#6B9B5A" />
                 </View>
                 <Text style={styles.actionLabel}>Dashboard</Text>
               </TouchableOpacity>
@@ -240,7 +240,7 @@ export default function ProfileScreen() {
           {/* Identity Section */}
           <View style={styles.identitySection}>
             <View style={styles.avatarWrapper}>
-              <LinearGradient colors={['#7ED957', '#3B82F6']} style={styles.avatarRing}>
+              <LinearGradient colors={['#6B9B5A', '#3B82F6']} style={styles.avatarRing}>
                 <View style={styles.avatarInner}>
                   <Text style={styles.avatarText}>P</Text>
                 </View>
@@ -270,7 +270,7 @@ export default function ProfileScreen() {
                   router.push("/settings/menu")
                 }}
               >
-                <Ionicons name="swap-horizontal" size={14} color="#7ED957" />
+                <Ionicons name="swap-horizontal" size={14} color="#6B9B5A" />
                 <Text style={styles.switchModeText}>Switch to Business View</Text>
               </TouchableOpacity>
             )}
@@ -351,7 +351,7 @@ export default function ProfileScreen() {
             }}
           >
             <View style={styles.connectHealthLeft}>
-              <Ionicons name="fitness" size={20} color="#7ED957" />
+              <Ionicons name="fitness" size={20} color="#6B9B5A" />
               <View>
                 <Text style={styles.connectHealthTitle}>Sync Apple Health</Text>
                 <Text style={styles.connectHealthSubtitle}>See real activity data</Text>
@@ -402,7 +402,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 28,
-    fontFamily: 'Inter_700Bold',
+    fontFamily: 'Outfit_700Bold',
     color: '#FFF',
   },
   settingsButton: {
@@ -442,14 +442,14 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     fontSize: 40,
-    fontFamily: 'Inter_700Bold',
+    fontFamily: 'Outfit_700Bold',
     color: '#FFF',
   },
   editBadge: {
     position: 'absolute',
     bottom: 0,
     right: 0,
-    backgroundColor: '#7ED957',
+    backgroundColor: '#6B9B5A',
     width: 28,
     height: 28,
     borderRadius: 14,
@@ -460,7 +460,7 @@ const styles = StyleSheet.create({
   },
   userName: {
     fontSize: 24,
-    fontFamily: 'Inter_700Bold',
+    fontFamily: 'Outfit_700Bold',
     color: '#FFF',
     marginBottom: 6,
   },
@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
   },
   roleText: {
     fontSize: 10,
-    fontFamily: 'Inter_700Bold',
+    fontFamily: 'Outfit_700Bold',
     color: '#CCC',
     letterSpacing: 1,
   },
@@ -491,7 +491,7 @@ const styles = StyleSheet.create({
   switchModeText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#7ED957',
+    color: '#6B9B5A',
   },
   // Widget Grid - Apple Watch Style
   widgetGrid: {
@@ -557,7 +557,7 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 14,
-    fontFamily: 'Inter_600SemiBold',
+    fontFamily: 'Outfit_600SemiBold',
     color: '#FFF',
   },
   gaugeWrapper: {
@@ -568,13 +568,13 @@ const styles = StyleSheet.create({
   },
   smallStatValue: {
     fontSize: 20,
-    fontFamily: 'Inter_700Bold',
+    fontFamily: 'Outfit_700Bold',
     color: '#FFF',
     marginTop: 4,
   },
   smallStatLabel: {
     fontSize: 10,
-    fontFamily: 'Inter_600SemiBold',
+    fontFamily: 'Outfit_600SemiBold',
     color: '#666',
     marginTop: 2,
   },
@@ -595,7 +595,7 @@ const styles = StyleSheet.create({
   },
   recoveryPercent: {
     fontSize: 16,
-    fontFamily: 'Inter_700Bold',
+    fontFamily: 'Outfit_700Bold',
     color: '#3B82F6',
   },
   progressBarBg: {
@@ -628,7 +628,7 @@ const styles = StyleSheet.create({
   },
   placeholderScore: {
     fontSize: 28,
-    fontFamily: 'Inter_700Bold',
+    fontFamily: 'Outfit_700Bold',
     color: '#666',
   },
   placeholderLabel: {
@@ -662,7 +662,7 @@ const styles = StyleSheet.create({
   },
   actionText: {
     fontSize: 16,
-    fontFamily: 'Inter_700Bold',
+    fontFamily: 'Outfit_700Bold',
     color: '#000',
   },
   simpleStatsRow: {
@@ -679,7 +679,7 @@ const styles = StyleSheet.create({
   },
   simpleStatNum: {
     fontSize: 18,
-    fontFamily: 'Inter_700Bold',
+    fontFamily: 'Outfit_700Bold',
     color: '#FFF',
   },
   simpleStatSub: {

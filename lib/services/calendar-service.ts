@@ -72,7 +72,7 @@ export class CalendarService {
 
             const newCalendarId = await Calendar.createCalendarAsync({
                 title: "GoodRunss",
-                color: "#7ED957",
+                color: "#6B9B5A",
                 entityType: Calendar.EntityTypes.EVENT,
                 sourceId: defaultCalendar.source.id,
                 source: defaultCalendar.source,

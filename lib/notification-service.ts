@@ -72,7 +72,7 @@ export class NotificationService {
           name: "default",
           importance: Notifications.AndroidImportance.MAX,
           vibrationPattern: [0, 250, 250, 250],
-          lightColor: "#7ED957",
+          lightColor: "#6B9B5A",
         })
       }
 

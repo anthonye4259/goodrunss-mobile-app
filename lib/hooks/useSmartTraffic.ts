@@ -124,7 +124,7 @@ export function useSmartTraffic(): UseSmartTrafficResult {
 
             return {
                 level: isPeak ? "moderate" : "low",
-                color: isPeak ? "#FFA500" : "#7ED957",
+                color: isPeak ? "#FFA500" : "#6B9B5A",
                 label: isPeak ? "Moderate" : "Low",
                 confidence: 0.6,
                 estimatedWaitTime: isPeak ? "5-10 min" : undefined,

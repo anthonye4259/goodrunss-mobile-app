@@ -174,7 +174,7 @@ export const crowdLevelService = {
                 return {
                     level,
                     label: "Quiet",
-                    color: "#7ED957",
+                    color: "#6B9B5A",
                     message: "Great time to visit! Plenty of availability.",
                 }
             case "moderate":

@@ -86,7 +86,7 @@ const BADGES: Record<string, Omit<Badge, "earnedAt">> = {
         name: "First Check-In",
         description: "Checked in at your first venue",
         icon: "location",
-        color: "#7ED957",
+        color: "#6B9B5A",
         category: "activity",
     },
     first_report: {

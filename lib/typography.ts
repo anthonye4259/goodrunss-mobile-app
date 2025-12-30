@@ -9,10 +9,10 @@ import { TextStyle } from "react-native"
 
 // Font family names as loaded by expo-google-fonts
 export const fonts = {
-    regular: "Inter_400Regular",
-    medium: "Inter_500Medium",
-    semibold: "Inter_600SemiBold",
-    bold: "Inter_700Bold",
+    regular: "Outfit_400Regular",
+    medium: "Outfit_500Medium",
+    semibold: "Outfit_600SemiBold",
+    bold: "Outfit_700Bold",
 } as const
 
 // Typography scale with font families

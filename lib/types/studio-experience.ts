@@ -346,7 +346,7 @@ export function calculateVibeMatch(
 
 export function getVibeMatchLabel(score: number): { label: string; emoji: string; color: string } {
     if (score >= 90) return { label: "Perfect Match", emoji: "💯", color: "#22C55E" }
-    if (score >= 70) return { label: "Great Match", emoji: "✨", color: "#7ED957" }
+    if (score >= 70) return { label: "Great Match", emoji: "✨", color: "#6B9B5A" }
     if (score >= 50) return { label: "Good Match", emoji: "👍", color: "#FBBF24" }
     if (score >= 30) return { label: "Okay Match", emoji: "🤷", color: "#F97316" }
     return { label: "Not Your Vibe", emoji: "😕", color: "#EF4444" }

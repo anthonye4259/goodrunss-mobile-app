@@ -51,7 +51,7 @@ export const PRO_FEATURES: ProFeature[] = [
         name: "GIA Business Mode",
         description: "AI-powered business copilot with scheduling & client management",
         icon: "sparkles",
-        color: "#7ED957",
+        color: "#6B9B5A",
         available: false,
         requiredTier: "pro",
     },
