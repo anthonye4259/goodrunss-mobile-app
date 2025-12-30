@@ -11,6 +11,7 @@
 
 import { db } from "@/lib/firebase-config"
 import AsyncStorage from "@react-native-async-storage/async-storage"
+import { reviewTriggers } from "@/lib/services/app-review-service"
 
 // ============================================
 // TYPES
@@ -82,6 +83,10 @@ export async function recordCheckIn(
             await saveLocalCheckIn(checkIn)
 
             console.log(`[CheckIn] Recorded at ${venueName}:`, docRef.id)
+
+            // Trigger review prompt after successful check-in
+            reviewTriggers.onCheckIn()
+
             return { success: true, checkInId: docRef.id }
         } else {
             // Offline mode - save locally only

@@ -210,7 +210,7 @@ You agree to indemnify and hold GoodRunss harmless from claims arising from:
 
 ### Informal Resolution
 - Contact us first to resolve disputes informally
-- Email: support@goodrunss.com
+- Email: helpdesk@teamgoodrunss.com
 
 ## 18. Modifications to Terms
 
@@ -266,7 +266,7 @@ If you offer services as a trainer or venue:
 
 For questions about these Terms:
 - **Email**: legal@goodrunss.com
-- **Support**: support@goodrunss.com
+- **Support**: helpdesk@teamgoodrunss.com
 - **Mail**: GoodRunss, Inc., [Your Address]
 
 ---

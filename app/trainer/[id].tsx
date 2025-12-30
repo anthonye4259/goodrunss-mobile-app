@@ -12,50 +12,96 @@ import { Ionicons } from "@expo/vector-icons"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useLocalSearchParams, router } from "expo-router"
 import * as Haptics from "expo-haptics"
+import { doc, getDoc } from "firebase/firestore"
+import { db } from "@/lib/firebase-config"
 
-// Mock trainer data
-const MOCK_TRAINER = {
-    id: "trainer-1",
-    name: "Coach Mike",
-    tagline: "Former D1 Player • 10+ Years Experience",
-    sport: "Basketball",
-    rating: 4.9,
-    reviewCount: 47,
-    hourlyRate: 75,
-    bio: "I help players of all skill levels improve their game through personalized training. Specializing in shooting mechanics, ball handling, and basketball IQ.",
-    certifications: ["NASM Certified", "First Aid/CPR", "Youth Coaching License"],
-    services: [
-        { id: "1", name: "1-on-1 Training", duration: 60, price: 75 },
-        { id: "2", name: "Group Session (2-4)", duration: 90, price: 50 },
-        { id: "3", name: "Video Analysis", duration: 30, price: 35 },
-    ],
-    availability: ["Mon 6-9pm", "Wed 6-9pm", "Sat 9am-2pm"],
-    reviews: [
-        { id: "1", userName: "Marcus T.", rating: 5, text: "Coach Mike transformed my shooting form. Highly recommend!", date: "2 weeks ago" },
-        { id: "2", userName: "Sarah L.", rating: 5, text: "Great with kids. My son loves his sessions.", date: "1 month ago" },
-    ],
-    images: ["/trainer-placeholder.png"],
-    responseTime: "Usually responds in 1 hour",
-    totalSessions: 240,
+interface TrainerData {
+    id: string
+    name: string
+    tagline: string
+    sport: string
+    rating: number
+    reviewCount: number
+    hourlyRate: number
+    bio: string
+    certifications: string[]
+    services: { id: string; name: string; duration: number; price: number }[]
+    availability: string[]
+    reviews: { id: string; userName: string; rating: number; text: string; date: string }[]
+    images: string[]
+    responseTime: string
+    totalSessions: number
 }
 
 export default function TrainerProfileScreen() {
     const { id } = useLocalSearchParams()
     const [loading, setLoading] = useState(true)
-    const [trainer, setTrainer] = useState<typeof MOCK_TRAINER | null>(null)
+    const [trainer, setTrainer] = useState<TrainerData | null>(null)
 
     useEffect(() => {
-        // TODO: Fetch real trainer data
-        setTimeout(() => {
-            setTrainer(MOCK_TRAINER)
-            setLoading(false)
-        }, 500)
+        fetchTrainer()
     }, [id])
 
-    if (loading || !trainer) {
+    const fetchTrainer = async () => {
+        try {
+            const trainerId = typeof id === "string" ? id : id?.[0] || ""
+            if (!trainerId) {
+                setLoading(false)
+                return
+            }
+
+            // Fetch from Firebase
+            const trainerDoc = await getDoc(doc(db, "trainers", trainerId))
+
+            if (trainerDoc.exists()) {
+                const data = trainerDoc.data()
+                setTrainer({
+                    id: trainerDoc.id,
+                    name: data.name || data.displayName || "Trainer",
+                    tagline: data.tagline || data.headline || "",
+                    sport: data.sport || data.primarySport || "Training",
+                    rating: data.rating || 5.0,
+                    reviewCount: data.reviewCount || 0,
+                    hourlyRate: data.hourlyRate || data.rate || 50,
+                    bio: data.bio || data.about || "Professional trainer ready to help you reach your goals.",
+                    certifications: data.certifications || [],
+                    services: data.services || [
+                        { id: "1", name: "1-on-1 Training", duration: 60, price: data.hourlyRate || 50 }
+                    ],
+                    availability: data.availability || ["Contact for availability"],
+                    reviews: data.reviews || [],
+                    images: data.images || data.photos || [],
+                    responseTime: data.responseTime || "Usually responds within 24 hours",
+                    totalSessions: data.totalSessions || data.completedSessions || 0,
+                })
+            } else {
+                // No trainer found - show empty state
+                setTrainer(null)
+            }
+        } catch (error) {
+            console.log("[Trainer] Error fetching trainer:", error)
+            setTrainer(null)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    if (loading) {
         return (
             <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color="#7ED957" />
+            </View>
+        )
+    }
+
+    if (!trainer) {
+        return (
+            <View style={styles.loadingContainer}>
+                <Ionicons name="person-outline" size={48} color="#666" />
+                <Text style={{ color: "#666", marginTop: 12 }}>Trainer not found</Text>
+                <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 20 }}>
+                    <Text style={{ color: "#7ED957" }}>Go Back</Text>
+                </TouchableOpacity>
             </View>
         )
     }

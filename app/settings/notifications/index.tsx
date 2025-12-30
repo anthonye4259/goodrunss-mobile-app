@@ -1,29 +1,78 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { View, Text, StyleSheet, Switch, ScrollView, TouchableOpacity, Alert } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
 import { router } from "expo-router"
 import { LinearGradient } from "expo-linear-gradient"
 import * as Haptics from "expo-haptics"
+import AsyncStorage from "@react-native-async-storage/async-storage"
+
+const NOTIFICATION_STORAGE_KEY = "@goodrunss_notification_settings"
+
+interface NotificationSettingsType {
+    pauseAll: boolean
+    newFollowers: boolean
+    friendRequests: boolean
+    chatMessages: boolean
+    mentions: boolean
+    gameInvites: boolean
+    nearbyAlerts: boolean
+    reminders: boolean
+    promotions: boolean
+    tips: boolean
+}
+
+const DEFAULT_SETTINGS: NotificationSettingsType = {
+    pauseAll: false,
+    newFollowers: true,
+    friendRequests: true,
+    chatMessages: true,
+    mentions: true,
+    gameInvites: true,
+    nearbyAlerts: true,
+    reminders: true,
+    promotions: false,
+    tips: true
+}
 
 export default function NotificationSettings() {
-    const [settings, setSettings] = useState({
-        pauseAll: false,
-        // Social
-        newFollowers: true,
-        friendRequests: true,
-        chatMessages: true,
-        mentions: true,
-        // Activity
-        gameInvites: true,
-        nearbyAlerts: true,
-        reminders: true,
-        // Marketing
-        promotions: false,
-        tips: true
-    })
+    const [settings, setSettings] = useState<NotificationSettingsType>(DEFAULT_SETTINGS)
+    const [loading, setLoading] = useState(true)
 
-    const toggleSwitch = (key: keyof typeof settings) => {
+    // Load settings on mount
+    useEffect(() => {
+        loadSettings()
+    }, [])
+
+    // Save settings whenever they change
+    useEffect(() => {
+        if (!loading) {
+            saveSettings(settings)
+        }
+    }, [settings, loading])
+
+    const loadSettings = async () => {
+        try {
+            const stored = await AsyncStorage.getItem(NOTIFICATION_STORAGE_KEY)
+            if (stored) {
+                setSettings({ ...DEFAULT_SETTINGS, ...JSON.parse(stored) })
+            }
+        } catch (error) {
+            console.log("[Notifications] Error loading settings:", error)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const saveSettings = async (newSettings: NotificationSettingsType) => {
+        try {
+            await AsyncStorage.setItem(NOTIFICATION_STORAGE_KEY, JSON.stringify(newSettings))
+        } catch (error) {
+            console.log("[Notifications] Error saving settings:", error)
+        }
+    }
+
+    const toggleSwitch = (key: keyof NotificationSettingsType) => {
         Haptics.selectionAsync()
         setSettings(prev => ({ ...prev, [key]: !prev[key] }))
     }

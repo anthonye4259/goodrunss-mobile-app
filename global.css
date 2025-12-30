@@ -3,30 +3,34 @@
 @tailwind utilities;
 
 :root {
-  --background: 0 0% 0%;
-  /* True Black */
-  --foreground: 0 0% 98%;
-  --card: 0 0% 9%;
-  /* Subtle lift */
-  --card-foreground: 0 0% 98%;
-  --popover: 0 0% 9%;
-  --popover-foreground: 0 0% 98%;
-  --primary: 142 70% 50%;
-  /* Sharper, cleaner Signal Green */
+  /* Matte Color Palette - Premium, softer aesthetic */
+  --background: 0 0% 4%;
+  /* Warm black #0A0A0A */
+  --foreground: 0 0% 94%;
+  /* Off-white #F0F0F0 */
+  --card: 0 0% 8%;
+  /* Soft dark #141414 */
+  --card-foreground: 0 0% 94%;
+  --popover: 0 0% 8%;
+  --popover-foreground: 0 0% 94%;
+  --primary: 100 26% 48%;
+  /* Matte sage green #6B9B5A */
   --primary-foreground: 0 0% 4%;
-  --secondary: 0 0% 12%;
-  --secondary-foreground: 0 0% 98%;
-  --muted: 0 0% 16%;
-  --muted-foreground: 0 0% 64%;
-  --accent: 142 70% 50%;
-  /* Match primary for consistency */
+  --secondary: 0 0% 10%;
+  /* Warm dark gray */
+  --secondary-foreground: 0 0% 94%;
+  --muted: 0 0% 12%;
+  --muted-foreground: 0 0% 54%;
+  /* Softer gray #8A8A8A */
+  --accent: 100 26% 48%;
+  /* Match primary sage */
   --accent-foreground: 0 0% 4%;
-  --destructive: 0 84% 60%;
+  --destructive: 0 72% 51%;
+  /* Muted red */
   --destructive-foreground: 0 0% 98%;
-  --border: 0 0% 16%;
-  /* Darker borders for subtle separation */
-  --input: 0 0% 20%;
-  --ring: 142 70% 50%;
+  --border: 0 0% 12%;
+  /* Subtle borders #1F1F1F */
+  --input: 0 0% 15%;
+  --ring: 100 26% 48%;
   --radius: 1rem;
-  /* More rounded, softer UI */
 }

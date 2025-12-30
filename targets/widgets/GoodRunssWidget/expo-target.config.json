@@ -1,0 +1,21 @@
+{
+    "type": "widget",
+    "icon": "../assets/icon.png",
+    "name": "GoodRunss",
+    "teamId": "KF86S48Y7B",
+    "bundleIdentifier": "com.goodrunss.app.widget",
+    "deploymentTarget": "16.0",
+    "entitlements": {
+        "com.apple.security.application-groups": [
+            "group.com.goodrunss.app"
+        ]
+    },
+    "frameworks": [
+        "WidgetKit",
+        "SwiftUI"
+    ],
+    "colors": {
+        "$accent": "#7ED957",
+        "$widgetBackground": "#0A0A0A"
+    }
+}

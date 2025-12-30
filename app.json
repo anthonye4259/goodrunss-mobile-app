@@ -105,7 +105,7 @@
         "expo-build-properties",
         {
           "ios": {
-            "deploymentTarget": "15.1"
+            "deploymentTarget": "16.0"
           },
           "android": {
             "compileSdkVersion": 34,
@@ -119,6 +119,12 @@
         {
           "merchantIdentifier": "merchant.com.goodrunss.app",
           "enableGooglePay": true
+        }
+      ],
+      [
+        "@bacons/apple-targets",
+        {
+          "appleTeamId": "KF86S48Y7B"
         }
       ],
       "expo-asset",

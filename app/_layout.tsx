@@ -2,10 +2,13 @@
 import { Stack } from "expo-router"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
 import { UserPreferencesProvider, useUserPreferences } from "@/lib/user-preferences"
-import { LocationProvider } from "@/lib/location-context"
+import { LocationProvider, useLocation } from "@/lib/location-context"
 import { StripeProvider } from "@/lib/stripe-provider"
 import { NotificationService } from "@/lib/notification-service"
 import { dailyEngagementService } from "@/lib/services/daily-engagement-service"
+import { upgradeNotificationService } from "@/lib/services/upgrade-notification-service"
+import { liveActivityNotifications } from "@/lib/services/live-activity-notifications"
+import { crashReporting } from "@/lib/services/crash-reporting-service"
 import { useEffect, useCallback } from "react"
 import "@/lib/i18n"
 import "../global.css"
@@ -17,21 +20,25 @@ import { ToastProvider } from "@/components/ui/Toast"
 import { NudgesProvider } from "@/components/ui/OnboardingNudges"
 import {
   useFonts,
-  Inter_400Regular,
-  Inter_500Medium,
-  Inter_600SemiBold,
-  Inter_700Bold,
-} from "@expo-google-fonts/inter"
+  Outfit_400Regular,
+  Outfit_500Medium,
+  Outfit_600SemiBold,
+  Outfit_700Bold,
+} from "@expo-google-fonts/outfit"
 import * as SplashScreen from "expo-splash-screen"
 
 // Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync()
+
+// Initialize crash reporting early
+crashReporting.init()
 
 
 
 // Inner component that has access to auth
 function AppContent({ children }: { children: React.ReactNode }) {
   const { user } = useAuth()
+  const { preferences } = useUserPreferences()
 
   // Initialize deep linking
   useDeepLinking()
@@ -47,26 +54,49 @@ function AppContent({ children }: { children: React.ReactNode }) {
       console.log("[Engagement] Failed to schedule:", err)
     )
 
+    // Schedule upgrade prompts for free trainers/facilities
+    const userType = preferences?.userType
+    if (userType === "trainer" || userType === "instructor") {
+      upgradeNotificationService.scheduleUpgradePrompt("trainer").catch(err =>
+        console.log("[UpgradeNotif] Failed to schedule trainer prompt:", err)
+      )
+    } else if (userType === "facility") {
+      upgradeNotificationService.scheduleUpgradePrompt("facility").catch(err =>
+        console.log("[UpgradeNotif] Failed to schedule facility prompt:", err)
+      )
+    }
+
+    // Start live activity notifications for players
+    // (friend check-ins, active runs, etc.)
+    if (userType === "player" || userType === "both") {
+      // Get friend IDs from user profile (would need to fetch from Firestore)
+      const friendIds = user.friendIds || []
+      if (friendIds.length > 0) {
+        liveActivityNotifications.startFriendCheckInListener(user.id, friendIds)
+      }
+    }
+
     // Set up client sync (works for both clients and trainers for now)
     const cleanup = setupClientRealTimeSync(user.id)
 
     return () => {
       if (cleanup) cleanup()
       unsubscribeAll()
+      liveActivityNotifications.stopFriendCheckInListener()
     }
-  }, [user?.id, user?.role])
+  }, [user?.id, user?.role, preferences?.userType])
 
   return <>{children}</>
 }
 
 
 export default function RootLayout() {
-  // Load Inter fonts
+  // Load Outfit fonts
   const [fontsLoaded] = useFonts({
-    Inter_400Regular,
-    Inter_500Medium,
-    Inter_600SemiBold,
-    Inter_700Bold,
+    Outfit_400Regular,
+    Outfit_500Medium,
+    Outfit_600SemiBold,
+    Outfit_700Bold,
   })
 
   // Hide splash screen once fonts are loaded

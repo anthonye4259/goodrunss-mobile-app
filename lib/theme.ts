@@ -1,77 +1,79 @@
 /**
  * GoodRunss Design System
  * Centralized theme tokens for consistent styling across the app
+ * 
+ * MATTE SAGE GREEN THEME - Premium, softer aesthetic
  */
 
 // ============================================
-// COLORS
+// COLORS - Matte Sage Theme
 // ============================================
 
 export const colors = {
-    // Backgrounds
+    // Backgrounds - Warm Blacks
     bg: {
         primary: "#0A0A0A",
-        secondary: "#111111",
+        secondary: "#101010",
         card: "#141414",
         elevated: "#1A1A1A",
     },
 
-    // Brand Colors
-    primary: "#7ED957",      // Lime green (main CTA)
-    primaryDark: "#22C55E",  // Darker lime
+    // Brand Colors - Matte Sage
+    primary: "#6B9B5A",      // Matte sage green (main CTA)
+    primaryDark: "#5A8A4A",  // Darker sage
     secondary: "#8B5CF6",    // Purple (GIA)
-    accent: "#3B82F6",       // Blue (info)
+    accent: "#5B7DB6",       // Muted blue (info)
 
-    // Text
+    // Text - Softer Contrast
     text: {
-        primary: "#FFFFFF",
-        secondary: "#9CA3AF",
-        muted: "#6B7280",
-        disabled: "#4B5563",
+        primary: "#F0F0F0",
+        secondary: "#8A8A8A",
+        muted: "#666666",
+        disabled: "#444444",
     },
 
     // Borders
     border: {
         default: "#1F1F1F",
-        subtle: "#2A2A2A",
-        highlight: "rgba(126, 217, 87, 0.3)",
+        subtle: "#252525",
+        highlight: "rgba(107, 155, 90, 0.3)",
     },
 
-    // Status Colors
+    // Status Colors - Muted
     status: {
-        success: "#22C55E",
-        warning: "#FBBF24",
-        error: "#EF4444",
-        info: "#3B82F6",
+        success: "#6B9B5A",
+        warning: "#D99B3D",
+        error: "#DC4444",
+        info: "#5B7DB6",
     },
 
     // Activity Levels
     activity: {
-        quiet: "#22C55E",
-        active: "#EAB308",
-        busy: "#F97316",
-        packed: "#EF4444",
+        quiet: "#6B9B5A",
+        active: "#C9A33D",
+        busy: "#D97430",
+        packed: "#DC4444",
     },
 
-    // Overlays
+    // Overlays - Using Matte Sage
     overlay: {
-        light: "rgba(255, 255, 255, 0.1)",
+        light: "rgba(255, 255, 255, 0.08)",
         dark: "rgba(0, 0, 0, 0.5)",
-        primary: "rgba(126, 217, 87, 0.15)",
+        primary: "rgba(107, 155, 90, 0.15)",
         secondary: "rgba(139, 92, 246, 0.15)",
     },
 }
 
 // ============================================
-// TYPOGRAPHY
+// TYPOGRAPHY - Outfit Font
 // ============================================
 
 export const typography = {
     fontFamily: {
-        regular: "Inter_400Regular",
-        medium: "Inter_500Medium",
-        semibold: "Inter_600SemiBold",
-        bold: "Inter_700Bold",
+        regular: "Outfit_400Regular",
+        medium: "Outfit_500Medium",
+        semibold: "Outfit_600SemiBold",
+        bold: "Outfit_700Bold",
     },
     fontSize: {
         xs: 10,
@@ -89,6 +91,12 @@ export const typography = {
         tight: 1.2,
         normal: 1.5,
         relaxed: 1.75,
+    },
+    letterSpacing: {
+        tight: -0.5,
+        normal: 0,
+        wide: 1,
+        wider: 2,
     },
 }
 
@@ -128,33 +136,33 @@ export const shadows = {
     sm: {
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.2,
+        shadowOpacity: 0.15,
         shadowRadius: 2,
     },
     md: {
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
+        shadowOpacity: 0.2,
         shadowRadius: 6,
     },
     lg: {
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.4,
+        shadowOpacity: 0.3,
         shadowRadius: 12,
     },
 }
 
 // ============================================
-// GRADIENTS
+// GRADIENTS - Matte Theme
 // ============================================
 
 export const gradients = {
-    background: ["#0A0A0A", "#141414"],
-    hero: ["#0D1F0A", "#0A0A0A", "#1A0A2E"],
-    primary: ["#7ED957", "#22C55E"],
+    background: ["#0A0A0A", "#121212"],
+    hero: ["#0D1A0A", "#0A0A0A", "#1A0A20"],
+    primary: ["#7DAD6C", "#5A8A4A"],
     secondary: ["#8B5CF6", "#6D28D9"],
-    card: ["rgba(255,255,255,0.05)", "rgba(255,255,255,0.02)"],
+    card: ["rgba(255,255,255,0.04)", "rgba(255,255,255,0.02)"],
 }
 
 // ============================================
@@ -209,3 +217,4 @@ const theme = {
 }
 
 export default theme
+

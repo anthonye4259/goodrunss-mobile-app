@@ -25,6 +25,12 @@ export type NotificationType =
   | "availability_reminder" // New: remind trainer to update availability
   | "court_status_change"  // Court status changed (favorite courts)
   | "court_nearby_quiet"   // Nearby court is quiet (geofence trigger)
+  | "upgrade_prompt_trainer"  // Prompt free trainers to upgrade
+  | "upgrade_prompt_facility" // Prompt free facilities to upgrade
+  | "live_friend_checkin"     // Real-time: friend checked into venue
+  | "live_active_run"         // Real-time: active run at nearby venue
+  | "live_best_time"          // Real-time: best time to play prediction
+  | "live_need_players"       // Real-time: someone needs players nearby
   | "general"              // Generic notification
 
 
@@ -212,6 +218,12 @@ export class NotificationService {
       availability_reminder: true, // Trainer: update availability
       court_status_change: true,  // Favorite court status changed
       court_nearby_quiet: true,   // Nearby court is quiet
+      upgrade_prompt_trainer: true, // Upgrade prompts for trainers
+      upgrade_prompt_facility: true, // Upgrade prompts for facilities
+      live_friend_checkin: true,  // Real-time: friend checked in
+      live_active_run: true,      // Real-time: active run nearby
+      live_best_time: true,       // Real-time: best time prediction
+      live_need_players: true,    // Real-time: someone needs players
       general: true,             // Generic notifications
     }
   }

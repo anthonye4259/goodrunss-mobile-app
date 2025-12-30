@@ -1,10 +1,12 @@
 
-import { useState } from "react"
-import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, Image } from "react-native"
+import { useState, useEffect } from "react"
+import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, Image, ActivityIndicator } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { router } from "expo-router"
 import { socialService } from "@/lib/services/social-service"
+import { collection, query, where, getDocs, limit, orderBy } from "firebase/firestore"
+import { db, auth } from "@/lib/firebase-config"
 
 interface UserSuggestion {
   id: string
@@ -19,50 +21,105 @@ interface UserSuggestion {
 export default function AddFriendScreen() {
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState<UserSuggestion[]>([])
-  const [suggestions, setSuggestions] = useState<UserSuggestion[]>([
-    {
-      id: "1",
-      name: "Emma Wilson",
-      username: "emmaw",
-      avatar: "/placeholder.svg?height=80&width=80",
-      activities: ["Basketball", "Tennis"],
-      mutualFriends: 3,
-      distance: 1.2,
-    },
-    {
-      id: "2",
-      name: "James Lee",
-      username: "jameslee",
-      avatar: "/placeholder.svg?height=80&width=80",
-      activities: ["Soccer", "Basketball"],
-      mutualFriends: 5,
-      distance: 3.5,
-    },
-  ])
+  const [suggestions, setSuggestions] = useState<UserSuggestion[]>([])
+  const [loading, setLoading] = useState(false)
+  const [loadingSuggestions, setLoadingSuggestions] = useState(true)
+
+  useEffect(() => {
+    loadSuggestions()
+  }, [])
+
+  const loadSuggestions = async () => {
+    try {
+      const currentUserId = auth.currentUser?.uid
+      if (!currentUserId) {
+        setLoadingSuggestions(false)
+        return
+      }
+
+      // Fetch suggested users (recent active users)
+      const usersRef = collection(db, "users")
+      const q = query(
+        usersRef,
+        where("__name__", "!=", currentUserId),
+        limit(10)
+      )
+      const snapshot = await getDocs(q)
+
+      const suggestedUsers: UserSuggestion[] = snapshot.docs.map(doc => {
+        const data = doc.data()
+        return {
+          id: doc.id,
+          name: data.displayName || data.name || "User",
+          username: data.username || doc.id.substring(0, 8),
+          avatar: data.photoURL || data.avatar,
+          activities: data.activities || data.sports || [],
+          mutualFriends: 0,
+          distance: undefined
+        }
+      })
+
+      setSuggestions(suggestedUsers)
+    } catch (error) {
+      console.log("[Friends] Error loading suggestions:", error)
+    } finally {
+      setLoadingSuggestions(false)
+    }
+  }
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return
 
+    setLoading(true)
     try {
-      // TODO: Replace with actual API call
-      // const response = await fetch(`/api/users/search?q=${searchQuery}`);
-      // const data = await response.json();
-      setSearchResults(suggestions) // Mock
+      const usersRef = collection(db, "users")
+      const searchLower = searchQuery.toLowerCase()
+
+      // Search by display name (case-insensitive search using range query)
+      const q = query(
+        usersRef,
+        where("displayName", ">=", searchQuery),
+        where("displayName", "<=", searchQuery + '\uf8ff'),
+        limit(20)
+      )
+      const snapshot = await getDocs(q)
+
+      const results: UserSuggestion[] = snapshot.docs
+        .filter(doc => doc.id !== auth.currentUser?.uid)
+        .map(doc => {
+          const data = doc.data()
+          return {
+            id: doc.id,
+            name: data.displayName || data.name || "User",
+            username: data.username || doc.id.substring(0, 8),
+            avatar: data.photoURL || data.avatar,
+            activities: data.activities || data.sports || [],
+            mutualFriends: 0,
+            distance: undefined
+          }
+        })
+
+      setSearchResults(results)
     } catch (error) {
-      console.error("Error searching users:", error)
+      console.log("[Friends] Error searching users:", error)
+      setSearchResults([])
+    } finally {
+      setLoading(false)
     }
   }
-
 
   const handleSendRequest = async (userId: string) => {
     try {
       await socialService.sendFriendRequest(userId)
       // Optimistic update
       setSuggestions((prev) => prev.filter((user) => user.id !== userId))
+      setSearchResults((prev) => prev.filter((user) => user.id !== userId))
     } catch (error) {
-      console.error("Error sending friend request:", error)
+      console.log("[Friends] Error sending friend request:", error)
     }
   }
+
+  const displayedUsers = searchQuery.trim() ? searchResults : suggestions
 
   return (
     <LinearGradient colors={["#0A0A0A", "#141414"]} style={styles.container}>
@@ -135,43 +192,70 @@ export default function AddFriendScreen() {
         {/* Suggested Friends */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Suggested for You</Text>
-            <Text style={styles.sectionSubtitle}>Based on your activities and location</Text>
+            <Text style={styles.sectionTitle}>
+              {searchQuery.trim() ? "Search Results" : "Suggested for You"}
+            </Text>
+            <Text style={styles.sectionSubtitle}>
+              {searchQuery.trim() ? `${displayedUsers.length} users found` : "Based on your activities and location"}
+            </Text>
           </View>
 
-          {suggestions.map((user) => (
-            <View key={user.id} style={styles.userCard}>
-              <Image source={{ uri: user.avatar }} style={styles.userAvatar} />
-              <View style={styles.userInfo}>
-                <Text style={styles.userName}>{user.name}</Text>
-                <Text style={styles.userUsername}>@{user.username}</Text>
-                <View style={styles.userActivities}>
-                  {user.activities.slice(0, 2).map((activity, index) => (
-                    <View key={index} style={styles.activityTag}>
-                      <Text style={styles.activityTagText}>{activity}</Text>
-                    </View>
-                  ))}
-                </View>
-                <View style={styles.userMeta}>
-                  {user.distance && (
-                    <View style={styles.metaItem}>
-                      <Ionicons name="location" size={12} color="#7ED957" />
-                      <Text style={styles.metaText}>{user.distance} mi</Text>
-                    </View>
-                  )}
-                  {user.mutualFriends > 0 && (
-                    <View style={styles.metaItem}>
-                      <Ionicons name="people" size={12} color="#666" />
-                      <Text style={styles.metaText}>{user.mutualFriends} mutual</Text>
-                    </View>
-                  )}
-                </View>
-              </View>
-              <TouchableOpacity style={styles.addButton} onPress={() => handleSendRequest(user.id)}>
-                <Ionicons name="person-add" size={20} color="#000" />
-              </TouchableOpacity>
+          {loading || loadingSuggestions ? (
+            <View style={{ padding: 40, alignItems: "center" }}>
+              <ActivityIndicator color="#7ED957" />
             </View>
-          ))}
+          ) : displayedUsers.length === 0 ? (
+            <View style={{ padding: 40, alignItems: "center" }}>
+              <Ionicons name="people-outline" size={48} color="#333" />
+              <Text style={{ color: "#666", marginTop: 12 }}>
+                {searchQuery.trim() ? "No users found" : "No suggestions yet"}
+              </Text>
+            </View>
+          ) : (
+            displayedUsers.map((user) => (
+              <View key={user.id} style={styles.userCard}>
+                {user.avatar ? (
+                  <Image source={{ uri: user.avatar }} style={styles.userAvatar} />
+                ) : (
+                  <View style={[styles.userAvatar, { backgroundColor: "#7ED957", justifyContent: "center", alignItems: "center" }]}>
+                    <Text style={{ color: "#000", fontSize: 24, fontWeight: "bold" }}>
+                      {user.name.charAt(0).toUpperCase()}
+                    </Text>
+                  </View>
+                )}
+                <View style={styles.userInfo}>
+                  <Text style={styles.userName}>{user.name}</Text>
+                  <Text style={styles.userUsername}>@{user.username}</Text>
+                  {user.activities.length > 0 && (
+                    <View style={styles.userActivities}>
+                      {user.activities.slice(0, 2).map((activity, index) => (
+                        <View key={index} style={styles.activityTag}>
+                          <Text style={styles.activityTagText}>{activity}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+                  <View style={styles.userMeta}>
+                    {user.distance && (
+                      <View style={styles.metaItem}>
+                        <Ionicons name="location" size={12} color="#7ED957" />
+                        <Text style={styles.metaText}>{user.distance} mi</Text>
+                      </View>
+                    )}
+                    {user.mutualFriends > 0 && (
+                      <View style={styles.metaItem}>
+                        <Ionicons name="people" size={12} color="#666" />
+                        <Text style={styles.metaText}>{user.mutualFriends} mutual</Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+                <TouchableOpacity style={styles.addButton} onPress={() => handleSendRequest(user.id)}>
+                  <Ionicons name="person-add" size={20} color="#000" />
+                </TouchableOpacity>
+              </View>
+            ))
+          )}
         </View>
       </ScrollView>
     </LinearGradient>

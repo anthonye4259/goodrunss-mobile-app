@@ -290,19 +290,19 @@ export function predictVenueTraffic(
 
     if (trafficScore < 35) {
         level = "low"
-        color = "#7ED957"
+        color = "#6B9B5A"  // Matte sage green
         label = "Low"
         estimatedWaitTime = undefined
         peakHours = isWeekend ? "9 AM - 6 PM" : "6-9 AM, 5-8 PM"
     } else if (trafficScore < 65) {
         level = "moderate"
-        color = "#FFA500"
+        color = "#D99B3D"  // Muted amber
         label = "Moderate"
         estimatedWaitTime = "5-10 min"
         peakHours = isWeekend ? "9 AM - 6 PM" : "6-9 AM, 5-8 PM"
     } else {
         level = "busy"
-        color = "#FF6B6B"
+        color = "#DC4444"  // Muted red
         label = "Busy"
         estimatedWaitTime = "15-20 min"
         peakHours = isWeekend ? "9 AM - 6 PM" : "6-9 AM, 5-8 PM"

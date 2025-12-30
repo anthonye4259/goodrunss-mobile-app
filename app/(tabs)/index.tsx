@@ -12,9 +12,11 @@ import { TeacherDashboard } from "@/components/TeacherDashboard"
 import { useUserLocation } from "@/lib/location-context"
 import { FriendActivityRail } from "@/components/Live/FriendActivityRail"
 import { SEED_VENUES } from "@/lib/services/smart-data-service"
-import { WeatherWidget } from "@/components/Widgets/WeatherWidget"
 import { PlayRequestModal } from "@/components/Social/PlayRequest"
 import { MiniCourtCardSkeleton } from "@/components/ui/Skeleton"
+import { WeeklyCalendar } from "@/components/WeeklyCalendar"
+import { VenueTrafficCard } from "@/components/VenueTrafficCard"
+import { LinearGradient } from "expo-linear-gradient"
 
 const { width } = Dimensions.get("window")
 
@@ -23,18 +25,10 @@ const colors = {
   bg: "#0A0A0A",
   card: "#141414",
   cardBorder: "#1F1F1F",
-  primary: "#7ED957",
-  textPrimary: "#FFFFFF",
-  textSecondary: "#9CA3AF",
-  textMuted: "#6B7280",
-}
-
-// Activity level colors
-const ACTIVITY_COLORS = {
-  quiet: "#22C55E",
-  active: "#EAB308",
-  busy: "#F97316",
-  packed: "#EF4444",
+  primary: "#6B9B5A", // Updated to matte sage
+  textPrimary: "#F0F0F0",
+  textSecondary: "#8A8A8A",
+  textMuted: "#666666",
 }
 
 // Courts from smart data service (blends real + seed data)
@@ -57,43 +51,6 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
     Math.sin(dLon / 2) * Math.sin(dLon / 2)
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
   return R * c
-}
-
-// Generate hourly predictions
-function generateHourlyPredictions(currentHour: number) {
-  const isWeekend = new Date().getDay() === 0 || new Date().getDay() === 6
-  const predictions = []
-
-  for (let i = 0; i < 6; i++) {
-    const h = (currentHour + i) % 24
-    let level: 'quiet' | 'active' | 'busy' | 'packed' = 'quiet'
-
-    // Simple prediction logic
-    if (isWeekend) {
-      if (h >= 10 && h <= 17) level = Math.random() > 0.5 ? 'busy' : 'active'
-      else if (h >= 18 && h <= 20) level = 'active'
-    } else {
-      if ((h >= 6 && h <= 9) || (h >= 17 && h <= 20)) level = Math.random() > 0.5 ? 'busy' : 'packed'
-      else if (h >= 12 && h <= 14) level = 'active'
-    }
-
-    const hourStr = i === 0 ? "Now" :
-      h === 0 ? "12a" : h < 12 ? `${h}a` : h === 12 ? "12p" : `${h - 12}p`
-
-    predictions.push({
-      hour: hourStr,
-      level,
-      color: ACTIVITY_COLORS[level],
-      isNow: i === 0,
-      isBest: level === 'quiet' && i > 0
-    })
-  }
-
-  // Find best time
-  const bestIndex = predictions.findIndex((p, i) => i > 0 && p.level === 'quiet')
-  if (bestIndex > 0) predictions[bestIndex].isBest = true
-
-  return predictions
 }
 
 export default function HomeScreen() {
@@ -146,11 +103,6 @@ export default function HomeScreen() {
     return { ...nearest, distance: minDistance }
   }, [location])
 
-  // Generate predictions
-  const predictions = useMemo(() => generateHourlyPredictions(currentHour), [currentHour])
-  const bestTimeIndex = predictions.findIndex(p => p.isBest)
-  const bestTime = bestTimeIndex > 0 ? predictions[bestTimeIndex].hour : "Now"
-
   // Time-based greeting
   const getGreeting = () => {
     if (currentHour < 12) return "Good morning"
@@ -177,7 +129,7 @@ export default function HomeScreen() {
                 setViewMode("player")
               }}
             >
-              <Ionicons name="swap-horizontal" size={16} color="#7ED957" />
+              <Ionicons name="swap-horizontal" size={16} color="#6B9B5A" />
               <Text style={styles.modeToggleText}>Switch to Player Mode</Text>
             </TouchableOpacity>
           )}
@@ -199,8 +151,6 @@ export default function HomeScreen() {
           showsVerticalScrollIndicator={false}
         >
 
-
-
           {/* Mode Toggle for "Both" Users in Player Mode */}
           {showBothModeToggle && (
             <TouchableOpacity
@@ -210,7 +160,7 @@ export default function HomeScreen() {
                 setViewMode("trainer")
               }}
             >
-              <Ionicons name="swap-horizontal" size={16} color="#7ED957" />
+              <Ionicons name="swap-horizontal" size={16} color="#6B9B5A" />
               <Text style={styles.modeToggleText}>Switch to Trainer Mode</Text>
             </TouchableOpacity>
           )}
@@ -267,7 +217,7 @@ export default function HomeScreen() {
               >
                 <View style={styles.upcomingLeft}>
                   <View style={styles.upcomingBadge}>
-                    <Ionicons name="calendar" size={14} color="#7ED957" />
+                    <Ionicons name="calendar" size={14} color="#6B9B5A" />
                     <Text style={styles.upcomingBadgeText}>UPCOMING</Text>
                   </View>
                   <Text style={styles.upcomingVenue}>{upcomingBooking.venue}</Text>
@@ -283,8 +233,14 @@ export default function HomeScreen() {
             </TouchableOpacity>
           )}
 
-          {/* ===== WEATHER WIDGET ===== */}
-          <WeatherWidget />
+          {/* ===== WEEKLY CALENDAR (New) ===== */}
+          <WeeklyCalendar
+            weather={{
+              temp: 72, // TODO: Hook up to real weather service
+              condition: "sunny",
+              description: "Perfect for outdoor play"
+            }}
+          />
 
           {/* ===== RECOVERY HUB - Tap to open full screen ===== */}
           <TouchableOpacity
@@ -326,71 +282,14 @@ export default function HomeScreen() {
             </View>
           </TouchableOpacity>
 
-          {/* ===== HERO CARD - GIA PREDICTION (WOW FACTOR) ===== */}
-          <TouchableOpacity
-            style={styles.heroCard}
-            onPress={() => handlePress(() => router.push("/(tabs)/live"))}
-            activeOpacity={0.9}
-          >
-            <View style={styles.heroContent}>
-              {/* Top Row: Badge + Live Indicator */}
-              <View style={styles.heroTopRow}>
-                <View style={styles.giaBadge}>
-                  <Ionicons name="sparkles" size={14} color="#8B5CF6" />
-                  <Text style={styles.giaBadgeText}>GIA INSIGHT</Text>
-                </View>
-                <View style={styles.liveIndicator}>
-                  <View style={styles.liveDot} />
-                  <Text style={styles.liveText}>LIVE</Text>
-                </View>
-              </View>
-
-              {/* Main Content: Venue-Specific Prediction */}
-              <View style={styles.heroMain}>
-                <View style={styles.venueRow}>
-                  <Text style={styles.venueName}>{nearestCourt.name}</Text>
-                  <Text style={styles.venueDistance}>
-                    • {nearestCourt.distance ? `${nearestCourt.distance.toFixed(1)} mi` : "nearby"}
-                  </Text>
-                </View>
-                <Text style={styles.heroBigText}>
-                  {predictions[0]?.level === 'quiet' ? "Quiet" :
-                    predictions[0]?.level === 'active' ? "Active" :
-                      predictions[0]?.level === 'busy' ? "Busy" : "Packed"}
-                </Text>
-                <Text style={styles.heroConfidence}>
-                  {predictions[0]?.level === 'quiet' ? 'Perfect for pickup games.' :
-                    predictions[0]?.level === 'active' ? 'Games happening now.' :
-                      predictions[0]?.level === 'busy' ? 'Getting crowded.' :
-                        'Full courts expected.'}
-                </Text>
-              </View>
-
-              {/* Activity Timeline - Horizontal bars */}
-              <View style={styles.heroTimeline}>
-                <View style={styles.timelineBars}>
-                  {predictions.map((pred, index) => (
-                    <View key={index} style={styles.timelineItem}>
-                      <View style={[
-                        styles.timelineBar,
-                        {
-                          height: pred.level === 'quiet' ? 24 :
-                            pred.level === 'active' ? 32 :
-                              pred.level === 'busy' ? 44 : 56,
-                          backgroundColor: pred.isNow ? '#FFFFFF' : '#333333',
-                          opacity: 1,
-                        },
-                      ]} />
-                      <Text style={[
-                        styles.timelineLabel,
-                        pred.isNow && { color: '#FFF', fontFamily: 'Inter_700Bold' }
-                      ]}>{pred.hour}</Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-            </View>
-          </TouchableOpacity>
+          {/* ===== VENUE TRAFFIC CARD (New Premium Component) ===== */}
+          <VenueTrafficCard
+            venueId={nearestCourt.id}
+            venueName={nearestCourt.name}
+            distance={nearestCourt.distance}
+            openUntil="10:00 PM" // TODO: Get from venue data
+            sport={primaryActivity.toLowerCase()}
+          />
 
           {/* ===== FRIENDS ACTIVE ===== */}
           <FriendActivityRail />

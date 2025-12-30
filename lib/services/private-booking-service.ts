@@ -15,6 +15,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage"
 import type { PrivateBooking, AvailabilitySlot, Instructor } from "@/lib/types/wellness-instructor"
 import { calculateBookingFees, FeeCalculation } from "./fee-calculation-service"
 import { recordMarketplaceBooking, markAsRepeatClient, BookingFeeType } from "./client-relationship-service"
+import { reviewTriggers } from "@/lib/services/app-review-service"
 
 // Legacy constants (kept for backwards compatibility)
 export const PLATFORM_FEE_PERCENT = 6
@@ -359,6 +360,10 @@ export async function confirmBookingPayment(bookingId: string): Promise<boolean>
         }
 
         console.log(`[PrivateBookingService] Confirmed booking ${bookingId}`)
+
+        // Trigger review prompt after successful booking
+        reviewTriggers.onBookingComplete()
+
         return true
     } catch (error) {
         console.error("[PrivateBookingService] confirmBookingPayment error:", error)

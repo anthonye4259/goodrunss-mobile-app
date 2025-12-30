@@ -1,34 +1,36 @@
 /**
  * Design Tokens for GoodRunss
  * Single source of truth for colors, spacing, typography, etc.
+ * 
+ * MATTE COLOR PALETTE - Premium, softer aesthetic
  */
 
-// Colors
+// Colors - Matte Sage Green Theme
 export const colors = {
-    // Primary Brand Colors
-    primary: '#7ED957',
-    primaryDark: '#6BC045',
-    primaryLight: '#9FE577',
+    // Primary Brand Colors - Matte Sage
+    primary: '#6B9B5A',
+    primaryDark: '#5A8A4A',
+    primaryLight: '#7DAD6C',
 
-    // Background Colors
+    // Background Colors - Warm Blacks
     bgPrimary: '#0A0A0A',
-    bgSecondary: '#141414',
+    bgSecondary: '#121212',
     bgTertiary: '#1A1A1A',
 
-    // Text Colors
-    textPrimary: '#FFFFFF',
-    textSecondary: '#A1A1AA',
-    textMuted: '#71717A',
+    // Text Colors - Softer Contrast
+    textPrimary: '#F0F0F0',
+    textSecondary: '#8A8A8A',
+    textMuted: '#666666',
 
     // Border Colors
-    borderPrimary: '#27272A',
-    borderAccent: '#7ED957',
+    borderPrimary: '#1F1F1F',
+    borderAccent: '#6B9B5A',
 
-    // Status Colors
-    success: '#7ED957',
-    error: '#EF4444',
-    warning: '#F59E0B',
-    info: '#3B82F6',
+    // Status Colors - Muted
+    success: '#6B9B5A',
+    error: '#DC4444',
+    warning: '#D99B3D',
+    info: '#5B7DB6',
 
     // Utility
     black: '#000000',
@@ -47,8 +49,16 @@ export const spacing = {
     '3xl': 64,
 } as const;
 
-// Typography
+// Typography - Outfit Font Family
 export const typography = {
+    // Font Family
+    fontFamily: {
+        regular: 'Outfit_400Regular',
+        medium: 'Outfit_500Medium',
+        semibold: 'Outfit_600SemiBold',
+        bold: 'Outfit_700Bold',
+    },
+
     // Font Sizes
     fontSize: {
         xs: 12,
@@ -74,6 +84,14 @@ export const typography = {
         tight: 1.2,
         normal: 1.5,
         relaxed: 1.75,
+    },
+
+    // Letter Spacing (for section headers)
+    letterSpacing: {
+        tight: -0.5,
+        normal: 0,
+        wide: 1,
+        wider: 2,
     },
 } as const;
 
@@ -134,21 +152,21 @@ export const rgba = (hex: string, alpha: number): string => {
 export const colorClasses = {
     // Backgrounds
     bgPrimary: 'bg-[#0A0A0A]',
-    bgSecondary: 'bg-[#141414]',
+    bgSecondary: 'bg-[#121212]',
     bgTertiary: 'bg-[#1A1A1A]',
 
     // Text
-    textPrimary: 'text-white',
-    textSecondary: 'text-[#A1A1AA]',
-    textMuted: 'text-[#71717A]',
+    textPrimary: 'text-[#F0F0F0]',
+    textSecondary: 'text-[#8A8A8A]',
+    textMuted: 'text-[#666666]',
 
     // Borders
-    borderPrimary: 'border-[#27272A]',
-    borderAccent: 'border-[#7ED957]',
+    borderPrimary: 'border-[#1F1F1F]',
+    borderAccent: 'border-[#6B9B5A]',
 
-    // Primary
-    primary: 'bg-[#7ED957]',
-    primaryText: 'text-[#7ED957]',
+    // Primary - Matte Sage
+    primary: 'bg-[#6B9B5A]',
+    primaryText: 'text-[#6B9B5A]',
 } as const;
 
 export default {
@@ -162,3 +180,4 @@ export default {
     getSpacing,
     colorClasses,
 };
+

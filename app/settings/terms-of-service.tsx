@@ -90,7 +90,7 @@ export default function TermsOfServiceScreen() {
                     <Text style={styles.text}>
                         For questions about these Terms:{"\n\n"}
                         Email: legal@goodrunss.com{"\n"}
-                        Support: support@goodrunss.com
+                        Support: helpdesk@teamgoodrunss.com
                     </Text>
 
                     <TouchableOpacity

@@ -1,23 +1,81 @@
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { View, Text, StyleSheet, Switch, ScrollView, TouchableOpacity, Alert } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
 import { router } from "expo-router"
 import * as Haptics from "expo-haptics"
 import { LinearGradient } from "expo-linear-gradient"
+import AsyncStorage from "@react-native-async-storage/async-storage"
+
+const PRIVACY_STORAGE_KEY = "@goodrunss_privacy_settings"
+
+interface PrivacySettings {
+  ghostMode: boolean
+  profileVisibility: "public" | "friends" | "private"
+  showActivity: boolean
+  allowTagging: boolean
+  dataSharing: boolean
+}
+
+const DEFAULT_PRIVACY: PrivacySettings = {
+  ghostMode: false,
+  profileVisibility: "public",
+  showActivity: true,
+  allowTagging: true,
+  dataSharing: false,
+}
 
 export default function PrivacyScreen() {
-  // Mock State - In real app, connect to UserPreferencesContext
-  const [ghostMode, setGhostMode] = useState(false)
-  const [profileVisibility, setProfileVisibility] = useState("public") // public, friends, private
-  const [showActivity, setShowActivity] = useState(true)
-  const [allowTagging, setAllowTagging] = useState(true)
-  const [dataSharing, setDataSharing] = useState(false)
+  const [settings, setSettings] = useState<PrivacySettings>(DEFAULT_PRIVACY)
+  const [loading, setLoading] = useState(true)
 
-  const toggleSwitch = (setter: (val: boolean) => void, val: boolean) => {
+  // Load settings on mount
+  useEffect(() => {
+    loadSettings()
+  }, [])
+
+  // Save settings whenever they change
+  useEffect(() => {
+    if (!loading) {
+      saveSettings(settings)
+    }
+  }, [settings, loading])
+
+  const loadSettings = async () => {
+    try {
+      const stored = await AsyncStorage.getItem(PRIVACY_STORAGE_KEY)
+      if (stored) {
+        setSettings({ ...DEFAULT_PRIVACY, ...JSON.parse(stored) })
+      }
+    } catch (error) {
+      console.log("[Privacy] Error loading settings:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const saveSettings = async (newSettings: PrivacySettings) => {
+    try {
+      await AsyncStorage.setItem(PRIVACY_STORAGE_KEY, JSON.stringify(newSettings))
+    } catch (error) {
+      console.log("[Privacy] Error saving settings:", error)
+    }
+  }
+
+  const toggleSetting = (key: keyof PrivacySettings) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-    setter(!val)
+    setSettings(prev => ({ ...prev, [key]: !prev[key] }))
+  }
+
+  const cycleProfileVisibility = () => {
+    Haptics.selectionAsync()
+    const next = settings.profileVisibility === "public"
+      ? "friends"
+      : settings.profileVisibility === "friends"
+        ? "private"
+        : "public"
+    setSettings(prev => ({ ...prev, profileVisibility: next }))
   }
 
   const handleVisionExplanation = () => {
@@ -46,12 +104,12 @@ export default function PrivacyScreen() {
           {/* Ghost Mode (Hero Feature) */}
           <View style={styles.ghostCard}>
             <LinearGradient
-              colors={ghostMode ? ['#374151', '#1F2937'] : ['#1F2937', '#111']}
+              colors={settings.ghostMode ? ['#374151', '#1F2937'] : ['#1F2937', '#111']}
               style={styles.ghostGradient}
             >
               <View style={styles.ghostHeader}>
                 <View style={styles.ghostIcon}>
-                  <Ionicons name={ghostMode ? "eye-off" : "eye"} size={26} color={ghostMode ? "#F87171" : "#7ED957"} />
+                  <Ionicons name={settings.ghostMode ? "eye-off" : "eye"} size={26} color={settings.ghostMode ? "#F87171" : "#7ED957"} />
                 </View>
                 <View style={styles.ghostText}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -61,13 +119,13 @@ export default function PrivacyScreen() {
                     </TouchableOpacity>
                   </View>
                   <Text style={styles.ghostDesc}>
-                    {ghostMode ? "You are invisible on the map." : "You are visible to nearby players."}
+                    {settings.ghostMode ? "You are invisible on the map." : "You are visible to nearby players."}
                   </Text>
                 </View>
                 <Switch
-                  value={ghostMode}
-                  onValueChange={(val) => toggleSwitch(setGhostMode, ghostMode)}
-                  trackColor={{ false: "#374151", true: "#DC2626" }} // Red for Ghost Mode active
+                  value={settings.ghostMode}
+                  onValueChange={() => toggleSetting("ghostMode")}
+                  trackColor={{ false: "#374151", true: "#DC2626" }}
                   thumbColor="#FFF"
                 />
               </View>
@@ -84,15 +142,10 @@ export default function PrivacyScreen() {
               </View>
               <TouchableOpacity
                 style={styles.selectBtn}
-                onPress={() => {
-                  // Cycle for demo: Public -> Friends -> Private
-                  const next = profileVisibility === 'public' ? 'friends' : profileVisibility === 'friends' ? 'private' : 'public'
-                  setProfileVisibility(next)
-                  Haptics.selectionAsync()
-                }}
+                onPress={cycleProfileVisibility}
               >
                 <Text style={styles.selectText}>
-                  {profileVisibility === 'public' ? 'Everyone' : profileVisibility === 'friends' ? 'Friends' : 'Only Me'}
+                  {settings.profileVisibility === 'public' ? 'Everyone' : settings.profileVisibility === 'friends' ? 'Friends' : 'Only Me'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -105,8 +158,8 @@ export default function PrivacyScreen() {
                 <Text style={styles.rowDesc}>Show when you're online or in-game.</Text>
               </View>
               <Switch
-                value={showActivity}
-                onValueChange={(val) => toggleSwitch(setShowActivity, showActivity)}
+                value={settings.showActivity}
+                onValueChange={() => toggleSetting("showActivity")}
                 trackColor={{ false: "#374151", true: "#7ED957" }}
                 thumbColor="#FFF"
               />
@@ -121,8 +174,8 @@ export default function PrivacyScreen() {
                 <Text style={styles.rowDesc}>Friends can tag you in posts/games.</Text>
               </View>
               <Switch
-                value={allowTagging}
-                onValueChange={(val) => toggleSwitch(setAllowTagging, allowTagging)}
+                value={settings.allowTagging}
+                onValueChange={() => toggleSetting("allowTagging")}
                 trackColor={{ false: "#374151", true: "#3B82F6" }}
                 thumbColor="#FFF"
               />
