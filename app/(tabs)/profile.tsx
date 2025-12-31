@@ -185,23 +185,23 @@ export default function ProfileScreen() {
                 </View>
                 <Text style={styles.actionLabel}>Dashboard</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.actionItem} onPress={() => router.push("/(tabs)/bookings")}>
+              <TouchableOpacity style={styles.actionItem} onPress={() => router.push("/trainer/library-manager")}>
+                <View style={[styles.actionIcon, { backgroundColor: 'rgba(139,92,246,0.15)' }]}>
+                  <Ionicons name="library" size={20} color="#8B5CF6" />
+                </View>
+                <Text style={styles.actionLabel}>My Content</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.actionItem} onPress={() => router.push("/trainer/video-inbox")}>
                 <View style={[styles.actionIcon, { backgroundColor: 'rgba(59,130,246,0.15)' }]}>
-                  <Ionicons name="calendar" size={20} color="#3B82F6" />
+                  <Ionicons name="mail" size={20} color="#3B82F6" />
                 </View>
-                <Text style={styles.actionLabel}>Calendar</Text>
+                <Text style={styles.actionLabel}>Video Inbox</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.actionItem} onPress={() => router.push("/business/crm")}>
+              <TouchableOpacity style={styles.actionItem} onPress={() => router.push("/settings/train-global")}>
                 <View style={[styles.actionIcon, { backgroundColor: 'rgba(251,191,36,0.15)' }]}>
-                  <Ionicons name="people" size={20} color="#FBBF24" />
+                  <Ionicons name="globe" size={20} color="#FBBF24" />
                 </View>
-                <Text style={styles.actionLabel}>Clients</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.actionItem} onPress={() => router.push("/pro-dashboard")}>
-                <View style={[styles.actionIcon, { backgroundColor: 'rgba(168,85,247,0.15)' }]}>
-                  <Ionicons name="rocket" size={20} color="#A855F7" />
-                </View>
-                <Text style={styles.actionLabel}>Pro Tools</Text>
+                <Text style={styles.actionLabel}>Global</Text>
               </TouchableOpacity>
             </View>
 
@@ -378,11 +378,38 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           </View>
 
-        </View>
+          {/* Player Quick Actions */}
+          <Text style={styles.sectionLabel}>MY CONTENT</Text>
+          <View style={styles.quickActions}>
+            <TouchableOpacity style={styles.actionItem} onPress={() => router.push("/library/my-purchases")}>
+              <View style={[styles.actionIcon, { backgroundColor: 'rgba(139,92,246,0.15)' }]}>
+                <Ionicons name="library" size={20} color="#8B5CF6" />
+              </View>
+              <Text style={styles.actionLabel}>My Library</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionItem} onPress={() => router.push("/(tabs)/gia")}>
+              <View style={[styles.actionIcon, { backgroundColor: 'rgba(126,217,87,0.15)' }]}>
+                <Ionicons name="sparkles" size={20} color="#6B9B5A" />
+              </View>
+              <Text style={styles.actionLabel}>AI Coach</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionItem} onPress={() => router.push("/remote-training")}>
+              <View style={[styles.actionIcon, { backgroundColor: 'rgba(59,130,246,0.15)' }]}>
+                <Ionicons name="videocam" size={20} color="#3B82F6" />
+              </View>
+              <Text style={styles.actionLabel}>Remote</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionItem} onPress={() => router.push("/library")}>
+              <View style={[styles.actionIcon, { backgroundColor: 'rgba(251,191,36,0.15)' }]}>
+                <Ionicons name="book" size={20} color="#FBBF24" />
+              </View>
+              <Text style={styles.actionLabel}>Browse</Text>
+            </TouchableOpacity>
+          </View>
 
-        <Text style={styles.version}>v1.0.0 • Player ID: #8821</Text>
-      </ScrollView>
-    </SafeAreaView>
+          <Text style={styles.version}>v1.0.0 • Player ID: #8821</Text>
+        </ScrollView>
+      </SafeAreaView>
     </View >
   )
 }
