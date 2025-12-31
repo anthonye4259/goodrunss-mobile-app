@@ -80,7 +80,7 @@ class LiveSessionService {
 
     /**
      * Create a video room for a session
-     * In production, this would call your backend which calls Daily.co API
+     * Calls Daily.co API to create a real room
      */
     async createRoom(options: {
         bookingId: string
@@ -90,13 +90,44 @@ class LiveSessionService {
         duration: number
     }): Promise<LiveSession> {
         const roomName = `session_${options.bookingId}_${Date.now()}`
+        const apiKey = process.env.EXPO_PUBLIC_DAILY_API_KEY
 
-        // In production: Call your backend to create Daily.co room
-        // const response = await fetch(`${YOUR_BACKEND}/create-room`, { ... })
+        let roomUrl = `https://goodrunss.daily.co/${roomName}` // fallback
 
-        // For now, create a mock room URL
-        // Daily.co room URLs follow pattern: https://your-domain.daily.co/room-name
-        const mockRoomUrl = `https://goodrunss.daily.co/${roomName}`
+        // Create real Daily.co room if API key is available
+        if (apiKey) {
+            try {
+                const response = await fetch(`${DAILY_API_URL}/rooms`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${apiKey}`,
+                    },
+                    body: JSON.stringify({
+                        name: roomName,
+                        properties: {
+                            max_participants: 2,
+                            enable_recording: "cloud",
+                            exp: Math.floor(Date.now() / 1000) + (options.duration + 30) * 60, // Expires 30 min after session
+                            enable_chat: true,
+                            enable_screenshare: true,
+                            start_video_off: false,
+                            start_audio_off: false,
+                        },
+                    }),
+                })
+
+                if (response.ok) {
+                    const room = await response.json() as DailyRoom
+                    roomUrl = room.url
+                    console.log("Daily.co room created:", roomUrl)
+                } else {
+                    console.error("Daily.co room creation failed:", await response.text())
+                }
+            } catch (error) {
+                console.error("Daily.co API error:", error)
+            }
+        }
 
         const session: LiveSession = {
             id: `session_${Date.now()}`,
@@ -105,7 +136,7 @@ class LiveSessionService {
             playerId: options.playerId,
             scheduledAt: options.scheduledAt,
             duration: options.duration,
-            roomUrl: mockRoomUrl,
+            roomUrl,
             roomName,
             status: "scheduled",
             createdAt: new Date().toISOString(),
