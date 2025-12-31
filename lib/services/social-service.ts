@@ -376,7 +376,7 @@ class SocialService {
         // Send push notification to challenged user
         await this.notificationService.sendLocalNotification({
             type: "message_received",
-            title: "🎯 New Challenge!",
+            title: "New Challenge!",
             body: `${challengeData.challengerName} challenged you to ${challengeData.activity}!`,
             data: { challengeId: challenge.id },
         })
@@ -410,7 +410,7 @@ class SocialService {
             const challenge = challenges[index]
             await this.notificationService.sendLocalNotification({
                 type: "message_received",
-                title: accept ? "✅ Challenge Accepted!" : "❌ Challenge Declined",
+                title: accept ? "Challenge Accepted!" : "Challenge Declined",
                 body: accept
                     ? `${challenge.challengedName} accepted your challenge!`
                     : `${challenge.challengedName} declined your challenge`,
@@ -465,7 +465,7 @@ class SocialService {
         if (newLevel > currentXP.level) {
             await this.notificationService.sendLocalNotification({
                 type: "referral_reward",
-                title: "🎉 Level Up!",
+                title: "Level Up!",
                 body: `You're now ${newLevelName}! Keep it up!`,
                 data: { level: newLevel },
             })
@@ -546,7 +546,7 @@ class SocialService {
         // Notify user
         await this.notificationService.sendLocalNotification({
             type: "referral_reward",
-            title: "🏆 New Badge Earned!",
+            title: "New Badge Earned!",
             body: `You earned the "${badge.name}" badge!`,
             data: { badgeId },
         })

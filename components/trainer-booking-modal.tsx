@@ -154,7 +154,7 @@ export function TrainerBookingModal({ visible, onClose, trainer }: TrainerBookin
       // Send local notification
       await notificationService.sendLocalNotification({
         type: "booking_confirmed",
-        title: "Booking Confirmed! 🎉",
+        title: "Booking Confirmed!",
         body: `Your session with ${trainer.name} on ${selectedDate} at ${selectedTime} is confirmed.`,
       })
 

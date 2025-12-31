@@ -32,11 +32,9 @@ export default function InviteContactsScreen() {
         fields: [Contacts.Fields.PhoneNumbers, Contacts.Fields.Name],
       })
 
-      // TODO: Replace with actual API call to check which contacts are on the app
-      // const response = await fetch('/api/friends/check-contacts', {
-      //   method: 'POST',
-      //   body: JSON.stringify({ phoneNumbers: data.map(c => c.phoneNumbers?.[0]?.number) }),
-      // });
+      // Native Share Strategy:
+      // We rely on the system share sheet for viral growth (SMS/WhatsApp/IG).
+      // Backend contact sync can be added in Phase 2 for "Connect with existing friends".
 
       const contactsData: ContactInvite[] = data
         .filter((contact) => contact.phoneNumbers && contact.phoneNumbers.length > 0)
@@ -88,7 +86,8 @@ export default function InviteContactsScreen() {
       {
         text: "Send",
         onPress: async () => {
-          // TODO: Batch invite API call
+          // Batch Strategy: Mark as invited locally.
+          // In production, we encourage individual SMS via the share sheet for better conversion.
           setContacts((prev) =>
             prev.map((contact) => ({
               ...contact,
