@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { db, auth } from "@/lib/firebase-config"
 import { NotificationService } from "@/lib/notification-service"
+import { getReferralMultiplier, getLaunchCity } from "@/lib/launch-cities"
 import type { FriendActivity } from "@/lib/friends-types"
 
 // ============================================
@@ -152,6 +153,31 @@ const BADGES: Record<string, Omit<Badge, "earnedAt">> = {
         icon: "heart",
         color: "#EC4899",
         category: "social",
+    },
+    // Launch City Badges (Priority Cities)
+    nyc_pioneer: {
+        id: "nyc_pioneer",
+        name: "NYC Pioneer",
+        description: "Early adopter in New York City",
+        icon: "ribbon",
+        color: "#3B82F6",
+        category: "achievement",
+    },
+    sf_early_adopter: {
+        id: "sf_early_adopter",
+        name: "SF Early Adopter",
+        description: "Early adopter in San Francisco",
+        icon: "ribbon",
+        color: "#F97316",
+        category: "achievement",
+    },
+    myrtle_og: {
+        id: "myrtle_og",
+        name: "Myrtle Beach OG",
+        description: "Early adopter in Myrtle Beach",
+        icon: "ribbon",
+        color: "#14B8A6",
+        category: "achievement",
     },
 }
 
@@ -564,12 +590,14 @@ class SocialService {
     // REFERRAL TRACKING
     // ============================================
 
-    async trackReferral(referralCode: string): Promise<void> {
+    async trackReferral(referralCode: string, userCity?: string): Promise<void> {
         const stats = await this.getUserStats()
         await this.updateUserStats({ referralsSent: stats.referralsSent + 1 })
 
-        // Grant XP
-        await this.addXP(100, "referral")
+        // Apply city-based multiplier (2x for priority cities)
+        const multiplier = getReferralMultiplier(getLaunchCity(userCity)?.id)
+        const baseXP = 100
+        await this.addXP(baseXP * multiplier, multiplier > 1 ? "referral_2x" : "referral")
 
         // Check for ambassador badges
         if (stats.referralsSent === 0) {

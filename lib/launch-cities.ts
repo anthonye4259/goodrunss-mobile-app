@@ -16,6 +16,32 @@ export const LAUNCH_CITIES = [
 export type LaunchCityId = typeof LAUNCH_CITIES[number]["id"]
 
 /**
+ * Priority Launch Cities for Extreme Marketing Push
+ * These cities get 2x referral bonuses and special features
+ */
+export const PRIORITY_LAUNCH_CITIES: LaunchCityId[] = [
+    "myrtle-beach",
+    "new-york",
+    "san-francisco",
+]
+
+/**
+ * Check if a city is a priority launch city
+ */
+export function isPriorityCity(cityId?: string): boolean {
+    if (!cityId) return false
+    return PRIORITY_LAUNCH_CITIES.includes(cityId as LaunchCityId)
+}
+
+/**
+ * Get referral multiplier for a city
+ * Priority cities get 2x, others get 1x
+ */
+export function getReferralMultiplier(cityId?: string): number {
+    return isPriorityCity(cityId) ? 2 : 1
+}
+
+/**
  * Check if a city has booking enabled
  */
 export function isBookingEnabled(city?: string, state?: string): boolean {

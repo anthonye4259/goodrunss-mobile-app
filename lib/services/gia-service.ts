@@ -568,15 +568,51 @@ Respond with valid JSON only.`
     /**
      * Get personalized greeting
      */
-    getGreeting(userName?: string, recentSport?: string): string {
+    getGreeting(userName?: string, recentSport?: string, userCity?: string): string {
         const hour = new Date().getHours()
         const name = userName ? userName.split(" ")[0] : ""
         const timeGreeting = hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening"
 
+        // Use city-specific greeting if in a priority city
+        const cityGreeting = this.getCitySpecificGreeting(userCity, name, timeGreeting)
+        if (cityGreeting) return cityGreeting
+
         if (recentSport) {
-            return `Good ${timeGreeting}${name ? ` ${name}` : ""}! 🎾 Ready for some ${recentSport}?`
+            return `Good ${timeGreeting}${name ? ` ${name}` : ""}! Ready for some ${recentSport}?`
         }
-        return `Good ${timeGreeting}${name ? ` ${name}` : ""}! 👋 What would you like to play today?`
+        return `Good ${timeGreeting}${name ? ` ${name}` : ""}! What would you like to play today?`
+    },
+
+    /**
+     * Get city-specific greeting for priority launch cities
+     */
+    getCitySpecificGreeting(cityId?: string, userName?: string, timeGreeting?: string): string | null {
+        if (!cityId) return null
+        const name = userName ? ` ${userName}` : ""
+        const time = timeGreeting || "there"
+
+        const cityGreetings: Record<string, string[]> = {
+            "new-york": [
+                `Good ${time}${name}! NYC is buzzing. Ready to hit the courts?`,
+                `What's good${name}! Let's find you a game in the city that never sleeps.`,
+                `Hey${name}! Perfect day for pickup in the five boroughs.`,
+            ],
+            "san-francisco": [
+                `Good ${time}${name}! SF weather looking good for outdoor hoops.`,
+                `Hey${name}! The Bay Area courts are calling.`,
+                `What's up${name}! Let's get you playing in SF today.`,
+            ],
+            "myrtle-beach": [
+                `Welcome to Myrtle${name}! Ready to find a court on vacation?`,
+                `Hey${name}! Myrtle Beach vibes - let's find you a game.`,
+                `Good ${time}${name}! Beach ball or basketball? I've got you covered.`,
+            ],
+        }
+
+        const greetings = cityGreetings[cityId]
+        if (!greetings) return null
+
+        return greetings[Math.floor(Math.random() * greetings.length)]
     },
 
     /**

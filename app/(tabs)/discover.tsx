@@ -38,6 +38,8 @@ import { QuickReportSheet } from "@/components/QuickReportSheet"
 import { SectionSkeleton, VenueCardSkeleton } from "@/components/ui/Skeleton"
 import { EmptyState, EMPTY_STATE_PRESETS } from "@/components/ui/EmptyState"
 import { GiaEmptyState } from "@/components/GIA/GiaEmptyState"
+import { LocalTrainerSpotlight } from "@/components/LocalTrainerSpotlight"
+import { getLaunchCity } from "@/lib/launch-cities"
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window")
 const CARD_WIDTH = SCREEN_WIDTH * 0.7
@@ -434,6 +436,12 @@ export default function DiscoverScreen() {
                                     </View>
                                 </View>
                             </View>
+
+                            {/* LOCAL TRAINER SPOTLIGHT - Priority Cities Only */}
+                            <LocalTrainerSpotlight
+                                trainers={trainers}
+                                cityId={getLaunchCity(userCity)?.id}
+                            />
 
                             {isTrainer ? (
 
