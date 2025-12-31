@@ -4,13 +4,31 @@
  */
 
 export const LAUNCH_CITIES = [
-    { id: "atlanta", name: "Atlanta", state: "GA", aliases: ["atl"] },
-    { id: "myrtle-beach", name: "Myrtle Beach", state: "SC", aliases: ["mb", "myrtle"] },
-    { id: "san-francisco", name: "San Francisco", state: "CA", aliases: ["sf", "san fran"] },
-    { id: "new-york", name: "New York City", state: "NY", aliases: ["nyc", "new york", "manhattan", "brooklyn"] },
-    { id: "austin", name: "Austin", state: "TX", aliases: [] },
-    { id: "phoenix", name: "Phoenix", state: "AZ", aliases: [] },
-    { id: "miami", name: "Miami", state: "FL", aliases: ["mia"] },
+    // USA
+    { id: "atlanta", name: "Atlanta", state: "GA", country: "USA", aliases: ["atl"], timezone: "America/New_York" },
+    { id: "myrtle-beach", name: "Myrtle Beach", state: "SC", country: "USA", aliases: ["mb", "myrtle"], timezone: "America/New_York" },
+    { id: "san-francisco", name: "San Francisco", state: "CA", country: "USA", aliases: ["sf", "san fran"], timezone: "America/Los_Angeles" },
+    { id: "new-york", name: "New York City", state: "NY", country: "USA", aliases: ["nyc", "new york", "manhattan", "brooklyn"], timezone: "America/New_York" },
+    { id: "austin", name: "Austin", state: "TX", country: "USA", aliases: [], timezone: "America/Chicago" },
+    { id: "phoenix", name: "Phoenix", state: "AZ", country: "USA", aliases: [], timezone: "America/Phoenix" },
+    { id: "miami", name: "Miami", state: "FL", country: "USA", aliases: ["mia"], timezone: "America/New_York" },
+
+    // UK
+    { id: "london", name: "London", state: "", country: "UK", aliases: ["ldn"], timezone: "Europe/London" },
+    { id: "manchester", name: "Manchester", state: "", country: "UK", aliases: ["manc"], timezone: "Europe/London" },
+
+    // Spain
+    { id: "barcelona", name: "Barcelona", state: "", country: "Spain", aliases: ["bcn"], timezone: "Europe/Madrid" },
+    { id: "madrid", name: "Madrid", state: "", country: "Spain", aliases: [], timezone: "Europe/Madrid" },
+    { id: "marbella", name: "Marbella", state: "", country: "Spain", aliases: [], timezone: "Europe/Madrid" },
+
+    // UAE
+    { id: "dubai", name: "Dubai", state: "", country: "UAE", aliases: ["dxb"], timezone: "Asia/Dubai" },
+    { id: "abu-dhabi", name: "Abu Dhabi", state: "", country: "UAE", aliases: ["auh"], timezone: "Asia/Dubai" },
+
+    // Portugal
+    { id: "lisbon", name: "Lisbon", state: "", country: "Portugal", aliases: ["lisboa"], timezone: "Europe/Lisbon" },
+    { id: "algarve", name: "Algarve", state: "", country: "Portugal", aliases: [], timezone: "Europe/Lisbon" },
 ] as const
 
 export type LaunchCityId = typeof LAUNCH_CITIES[number]["id"]
