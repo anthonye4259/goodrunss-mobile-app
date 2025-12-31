@@ -647,6 +647,15 @@ export default function VenueDetailScreen() {
               </View>
             </View>
 
+            {/* Social Share: I'm Headed Here */}
+            <View className="mb-6">
+              <WhereImHeaded
+                venueName={venue.name}
+                sport={primaryActivity}
+                venueId={id as string}
+              />
+            </View>
+
             <View className="space-y-3 mb-6">
               <View className="flex-row gap-3">
                 <TouchableOpacity

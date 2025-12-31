@@ -58,21 +58,24 @@ export default function InviteContactsScreen() {
 
   const handleInvite = async (phoneNumber: string) => {
     try {
-      // TODO: Replace with actual API call
-      // await fetch('/api/friends/invite', {
-      //   method: 'POST',
-      //   body: JSON.stringify({ phoneNumber }),
-      // });
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+      // Viral Loop: Send the generalized invite link
+      // in production this would be an SMS deeplink or backend trigger
+      // but for "Share Sheet" universality we use the native share
+      const result = await Share.share({
+        message: `Join me on GoodRunss! Use code ANTH2025 to get a free month of premium. https://goodrunss.com/invite/ANTH2025`,
+        title: "Join GoodRunss"
+      })
 
-      setContacts((prev) =>
-        prev.map((contact) =>
-          contact.phoneNumber === phoneNumber
-            ? { ...contact, isInvited: true, invitedAt: new Date().toISOString() }
-            : contact,
-        ),
-      )
-
-      Alert.alert("Success", "Invitation sent!")
+      if (result.action === Share.sharedAction) {
+        setContacts((prev) =>
+          prev.map((contact) =>
+            contact.phoneNumber === phoneNumber
+              ? { ...contact, isInvited: true, invitedAt: new Date().toISOString() }
+              : contact,
+          ),
+        )
+      }
     } catch (error) {
       console.error("Error sending invite:", error)
       Alert.alert("Error", "Failed to send invitation")

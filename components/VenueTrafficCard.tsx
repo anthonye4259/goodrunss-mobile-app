@@ -6,7 +6,8 @@
  */
 
 import React, { useEffect, useState } from "react"
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native"
+import { View, Text, StyleSheet, TouchableOpacity, Share } from "react-native"
+import * as Haptics from "expo-haptics"
 import { Ionicons } from "@expo/vector-icons"
 import { router } from "expo-router"
 import {
@@ -127,6 +128,20 @@ export function VenueTrafficCard({
         }
     }
 
+    const handleShare = async () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+        const message = `🏀 ${venueName} is at ${currentLabel} traffic right now! (~${playerCount ?? "unknown"} players). Best time to go is ${bestTime}. Join me? https://goodrunss.app/venue/${venueId}`
+
+        try {
+            await Share.share({
+                message,
+                title: `${venueName} Status`
+            })
+        } catch (err) {
+            console.error(err)
+        }
+    }
+
     return (
         <TouchableOpacity
             style={styles.container}
@@ -135,8 +150,17 @@ export function VenueTrafficCard({
         >
             {/* Header */}
             <View style={styles.header}>
-                <Text style={styles.venueName} numberOfLines={1}>{venueName}</Text>
-                {getLevelBadge()}
+                <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+                    <Text style={styles.venueName} numberOfLines={1}>{venueName}</Text>
+                    {getLevelBadge()}
+                </View>
+                <TouchableOpacity
+                    onPress={handleShare}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    style={{ paddingLeft: 8 }}
+                >
+                    <Ionicons name="share-outline" size={20} color="#7ED957" />
+                </TouchableOpacity>
             </View>
 
             {/* Meta Info */}
