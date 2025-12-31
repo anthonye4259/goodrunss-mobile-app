@@ -13,6 +13,8 @@
   },
   "dependencies": {
     "@bacons/apple-targets": "^3.0.6",
+    "@config-plugins/react-native-webrtc": "^13.0.0",
+    "@daily-co/react-native-daily-js": "^0.82.0",
     "@expo-google-fonts/inter": "^0.4.2",
     "@expo-google-fonts/outfit": "^0.4.3",
     "@expo/vector-icons": "^15.0.3",
@@ -73,6 +75,7 @@
     "react-native-snap-carousel": "^3.9.1",
     "react-native-svg": "15.12.1",
     "react-native-view-shot": "^4.0.3",
+    "react-native-webrtc": "^124.0.7",
     "react-native-worklets": "0.5.1",
     "react-native-worklets-core": "^1.6.2"
   },
