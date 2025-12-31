@@ -179,6 +179,31 @@ const BADGES: Record<string, Omit<Badge, "earnedAt">> = {
         color: "#14B8A6",
         category: "achievement",
     },
+    // City Ambassador Badges (Refer 10+ in a city)
+    nyc_ambassador: {
+        id: "nyc_ambassador",
+        name: "NYC Ambassador",
+        description: "Referred 10+ friends in NYC",
+        icon: "medal",
+        color: "#3B82F6",
+        category: "referral",
+    },
+    sf_ambassador: {
+        id: "sf_ambassador",
+        name: "SF Ambassador",
+        description: "Referred 10+ friends in SF",
+        icon: "medal",
+        color: "#F97316",
+        category: "referral",
+    },
+    myrtle_ambassador: {
+        id: "myrtle_ambassador",
+        name: "Myrtle Ambassador",
+        description: "Referred 10+ friends in Myrtle Beach",
+        icon: "medal",
+        color: "#14B8A6",
+        category: "referral",
+    },
 }
 
 // ============================================
@@ -590,20 +615,54 @@ class SocialService {
     // REFERRAL TRACKING
     // ============================================
 
-    async trackReferral(referralCode: string, userCity?: string): Promise<void> {
+    async trackReferral(referralCode: string, userCity?: string, referralCity?: string): Promise<void> {
         const stats = await this.getUserStats()
+        const cityId = getLaunchCity(userCity)?.id
+        const referralCityId = getLaunchCity(referralCity)?.id
+
+        // Track city-specific referral count
+        const cityReferralKey = cityId ? `cityReferrals_${cityId}` : null
+        let cityReferralCount = 0
+        if (cityReferralKey) {
+            const stored = await AsyncStorage.getItem(cityReferralKey)
+            cityReferralCount = stored ? parseInt(stored, 10) : 0
+            await AsyncStorage.setItem(cityReferralKey, (cityReferralCount + 1).toString())
+        }
+
         await this.updateUserStats({ referralsSent: stats.referralsSent + 1 })
 
         // Apply city-based multiplier (2x for priority cities)
-        const multiplier = getReferralMultiplier(getLaunchCity(userCity)?.id)
+        const multiplier = getReferralMultiplier(cityId)
         const baseXP = 100
-        await this.addXP(baseXP * multiplier, multiplier > 1 ? "referral_2x" : "referral")
+        let totalXP = baseXP * multiplier
+        let xpReason = multiplier > 1 ? "referral_2x" : "referral"
 
-        // Check for ambassador badges
+        // Same-city bonus: +50 XP if referral is in the same city as referrer
+        if (cityId && referralCityId && cityId === referralCityId) {
+            totalXP += 50
+            xpReason = "referral_same_city"
+        }
+
+        await this.addXP(totalXP, xpReason)
+
+        // Check for ambassador badges (general)
         if (stats.referralsSent === 0) {
             await this.awardBadge("ambassador")
         } else if (stats.referralsSent + 1 >= 10) {
             await this.awardBadge("super_ambassador")
+        }
+
+        // Check for City Ambassador badges (10+ referrals in a specific city)
+        if (cityReferralCount + 1 >= 10 && cityId) {
+            const cityAmbassadorBadges: Record<string, string> = {
+                "new-york": "nyc_ambassador",
+                "san-francisco": "sf_ambassador",
+                "myrtle-beach": "myrtle_ambassador",
+            }
+            const cityBadge = cityAmbassadorBadges[cityId]
+            if (cityBadge) {
+                await this.awardBadge(cityBadge)
+            }
         }
     }
 
