@@ -6,7 +6,7 @@
  */
 
 import { View, Text, TouchableOpacity, StyleSheet, Share, Animated } from "react-native"
-import { useRef, useEffect } from "react"
+import { useRef, useEffect, useState } from "react"
 import { Ionicons } from "@expo/vector-icons"
 import { LinearGradient } from "expo-linear-gradient"
 import * as Haptics from "expo-haptics"
@@ -19,31 +19,44 @@ type Props = {
     onShare?: () => void
 }
 
-export function WhereImHeaded({ courtName, courtId, sport, eta, onShare }: Props) {
+export function WhereImHeaded({ courtName, courtId, sport, onShare }: Props) {
     const pulseAnim = useRef(new Animated.Value(1)).current
     const deepLink = `https://goodrunss.app/court/${courtId}`
+
+    // Quick Time Options
+    const [selectedTime, setSelectedTime] = useState<string>("Now")
+
+    const timeOptions = ["Now", "15m", "30m", "1h", "2h"]
 
     // Pulsing animation to draw attention
     useEffect(() => {
         Animated.loop(
             Animated.sequence([
                 Animated.timing(pulseAnim, {
-                    toValue: 1.05,
-                    duration: 1000,
+                    toValue: 1.02,
+                    duration: 1500,
                     useNativeDriver: true,
                 }),
                 Animated.timing(pulseAnim, {
                     toValue: 1,
-                    duration: 1000,
+                    duration: 1500,
                     useNativeDriver: true,
                 }),
             ])
         ).start()
     }, [])
 
+    const getActionText = () => {
+        const s = sport.toLowerCase()
+        if (s === 'tennis' || s === 'pickleball') return 'hit some balls'
+        if (s === 'basketball') return 'hoop'
+        return `play ${s}`
+    }
+
     const getShareMessage = () => {
-        const etaText = eta ? ` (${eta} away)` : ""
-        return `🚀 On my way to ${courtName}${etaText}! Come run some ${sport.toLowerCase()} with me 🏀\n\n${deepLink}`
+        const timeText = selectedTime === "Now" ? "right now" : `in ${selectedTime}`
+        const action = getActionText()
+        return `🚀 I'm headed to ${courtName} ${timeText}! Come ${action} with me.\n\n${deepLink}`
     }
 
     const handleShare = async () => {
@@ -67,29 +80,56 @@ export function WhereImHeaded({ courtName, courtId, sport, eta, onShare }: Props
 
     return (
         <Animated.View style={[styles.container, { transform: [{ scale: pulseAnim }] }]}>
-            <TouchableOpacity onPress={handleShare} activeOpacity={0.9}>
-                <LinearGradient
-                    colors={["#7ED957", "#22C55E"]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.gradient}
-                >
+            <LinearGradient
+                colors={["#7ED957", "#22C55E"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.gradient}
+            >
+                <View style={styles.topRow}>
                     <View style={styles.iconContainer}>
                         <Ionicons name="navigate" size={24} color="#000" />
                     </View>
 
                     <View style={styles.content}>
-                        <Text style={styles.heading}>Let friends know!</Text>
+                        <Text style={styles.heading}>I'm Headed Here</Text>
                         <Text style={styles.subheading} numberOfLines={1}>
-                            "I'm headed to {courtName}"
+                            Notify friends & followers
                         </Text>
                     </View>
+                </View>
 
-                    <View style={styles.shareIcon}>
-                        <Ionicons name="share-social" size={20} color="#000" />
-                    </View>
-                </LinearGradient>
-            </TouchableOpacity>
+                {/* Time Selection Chips */}
+                <View style={styles.timeRow}>
+                    {timeOptions.map((time) => (
+                        <TouchableOpacity
+                            key={time}
+                            onPress={() => {
+                                Haptics.selectionAsync()
+                                setSelectedTime(time)
+                            }}
+                            style={[
+                                styles.timeChip,
+                                selectedTime === time && styles.timeChipActive
+                            ]}
+                        >
+                            <Text style={[
+                                styles.timeText,
+                                selectedTime === time && styles.timeTextActive
+                            ]}>{time}</Text>
+                        </TouchableOpacity>
+                    ))}
+                </View>
+
+                <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={handleShare}
+                >
+                    <Text style={styles.actionText}>Share Status: {selectedTime === "Now" ? "Going Now" : `Arriving in ${selectedTime}`}</Text>
+                    <Ionicons name="share-social" size={18} color="#000" />
+                </TouchableOpacity>
+
+            </LinearGradient>
         </Animated.View>
     )
 }
@@ -128,21 +168,63 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     gradient: {
-        flexDirection: "row",
-        alignItems: "center",
         padding: 16,
     },
+    topRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 16,
+    },
     iconContainer: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
-        backgroundColor: "rgba(0,0,0,0.15)",
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: "rgba(0,0,0,0.1)",
         alignItems: "center",
         justifyContent: "center",
         marginRight: 12,
     },
     content: {
         flex: 1,
+    },
+    timeRow: {
+        flexDirection: "row",
+        gap: 8,
+        marginBottom: 16,
+    },
+    timeChip: {
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 20,
+        backgroundColor: "rgba(0,0,0,0.1)",
+        borderWidth: 1,
+        borderColor: "rgba(0,0,0,0.1)",
+    },
+    timeChipActive: {
+        backgroundColor: "#000",
+        borderColor: "#000",
+    },
+    timeText: {
+        fontSize: 12,
+        fontWeight: "600",
+        color: "rgba(0,0,0,0.6)",
+    },
+    timeTextActive: {
+        color: "#FFF",
+    },
+    actionButton: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "rgba(255,255,255,0.2)",
+        paddingVertical: 12,
+        borderRadius: 12,
+        gap: 8,
+    },
+    actionText: {
+        fontSize: 14,
+        fontWeight: "bold",
+        color: "#000",
     },
     heading: {
         color: "#000",

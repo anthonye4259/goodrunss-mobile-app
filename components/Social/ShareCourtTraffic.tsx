@@ -23,15 +23,15 @@ export function ShareCourtTraffic({ courtName, courtId, playersNow, sport, varia
 
     const getShareMessage = () => {
         if (playersNow === 0) {
-            return `🏀 Empty court alert! ${courtName} is wide open. Come get some runs!\n\n${deepLink}`
+            return `🏀 Empty court alert! ${courtName} is wide open. Come get a game!\n\n${deepLink}`
         }
         if (playersNow <= 3) {
             return `🔥 ${courtName} has ${playersNow} players right now! Need more for a game. Pull up!\n\n${deepLink}`
         }
         if (playersNow <= 6) {
-            return `🏀 Good vibes at ${courtName}! ${playersNow} players running. Come through!\n\n${deepLink}`
+            return `🏀 Good vibes at ${courtName}! ${playersNow} players on court. Come through!\n\n${deepLink}`
         }
-        return `🔥🔥 ${courtName} is LIT! ${playersNow} players on the courts. You missing out!\n\n${deepLink}`
+        return `🔥🔥 ${courtName} is LIT! ${playersNow} players active. You missing out!\n\n${deepLink}`
     }
 
     const handleShareSocial = async () => {
