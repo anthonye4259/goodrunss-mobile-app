@@ -39,6 +39,7 @@ import { SectionSkeleton, VenueCardSkeleton } from "@/components/ui/Skeleton"
 import { EmptyState, EMPTY_STATE_PRESETS } from "@/components/ui/EmptyState"
 import { GiaEmptyState } from "@/components/GIA/GiaEmptyState"
 import { LocalTrainerSpotlight } from "@/components/LocalTrainerSpotlight"
+import { FeaturedInternationalCoaches } from "@/components/FeaturedInternationalCoaches"
 import { getLaunchCity } from "@/lib/launch-cities"
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window")
@@ -443,12 +444,137 @@ export default function DiscoverScreen() {
                                 cityId={getLaunchCity(userCity)?.id}
                             />
 
+                            {/* FEATURED INTERNATIONAL COACHES - Train with Pros Abroad */}
+                            <FeaturedInternationalCoaches />
+
+                            {/* REMOTE TRAINING QUICK ACTIONS */}
+                            <View style={styles.quickActionsSection}>
+                                <Text style={styles.quickActionsTitle}>✨ More Ways to Train</Text>
+                                <ScrollView
+                                    horizontal
+                                    showsHorizontalScrollIndicator={false}
+                                    contentContainerStyle={styles.quickActionsRow}
+                                >
+                                    <TouchableOpacity
+                                        style={styles.quickActionCard}
+                                        onPress={() => {
+                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                                            router.push("/remote-training")
+                                        }}
+                                    >
+                                        <LinearGradient
+                                            colors={["#6B9B5A20", "#0A0A0A"]}
+                                            style={styles.quickActionGradient}
+                                        >
+                                            <Ionicons name="videocam" size={24} color="#6B9B5A" />
+                                            <Text style={styles.quickActionText}>Remote Training</Text>
+                                            <Text style={styles.quickActionDesc}>Video & live sessions</Text>
+                                        </LinearGradient>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={styles.quickActionCard}
+                                        onPress={() => {
+                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                                            router.push("/library")
+                                        }}
+                                    >
+                                        <LinearGradient
+                                            colors={["#8B5CF620", "#0A0A0A"]}
+                                            style={styles.quickActionGradient}
+                                        >
+                                            <Ionicons name="library" size={24} color="#8B5CF6" />
+                                            <Text style={styles.quickActionText}>Trainer Library</Text>
+                                            <Text style={styles.quickActionDesc}>Courses & drills</Text>
+                                        </LinearGradient>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={styles.quickActionCard}
+                                        onPress={() => {
+                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                                            router.push("/remote-training/train-abroad")
+                                        }}
+                                    >
+                                        <LinearGradient
+                                            colors={["#3B82F620", "#0A0A0A"]}
+                                            style={styles.quickActionGradient}
+                                        >
+                                            <Ionicons name="airplane" size={24} color="#3B82F6" />
+                                            <Text style={styles.quickActionText}>Train Abroad</Text>
+                                            <Text style={styles.quickActionDesc}>Plan your trip</Text>
+                                        </LinearGradient>
+                                    </TouchableOpacity>
+                                </ScrollView>
+                            </View>
+
                             {isTrainer ? (
 
                                 // ============================================
                                 // 🏋️ TRAINER DISCOVER FEED
                                 // ============================================
                                 <>
+                                    {/* TRAINER TOOLS - Quick Access */}
+                                    <View style={styles.section}>
+                                        <SectionHeader
+                                            title="YOUR TRAINER TOOLS"
+                                            icon="briefcase"
+                                            color="#6B9B5A"
+                                        />
+                                        <ScrollView
+                                            horizontal
+                                            showsHorizontalScrollIndicator={false}
+                                            contentContainerStyle={styles.quickActionsRow}
+                                        >
+                                            <TouchableOpacity
+                                                style={styles.trainerToolCard}
+                                                onPress={() => {
+                                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                                                    router.push("/trainer/video-inbox")
+                                                }}
+                                            >
+                                                <View style={[styles.trainerToolIcon, { backgroundColor: "#6B9B5A20" }]}>
+                                                    <Ionicons name="mail" size={24} color="#6B9B5A" />
+                                                </View>
+                                                <Text style={styles.trainerToolText}>Video Inbox</Text>
+                                            </TouchableOpacity>
+                                            <TouchableOpacity
+                                                style={styles.trainerToolCard}
+                                                onPress={() => {
+                                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                                                    router.push("/trainer/us-leads")
+                                                }}
+                                            >
+                                                <View style={[styles.trainerToolIcon, { backgroundColor: "#3B82F620" }]}>
+                                                    <Ionicons name="flag" size={24} color="#3B82F6" />
+                                                </View>
+                                                <Text style={styles.trainerToolText}>U.S. Leads</Text>
+                                            </TouchableOpacity>
+                                            <TouchableOpacity
+                                                style={styles.trainerToolCard}
+                                                onPress={() => {
+                                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                                                    router.push("/trainer/remote-setup")
+                                                }}
+                                            >
+                                                <View style={[styles.trainerToolIcon, { backgroundColor: "#8B5CF620" }]}>
+                                                    <Ionicons name="settings" size={24} color="#8B5CF6" />
+                                                </View>
+                                                <Text style={styles.trainerToolText}>Remote Setup</Text>
+                                            </TouchableOpacity>
+                                            <TouchableOpacity
+                                                style={styles.trainerToolCard}
+                                                onPress={() => {
+                                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                                                    router.push("/settings/train-global")
+                                                }}
+                                            >
+                                                <View style={[styles.trainerToolIcon, { backgroundColor: "#FBBF2420" }]}>
+                                                    <Ionicons name="globe" size={24} color="#FBBF24" />
+                                                </View>
+                                                <Text style={styles.trainerToolText}>Train Global</Text>
+                                            </TouchableOpacity>
+                                        </ScrollView>
+                                    </View>
+
                                     {/* 1. Player Hot Leads (Top) */}
                                     <View style={styles.section}>
                                         <SectionHeader
@@ -468,6 +594,7 @@ export default function DiscoverScreen() {
                                             decelerationRate="fast"
                                         />
                                     </View>
+
 
                                     {/* 2. Top Facilities Near You */}
                                     <View style={styles.section}>
@@ -1524,6 +1651,66 @@ const styles = StyleSheet.create({
         color: "#666",
         fontSize: 13,
         marginTop: 8,
+        textAlign: "center",
+    },
+
+    // Quick Actions Section
+    quickActionsSection: {
+        marginTop: 24,
+        marginBottom: 16,
+    },
+    quickActionsTitle: {
+        fontSize: 18,
+        fontWeight: "bold",
+        color: "#FFF",
+        paddingHorizontal: 20,
+        marginBottom: 12,
+    },
+    quickActionsRow: {
+        paddingHorizontal: 16,
+        gap: 12,
+    },
+    quickActionCard: {
+        width: 140,
+        borderRadius: 16,
+        overflow: "hidden",
+    },
+    quickActionGradient: {
+        padding: 16,
+        borderWidth: 1,
+        borderColor: "#2A2A2A",
+        borderRadius: 16,
+        height: 110,
+    },
+    quickActionText: {
+        fontSize: 14,
+        fontWeight: "bold",
+        color: "#FFF",
+        marginTop: 12,
+    },
+    quickActionDesc: {
+        fontSize: 11,
+        color: "#888",
+        marginTop: 4,
+    },
+
+    // Trainer Tool Cards
+    trainerToolCard: {
+        alignItems: "center",
+        width: 90,
+    },
+    trainerToolIcon: {
+        width: 56,
+        height: 56,
+        borderRadius: 16,
+        alignItems: "center",
+        justifyContent: "center",
+        marginBottom: 8,
+    },
+    trainerToolText: {
+        fontSize: 12,
+        fontWeight: "600",
+        color: "#FFF",
         textAlign: "center",
     },
 })
