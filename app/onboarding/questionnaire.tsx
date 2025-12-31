@@ -258,8 +258,13 @@ export default function QuestionnaireScreen() {
         state: detectedState,
         isPhase1City: isPhase1City,
       })
-      // Navigate to feature discovery slides
-      router.replace("/onboarding/features")
+
+      // Route trainers to Train Global opportunity, players to feature discovery
+      if (isTeachingRole(userType)) {
+        router.replace("/onboarding/train-global")
+      } else {
+        router.replace("/onboarding/features")
+      }
     }
   }
 
