@@ -1,8 +1,9 @@
 
 import { useState, useEffect } from "react"
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from "react-native"
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Share } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
+import * as Haptics from "expo-haptics"
 import { router } from "expo-router"
 import * as Contacts from "expo-contacts"
 import type { ContactInvite } from "@/lib/friends-types"
