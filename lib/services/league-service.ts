@@ -446,10 +446,10 @@ export const leagueService = {
      */
     formatSkillLevel(level: SkillLevel): string {
         const labels: { [key in SkillLevel]: string } = {
-            beginner: "🟢 Beginner",
-            intermediate: "🟡 Intermediate",
-            advanced: "🔴 Advanced",
-            open: "⚪ All Levels",
+            beginner: "Beginner",
+            intermediate: "Intermediate",
+            advanced: "Advanced",
+            open: "All Levels",
         }
         return labels[level]
     },

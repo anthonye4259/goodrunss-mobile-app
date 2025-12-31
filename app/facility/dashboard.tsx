@@ -40,6 +40,7 @@ import {
     WaitlistManager, NoShowTracker, QuickBlockTimes,
     PendingBookingsBadge, MaintenanceDueIndicator
 } from "@/components/Facility"
+import { MissedRevenueCard } from "@/components/Facility/MissedRevenueCard"
 
 // Analytics Service for Real Data
 import {
@@ -75,6 +76,9 @@ export default function FacilityDashboardScreen() {
 
     // AI & Upgrade state
     const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+    const [monthlyRevenue, setMonthlyRevenue] = useState(0) // Tracked revenue
+
+    // State Moved Up
     const [aiInsights, setAiInsights] = useState<{
         emptySlots24h: number
         emptySlots48h: number
@@ -270,6 +274,24 @@ export default function FacilityDashboardScreen() {
         )
     }
 
+    if (loading) {
+        return (
+            <View style={{ flex: 1, backgroundColor: "#000", justifyContent: "center", alignItems: "center" }}>
+                <ActivityIndicator size="large" color="#7ED957" />
+            </View>
+        )
+    }
+
+    if (!facility) {
+        // Fallback handled by the "unclaimed" view logic or specific empty state
+        // For now, assume if not loading and not facility, we might show empty or return null to allow the downstream "unclaimed" view to take over if it exists
+        return (
+            <View style={{ flex: 1, backgroundColor: "#000", justifyContent: "center", alignItems: "center" }}>
+                <Text style={{ color: "#888" }}>Loading facility...</Text>
+            </View>
+        )
+    }
+
     return (
         <View style={styles.container}>
             <LinearGradient colors={["#0A0A0A", "#111"]} style={StyleSheet.absoluteFill} />
@@ -295,6 +317,17 @@ export default function FacilityDashboardScreen() {
                     </TouchableOpacity>
                 </View>
 
+                {/* Missed Revenue FOMO (Free Tier Only) */}
+                {!isPremium && (
+                    <MissedRevenueCard
+                        monthlyRevenue={monthlyRevenue || 2500} // Mock if empty
+                        onUpgradePress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy)
+                            setShowUpgradeModal(true)
+                        }}
+                    />
+                )}
+
                 {/* Stats Row */}
                 <View style={styles.statsRow}>
                     <View style={styles.statCard}>
@@ -305,75 +338,121 @@ export default function FacilityDashboardScreen() {
                         <Text style={styles.statValue}>{bookings.filter(b => b.status === "confirmed").length}</Text>
                         <Text style={styles.statLabel}>Upcoming</Text>
                     </View>
-                    <View style={styles.statCard}>
-                        <Text style={[styles.statValue, { color: "#7ED957" }]}>
-                            ${(totalEarnings / 100).toFixed(0)}
-                        </Text>
-                    </View>
-                </View>
-
-                {/* Upgrade Banner (Free Tier) */}
-                {!isPremium && (
                     <TouchableOpacity
-                        style={styles.upgradeBanner}
+                        style={styles.statCard}
                         onPress={() => {
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-                            setShowUpgradeModal(true)
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                            if (!isPremium) {
+                                setShowUpgradeModal(true)
+                            } else {
+                                router.push(`/facility/insights?facilityId=${facility.id}`)
+                            }
                         }}
                     >
-                        <LinearGradient
-                            colors={["#FFD700", "#FFA500"]}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 0 }}
-                            style={styles.upgradeBannerGradient}
-                        >
-                            <View style={styles.upgradeBannerContent}>
-                                <Ionicons name="star" size={24} color="#000" />
-                                <View style={styles.upgradeBannerText}>
-                                    <Text style={styles.upgradeBannerTitle}>Unlock 7 AI Features</Text>
-                                    <Text style={styles.upgradeBannerSubtitle}>
-                                        Fill more slots • Save 3% on fees • $50/mo
-                                    </Text>
-                                </View>
-                            </View>
-                            <Ionicons name="chevron-forward" size={20} color="#000" />
-                        </LinearGradient>
+                        <Text style={[styles.statValue, { color: isPremium ? "#7ED957" : "#888" }]}>
+                            ${(totalEarnings / 100).toFixed(0)}
+                        </Text>
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 4 }}>
+                            <Text style={styles.statLabel}>Revenue</Text>
+                            {!isPremium && <Ionicons name="lock-closed" size={10} color="#888" />}
+                        </View>
                     </TouchableOpacity>
-                )}
+                </View>
+
+                {/* Complete Profile Nudge (If missing cover photo) */}
+                {
+                    !facility.coverPhoto && (
+                        <TouchableOpacity
+                            style={styles.nudgeCard}
+                            onPress={() => router.push(`/facility/edit-profile?facilityId=${facility.id}`)}
+                        >
+                            <LinearGradient
+                                colors={["#FFD700", "#FF8C00"]} // Premium Gold/Orange
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 0 }}
+                                style={styles.nudgeGradient}
+                            >
+                                <View style={styles.nudgeContent}>
+                                    <Ionicons name="images" size={24} color="#000" />
+                                    <View style={styles.nudgeTextContainer}>
+                                        <Text style={styles.nudgeTitle}>Add Photos & Amenities</Text>
+                                        <Text style={styles.nudgeSubtitle}>
+                                            Get 3x more bookings with a complete profile.
+                                        </Text>
+                                    </View>
+                                </View>
+                                <Ionicons name="arrow-forward-circle" size={28} color="#000" />
+                            </LinearGradient>
+                        </TouchableOpacity>
+                    )
+                }
+
+                {/* Upgrade Banner (Free Tier) */}
+                {
+                    !isPremium && (
+                        <TouchableOpacity
+                            style={styles.upgradeBanner}
+                            onPress={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+                                setShowUpgradeModal(true)
+                            }}
+                        >
+                            <LinearGradient
+                                colors={["#FFD700", "#FFA500"]}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 0 }}
+                                style={styles.upgradeBannerGradient}
+                            >
+                                <View style={styles.upgradeBannerContent}>
+                                    <Ionicons name="star" size={24} color="#000" />
+                                    <View style={styles.upgradeBannerText}>
+                                        <Text style={styles.upgradeBannerTitle}>Unlock 7 AI Features</Text>
+                                        <Text style={styles.upgradeBannerSubtitle}>
+                                            Fill more slots • Save 3% on fees • $50/mo
+                                        </Text>
+                                    </View>
+                                </View>
+                                <Ionicons name="chevron-forward" size={20} color="#000" />
+                            </LinearGradient>
+                        </TouchableOpacity>
+                    )
+                }
 
                 {/* AI Insights Card (Premium) */}
-                {isPremium && aiInsights && (
-                    <View style={styles.aiInsightsCard}>
-                        <View style={styles.aiInsightsHeader}>
-                            <Ionicons name="sparkles" size={20} color="#7ED957" />
-                            <Text style={styles.aiInsightsTitle}>AI Slot Filling</Text>
+                {
+                    isPremium && aiInsights && (
+                        <View style={styles.aiInsightsCard}>
+                            <View style={styles.aiInsightsHeader}>
+                                <Ionicons name="sparkles" size={20} color="#7ED957" />
+                                <Text style={styles.aiInsightsTitle}>AI Slot Filling</Text>
+                            </View>
+                            <View style={styles.aiInsightsRow}>
+                                <View style={styles.aiInsightItem}>
+                                    <Text style={styles.aiInsightValue}>{aiInsights.emptySlots24h}</Text>
+                                    <Text style={styles.aiInsightLabel}>Empty (24h)</Text>
+                                </View>
+                                <View style={styles.aiInsightItem}>
+                                    <Text style={[styles.aiInsightValue, { color: "#FF9500" }]}>{aiInsights.urgentSlots}</Text>
+                                    <Text style={styles.aiInsightLabel}>Urgent</Text>
+                                </View>
+                                <View style={styles.aiInsightItem}>
+                                    <Text style={[styles.aiInsightValue, { color: "#7ED957" }]}>${aiInsights.potentialRevenue}</Text>
+                                    <Text style={styles.aiInsightLabel}>Potential</Text>
+                                </View>
+                            </View>
+                            {aiInsights.topSuggestions.length > 0 && (
+                                <TouchableOpacity
+                                    style={styles.fillSlotsBtn}
+                                    onPress={() => router.push(`/facility/ai-slots?facilityId=${facility.id}`)}
+                                >
+                                    <Text style={styles.fillSlotsBtnText}>
+                                        Fill {aiInsights.urgentSlots} Urgent Slots →
+                                    </Text>
+                                </TouchableOpacity>
+                            )}
                         </View>
-                        <View style={styles.aiInsightsRow}>
-                            <View style={styles.aiInsightItem}>
-                                <Text style={styles.aiInsightValue}>{aiInsights.emptySlots24h}</Text>
-                                <Text style={styles.aiInsightLabel}>Empty (24h)</Text>
-                            </View>
-                            <View style={styles.aiInsightItem}>
-                                <Text style={[styles.aiInsightValue, { color: "#FF9500" }]}>{aiInsights.urgentSlots}</Text>
-                                <Text style={styles.aiInsightLabel}>Urgent</Text>
-                            </View>
-                            <View style={styles.aiInsightItem}>
-                                <Text style={[styles.aiInsightValue, { color: "#7ED957" }]}>${aiInsights.potentialRevenue}</Text>
-                                <Text style={styles.aiInsightLabel}>Potential</Text>
-                            </View>
-                        </View>
-                        {aiInsights.topSuggestions.length > 0 && (
-                            <TouchableOpacity
-                                style={styles.fillSlotsBtn}
-                                onPress={() => router.push(`/facility/ai-slots?facilityId=${facility.id}`)}
-                            >
-                                <Text style={styles.fillSlotsBtnText}>
-                                    Fill {aiInsights.urgentSlots} Urgent Slots →
-                                </Text>
-                            </TouchableOpacity>
-                        )}
-                    </View>
-                )}
+                    )
+                }
 
                 {/* Quick Actions */}
                 <View style={styles.quickActionsRow}>
@@ -754,8 +833,9 @@ export default function FacilityDashboardScreen() {
                         </View>
                     )}
                 </ScrollView>
-            </SafeAreaView>
+            </SafeAreaView >
 
+            {/* Upgrade Modal */}
             {/* Upgrade Modal */}
             <UpgradePrompt
                 visible={showUpgradeModal}
@@ -799,10 +879,44 @@ const styles = StyleSheet.create({
 
     statsRow: {
         flexDirection: "row",
+        justifyContent: "space-between",
         paddingHorizontal: 20,
+        marginBottom: 24,
+    },
+
+    nudgeCard: {
+        marginHorizontal: 20,
         marginBottom: 20,
+        borderRadius: 16,
+        overflow: "hidden",
+    },
+    nudgeGradient: {
+        padding: 16,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+    },
+    nudgeContent: {
+        flexDirection: "row",
+        alignItems: "center",
+        flex: 1,
         gap: 12,
     },
+    nudgeTextContainer: {
+        flex: 1,
+    },
+    nudgeTitle: {
+        fontSize: 16,
+        fontWeight: "bold",
+        color: "#000",
+    },
+    nudgeSubtitle: {
+        fontSize: 12,
+        color: "#000",
+        opacity: 0.8,
+        marginTop: 2,
+    },
+
     statCard: {
         flex: 1,
         backgroundColor: "#1A1A1A",

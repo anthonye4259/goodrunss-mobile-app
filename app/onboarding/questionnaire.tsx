@@ -336,7 +336,7 @@ export default function QuestionnaireScreen() {
                 >
                   <Ionicons name="star" size={20} color="#000" />
                   <View style={styles.phase1BadgeText}>
-                    <Text style={styles.phase1Title}>🎉 You're in a Launch City!</Text>
+                    <Text style={styles.phase1Title}>You're in a Launch City!</Text>
                     <Text style={styles.phase1Subtitle}>
                       Exclusive early access to all features, local trainers, and priority bookings
                     </Text>

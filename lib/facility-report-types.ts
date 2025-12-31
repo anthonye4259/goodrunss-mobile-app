@@ -35,11 +35,11 @@ export const REPORT_REWARDS = {
 }
 
 export const REPORT_LEVELS = [
-  { level: 1, minReports: 0, badge: "🌱", title: "Newbie Reporter" },
-  { level: 2, minReports: 10, badge: "🔰", title: "Scout" },
-  { level: 3, minReports: 25, badge: "⭐", title: "Community Helper" },
-  { level: 4, minReports: 50, badge: "💎", title: "Trusted Reporter" },
-  { level: 5, minReports: 100, badge: "👑", title: "Elite Reporter" },
+  { level: 1, minReports: 0, badge: "leaf", title: "Newbie Reporter" },
+  { level: 2, minReports: 10, badge: "shield-checkmark", title: "Scout" },
+  { level: 3, minReports: 25, badge: "heart", title: "Community Helper" },
+  { level: 4, minReports: 50, badge: "diamond", title: "Trusted Reporter" },
+  { level: 5, minReports: 100, badge: "trophy", title: "Elite Reporter" },
 ]
 
 export function getReportLevel(totalReports: number) {

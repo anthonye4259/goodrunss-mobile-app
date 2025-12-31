@@ -91,7 +91,7 @@ export const sendDailyDemandInsights = functions.pubsub
                     if (tokens.length > 0 && bookingsSnapshot.size > 0) {
                         await admin.messaging().sendEachForMulticast({
                             notification: {
-                                title: "📊 Yesterday's Summary",
+                                title: "Yesterday's Summary",
                                 body: `${bookingsSnapshot.size} bookings, $${totalRevenue.toFixed(0)} earned`,
                             },
                             data: {
@@ -222,7 +222,7 @@ export const processSpotOpening = functions.firestore
                     if (tokens.length > 0) {
                         await admin.messaging().sendEachForMulticast({
                             notification: {
-                                title: "🎉 You Got the Spot!",
+                                title: "You Got the Spot!",
                                 body: `Pro Priority: Auto-booked for ${date} at ${startTime}`,
                             },
                             data: {
@@ -252,7 +252,7 @@ export const processSpotOpening = functions.firestore
                     if (tokens.length > 0) {
                         await admin.messaging().sendEachForMulticast({
                             notification: {
-                                title: "⚡ Spot Just Opened!",
+                                title: "Spot Just Opened!",
                                 body: `A court is now available for ${date} at ${startTime}. Book now!`,
                             },
                             data: {

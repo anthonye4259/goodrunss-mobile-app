@@ -24,47 +24,47 @@ const MAX_PROMPTS_BEFORE_DISMISS_OPTION = 5
 
 const TRAINER_MESSAGES = [
     {
-        title: "Trainers like you are growing fast 🚀",
-        body: "Unlock CRM, invoicing, and marketing tools for $29/mo. Start your free trial.",
+        title: "GIA: You're growing fast!",
+        body: "I can help you manage all these new clients with automated invoicing. Want to see how?",
     },
     {
-        title: "You're getting noticed 👀",
-        body: "Pro trainers appear first in search and get 3x more client requests.",
+        title: "GIA: Eyes on you",
+        body: "Your profile is getting hits. Going Pro boosts your visibility by 3x. Let's get you fully booked!",
     },
     {
-        title: "Stop losing clients to paperwork",
-        body: "Auto-invoice, track payments, and manage clients - all in one app.",
+        title: "GIA: Hate paperwork?",
+        body: "I can handle your invoices and payments automatically. Upgrade to Pro and I'll get started.",
     },
     {
-        title: "Your competition is going Pro",
-        body: "Join 500+ trainers using GoodRunss Pro to grow their business.",
+        title: "GIA: Join the pros",
+        body: "500+ trainers use me to run their business. Ready to level up your game?",
     },
     {
-        title: "Ready to level up? 💪",
-        body: "Pro trainers earn an average of $500 more per month. Try it free.",
+        title: "GIA: Ready to earn more?",
+        body: "Pro trainers earn $500 more per month on average. I can help you get there.",
     },
 ]
 
 const FACILITY_MESSAGES = [
     {
-        title: "Your courts could be making more 💰",
-        body: "Premium facilities fill 40% more slots. Upgrade for $50/mo.",
+        title: "GIA: Boost your revenue",
+        body: "I predict we could fill 40% more court time with Premium visibility. Interested?",
     },
     {
-        title: "Empty courts? We can help",
-        body: "AI-powered slot filling and demand insights. Start your free trial.",
+        title: "GIA: Empty courts?",
+        body: "I can find players to fill those slots automatically using my demand prediction engine.",
     },
     {
-        title: "Get found by more players 🔍",
-        body: "Premium facilities appear first in search results.",
+        title: "GIA: Get discovered",
+        body: "Players are searching nearby. Upgrade to Premium and I'll put your facility at the top.",
     },
     {
-        title: "Reduce your booking fees",
-        body: "Premium members pay just 5% instead of 8%. That adds up fast.",
+        title: "GIA: Save on fees",
+        body: "Smart move: Premium members save 3% on every booking. That adds up!",
     },
     {
-        title: "Players are searching near you",
-        body: "Get featured placement and priority in search. Upgrade to Premium.",
+        title: "GIA: High demand detected",
+        body: "Lots of players active nearby. Let's make sure they see your facility first.",
     },
 ]
 

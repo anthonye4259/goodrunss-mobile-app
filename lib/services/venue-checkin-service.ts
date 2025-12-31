@@ -343,12 +343,12 @@ export async function checkNotificationTriggers(
 ): Promise<string | null> {
     // Good time to go!
     if (currentLevel === "empty" || currentLevel === "light") {
-        return `🎯 ${venueName} is ${currentLevel} right now - perfect time to play!`
+        return `${venueName} is ${currentLevel} right now - perfect time to play!`
     }
 
     // Good crowd for pickup games
     if (currentLevel === "moderate") {
-        return `👥 ${venueName} has a good crowd for games right now!`
+        return `${venueName} has a good crowd for games right now!`
     }
 
     // Getting busy - maybe wait

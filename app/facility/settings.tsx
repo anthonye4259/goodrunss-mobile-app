@@ -273,6 +273,23 @@ export default function FacilitySettingsScreen() {
                     </View>
 
                     {/* Operating Hours Section */}
+
+                    <TouchableOpacity
+                        style={[styles.section, { flexDirection: "row", alignItems: "center", justifyContent: "space-between" }]}
+                        onPress={() => router.push(`/facility/edit-profile?facilityId=${facilityId}`)}
+                    >
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                            <View style={{ backgroundColor: "#7ED95720", padding: 8, borderRadius: 8 }}>
+                                <Ionicons name="images" size={20} color="#7ED957" />
+                            </View>
+                            <View>
+                                <Text style={{ color: "#FFF", fontSize: 16, fontWeight: "600" }}>Edit Profile</Text>
+                                <Text style={{ color: "#888", fontSize: 12 }}>Photos, Bio, Amenities</Text>
+                            </View>
+                        </View>
+                        <Ionicons name="chevron-forward" size={20} color="#666" />
+                    </TouchableOpacity>
+
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>Operating Hours</Text>
                         <Text style={styles.sectionSubtitle}>When can players book?</Text>

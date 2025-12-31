@@ -245,10 +245,10 @@ export const aiSlotFillingService = {
 
         if (slots.length === 1) {
             const slot = slots[0]
-            return `⚡ Flash Deal: ${slot.slot.courtName} at ${facilityName} - ${slot.suggestedDiscount}% off today at ${slot.slot.startTime}! Book now 🎾`
+            return `Flash Deal: ${slot.slot.courtName} at ${facilityName} - ${slot.suggestedDiscount}% off today at ${slot.slot.startTime}! Book now`
         }
 
-        return `🔥 ${slots.length} slots available at ${facilityName} with up to ${avgDiscount}% off! Limited time ⏰`
+        return `${slots.length} slots available at ${facilityName} with up to ${avgDiscount}% off! Limited time`
     },
 
     /**

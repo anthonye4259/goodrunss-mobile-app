@@ -29,7 +29,7 @@ export function CourtStatusCard({
     compact = false,
 }: CourtStatusCardProps) {
     const {
-        crowdEmoji,
+        crowdIcon,
         crowdColor,
         crowdLabel,
         dataFreshness,
@@ -73,7 +73,7 @@ export function CourtStatusCard({
         return (
             <View style={styles.compactContainer}>
                 <View style={[styles.compactIndicator, { backgroundColor: crowdColor }]} />
-                <Text style={styles.compactEmoji}>{crowdEmoji}</Text>
+                <Ionicons name={crowdIcon as any} size={20} color={crowdColor} style={{ marginRight: 4 }} />
                 <Text style={styles.compactLabel}>{crowdLabel}</Text>
                 {dataFreshness === "live" && (
                     <View style={styles.liveDot} />
@@ -88,7 +88,7 @@ export function CourtStatusCard({
             <View style={styles.mainRow}>
                 {/* Crowd Level Badge */}
                 <View style={[styles.statusBadge, { backgroundColor: crowdColor + "20" }]}>
-                    <Text style={styles.statusEmoji}>{crowdEmoji}</Text>
+                    <Ionicons name={crowdIcon as any} size={32} color={crowdColor} />
                     <View>
                         <Text style={[styles.statusLabel, { color: crowdColor }]}>
                             {crowdLabel.toUpperCase()}
@@ -189,19 +189,19 @@ export function CourtStatusCard({
  * Mini version for map pins
  */
 export function CourtStatusPill({
-    crowdEmoji,
+    crowdIcon,
     crowdColor,
     crowdLabel,
     isLive,
 }: {
-    crowdEmoji: string
+    crowdIcon: string
     crowdColor: string
     crowdLabel: string
     isLive?: boolean
 }) {
     return (
         <View style={[styles.pill, { backgroundColor: crowdColor + "20", borderColor: crowdColor }]}>
-            <Text style={styles.pillEmoji}>{crowdEmoji}</Text>
+            <Ionicons name={crowdIcon as any} size={16} color={crowdColor} style={{ marginRight: 4 }} />
             <Text style={[styles.pillLabel, { color: crowdColor }]}>{crowdLabel}</Text>
             {isLive && <View style={styles.pillLive} />}
         </View>
@@ -214,7 +214,7 @@ export function CourtStatusPill({
 export function CourtStatusHero({ status }: { status: CourtStatus }) {
     return (
         <View style={[styles.heroContainer, { borderColor: status.crowdColor }]}>
-            <Text style={styles.heroEmoji}>{status.crowdEmoji}</Text>
+            <Ionicons name={status.crowdIcon as any} size={64} color={status.crowdColor} style={{ marginBottom: 16 }} />
             <Text style={[styles.heroLabel, { color: status.crowdColor }]}>
                 {status.crowdLabel}
             </Text>

@@ -46,7 +46,7 @@ const PLAYER_NOTIFICATIONS: ScheduledNotification[] = [
     {
         id: "morning-1",
         type: "morning_motivation",
-        title: "🌅 Rise and Grind",
+        title: "Rise and Grind",
         body: "Champions train before the world wakes up. Courts are empty - your time to shine.",
         hour: 7,
         minute: 30,
@@ -56,7 +56,7 @@ const PLAYER_NOTIFICATIONS: ScheduledNotification[] = [
     {
         id: "lunch-1",
         type: "lunch_reminder",
-        title: "⏰ Lunch Break = Level Up",
+        title: "Lunch Break = Level Up",
         body: "30 minutes of play > 30 minutes of scrolling. Courts near you are active!",
         hour: 12,
         minute: 0,
@@ -66,7 +66,7 @@ const PLAYER_NOTIFICATIONS: ScheduledNotification[] = [
     {
         id: "afternoon-1",
         type: "nearby_activity",
-        title: "🔥 The Crowd's Showing Up",
+        title: "The Crowd's Showing Up",
         body: "Games are forming. Get there before the good spots are taken!",
         hour: 16,
         minute: 0,
@@ -76,7 +76,7 @@ const PLAYER_NOTIFICATIONS: ScheduledNotification[] = [
     {
         id: "report-1",
         type: "report_reminder",
-        title: "💰 Quick $5: 30 Seconds",
+        title: "Quick $5: 30 Seconds",
         body: "Report court conditions. Get paid. Help your community. Win-win-win.",
         hour: 17,
         minute: 30,
@@ -86,7 +86,7 @@ const PLAYER_NOTIFICATIONS: ScheduledNotification[] = [
     {
         id: "evening-1",
         type: "evening_peak",
-        title: "⚡ PRIME TIME",
+        title: "PRIME TIME",
         body: "This is THE hour. Courts are live. Games are running. You in?",
         hour: 18,
         minute: 0,
@@ -96,7 +96,7 @@ const PLAYER_NOTIFICATIONS: ScheduledNotification[] = [
     {
         id: "evening-2",
         type: "social_nudge",
-        title: "👥 Games Need Players",
+        title: "Games Need Players",
         body: "Don't let them play without you. Jump in!",
         hour: 18,
         minute: 30,
@@ -106,7 +106,7 @@ const PLAYER_NOTIFICATIONS: ScheduledNotification[] = [
     {
         id: "night-1",
         type: "streak_reminder",
-        title: "🔥 Your Streak!",
+        title: "Your Streak!",
         body: "You've been consistent. Don't break it now. One quick check-in.",
         hour: 20,
         minute: 0,
@@ -122,7 +122,7 @@ const TRAINER_NOTIFICATIONS: ScheduledNotification[] = [
     {
         id: "trainer-morning-1",
         type: "trainer_check_in",
-        title: "☀️ Good Morning, Coach",
+        title: "Good Morning, Coach",
         body: "Your clients are counting on you. Check today's schedule and show up strong.",
         hour: 8,
         minute: 0,
@@ -132,7 +132,7 @@ const TRAINER_NOTIFICATIONS: ScheduledNotification[] = [
     {
         id: "trainer-midday-1",
         type: "trainer_check_in",
-        title: "📅 Fill Your Calendar",
+        title: "Fill Your Calendar",
         body: "Empty slots = lost income. Update your availability and get booked.",
         hour: 12,
         minute: 30,
@@ -142,7 +142,7 @@ const TRAINER_NOTIFICATIONS: ScheduledNotification[] = [
     {
         id: "trainer-afternoon-1",
         type: "nearby_activity",
-        title: "📍 Players Looking for You",
+        title: "Players Looking for You",
         body: "Courts are busy. People want to learn. Time to grow your client base.",
         hour: 16,
         minute: 30,
@@ -152,7 +152,7 @@ const TRAINER_NOTIFICATIONS: ScheduledNotification[] = [
     {
         id: "trainer-evening-1",
         type: "social_nudge",
-        title: "✍️ Session Complete?",
+        title: "Session Complete?",
         body: "Log it. Get reviews. Build your reputation. Future you says thanks.",
         hour: 19,
         minute: 0,
@@ -162,7 +162,7 @@ const TRAINER_NOTIFICATIONS: ScheduledNotification[] = [
     {
         id: "trainer-weekly-1",
         type: "weekly_recap",
-        title: "📊 Your Weekly Numbers",
+        title: "Your Weekly Numbers",
         body: "See what you earned, who you helped, and where to grow next week.",
         hour: 10,
         minute: 0,
@@ -177,97 +177,97 @@ const TRAINER_NOTIFICATIONS: ScheduledNotification[] = [
 // ============================================
 const SPORT_MESSAGES = {
     basketball: [
-        { title: "🏀 Time to Ball", body: "Courts are calling. Get your shots up." },
-        { title: "🏀 Hoopers Unite", body: "Runs are forming. Don't miss out." },
-        { title: "🏀 Buckets Await", body: "The rim won't score itself. Let's go." },
+        { title: "Time to Ball", body: "Courts are calling. Get your shots up." },
+        { title: "Hoopers Unite", body: "Runs are forming. Don't miss out." },
+        { title: "Buckets Await", body: "The rim won't score itself. Let's go." },
     ],
     tennis: [
-        { title: "🎾 Court Time", body: "Serve. Rally. Win. Courts are open." },
-        { title: "🎾 Match Point", body: "Find a partner. Get on the court." },
-        { title: "🎾 Ace the Day", body: "Tennis courts near you are waiting." },
+        { title: "Court Time", body: "Serve. Rally. Win. Courts are open." },
+        { title: "Match Point", body: "Find a partner. Get on the court." },
+        { title: "Ace the Day", body: "Tennis courts near you are waiting." },
     ],
     pickleball: [
-        { title: "🏓 Dink & Drive", body: "Pickleball courts are filling up. Join the fun!" },
-        { title: "🏓 Pickle Power", body: "Fast-growing sport. Growing skills. Let's play." },
-        { title: "🏓 Kitchen Ready?", body: "Get to the court and dominate the kitchen." },
+        { title: "Dink & Drive", body: "Pickleball courts are filling up. Join the fun!" },
+        { title: "Pickle Power", body: "Fast-growing sport. Growing skills. Let's play." },
+        { title: "Kitchen Ready?", body: "Get to the court and dominate the kitchen." },
     ],
     soccer: [
-        { title: "⚽ Goal Time", body: "Fields are active. Find a pickup game." },
-        { title: "⚽ Beautiful Game", body: "There's always room for one more on the pitch." },
+        { title: "Goal Time", body: "Fields are active. Find a pickup game." },
+        { title: "Beautiful Game", body: "There's always room for one more on the pitch." },
     ],
     volleyball: [
-        { title: "🏐 Bump. Set. Spike.", body: "Courts are filling. Get in the rotation." },
-        { title: "🏐 Sand or Indoor?", body: "Volleyball games forming near you." },
+        { title: "Bump. Set. Spike.", body: "Courts are filling. Get in the rotation." },
+        { title: "Sand or Indoor?", body: "Volleyball games forming near you." },
     ],
 }
 
 // Generic motivational messages (Duolingo psychology)
 const MOTIVATIONAL_MESSAGES = {
     morning_motivation: [
-        { title: "🌅 The Early Grind", body: "While others sleep, you improve. Courts are empty." },
-        { title: "💪 Earn Your Day", body: "Start with movement. Win at everything else." },
-        { title: "🔥 Morning Reps", body: "The version of you from yesterday is watching. Level up." },
-        { title: "☀️ New Day, New PR", body: "What will you accomplish before noon?" },
-        { title: "⚡ Built Different", body: "You're up early. That already sets you apart." },
+        { title: "The Early Grind", body: "While others sleep, you improve. Courts are empty." },
+        { title: "Earn Your Day", body: "Start with movement. Win at everything else." },
+        { title: "Morning Reps", body: "The version of you from yesterday is watching. Level up." },
+        { title: "New Day, New PR", body: "What will you accomplish before noon?" },
+        { title: "Built Different", body: "You're up early. That already sets you apart." },
     ],
     streak_reminder: [
-        { title: "😱 Streak in Danger!", body: "You've come too far to quit now. One quick check-in!" },
-        { title: "🔥 DON'T LET IT DIE", body: "Your streak survives with one action. Do it now." },
-        { title: "🏆 Consistency = Greatness", body: "The greats never skip. Will you?" },
-        { title: "⏰ Time's Running Out", body: "Your streak ends at midnight. Save it!" },
-        { title: "💔 Break the Streak?", body: "After all that progress? Nah. Check in." },
+        { title: "Streak in Danger!", body: "You've come too far to quit now. One quick check-in!" },
+        { title: "DON'T LET IT DIE", body: "Your streak survives with one action. Do it now." },
+        { title: "Consistency = Greatness", body: "The greats never skip. Will you?" },
+        { title: "Time's Running Out", body: "Your streak ends at midnight. Save it!" },
+        { title: "Break the Streak?", body: "After all that progress? Nah. Check in." },
     ],
     social_nudge: [
-        { title: "👀 They Started Without You", body: "Games are happening. Get there!" },
-        { title: "🤝 Your Crew is Playing", body: "Friends are at the court. Don't miss out." },
-        { title: "👥 1 Spot Left", body: "Game needs one more. Could be you." },
-        { title: "🎯 Prove Yourself", body: "New players to compete with. Show them what you've got." },
+        { title: "They Started Without You", body: "Games are happening. Get there!" },
+        { title: "Your Crew is Playing", body: "Friends are at the court. Don't miss out." },
+        { title: "1 Spot Left", body: "Game needs one more. Could be you." },
+        { title: "Prove Yourself", body: "New players to compete with. Show them what you've got." },
     ],
     evening_peak: [
-        { title: "🔥 IT'S GO TIME", body: "Peak hours. Full courts. Maximum energy." },
-        { title: "⚡ Prime Time", body: "This is when legends play. Are you one?" },
-        { title: "🌙 Golden Hour", body: "Best games of the day are happening right now." },
-        { title: "🏀 The Runs Are Hot", body: "Courts are packed and competitive. Join up." },
+        { title: "IT'S GO TIME", body: "Peak hours. Full courts. Maximum energy." },
+        { title: "Prime Time", body: "This is when legends play. Are you one?" },
+        { title: "Golden Hour", body: "Best games of the day are happening right now." },
+        { title: "The Runs Are Hot", body: "Courts are packed and competitive. Join up." },
     ],
     lunch_reminder: [
-        { title: "🍽️ Lunch Sweat", body: "Skip the extra scroll. Get a quick session in." },
-        { title: "⏰ 30 Min to Change", body: "Lunch break = self-improvement time." },
-        { title: "💪 Midday Movement", body: "Your afternoon self will thank you. Move!" },
+        { title: "Lunch Sweat", body: "Skip the extra scroll. Get a quick session in." },
+        { title: "30 Min to Change", body: "Lunch break = self-improvement time." },
+        { title: "Midday Movement", body: "Your afternoon self will thank you. Move!" },
     ],
     report_reminder: [
-        { title: "💰 Easiest $5 Ever", body: "30 seconds. Snap. Report. Get paid." },
-        { title: "📸 Help the Community", body: "Report conditions. Earn rewards. Be a hero." },
-        { title: "🤑 Stack That Cash", body: "You're at a court anyway. Why not get paid?" },
+        { title: "Easiest $5 Ever", body: "30 seconds. Snap. Report. Get paid." },
+        { title: "Help the Community", body: "Report conditions. Earn rewards. Be a hero." },
+        { title: "Stack That Cash", body: "You're at a court anyway. Why not get paid?" },
     ],
     nearby_activity: [
-        { title: "📍 Activity Alert", body: "Courts near you are popping off right now." },
-        { title: "🔔 Players Nearby", body: "People are playing. Go be one of them." },
-        { title: "🗺️ Close to Action", body: "Great games within a mile. Check it out." },
+        { title: "Activity Alert", body: "Courts near you are popping off right now." },
+        { title: "Players Nearby", body: "People are playing. Go be one of them." },
+        { title: "Close to Action", body: "Great games within a mile. Check it out." },
     ],
     challenge: [
-        { title: "🎯 Daily Challenge", body: "Play one game today. Can you do it?" },
-        { title: "💪 Push Yourself", body: "One more session than last week. You got this." },
-        { title: "🏆 Beat Your Best", body: "Last week you played 3x. Can you hit 4?" },
+        { title: "Daily Challenge", body: "Play one game today. Can you do it?" },
+        { title: "Push Yourself", body: "One more session than last week. You got this." },
+        { title: "Beat Your Best", body: "Last week you played 3x. Can you hit 4?" },
     ],
     progress_update: [
-        { title: "📈 You're Improving!", body: "More check-ins this week. Keep it up!" },
-        { title: "🌟 On a Roll", body: "Your activity is trending up. Don't stop now." },
-        { title: "💎 Rare Player", body: "Top 10% most active in your area. Nice." },
+        { title: "You're Improving!", body: "More check-ins this week. Keep it up!" },
+        { title: "On a Roll", body: "Your activity is trending up. Don't stop now." },
+        { title: "Rare Player", body: "Top 10% most active in your area. Nice." },
     ],
 }
 
 // Trainer-specific motivational messages
 const TRAINER_MESSAGES = {
     trainer_check_in: [
-        { title: "💼 Business Time", body: "Every session is a chance to change a life. Let's go." },
-        { title: "🌟 Impact Day", body: "Your clients believe in you. Deliver greatness." },
-        { title: "📈 Build the Empire", body: "Today's sessions = tomorrow's referrals." },
-        { title: "🎯 Coach Mode: ON", body: "Time to transform some athletes." },
+        { title: "Business Time", body: "Every session is a chance to change a life. Let's go." },
+        { title: "Impact Day", body: "Your clients believe in you. Deliver greatness." },
+        { title: "Build the Empire", body: "Today's sessions = tomorrow's referrals." },
+        { title: "Coach Mode: ON", body: "Time to transform some athletes." },
     ],
     weekly_recap: [
-        { title: "📊 Week in Review", body: "See your earnings, sessions, and growth." },
-        { title: "💰 Payday Check", body: "How much did you earn this week? Let's see." },
-        { title: "📈 The Numbers Are In", body: "Your weekly performance report is ready." },
+        { title: "Week in Review", body: "See your earnings, sessions, and growth." },
+        { title: "Payday Check", body: "How much did you earn this week? Let's see." },
+        { title: "The Numbers Are In", body: "Your weekly performance report is ready." },
     ],
 }
 
@@ -391,7 +391,7 @@ class DailyEngagementService {
         }
 
         // Fallback
-        return { title: "🏀 GoodRunss", body: "Time to get active!" }
+        return { title: "GoodRunss", body: "Time to get active!" }
     }
 
     /**
@@ -491,7 +491,7 @@ class DailyEngagementService {
                 if (!lastNudge || (now - parseInt(lastNudge) > 86400000)) { // 24h cooldown
                     await this.sendImmediateNotification(
                         "streak_reminder",
-                        "❄️ Streak Freezing...",
+                        "Streak Freezing...",
                         "You haven't checked in for 24h. Don't let your progress freeze!"
                     )
                     await AsyncStorage.setItem("last_streak_nudge", now.toString())
@@ -510,7 +510,7 @@ class DailyEngagementService {
                 if (!lastWeatherNudge || (now - parseInt(lastWeatherNudge) > 172800000)) { // 48h cooldown
                     await this.sendImmediateNotification(
                         "recommendation", // Reuse nearby_activity type
-                        `☀️ Perfect Setup in ${activeCity}`,
+                        `Perfect Setup in ${activeCity}`,
                         "72°F and sunny. The courts are calling. Go play!"
                     )
                     await AsyncStorage.setItem("last_weather_nudge", now.toString())
@@ -525,7 +525,7 @@ class DailyEngagementService {
                 if (!lastSocial || (now - parseInt(lastSocial) > 86400000)) {
                     await this.sendImmediateNotification(
                         "social_nudge",
-                        "👀 They're playing without you",
+                        "They're playing without you",
                         "3 friends checked into courts nearby. Join the run!"
                     )
                     await AsyncStorage.setItem("last_social_nudge_generated", now.toString())

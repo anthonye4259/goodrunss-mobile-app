@@ -39,7 +39,7 @@ export interface CourtStatus {
     crowdLevel: CrowdLevel
     crowdColor: string
     crowdLabel: string
-    crowdEmoji: string  // Emoji for crowd level display
+    crowdIcon: string  // Icon for crowd level display
 
     // Timing
     lastReportedAt: Date | null
@@ -88,12 +88,12 @@ export interface CourtCondition {
 // CROWD LEVEL MAPPING
 // ============================================
 
-const CROWD_LEVELS: Record<CrowdLevel, { color: string; label: string; waitTime: string; emoji: string }> = {
-    empty: { color: "#22C55E", label: "Empty", waitTime: "No wait", emoji: "😴" },
-    light: { color: "#EAB308", label: "Light", waitTime: "No wait", emoji: "🙂" },
-    moderate: { color: "#F97316", label: "Moderate", waitTime: "~5 min", emoji: "😊" },
-    busy: { color: "#EF4444", label: "Busy", waitTime: "10-15 min", emoji: "😅" },
-    packed: { color: "#DC2626", label: "Full", waitTime: "15+ min", emoji: "🔥" },
+const CROWD_LEVELS: Record<CrowdLevel, { color: string; label: string; waitTime: string; icon: string }> = {
+    empty: { color: "#22C55E", label: "Empty", waitTime: "No wait", icon: "leaf-outline" },
+    light: { color: "#EAB308", label: "Light", waitTime: "No wait", icon: "people-outline" },
+    moderate: { color: "#F97316", label: "Moderate", waitTime: "~5 min", icon: "people" },
+    busy: { color: "#EF4444", label: "Busy", waitTime: "10-15 min", icon: "alert-circle-outline" },
+    packed: { color: "#DC2626", label: "Full", waitTime: "15+ min", icon: "flame-outline" },
 }
 
 // ============================================
@@ -189,7 +189,7 @@ class CourtStatusService {
             crowdLevel,
             crowdColor: crowd.color,
             crowdLabel: crowd.label,
-            crowdEmoji: crowd.emoji,
+            crowdIcon: crowd.icon,
 
             lastReportedAt,
             dataFreshness,

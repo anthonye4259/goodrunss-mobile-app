@@ -177,20 +177,20 @@ function calculateTrafficPrediction(
 
     // Normalize Score (0-20 scale -> Low/Mod/Busy)
     let level: "low" | "moderate" | "busy" = "low"
-    let emoji = "🟢"
+    let emoji = ""
     let color = "#22C55E"
     let label = "Quiet"
     let waitTime: string | null = "No wait"
 
     if (trafficScore >= 14) {
         level = "busy"
-        emoji = "🔴"
+        emoji = ""
         color = "#EF4444"
         label = "Busy"
         waitTime = "20-40 min wait"
     } else if (trafficScore >= 8) {
         level = "moderate"
-        emoji = "🟡"
+        emoji = ""
         color = "#EAB308"
         label = "Active"
         waitTime = "5-15 min wait"
@@ -204,7 +204,7 @@ function calculateTrafficPrediction(
         waitTime,
         weatherImpact,
         populationImpact,
-        geoTrafficImpact,
+        geoTrafficImpact, // emoji key kept for schema compatibility but empty
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
     }
 }

@@ -37,6 +37,7 @@ interface UpgradePromptProps {
     facilityId: string
     monthlyRevenue?: number // Current monthly booking revenue
     onUpgrade: () => void
+    variant?: "standard" | "founding"
 }
 
 export function UpgradePrompt({
@@ -45,6 +46,7 @@ export function UpgradePrompt({
     facilityId,
     monthlyRevenue = 3000,
     onUpgrade,
+    variant = "founding", // Default to founding for launch push
 }: UpgradePromptProps) {
     const [scaleAnim] = useState(new Animated.Value(0.8))
     const [loading, setLoading] = useState(false)
@@ -145,22 +147,29 @@ export function UpgradePrompt({
                             {/* Header */}
                             <View style={styles.header}>
                                 <LinearGradient
-                                    colors={["#FFD700", "#FFA500"]}
+                                    colors={variant === "founding" ? ["#7ED957", "#4CAF50"] : ["#FFD700", "#FFA500"]}
                                     style={styles.premiumBadge}
                                 >
-                                    <Ionicons name="star" size={24} color="#000" />
+                                    <Ionicons name={variant === "founding" ? "ribbon" : "star"} size={24} color="#000" />
                                 </LinearGradient>
-                                <Text style={styles.title}>Unlock AI Features</Text>
+                                <Text style={styles.title}>
+                                    {variant === "founding" ? "Founding Member Offer" : "Unlock AI Features"}
+                                </Text>
                                 <Text style={styles.subtitle}>
-                                    Fill more slots, earn more revenue
+                                    {variant === "founding"
+                                        ? "Exclusive lifetime benefits for early partners"
+                                        : "Fill more slots, earn more revenue"}
                                 </Text>
                             </View>
 
                             {/* Revenue Calculator */}
                             <View style={styles.calculatorCard}>
-                                <Text style={styles.calculatorTitle}>
-                                    💰 Your Potential Savings
-                                </Text>
+                                <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 16 }}>
+                                    <View style={{ padding: 8, backgroundColor: "#1A1A1A", borderRadius: 8, marginRight: 10 }}>
+                                        <Ionicons name="cash-outline" size={20} color="#7ED957" />
+                                    </View>
+                                    <Text style={styles.calculatorTitle}>Your Potential Savings</Text>
+                                </View>
 
                                 <View style={styles.calculatorRow}>
                                     <Text style={styles.calculatorLabel}>Monthly booking revenue</Text>
@@ -171,6 +180,13 @@ export function UpgradePrompt({
                                     <Text style={styles.calculatorLabel}>Fee reduction (8% → 5%)</Text>
                                     <Text style={styles.calculatorValueGreen}>-${feeReduction.toLocaleString()}/mo</Text>
                                 </View>
+
+                                {variant === "founding" && (
+                                    <View style={styles.calculatorRow}>
+                                        <Text style={[styles.calculatorLabel, { color: "#7ED957" }]}>Founding Price Lock</Text>
+                                        <Text style={[styles.calculatorValue, { color: "#7ED957" }]}>Forever</Text>
+                                    </View>
+                                )}
 
                                 <View style={styles.calculatorRow}>
                                     <Text style={styles.calculatorLabel}>Premium subscription</Text>
@@ -190,17 +206,19 @@ export function UpgradePrompt({
                                 </View>
 
                                 {monthlySavings <= 0 && (
-                                    <Text style={styles.breakEvenNote}>
-                                        💡 Break-even at ~$1,700/month in bookings
-                                    </Text>
+                                        <Ionicons name="bulb-outline" size={14} color="#888" style={{ marginRight: 6 }} />
+                                        <Text style={styles.breakEvenNote}>
+                                            Break-even at ~$1,700/month in bookings
+                                        </Text>
                                 )}
                             </View>
 
                             {/* AI Features */}
                             <View style={styles.featuresSection}>
-                                <Text style={styles.sectionTitle}>
-                                    ⚡ 7 AI-Powered Features
-                                </Text>
+                                <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 16 }}>
+                                    <Ionicons name="flash" size={20} color="#FFD700" style={{ marginRight: 10 }} />
+                                    <Text style={styles.sectionTitle}>7 AI-Powered Features</Text>
+                                </View>
 
                                 {AI_FEATURES.map((key) => {
                                     const feature = AI_FEATURE_DESCRIPTIONS[key]
@@ -243,7 +261,9 @@ export function UpgradePrompt({
                                         <>
                                             <Ionicons name="rocket" size={20} color="#000" />
                                             <Text style={styles.upgradeButtonText}>
-                                                Upgrade for ${subscriptionCost}/month
+                                                {variant === "founding"
+                                                    ? `Join for $${subscriptionCost}/mo`
+                                                    : `Upgrade for $${subscriptionCost}/mo`}
                                             </Text>
                                         </>
                                     )}

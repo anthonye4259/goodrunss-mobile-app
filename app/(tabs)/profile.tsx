@@ -378,10 +378,12 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.version}>v1.0.0 • Player ID: #8821</Text>
-        </ScrollView>
-      </SafeAreaView>
-    </View>
+        </View>
+
+        <Text style={styles.version}>v1.0.0 • Player ID: #8821</Text>
+      </ScrollView>
+    </SafeAreaView>
+    </View >
   )
 }
 

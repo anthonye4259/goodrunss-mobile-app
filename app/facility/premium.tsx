@@ -155,7 +155,7 @@ export default function FacilityPremiumScreen() {
                     <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
                         <Ionicons name="arrow-back" size={24} color="#FFF" />
                     </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Upgrade to Premium</Text>
+                    <Text style={[styles.headerTitle, { color: "#7ED957" }]}>Founding Member</Text>
                     <View style={{ width: 40 }} />
                 </View>
 
@@ -171,13 +171,13 @@ export default function FacilityPremiumScreen() {
                     {/* Pricing Card */}
                     <View style={styles.pricingCard}>
                         <LinearGradient
-                            colors={["#FFD700", "#FFA500"]}
+                            colors={["#7ED957", "#4CAF50"]}
                             style={styles.pricingGradient}
                             start={{ x: 0, y: 0 }}
                             end={{ x: 1, y: 1 }}
                         >
                             <Ionicons name="ribbon" size={32} color="#000" />
-                            <Text style={styles.pricingLabel}>PREMIUM</Text>
+                            <Text style={styles.pricingLabel}>FOUNDING MEMBER</Text>
                             <View style={styles.priceRow}>
                                 <Text style={styles.price}>$50</Text>
                                 <Text style={styles.priceUnit}>/month</Text>
@@ -239,8 +239,8 @@ export default function FacilityPremiumScreen() {
 
                     {features.map((feature, index) => (
                         <View key={index} style={styles.featureRow}>
-                            <View style={styles.featureIcon}>
-                                <Ionicons name={feature.icon as any} size={20} color="#FFD700" />
+                            <View style={[styles.featureIcon, { backgroundColor: "rgba(126, 217, 87, 0.1)" }]}>
+                                <Ionicons name={feature.icon as any} size={20} color="#7ED957" />
                             </View>
                             <View style={styles.featureInfo}>
                                 <Text style={styles.featureTitle}>{feature.title}</Text>
@@ -266,7 +266,7 @@ export default function FacilityPremiumScreen() {
                             onPress={() => monthlyPackage && handlePurchase(monthlyPackage)}
                         >
                             <LinearGradient
-                                colors={["#FFD700", "#FFA500"]}
+                                colors={["#7ED957", "#4CAF50"]}
                                 style={styles.upgradeBtnGradient}
                             >
                                 {processing ? (

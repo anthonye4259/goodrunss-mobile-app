@@ -16,7 +16,11 @@ import { PlayRequestModal } from "@/components/Social/PlayRequest"
 import { MiniCourtCardSkeleton } from "@/components/ui/Skeleton"
 import { WeeklyCalendar } from "@/components/WeeklyCalendar"
 import { VenueTrafficCard } from "@/components/VenueTrafficCard"
+import { useRouter } from "expo-router"
 import { LinearGradient } from "expo-linear-gradient"
+import * as Location from "expo-location"
+import { WeatherService } from "@/lib/services/weather-service"
+import { GiaGreeting } from "@/components/GIA/GiaGreeting"
 
 const { width } = Dimensions.get("window")
 
@@ -32,14 +36,36 @@ const colors = {
 }
 
 // Courts from smart data service (blends real + seed data)
-const SAMPLE_COURTS = SEED_VENUES.map(v => ({
-  id: v.id,
-  name: v.name,
-  sport: v.sport,
-  lat: v.lat,
-  lng: v.lng,
-  distance: 0 // will be calculated
-}))
+// Courts from smart data service (blends real + seed data)
+const SAMPLE_COURTS = [
+  {
+    id: "1",
+    name: "Central Park Courts",
+    lat: 40.7829,
+    lng: -73.9654,
+    distance: 0.8,
+    activePlayers: 12,
+    openUntil: "10:00 PM"
+  },
+  {
+    id: "2",
+    name: "Riverside Park Tennis",
+    lat: 40.8000,
+    lng: -73.9720,
+    distance: 1.2,
+    activePlayers: 8,
+    openUntil: "9:00 PM"
+  },
+  {
+    id: "3",
+    name: "Morningside Courts",
+    lat: 40.8050,
+    lng: -73.9600,
+    distance: 1.5,
+    activePlayers: 0,
+    openUntil: "11:00 PM"
+  },
+]
 
 // Calculate distance between two coordinates in miles
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -60,6 +86,21 @@ export default function HomeScreen() {
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
   const [showPlayRequest, setShowPlayRequest] = useState(false)
   const [currentHour] = useState(new Date().getHours())
+
+  // Weather state
+  const [weather, setWeather] = useState({ temp: 72, condition: "Sunny", isDay: true })
+
+  useEffect(() => {
+    loadWeather()
+  }, [location])
+
+  const loadWeather = async () => {
+    const data = await WeatherService.getCurrentWeather(
+      location?.lat || 40.7128,
+      location?.lng || -74.0060
+    )
+    if (data) setWeather(data)
+  }
 
   // Mock upcoming booking for player (would come from real service)
   const upcomingBooking = user ? {
@@ -167,11 +208,10 @@ export default function HomeScreen() {
 
           {/* ===== HEADER ===== */}
           <View style={styles.header}>
-            <View>
-              <Text style={styles.greeting}>{getGreeting()}</Text>
-              <Text style={styles.userName}>
-                {isGuest ? "Guest" : user?.name || preferences.name || "Player"}
-              </Text>
+            <View style={{ flex: 1, marginRight: 12 }}>
+              <GiaGreeting
+                userName={isGuest ? "Guide" : (user?.name?.split(' ')[0] || preferences.name || "Player")}
+              />
             </View>
             <View style={styles.headerRight}>
               {/* CHAT BUTTON - Easy access to trainers & friends */}
@@ -236,9 +276,9 @@ export default function HomeScreen() {
           {/* ===== WEEKLY CALENDAR (New) ===== */}
           <WeeklyCalendar
             weather={{
-              temp: 72, // TODO: Hook up to real weather service
-              condition: "sunny",
-              description: "Perfect for outdoor play"
+              temp: weather.temp,
+              condition: weather.condition.toLowerCase(),
+              description: weather.condition === "Sunny" || weather.condition === "Clear" ? "Perfect for outdoor play" : "Great day for indoor courts"
             }}
           />
 
@@ -287,47 +327,11 @@ export default function HomeScreen() {
             venueId={nearestCourt.id}
             venueName={nearestCourt.name}
             distance={nearestCourt.distance}
-            openUntil="10:00 PM" // TODO: Get from venue data
+            openUntil={(nearestCourt as any).openUntil || "10:00 PM"}
             sport={primaryActivity.toLowerCase()}
           />
 
-          {/* ===== FRIENDS ACTIVE ===== */}
-          <FriendActivityRail />
-
-          {/* ===== NEARBY COURTS (Secondary Info) ===== */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Nearby Courts</Text>
-              <TouchableOpacity onPress={() => handlePress(() => router.push("/near-me"))}>
-                <Text style={styles.seeAll}>See all</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Court List */}
-            <View style={styles.courtList}>
-              {SAMPLE_COURTS.slice(0, 3).map((court, i) => {
-                const dist = location ? calculateDistance(location.lat, location.lng, court.lat, court.lng) : 0
-                return (
-                  <TouchableOpacity
-                    key={court.id}
-                    style={[styles.courtItem, i === 2 && { borderBottomWidth: 0 }]}
-                    onPress={() => handlePress(() => router.push(`/venues/${court.id}`))}
-                  >
-                    <View style={styles.courtLeft}>
-                      <View style={[styles.activityIndicator, { backgroundColor: "#7ED957" }]} />
-                      <View>
-                        <Text style={styles.courtName}>{court.name}</Text>
-                        <Text style={styles.courtDistance}>{dist.toFixed(1)} mi</Text>
-                      </View>
-                    </View>
-                    <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-                  </TouchableOpacity>
-                )
-              })}
-            </View>
-          </View>
-
-          {/* ===== QUICK ACTIONS (2x2 Grid) ===== */}
+          {/* ===== QUICK ACTIONS (2x2 Grid) - MOVED UP FOR STRATEGIC PLACEMENT ===== */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Quick Actions</Text>
             <View style={styles.actionsGrid}>
@@ -335,7 +339,7 @@ export default function HomeScreen() {
                 style={styles.actionCard}
                 onPress={() => handlePress(() => router.push("/(tabs)/live"))}
               >
-                <View style={[styles.actionIcon, { backgroundColor: "rgba(126, 217, 87, 0.15)" }]}>
+                <View style={[styles.actionIcon, { backgroundColor: "rgba(107, 155, 90, 0.15)" }]}>
                   <Ionicons name="map-outline" size={24} color={colors.primary} />
                 </View>
                 <Text style={styles.actionLabel}>Find Courts</Text>
@@ -373,6 +377,44 @@ export default function HomeScreen() {
             </View>
           </View>
 
+          {/* ===== FRIENDS ACTIVE ===== */}
+          <FriendActivityRail />
+
+          {/* ===== NEARBY COURTS (Secondary Info) ===== */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Nearby Courts</Text>
+              <TouchableOpacity onPress={() => handlePress(() => router.push("/near-me"))}>
+                <Text style={styles.seeAll}>See all</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Court List */}
+            <View style={styles.courtList}>
+              {SAMPLE_COURTS.slice(0, 3).map((court, i) => {
+                const dist = location ? calculateDistance(location.lat, location.lng, court.lat, court.lng) : 0
+                return (
+                  <TouchableOpacity
+                    key={court.id}
+                    style={[styles.courtItem, i === 2 && { borderBottomWidth: 0 }]}
+                    onPress={() => handlePress(() => router.push(`/venues/${court.id}`))}
+                  >
+                    <View style={styles.courtLeft}>
+                      <View style={[styles.activityIndicator, { backgroundColor: "#7ED957" }]} />
+                      <View>
+                        <Text style={styles.courtName}>{court.name}</Text>
+                        <Text style={styles.courtDistance}>{dist.toFixed(1)} mi</Text>
+                      </View>
+                    </View>
+                    <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                  </TouchableOpacity>
+                )
+              })}
+            </View>
+          </View>
+
+
+
           {/* ===== EARN BANNER ===== */}
           <TouchableOpacity
             style={styles.earnBanner}
@@ -385,7 +427,7 @@ export default function HomeScreen() {
               </View>
               <View>
                 <Text style={styles.earnTitle}>Earn $5 per report</Text>
-                <Text style={styles.earnSubtitle}>Help others, get paid</Text>
+                <Text style={styles.earnSubtitle}>Help others, earn credits</Text>
               </View>
             </View>
             <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />

@@ -318,6 +318,17 @@ export function TeacherDashboard({ userType, name }: TeacherDashboardProps) {
                             <Text style={[styles.menuText, { color: '#7ED957' }]}>Warm Leads</Text>
                             <Text style={styles.menuSubtext}>Players</Text>
                         </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.menuItem} onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+                            router.push("/growth/referrals")
+                        }}>
+                            <View style={[styles.menuIcon, { backgroundColor: '#FFD700' }]}>
+                                <Ionicons name="gift" size={24} color="#000" />
+                            </View>
+                            <Text style={[styles.menuText, { color: '#FFD700' }]}>Refer & Earn</Text>
+                            <Text style={styles.menuSubtext}>Get Premium</Text>
+                        </TouchableOpacity>
                     </View>
 
                 </ScrollView>

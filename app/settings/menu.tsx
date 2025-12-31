@@ -20,6 +20,7 @@ export default function SettingsMenuScreen() {
     const menuItems = [
         { icon: "options-outline", label: "My Preferences", route: "/settings/preferences", highlight: true },
         { icon: "person-outline", label: "Edit Profile", route: "/settings/edit-profile" },
+        { icon: "gift-outline", label: "Refer & Earn", route: "/growth/referrals", highlight: true },
         { icon: "card-outline", label: "Payment Methods", route: "/settings/payment-methods" },
         { icon: "notifications-outline", label: "Notifications", route: "/settings/notifications/friends" },
         { icon: "location-outline", label: "Location", route: "/settings/location" },
@@ -27,6 +28,11 @@ export default function SettingsMenuScreen() {
         { icon: "lock-closed-outline", label: "Privacy", route: "/settings/privacy" },
         { icon: "help-circle-outline", label: "Help & Support", route: "/settings/help" },
         { icon: "document-text-outline", label: "Terms of Service", route: "/settings/terms" },
+    ]
+
+    const partnerItems = [
+        { icon: "business-outline", label: "List Your Facility", route: "/facility/express-onboarding" },
+        { icon: "fitness-outline", label: "Become a Trainer", route: "/onboarding/questionnaire?userType=trainer" },
     ]
 
     return (
@@ -50,6 +56,26 @@ export default function SettingsMenuScreen() {
                             <View style={styles.menuItemLeft}>
                                 <View style={styles.menuIcon}>
                                     <Ionicons name={item.icon as any} size={22} color="#7ED957" />
+                                </View>
+                                <Text style={styles.menuLabel}>{item.label}</Text>
+                            </View>
+                            <Ionicons name="chevron-forward" size={20} color="#666" />
+                        </TouchableOpacity>
+                    ))}
+                </View>
+
+                {/* Partner Center */}
+                <Text style={styles.sectionHeader}>Partner Center</Text>
+                <View style={styles.menuContainer}>
+                    {partnerItems.map((item, index) => (
+                        <TouchableOpacity
+                            key={index}
+                            style={styles.menuItem}
+                            onPress={() => handlePress(item.route)}
+                        >
+                            <View style={styles.menuItemLeft}>
+                                <View style={[styles.menuIcon, { backgroundColor: "rgba(107, 155, 90, 0.1)" }]}>
+                                    <Ionicons name={item.icon as any} size={22} color="#6B9B5A" />
                                 </View>
                                 <Text style={styles.menuLabel}>{item.label}</Text>
                             </View>

@@ -140,7 +140,7 @@ export const createPendingBooking = functions.https.onCall(async (data, context)
         // Notify player
         await sendPlayerNotification(playerId, {
             type: "booking_confirmed",
-            title: "Booking Confirmed! 🎉",
+            title: "Booking Confirmed!",
             body: `Your ${courtName} booking for ${date} at ${startTime} is confirmed!`,
             bookingId: bookingRef.id,
         })
@@ -281,7 +281,7 @@ export const confirmBooking = functions.https.onCall(async (data, context) => {
     // Notify player
     await sendPlayerNotification(pending.playerId, {
         type: "booking_confirmed",
-        title: "Booking Confirmed! 🎉",
+        title: "Booking Confirmed!",
         body: `Your ${pending.courtName} booking for ${pending.date} at ${pending.startTime} is confirmed!`,
         bookingId: bookingRef.id,
     })
@@ -405,7 +405,7 @@ export const autoConfirmExpiredBookings = functions.pubsub
                 // Notify player
                 await sendPlayerNotification(pending.playerId, {
                     type: "booking_confirmed",
-                    title: "Booking Confirmed! 🎉",
+                    title: "Booking Confirmed!",
                     body: `Your ${pending.courtName} booking for ${pending.date} at ${pending.startTime} is confirmed!`,
                     bookingId: bookingRef.id,
                 })

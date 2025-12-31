@@ -263,7 +263,7 @@ export const marketIntelligenceService = {
 
         if (highUtilization.length >= 2) {
             return {
-                headline: "🔥 HIGH DEMAND ALERT",
+                headline: "HIGH DEMAND ALERT",
                 body: `${highUtilization.length} nearby facilities are 85%+ booked. Players are actively searching for alternatives!`,
                 urgency: "high",
             }
@@ -271,14 +271,14 @@ export const marketIntelligenceService = {
 
         if (marketData.demandLevel === "high") {
             return {
-                headline: "📈 Growing Market",
+                headline: "Growing Market",
                 body: `${marketData.playerCountNearby.toLocaleString()} active players in your area. Demand is outpacing supply.`,
                 urgency: "medium",
             }
         }
 
         return {
-            headline: "🎯 Opportunity Zone",
+            headline: "Opportunity Zone",
             body: `Only ${marketData.nearbyVenueCount} venues serving ${marketData.playerCountNearby.toLocaleString()} players. Room for a quality option.`,
             urgency: "low",
         }

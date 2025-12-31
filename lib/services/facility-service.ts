@@ -49,6 +49,11 @@ export interface ClaimedFacility {
     stripeAccountId?: string // For Stripe Connect payouts
     takeRatePercent: number // 8% for free, 5% for premium
 
+    // Visual Trust
+    description?: string
+    coverPhoto?: string
+    amenities?: string[]
+
     // Operating Hours
     operatingHours?: OperatingHours
     blockedDates?: string[] // Holidays, maintenance
@@ -714,6 +719,37 @@ export const facilityService = {
         } catch (error) {
             console.error("Error getting accessible facilities:", error)
             return []
+        }
+    },
+
+    /**
+     * Update facility profile (Visual Trust Layer)
+     */
+    async updateFacilityProfile(
+        facilityId: string,
+        updates: {
+            businessName?: string
+            description?: string
+            coverPhoto?: string
+            amenities?: string[]
+        }
+    ): Promise<boolean> {
+        if (!db) return false
+
+        try {
+            const updateData: any = {
+                updatedAt: new Date()
+            }
+            if (updates.businessName) updateData.businessName = updates.businessName
+            if (updates.description) updateData.description = updates.description
+            if (updates.coverPhoto) updateData.coverPhoto = updates.coverPhoto
+            if (updates.amenities) updateData.amenities = updates.amenities
+
+            await db.collection(FACILITIES_COLLECTION).doc(facilityId).update(updateData)
+            return true
+        } catch (error) {
+            console.error("Error updating facility profile:", error)
+            return false
         }
     },
 }

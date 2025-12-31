@@ -175,7 +175,7 @@ export default function GIAScreen() {
           { label: "Send now", icon: "paper-plane-outline" }
         ]
       } else if (lowerText.includes("health") || lowerText.includes("apple") || lowerText.includes("sync")) {
-        responseText += "I can sync with Apple Health to track your Move, Exercise, and Stand goals. Tap the button above to connect! ⌚️"
+        responseText += "I can sync with Apple Health to track your Move, Exercise, and Stand goals. Tap the button above to connect!"
         setHasHealthAccess(true); // Simulate auto-connect for demo
         setShowRings(true); // Show rings again
       } else if (lowerText.includes("play outside") || lowerText.includes("weather") || lowerText.includes("condition")) {
@@ -247,47 +247,56 @@ export default function GIAScreen() {
             onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
             showsVerticalScrollIndicator={false}
           >
-            {/* Daily Brief / Health Dashboard */}
+            {/* Daily Briefing Card */}
             {showRings && (
               <View style={styles.dashboardCard}>
-                <View style={styles.dashboardHeader}>
-                  <View>
-                    <Text style={styles.dashboardTitle}>Daily Activity</Text>
-                    <Text style={styles.dashboardDate}>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</Text>
+                <LinearGradient
+                  colors={["rgba(255, 255, 255, 0.05)", "rgba(255, 255, 255, 0.02)"]}
+                  style={styles.briefingGradient}
+                >
+                  <View style={styles.dashboardHeader}>
+                    <View>
+                      <View style={styles.briefingLabelRow}>
+                        <Ionicons name="sparkles" size={12} color="#7ED957" />
+                        <Text style={styles.briefingLabel}>DAILY BRIEFING</Text>
+                      </View>
+                      <Text style={styles.briefingTitle}>Good morning, Anthony!</Text>
+                      <Text style={styles.briefingSubtitle}>
+                        You have 2 sessions today. Weather is perfect for tennis at 72°F.
+                      </Text>
+                    </View>
                   </View>
-                  <TouchableOpacity
-                    style={[styles.syncButton, hasHealthAccess && styles.syncButtonActive]}
-                    onPress={toggleHealthSync}
-                  >
-                    <Ionicons name={hasHealthAccess ? "checkmark-circle" : "sync"} size={16} color={hasHealthAccess ? "#000" : "#7ED957"} />
-                    <Text style={[styles.syncButtonText, hasHealthAccess && { color: "#000" }]}>
-                      {hasHealthAccess ? "Synced" : "Sync Health"}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
 
-                <View style={styles.ringsContainer}>
-                  <ActivityRings
-                    size={140}
-                    movePercentage={hasHealthAccess ? 0.65 : 0}
-                    exercisePercentage={hasHealthAccess ? 0.45 : 0}
-                    standPercentage={hasHealthAccess ? 0.8 : 0}
-                  />
-                  <View style={styles.statsColumn}>
-                    <View style={styles.statItem}>
-                      <Text style={[styles.statValue, { color: "#FA114F" }]}>{hasHealthAccess ? "450" : "--"}</Text>
-                      <Text style={styles.statLabel}>MOVE / 700</Text>
-                    </View>
-                    <View style={styles.statItem}>
-                      <Text style={[styles.statValue, { color: "#A4FF00" }]}>{hasHealthAccess ? "28" : "--"}</Text>
-                      <Text style={styles.statLabel}>EXERCISE / 60</Text>
-                    </View>
-                    <View style={styles.statItem}>
-                      <Text style={[styles.statValue, { color: "#00D9FF" }]}>{hasHealthAccess ? "8" : "--"}</Text>
-                      <Text style={styles.statLabel}>STAND / 12</Text>
+                  <View style={styles.ringsContainer}>
+                    <ActivityRings
+                      size={140}
+                      movePercentage={hasHealthAccess ? 0.65 : 0}
+                      exercisePercentage={hasHealthAccess ? 0.45 : 0}
+                      standPercentage={hasHealthAccess ? 0.8 : 0}
+                    />
+                    <View style={styles.statsColumn}>
+                      {/* Weather Row */}
+                      <View style={styles.briefingRow}>
+                        <Ionicons name="sunny-outline" size={18} color="#FBBF24" />
+                        <Text style={styles.briefingText}>72° Sunny</Text>
+                      </View>
+                      {/* Schedule Row */}
+                      <View style={styles.briefingRow}>
+                        <Ionicons name="calendar-outline" size={18} color="#60A5FA" />
+                        <Text style={styles.briefingText}>2 Sessions</Text>
+                      </View>
+
+                      <TouchableOpacity
+                        style={[styles.syncButton, hasHealthAccess && styles.syncButtonActive]}
+                        onPress={toggleHealthSync}
+                      >
+                        <Text style={[styles.syncButtonText, hasHealthAccess && { color: "#000" }]}>
+                          {hasHealthAccess ? "Synced" : "Sync Health"}
+                        </Text>
+                      </TouchableOpacity>
                     </View>
                   </View>
-                </View>
+                </LinearGradient>
               </View>
             )}
 
@@ -488,13 +497,52 @@ const styles = StyleSheet.create({
   },
   // Dashboard Card Styles
   dashboardCard: {
-    backgroundColor: "#111",
+    backgroundColor: "transparent",
     borderRadius: 24,
-    padding: 20,
     marginBottom: 24,
     marginTop: 10,
     borderWidth: 1,
     borderColor: "#222",
+    overflow: 'hidden',
+  },
+  briefingGradient: {
+    padding: 20,
+  },
+  briefingLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 4,
+  },
+  briefingLabel: {
+    fontSize: 10,
+    fontFamily: "Inter_700Bold",
+    color: "#7ED957",
+    letterSpacing: 1,
+  },
+  briefingTitle: {
+    fontSize: 20,
+    fontFamily: "Outfit_600SemiBold", // Assuming Outfit is linked
+    color: "#FFF",
+    marginBottom: 6,
+  },
+  briefingSubtitle: {
+    fontSize: 14,
+    fontFamily: "Outfit_400Regular",
+    color: "#A3A3A3",
+    lineHeight: 20,
+    maxWidth: '90%',
+  },
+  briefingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  briefingText: {
+    fontSize: 14,
+    fontFamily: "Outfit_500Medium",
+    color: "#E5E5E5",
   },
   dashboardHeader: {
     flexDirection: "row",

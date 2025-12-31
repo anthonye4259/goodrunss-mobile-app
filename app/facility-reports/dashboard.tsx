@@ -62,7 +62,7 @@ export default function ReportsDashboardScreen() {
 
           <View className="bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/30 rounded-2xl p-6 mb-6">
             <View className="flex-row items-center mb-4">
-              <Text className="text-4xl mr-3">{level.badge}</Text>
+              <Ionicons name={level.badge as keyof typeof Ionicons.glyphMap} size={40} color="#7ED957" style={{ marginRight: 12 }} />
               <View>
                 <Text className="text-foreground font-bold text-xl">{level.title}</Text>
                 <Text className="text-muted-foreground">Level {level.level}</Text>
@@ -122,18 +122,18 @@ export default function ReportsDashboardScreen() {
                   </View>
                   <View
                     className={`rounded-lg px-3 py-1 ${report.status === "verified"
-                        ? "bg-primary/20"
-                        : report.status === "pending"
-                          ? "bg-accent/20"
-                          : "bg-destructive/20"
+                      ? "bg-primary/20"
+                      : report.status === "pending"
+                        ? "bg-accent/20"
+                        : "bg-destructive/20"
                       }`}
                   >
                     <Text
                       className={`text-xs font-bold ${report.status === "verified"
-                          ? "text-primary"
-                          : report.status === "pending"
-                            ? "text-accent"
-                            : "text-destructive"
+                        ? "text-primary"
+                        : report.status === "pending"
+                          ? "text-accent"
+                          : "text-destructive"
                         }`}
                     >
                       {report.status}

@@ -81,7 +81,7 @@ export class ImageService {
     return manipResult.uri
   }
 
-  async uploadImage(uri: string, type: "profile" | "venue" | "trainer"): Promise<string> {
+  async uploadImage(uri: string, type: string): Promise<string> {
     // TODO: Replace with actual upload to your backend/storage
     console.log("[v0] Uploading image:", uri, "type:", type)
 

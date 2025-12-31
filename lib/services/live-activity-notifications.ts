@@ -33,25 +33,25 @@ const COOLDOWN_HOURS = 2 // Hours between non-friend notifications
 // ============================================
 
 const ACTIVE_RUN_MESSAGES = [
-    { emoji: "🏀", template: (venue: string, count: number) => `${venue} has runs going - ${count} players checked in!` },
-    { emoji: "🔥", template: (venue: string, count: number) => `It's popping at ${venue}! ${count} players there now.` },
-    { emoji: "⚡", template: (venue: string, count: number) => `${venue} is live - ${count} checked in` },
+    { template: (venue: string, count: number) => `GIA: ${venue} is on fire right now! ${count} players checked in.` },
+    { template: (venue: string, count: number) => `GIA: Active courts alert! ${count} people are playing at ${venue}.` },
+    { template: (venue: string, count: number) => `GIA: I see a lot of activity at ${venue}. ${count} players active.` },
 ]
 
 const NEED_PLAYERS_MESSAGES = [
-    { emoji: "🆘", template: (venue: string, count: number) => `${count} looking for players at ${venue}` },
-    { emoji: "👥", template: (venue: string, count: number) => `Game forming at ${venue} - need ${count} more!` },
+    { template: (venue: string, count: number) => `GIA: Help needed! ${count} players looking for a game at ${venue}.` },
+    { template: (venue: string, count: number) => `GIA: Match opportunity! A group needs ${count} more at ${venue}.` },
 ]
 
 const BEST_TIME_MESSAGES = [
-    { emoji: "⏰", template: (venue: string) => `${venue} is usually empty right now - perfect time to go!` },
-    { emoji: "🎯", template: (venue: string) => `Low crowd at ${venue} - good time to practice!` },
+    { template: (venue: string) => `GIA: Pssst... ${venue} is strangely quiet right now. Perfect for practice!` },
+    { template: (venue: string) => `GIA: Pro tip: ${venue} has open courts. Go now!` },
 ]
 
 const FRIEND_CHECKIN_MESSAGES = [
-    { emoji: "👥", template: (name: string, venue: string) => `${name} just checked into ${venue} - join them!` },
-    { emoji: "🤝", template: (name: string, venue: string) => `${name} is at ${venue} right now!` },
-    { emoji: "👀", template: (name: string, venue: string) => `${name} checked in at ${venue}` },
+    { template: (name: string, venue: string) => `GIA: Your friend ${name} is playing at ${venue}. Want to join?` },
+    { template: (name: string, venue: string) => `GIA: Look who's here! ${name} just checked into ${venue}.` },
+    { template: (name: string, venue: string) => `GIA: ${name} is active at ${venue}. Time to lace up?` },
 ]
 
 // ============================================
@@ -144,7 +144,7 @@ class LiveActivityNotifications {
 
         await Notifications.scheduleNotificationAsync({
             content: {
-                title: `${message.emoji} Friend Alert`,
+                title: `Friend Alert`,
                 body: message.template(friendName, venueName),
                 data: {
                     type: "friend_checkin",
@@ -217,7 +217,7 @@ class LiveActivityNotifications {
 
         await Notifications.scheduleNotificationAsync({
             content: {
-                title: `${message.emoji} Runs Going Now`,
+                title: `Runs Going Now`,
                 body: message.template(venueName, playerCount),
                 data: {
                     type: "active_run",
@@ -254,7 +254,7 @@ class LiveActivityNotifications {
 
             await Notifications.scheduleNotificationAsync({
                 content: {
-                    title: `${message.emoji} Good Time to Play`,
+                    title: `Good Time to Play`,
                     body: message.template(venue.name),
                     data: {
                         type: "best_time",
@@ -289,7 +289,7 @@ class LiveActivityNotifications {
 
         await Notifications.scheduleNotificationAsync({
             content: {
-                title: `${message.emoji} Players Needed`,
+                title: `Players Needed`,
                 body: message.template(venueName, playersNeeded),
                 data: {
                     type: "need_players",

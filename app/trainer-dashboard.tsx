@@ -227,6 +227,15 @@ export default function TrainerDashboardScreen() {
                     <AvailabilityToggle />
                     <View style={{ height: 12 }} />
                     {user?.id && <ProPriorityToggle instructorId={user.id} />}
+                    <View style={{ height: 12 }} />
+                    <TouchableOpacity
+                        style={styles.settingsBtn}
+                        onPress={() => router.push("/business/setup")}
+                    >
+                        <Ionicons name="create-outline" size={20} color="#FFF" />
+                        <Text style={styles.settingsBtnText}>Edit Business Profile</Text>
+                        <Ionicons name="chevron-forward" size={16} color="#666" />
+                    </TouchableOpacity>
                 </View>
 
 
@@ -271,20 +280,26 @@ export default function TrainerDashboardScreen() {
                 </TouchableOpacity>
 
                 {/* Subscription Status */}
-                <View style={styles.subscriptionCard}>
+                <TouchableOpacity
+                    style={styles.subscriptionCard}
+                    onPress={() => router.push("/pro-dashboard")}
+                >
                     <View style={styles.subscriptionHeader}>
                         <View style={styles.proBadge}>
                             <Ionicons name="star" size={12} color="#0A0A0A" />
                             <Text style={styles.proBadgeText}>PRO</Text>
                         </View>
-                        <Text style={styles.subscriptionPrice}>
-                            ${TRAINER_PRICING.monthly.price / 100}/mo
-                        </Text>
+                        <View style={{ alignItems: 'flex-end' }}>
+                            <Text style={styles.subscriptionPrice}>
+                                ${TRAINER_PRICING.monthly.price / 100}/mo
+                            </Text>
+                            <Text style={{ fontSize: 10, color: '#7ED957' }}>Upgrade Now &rarr;</Text>
+                        </View>
                     </View>
                     <Text style={styles.subscriptionInfo}>
                         Or save with ${TRAINER_PRICING.quarterly.price / 100}/3mo or ${TRAINER_PRICING.biannual.price / 100}/6mo
                     </Text>
-                </View>
+                </TouchableOpacity>
 
                 {/* Marketing & Social Sharing */}
                 <View style={styles.section}>
@@ -721,5 +736,21 @@ const styles = StyleSheet.create({
     },
     bottomPadding: {
         height: 40,
+    },
+    settingsBtn: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "#1A1A1A",
+        padding: 16,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: "#252525",
+    },
+    settingsBtnText: {
+        flex: 1,
+        color: "#FFF",
+        fontSize: 16,
+        fontWeight: "600",
+        marginLeft: 12,
     },
 })

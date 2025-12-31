@@ -362,7 +362,7 @@ export function setupTrainerRealTimeSync(trainerId: string): () => void {
     const unsub1 = subscribeToNewBookings(trainerId, (booking) => {
         showNotification(
             "booking_confirmed",
-            "New Booking! 🎉",
+            "New Booking!",
             `${booking.clientName} booked a session`,
             { bookingId: booking.id }
         )
@@ -371,7 +371,7 @@ export function setupTrainerRealTimeSync(trainerId: string): () => void {
     const unsub2 = subscribeToTrainerMessages(trainerId, (message) => {
         showNotification(
             "message",
-            "New Message 💬",
+            "New Message",
             message.content?.substring(0, 50) || "You have a new message",
             { messageId: message.id, senderId: message.senderId }
         )
@@ -405,7 +405,7 @@ export function setupClientRealTimeSync(clientId: string): () => void {
         if (entry.notified && !entry.claimed) {
             showNotification(
                 "waitlist_available",
-                "Spot Just Opened! ⚡",
+                "Spot Just Opened!",
                 "You have 5 minutes to claim it!",
                 { classId: entry.classId, waitlistId: entry.id }
             )
@@ -416,7 +416,7 @@ export function setupClientRealTimeSync(clientId: string): () => void {
         if (changeType === "modified" && booking.status === "confirmed") {
             showNotification(
                 "booking_confirmed",
-                "Booking Confirmed! ✓",
+                "Booking Confirmed!",
                 `Your session is confirmed`,
                 { bookingId: booking.id }
             )

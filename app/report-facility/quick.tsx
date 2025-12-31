@@ -95,7 +95,7 @@ export default function QuickReportScreen() {
         if (success) {
             Alert.alert(
                 "Report Submitted!",
-                `Thank you for reporting ${selectedCourt}! You earned $15.`,
+                `Thank you for reporting ${selectedCourt}! You earned $5.`,
                 [{ text: "OK", onPress: () => router.back() }]
             )
         } else {
@@ -287,7 +287,7 @@ export default function QuickReportScreen() {
                         disabled={submitting}
                     >
                         <Text className="text-background font-bold text-center text-lg">
-                            {submitting ? "Submitting..." : "Submit Report & Earn $15"}
+                            {submitting ? "Submitting..." : "Submit Report & Earn $5"}
                         </Text>
                     </TouchableOpacity>
                 </View>
