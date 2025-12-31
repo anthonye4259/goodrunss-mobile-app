@@ -167,18 +167,9 @@ export default function USPlayerLeadsScreen() {
                                 style={styles.upgradeGradient}
                             >
                                 <Text style={styles.upgradeButtonText}>
-                                    Upgrade to Trainer Pro - $29/mo
+                                    Enable Train Global - $29/mo
                                 </Text>
                             </LinearGradient>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={styles.trialButton}
-                            onPress={() => trainerProService.startFreeTrial().then(loadData)}
-                        >
-                            <Text style={styles.trialButtonText}>
-                                Start 7-Day Free Trial
-                            </Text>
                         </TouchableOpacity>
                     </View>
                 </SafeAreaView>

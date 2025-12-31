@@ -22,12 +22,21 @@ export interface TrainerProSubscription {
     id: string
     trainerId: string
     plan: "monthly" | "annual"
-    status: "active" | "cancelled" | "expired" | "trial"
+    status: "active" | "cancelled" | "expired"
     startedAt: string
     expiresAt: string
     price: number
     currency: string
     features: TrainerProFeatures
+}
+
+export interface TrainerGlobalSettings {
+    enabled: boolean
+    targetMarkets: ("usa" | "uk" | "europe" | "middle_east" | "asia")[]
+    acceptedCurrencies: string[]
+    languagesSpoken: string[]
+    timezoneAvailability: string[] // e.g., ["EST", "PST", "GMT"]
+    enabledAt?: string
 }
 
 export interface TrainerProFeatures {
@@ -93,6 +102,7 @@ const STORAGE_KEYS = {
     SUBSCRIPTION: "@goodrunss_trainer_pro_sub",
     LEADS: "@goodrunss_us_player_leads",
     ANALYTICS: "@goodrunss_trainer_analytics",
+    GLOBAL_SETTINGS: "@goodrunss_train_global",
 }
 
 // ============================================
@@ -121,7 +131,7 @@ class TrainerProService {
         if (!sub) return false
 
         return (
-            (sub.status === "active" || sub.status === "trial") &&
+            sub.status === "active" &&
             new Date(sub.expiresAt) > new Date()
         )
     }
@@ -177,34 +187,83 @@ class TrainerProService {
         return subscription
     }
 
-    /**
-     * Start 7-day free trial
-     */
-    async startFreeTrial(): Promise<TrainerProSubscription> {
-        const trainerId = auth?.currentUser?.uid || "local_trainer"
+    // ========================
+    // TRAIN GLOBAL (OPT-IN)
+    // ========================
 
-        const subscription: TrainerProSubscription = {
-            id: `trial_${Date.now()}`,
-            trainerId,
-            plan: "monthly",
-            status: "trial",
-            startedAt: new Date().toISOString(),
-            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
-            price: 0,
-            currency: "USD",
-            features: {
-                contentLibrary: true,
-                featuredPlacement: true,
-                usPlayerLeads: true,
-                verifiedBadge: false, // Not during trial
-                advancedAnalytics: true,
-                prioritySupport: false,
-                customProfileUrl: false,
-            },
+    /**
+     * Check if trainer has opted into Train Global
+     */
+    async isTrainGlobalEnabled(): Promise<boolean> {
+        const settings = await this.getGlobalSettings()
+        return settings?.enabled === true
+    }
+
+    /**
+     * Get Train Global settings
+     */
+    async getGlobalSettings(): Promise<TrainerGlobalSettings | null> {
+        const stored = await AsyncStorage.getItem(STORAGE_KEYS.GLOBAL_SETTINGS)
+        return stored ? JSON.parse(stored) : null
+    }
+
+    /**
+     * Enable Train Global - trainer opts in to receive global clients
+     */
+    async enableTrainGlobal(settings: {
+        targetMarkets: ("usa" | "uk" | "europe" | "middle_east" | "asia")[]
+        acceptedCurrencies: string[]
+        languagesSpoken: string[]
+        timezoneAvailability: string[]
+    }): Promise<TrainerGlobalSettings> {
+        const globalSettings: TrainerGlobalSettings = {
+            enabled: true,
+            targetMarkets: settings.targetMarkets,
+            acceptedCurrencies: settings.acceptedCurrencies,
+            languagesSpoken: settings.languagesSpoken,
+            timezoneAvailability: settings.timezoneAvailability,
+            enabledAt: new Date().toISOString(),
         }
 
-        await AsyncStorage.setItem(STORAGE_KEYS.SUBSCRIPTION, JSON.stringify(subscription))
-        return subscription
+        await AsyncStorage.setItem(STORAGE_KEYS.GLOBAL_SETTINGS, JSON.stringify(globalSettings))
+
+        // Sync to Firestore
+        if (db && auth?.currentUser?.uid) {
+            try {
+                const { doc, setDoc } = await import("firebase/firestore")
+                await setDoc(
+                    doc(db, "trainer_global_settings", auth.currentUser.uid),
+                    globalSettings
+                )
+            } catch (error) {
+                console.error("Failed to sync global settings:", error)
+            }
+        }
+
+        return globalSettings
+    }
+
+    /**
+     * Disable Train Global
+     */
+    async disableTrainGlobal(): Promise<void> {
+        const settings = await this.getGlobalSettings()
+        if (settings) {
+            settings.enabled = false
+            await AsyncStorage.setItem(STORAGE_KEYS.GLOBAL_SETTINGS, JSON.stringify(settings))
+        }
+    }
+
+    /**
+     * Update Train Global settings
+     */
+    async updateGlobalSettings(updates: Partial<TrainerGlobalSettings>): Promise<TrainerGlobalSettings | null> {
+        const settings = await this.getGlobalSettings()
+        if (!settings) return null
+
+        const updated = { ...settings, ...updates }
+        await AsyncStorage.setItem(STORAGE_KEYS.GLOBAL_SETTINGS, JSON.stringify(updated))
+        return updated
     }
 
     // ========================
