@@ -31,6 +31,8 @@ export type GiaIntent =
     | "check_crowd"
     | "weather_check"
     | "recommendations"
+    | "trip_planning"
+    | "remote_training"
     | "general"
 
 export interface GiaMessage {
@@ -40,7 +42,7 @@ export interface GiaMessage {
     timestamp: Date
     intent?: GiaIntent
     action?: {
-        type: "show_venues" | "show_trainers" | "show_leagues" | "show_slots" | "none"
+        type: "show_venues" | "show_trainers" | "show_leagues" | "show_slots" | "show_travel_trainers" | "set_travel_plan" | "show_remote_services" | "none"
         params: Record<string, any>
     }
     quickReplies?: string[]
@@ -80,6 +82,8 @@ const INTENT_KEYWORDS: Record<GiaIntent, string[]> = {
     check_crowd: ["busy", "crowded", "quiet", "packed", "how many people"],
     weather_check: ["weather", "rain", "outdoor", "conditions"],
     recommendations: ["recommend", "suggest", "what should", "best"],
+    trip_planning: ["traveling", "travelling", "going to", "trip to", "visiting", "vacation", "holiday", "abroad", "international", "train in", "train abroad"],
+    remote_training: ["remote", "online", "video analysis", "virtual", "remote coaching", "video feedback"],
     general: [],
 }
 
@@ -145,22 +149,29 @@ User context:
 - City: ${userContext.city || "Unknown"}
 - Preferred sport: ${userContext.sport || "various sports"}
 
-Available cities: Atlanta, Myrtle Beach, San Francisco, NYC, Austin, Phoenix, Miami
+Available cities:
+- USA: Atlanta, Myrtle Beach, San Francisco, NYC, Austin, Phoenix, Miami
+- International: London, Manchester (UK), Barcelona, Madrid, Marbella (Spain), Dubai, Abu Dhabi (UAE), Lisbon, Algarve (Portugal)
 
 Your capabilities:
 1. Book courts (tennis, pickleball, padel, racquetball)
-2. Find trainers and coaches
+2. Find trainers and coaches (local or remote)
 3. Join leagues
 4. Check venue crowd levels
 5. Get personalized recommendations
+6. **Trip Planning**: Help users find trainers at travel destinations
+7. **Remote Training**: Connect users with international coaches for video analysis and live sessions
+
+When user mentions traveling/visiting a city, help them find trainers there.
+When user asks about remote training, explain the options: video analysis, live sessions, training plans.
 
 Be helpful, concise (2-3 sentences), and action-oriented. Use sports metaphors occasionally.
 Respond in JSON format:
 {
   "message": "Your response",
-  "intent": "book_court|find_venue|find_trainer|league_info|check_crowd|recommendations|general",
-  "extracted": { "sport": null, "date": null, "time": null, "city": null },
-  "action": { "type": "show_venues|show_trainers|show_leagues|show_slots|none", "params": {} },
+  "intent": "book_court|find_venue|find_trainer|league_info|check_crowd|recommendations|trip_planning|remote_training|general",
+  "extracted": { "sport": null, "date": null, "time": null, "city": null, "destination": null },
+  "action": { "type": "show_venues|show_trainers|show_leagues|show_slots|show_travel_trainers|set_travel_plan|show_remote_services|none", "params": {} },
   "quickReplies": ["suggestion 1", "suggestion 2"]
 }
 `
@@ -390,12 +401,43 @@ Respond with valid JSON only.`
                 action: { type: "show_venues", params: { sport: "Pickleball", city: extractedCity || city } },
                 quickReplies: ["Show pickleball", "Try something else", "What's trending?"],
             }),
+            trip_planning: () => {
+                // Extract destination from international cities
+                const destinations = ["london", "manchester", "barcelona", "madrid", "marbella", "dubai", "abu dhabi", "lisbon", "algarve"]
+                let destination: string | undefined
+                for (const dest of destinations) {
+                    if (lower.includes(dest)) {
+                        destination = dest.charAt(0).toUpperCase() + dest.slice(1)
+                        break
+                    }
+                }
+                return {
+                    message: destination
+                        ? `${greeting}Exciting trip to ${destination}! 🌍 I found some amazing ${sport || "sports"} trainers there. Want me to show you their profiles?`
+                        : `${greeting}Planning a sports trip? 🌍 Tell me where you're going and I'll find trainers there! We have coaches in Spain, Dubai, UK, and Portugal.`,
+                    intent: "trip_planning" as GiaIntent,
+                    extracted: { sport, city: destination || extractedCity },
+                    action: destination
+                        ? { type: "show_travel_trainers", params: { destination, sport } }
+                        : { type: "set_travel_plan", params: {} },
+                    quickReplies: destination
+                        ? ["Show trainers", "Set travel dates", "View courts too"]
+                        : ["Spain", "Dubai", "UK", "Portugal"],
+                }
+            },
+            remote_training: () => ({
+                message: `${greeting}Remote training is a game-changer! 📱 You can get video analysis, live coaching sessions, or monthly training plans from top coaches worldwide.`,
+                intent: "remote_training",
+                extracted: { sport },
+                action: { type: "show_remote_services", params: { sport } },
+                quickReplies: ["Video Analysis", "Live Sessions", "Training Plans"],
+            }),
             general: () => ({
-                message: `${greeting}I can help you book courts, find trainers, join leagues, or discover venues! What sounds good? 🎾`,
+                message: `${greeting}I can help you book courts, find trainers, join leagues, or discover venues! Planning a trip? I can find trainers abroad too! 🎾`,
                 intent: "general",
                 extracted: {},
                 action: { type: "none", params: {} },
-                quickReplies: ["Book a court", "Find trainers", "Join a league", "Explore venues"],
+                quickReplies: ["Book a court", "Find trainers", "Join a league", "Train abroad"],
             }),
         }
 
