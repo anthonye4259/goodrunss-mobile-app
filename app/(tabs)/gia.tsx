@@ -233,10 +233,6 @@ export default function GIAScreen() {
                 {isTyping ? "Thinking..." : "Goodrunss Intelligence Assistant"}
               </Text>
             </View>
-            {/* Context/Version Badge */}
-            <View style={styles.versionBadge}>
-              <Text style={styles.versionText}>BETA</Text>
-            </View>
           </View>
 
           {/* Messages Area */}

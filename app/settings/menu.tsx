@@ -22,6 +22,7 @@ export default function SettingsMenuScreen() {
         { icon: "person-outline", label: "Edit Profile", route: "/settings/edit-profile" },
         { icon: "gift-outline", label: "Refer & Earn", route: "/growth/referrals", highlight: true },
         { icon: "card-outline", label: "Payment Methods", route: "/settings/payment-methods" },
+        { icon: "star-outline", label: "Subscription", route: "/settings/subscription" },
         { icon: "notifications-outline", label: "Notifications", route: "/settings/notifications/friends" },
         { icon: "location-outline", label: "Location", route: "/settings/location" },
         { icon: "language-outline", label: "Language & Region", route: "/settings/language-region" },
@@ -159,5 +160,14 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: "#666",
         fontFamily: 'Inter_400Regular',
+    },
+    sectionHeader: {
+        fontSize: 12,
+        color: "#666",
+        marginTop: 24,
+        marginBottom: 8,
+        marginLeft: 4,
+        textTransform: 'uppercase',
+        fontFamily: 'Inter_600SemiBold',
     },
 })

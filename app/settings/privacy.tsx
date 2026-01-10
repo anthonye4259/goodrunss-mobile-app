@@ -193,6 +193,36 @@ export default function PrivacyScreen() {
             </View>
           </View>
 
+          <View style={[styles.settingsGroup, { borderColor: 'rgba(239, 68, 68, 0.3)' }]}>
+            <TouchableOpacity
+              style={styles.row}
+              onPress={() => {
+                Alert.alert(
+                  "Delete Account",
+                  "Are you sure you want to delete your account? This action cannot be undone and you will lose all your data.",
+                  [
+                    { text: "Cancel", style: "cancel" },
+                    {
+                      text: "Delete",
+                      style: "destructive",
+                      onPress: () => {
+                        // In a real app, call deleteAccount() from context
+                        Alert.alert("Account Deleted", "Your account has been successfully deleted.")
+                        router.replace("/auth")
+                      }
+                    }
+                  ]
+                )
+              }}
+            >
+              <View style={styles.rowInfo}>
+                <Text style={[styles.rowTitle, { color: '#EF4444' }]}>Delete Account</Text>
+                <Text style={styles.rowDesc}>Permanently remove your account and data.</Text>
+              </View>
+              <Ionicons name="trash-outline" size={20} color="#EF4444" />
+            </TouchableOpacity>
+          </View>
+
           <Text style={styles.footnote}>
             Changes are auto-saved. Your privacy is our top priority.
           </Text>
