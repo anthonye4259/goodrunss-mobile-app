@@ -207,7 +207,7 @@ export default function RootLayout() {
 }
 
 // Separate component to access LocationContext
-import { useLocation } from "@/lib/location-context"
+
 import { geofenceService } from "@/lib/services/geofence-service"
 import { venueService } from "@/lib/services/venue-service"
 
