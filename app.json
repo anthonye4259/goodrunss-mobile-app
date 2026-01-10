@@ -2,7 +2,7 @@
   "expo": {
     "name": "GoodRunss",
     "slug": "goodrunss-mobile",
-    "owner": "tony4080",
+    "owner": "ateam9999",
     "version": "1.0.0",
     "runtimeVersion": "1.0.0",
     "scheme": "goodrunss",
@@ -138,7 +138,7 @@
         "origin": false
       },
       "eas": {
-        "projectId": "b63887f4-0f38-4414-8597-47548483ad9f"
+        "projectId": "a16611ea-d95f-46ff-bb08-7ca0725c9f4d"
       }
     },
     "updates": {
