@@ -887,7 +887,9 @@ export default function DiscoverScreen() {
 
 
                             <View style={{ height: 100 }} />
-                        </ScrollView>
+                        </>
+                    )}
+                </ScrollView>
             </SafeAreaView>
 
             {/* Need Players FAB - Only for players, not trainers */}
