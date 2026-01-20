@@ -79,7 +79,7 @@ export default function FavoritesScreen() {
               title="No favorite trainers"
               description="Save your favorite trainers for quick access"
               actionText="Find Trainers"
-              onAction={() => router.push("/(tabs)/index")}
+              onAction={() => router.push("/(tabs)")}
             />
           ) : activeTab === "venues" && favoriteVenues.length === 0 ? (
             <EmptyState

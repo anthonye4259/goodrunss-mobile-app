@@ -21,7 +21,7 @@ export default function WearablesScreen() {
   }
 
   const devices = [
-    { id: "appleWatch", name: "Apple Watch", icon: "watch", color: "#000000" },
+    { id: "appleWatch", name: "Apple Health (HealthKit)", icon: "heart", color: "#FA586A" },
     { id: "whoop", name: "WHOOP", icon: "fitness", color: "#FF0000" },
     { id: "garmin", name: "Garmin", icon: "stopwatch", color: "#007CC3" },
     { id: "fitbit", name: "Fitbit", icon: "pulse", color: "#00B0B9" },

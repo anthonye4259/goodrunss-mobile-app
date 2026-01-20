@@ -6,12 +6,13 @@ import { router } from "expo-router"
 import { LinearGradient } from "expo-linear-gradient"
 import * as Haptics from "expo-haptics"
 import { revenueCatService } from "@/lib/revenue-cat"
-import { PurchasesPackage } from "react-native-purchases"
+import Purchases, { PurchasesPackage } from "react-native-purchases"
 
 export default function SubscriptionScreen() {
     const [offering, setOffering] = useState<any>(null)
     const [loading, setLoading] = useState(true)
     const [processing, setProcessing] = useState(false)
+    const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
         loadOfferings()
@@ -19,11 +20,95 @@ export default function SubscriptionScreen() {
 
     const loadOfferings = async () => {
         try {
-            await revenueCatService.initialize() // Ensure init
-            const currentOffering = await revenueCatService.getOfferings()
-            setOffering(currentOffering)
-        } catch (e) {
-            console.error(e)
+            setError(null)
+
+            // Initialize RevenueCat
+            try {
+                await revenueCatService.initialize()
+            } catch (initError: any) {
+                setError("Configuration error. Please contact support.")
+                setLoading(false)
+                return
+            }
+
+            // Fetch offerings
+            let offerings
+            try {
+                offerings = await Purchases.getOfferings()
+            } catch (offeringsError: any) {
+                // Check for specific StoreKit errors
+                const errorCode = offeringsError?.code || offeringsError?.userInfo?.code
+                if (errorCode === 2 || errorCode === "STORE_PROBLEM") {
+                    setError("App Store connection issue. Please try again.")
+                } else if (errorCode === 1 || errorCode === "UNKNOWN") {
+                    setError("Service temporarily unavailable.")
+                } else {
+                    setError("Could not connect to App Store.")
+                }
+                setLoading(false)
+                return
+            }
+
+            let targetPackage: PurchasesPackage | null = null
+
+            // 1. Try current offering first
+            if (offerings.current && offerings.current.availablePackages.length > 0) {
+                targetPackage = offerings.current.availablePackages.find((p: any) => p.packageType === "MONTHLY")
+                if (!targetPackage) {
+                    targetPackage = offerings.current.availablePackages.find((p: any) =>
+                        p.identifier === "trainer_monthly" ||
+                        p.identifier === "$rc_monthly" ||
+                        p.identifier === "monthly"
+                    )
+                }
+                if (!targetPackage) {
+                    targetPackage = offerings.current.availablePackages[0]
+                }
+            }
+
+            // 2. Fallback: Search all offerings
+            if (!targetPackage) {
+                for (const key of Object.keys(offerings.all)) {
+                    const off = offerings.all[key]
+                    if (off.availablePackages.length > 0) {
+                        targetPackage = off.availablePackages.find((p: any) =>
+                            p.packageType === "MONTHLY" ||
+                            p.identifier === "trainer_monthly" ||
+                            p.identifier === "$rc_monthly"
+                        ) || off.availablePackages[0]
+                        break
+                    }
+                }
+            }
+
+            // 3. Final Fallback: Fetch products directly
+            if (!targetPackage) {
+                try {
+                    const productIds = ["goodrunss_29_1m", "com.goodrunss.facility.monthly"]
+                    const products = await Purchases.getProducts(productIds)
+
+                    if (products.length > 0) {
+                        setOffering({
+                            availablePackages: [],
+                            storeProducts: products
+                        })
+                        setError("Subscription setup in progress. Please try again in a few minutes.")
+                        setLoading(false)
+                        return
+                    }
+                } catch (productError) {
+                    // Products fetch failed - continue to show general error
+                }
+            }
+
+            if (!targetPackage) {
+                setError("Subscription not available. Please try again later.")
+            } else {
+                setOffering({ availablePackages: [targetPackage] })
+            }
+
+        } catch (e: any) {
+            setError("Unable to load subscription. Please try again.")
         } finally {
             setLoading(false)
         }
@@ -42,7 +127,11 @@ export default function SubscriptionScreen() {
         }
     }
 
-    const handlePurchase = async (pack: PurchasesPackage) => {
+    const handlePurchase = async (pack: PurchasesPackage | null | undefined) => {
+        if (!pack) {
+            Alert.alert("Loading...", "Subscription is still loading. Please wait a moment and try again.")
+            return
+        }
         setProcessing(true)
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
 
@@ -55,6 +144,7 @@ export default function SubscriptionScreen() {
             }
         } catch (e) {
             console.log("Purchase failed or cancelled")
+            Alert.alert("Purchase Failed", "Something went wrong. Please try again.")
         } finally {
             setProcessing(false)
         }
@@ -73,7 +163,11 @@ export default function SubscriptionScreen() {
     )
 
     // Fallback Package if RevenueCat not configured
+    // Flexible Package Selection:
+    // 1. Try to find explicit MONTHLY type
+    // 2. Fallback to the FIRST available package in the list (since we might have filtered specifically for it)
     const monthlyPackage = offering?.availablePackages?.find((p: any) => p.packageType === "MONTHLY")
+        || offering?.availablePackages?.[0]
 
     return (
         <View style={styles.container}>
@@ -130,39 +224,72 @@ export default function SubscriptionScreen() {
                             <Text style={styles.popularText}>MOST POPULAR</Text>
                         </View>
                         <Text style={styles.planName}>Pro Trainer SaaS</Text>
+
+                        {/* HERO PRICE START - Guideline 3.1.2 */}
                         <View style={styles.priceRow}>
-                            <Text style={styles.amount}>{monthlyPackage?.product?.priceString || "..."}</Text>
+                            <Text style={styles.amount}>{monthlyPackage?.product?.priceString || "$29.00"}</Text>
                             <Text style={styles.period}>/month</Text>
                         </View>
+                        {/* HERO PRICE END */}
+
                         <Text style={styles.cancelText}>Cancel anytime. No lock-in.</Text>
 
-                        <TouchableOpacity
-                            style={styles.payBtn}
-                            onPress={() => handlePurchase(monthlyPackage)}
-                            disabled={processing}
-                        >
-                            <LinearGradient
-                                colors={['#7ED957', '#4C9E29']}
-                                style={styles.payGradient}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 0 }}
+                        {/* Error State */}
+                        {error && (
+                            <View style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', borderRadius: 12, padding: 16, marginBottom: 16 }}>
+                                <Text style={{ color: '#EF4444', textAlign: 'center', fontSize: 14, marginBottom: 8 }}>{error}</Text>
+                                <TouchableOpacity
+                                    onPress={() => { setLoading(true); loadOfferings(); }}
+                                    style={{ backgroundColor: '#EF4444', borderRadius: 8, padding: 10 }}
+                                >
+                                    <Text style={{ color: '#FFF', textAlign: 'center', fontWeight: '600' }}>Retry</Text>
+                                </TouchableOpacity>
+                            </View>
+                        )}
+
+                        {/* Subscribe Button */}
+                        {!error && (
+                            <TouchableOpacity
+                                style={[styles.payBtn, (!monthlyPackage || loading) && { opacity: 0.5 }]}
+                                onPress={() => handlePurchase(monthlyPackage)}
+                                disabled={processing || loading || !monthlyPackage}
                             >
-                                {processing ? (
-                                    <ActivityIndicator color="#000" />
-                                ) : (
-                                    <>
-                                        <Text style={styles.payText}>Start 7-Day Free Trial</Text>
-                                        <Ionicons name="arrow-forward" size={20} color="#000" />
-                                    </>
-                                )}
-                            </LinearGradient>
-                        </TouchableOpacity>
-                        <Text style={styles.trialText}>Then {monthlyPackage?.product?.priceString || "$29.00"} / month</Text>
+                                <LinearGradient
+                                    colors={['#7ED957', '#4C9E29']}
+                                    style={styles.payGradient}
+                                    start={{ x: 0, y: 0 }}
+                                    end={{ x: 1, y: 0 }}
+                                >
+                                    {processing || loading ? (
+                                        <ActivityIndicator color="#000" />
+                                    ) : (
+                                        <>
+                                            {/* Button Text Constraint: Must reference billing validity */}
+                                            <Text style={styles.payText}>Subscribe</Text>
+                                            <Ionicons name="arrow-forward" size={20} color="#000" />
+                                        </>
+                                    )}
+                                </LinearGradient>
+                            </TouchableOpacity>
+                        )}
+
+                        {/* Subordinate Trial Text */}
+                        <Text style={styles.trialText}>Includes 7-Day Free Trial</Text>
                     </View>
 
-                    <Text style={styles.footerText}>
-                        By syncing, you agree to our Terms of Service and Privacy Policy. Subscription auto-renews unless turned off in your Apple ID settings.
-                    </Text>
+                    <TouchableOpacity onPress={() => Linking.openURL('https://goodrunss.com/terms')}>
+                        <Text style={styles.footerText}>
+                            By syncing, you agree to our Terms of Service and Privacy Policy. Subscription auto-renews unless turned off in your Apple ID settings.
+                        </Text>
+                    </TouchableOpacity>
+                    <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 20, marginTop: 10 }}>
+                        <TouchableOpacity onPress={() => Linking.openURL('https://www.goodrunss.com/privacy')}>
+                            <Text style={[styles.footerText, { textDecorationLine: 'underline' }]}>Privacy Policy</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => Linking.openURL('https://www.goodrunss.com/terms')}>
+                            <Text style={[styles.footerText, { textDecorationLine: 'underline' }]}>Terms of Use</Text>
+                        </TouchableOpacity>
+                    </View>
 
                 </ScrollView>
             </SafeAreaView>

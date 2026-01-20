@@ -18,7 +18,7 @@ import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { router, useLocalSearchParams } from "expo-router"
 import * as Haptics from "expo-haptics"
-import { useStripe } from "@stripe/stripe-react-native"
+// import { useStripe } from "@stripe/stripe-react-native"
 
 import { useAuth } from "@/lib/auth-context"
 import { venueService } from "@/lib/services/venue-service"
@@ -32,7 +32,7 @@ import {
 export default function BookCourtScreen() {
     const { venueId } = useLocalSearchParams()
     const { user } = useAuth()
-    const { initPaymentSheet, presentPaymentSheet } = useStripe()
+    // const { initPaymentSheet, presentPaymentSheet } = useStripe()
 
     // State
     const [venue, setVenue] = useState<any>(null)
@@ -133,6 +133,10 @@ export default function BookCourtScreen() {
             return
         }
 
+        Alert.alert("Booking Unavailable", "Bookings are temporarily disabled in this version.")
+        return;
+
+        /*
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy)
         setBookingInProgress(true)
 
@@ -187,6 +191,7 @@ export default function BookCourtScreen() {
         } finally {
             setBookingInProgress(false)
         }
+        */
     }
 
     if (loading) {

@@ -20,20 +20,15 @@ export default function SettingsMenuScreen() {
     const menuItems = [
         { icon: "options-outline", label: "My Preferences", route: "/settings/preferences", highlight: true },
         { icon: "person-outline", label: "Edit Profile", route: "/settings/edit-profile" },
-        { icon: "gift-outline", label: "Refer & Earn", route: "/growth/referrals", highlight: true },
         { icon: "card-outline", label: "Payment Methods", route: "/settings/payment-methods" },
-        { icon: "star-outline", label: "Subscription", route: "/settings/subscription" },
         { icon: "notifications-outline", label: "Notifications", route: "/settings/notifications/friends" },
         { icon: "location-outline", label: "Location", route: "/settings/location" },
+        { icon: "star-outline", label: "Subscription", route: "/settings/subscription" },
         { icon: "language-outline", label: "Language & Region", route: "/settings/language-region" },
         { icon: "lock-closed-outline", label: "Privacy", route: "/settings/privacy" },
         { icon: "help-circle-outline", label: "Help & Support", route: "/settings/help" },
         { icon: "document-text-outline", label: "Terms of Service", route: "/settings/terms" },
-    ]
-
-    const partnerItems = [
-        { icon: "business-outline", label: "List Your Facility", route: "/facility/express-onboarding" },
-        { icon: "fitness-outline", label: "Become a Trainer", route: "/onboarding/questionnaire?userType=trainer" },
+        { icon: "watch-outline", label: "Connect Wearables", route: "/settings/wearables" },
     ]
 
     return (
@@ -65,29 +60,30 @@ export default function SettingsMenuScreen() {
                     ))}
                 </View>
 
-                {/* Partner Center */}
-                <Text style={styles.sectionHeader}>Partner Center</Text>
-                <View style={styles.menuContainer}>
-                    {partnerItems.map((item, index) => (
-                        <TouchableOpacity
-                            key={index}
-                            style={styles.menuItem}
-                            onPress={() => handlePress(item.route)}
-                        >
-                            <View style={styles.menuItemLeft}>
-                                <View style={[styles.menuIcon, { backgroundColor: "rgba(107, 155, 90, 0.1)" }]}>
-                                    <Ionicons name={item.icon as any} size={22} color="#6B9B5A" />
-                                </View>
-                                <Text style={styles.menuLabel}>{item.label}</Text>
-                            </View>
-                            <Ionicons name="chevron-forward" size={20} color="#666" />
-                        </TouchableOpacity>
-                    ))}
-                </View>
+                {/* Account Deletion (Required by Apple) */}
+                <TouchableOpacity
+                    style={[styles.menuItem, { borderBottomWidth: 0, marginTop: 24 }]}
+                    onPress={() => router.push("/settings/delete-account")}
+                >
+                    <View style={styles.menuItemLeft}>
+                        <View style={[styles.menuIcon, { backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}>
+                            <Ionicons name="trash-outline" size={22} color="#EF4444" />
+                        </View>
+                        <Text style={[styles.menuLabel, { color: '#EF4444' }]}>Delete Account</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color="#666" />
+                </TouchableOpacity>
 
                 <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
                     <Ionicons name="log-out-outline" size={22} color="#EF4444" />
                     <Text style={styles.logoutText}>Log Out</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={[styles.logoutButton, { backgroundColor: 'transparent', marginTop: -12 }]}
+                    onPress={() => router.push('/settings/delete-account' as any)}
+                >
+                    <Text style={[styles.logoutText, { color: '#666', fontSize: 14 }]}>Delete Account</Text>
                 </TouchableOpacity>
 
                 <Text style={styles.version}>GoodRunss v1.0.0</Text>
@@ -160,14 +156,5 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: "#666",
         fontFamily: 'Inter_400Regular',
-    },
-    sectionHeader: {
-        fontSize: 12,
-        color: "#666",
-        marginTop: 24,
-        marginBottom: 8,
-        marginLeft: 4,
-        textTransform: 'uppercase',
-        fontFamily: 'Inter_600SemiBold',
     },
 })

@@ -5,11 +5,13 @@
  * Includes QR code option for in-person networking.
  */
 
-import { View, Text, TouchableOpacity, StyleSheet, Share, Alert } from "react-native"
+import React, { useState } from "react"
+import { View, Text, TouchableOpacity, StyleSheet, Share, Alert, Modal } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { LinearGradient } from "expo-linear-gradient"
 import * as Clipboard from "expo-clipboard"
 import * as Haptics from "expo-haptics"
+import QRCode from 'react-native-qrcode-svg'
 
 type Props = {
     trainerId: string
@@ -20,7 +22,8 @@ type Props = {
 }
 
 export function ShareBookingLink({ trainerId, trainerName, specialty, variant = "card", onShared }: Props) {
-    const bookingLink = `https://goodrunss.app/book/${trainerId}`
+    const bookingLink = `https://dalai.app/book/${trainerId}`
+    const [showQR, setShowQR] = useState(false)
 
     const getShareMessage = () => {
         const specialtyText = specialty ? ` ${specialty}` : ""
@@ -55,23 +58,47 @@ export function ShareBookingLink({ trainerId, trainerName, specialty, variant = 
 
     if (variant === "fab") {
         return (
-            <TouchableOpacity style={styles.fab} onPress={handleShare}>
-                <LinearGradient
-                    colors={["#7ED957", "#22C55E"]}
-                    style={styles.fabGradient}
-                >
-                    <Ionicons name="share-social" size={24} color="#000" />
-                </LinearGradient>
-            </TouchableOpacity>
+            <>
+                <TouchableOpacity style={styles.fab} onPress={() => setShowQR(true)}>
+                    <LinearGradient
+                        colors={["#7ED957", "#22C55E"]}
+                        style={styles.fabGradient}
+                    >
+                        <Ionicons name="qr-code" size={24} color="#000" />
+                    </LinearGradient>
+                </TouchableOpacity>
+
+                {showQR && (
+                    <QRCodeModal
+                        visible={showQR}
+                        onClose={() => setShowQR(false)}
+                        value={bookingLink}
+                        name={trainerName}
+                        onShare={handleShare}
+                    />
+                )}
+            </>
         )
     }
 
     if (variant === "button") {
         return (
-            <TouchableOpacity style={styles.button} onPress={handleShare}>
-                <Ionicons name="link" size={16} color="#7ED957" />
-                <Text style={styles.buttonText}>Share Booking Link</Text>
-            </TouchableOpacity>
+            <>
+                <TouchableOpacity style={styles.button} onPress={() => setShowQR(true)}>
+                    <Ionicons name="qr-code-outline" size={16} color="#7ED957" />
+                    <Text style={styles.buttonText}>Show QR Code</Text>
+                </TouchableOpacity>
+
+                {showQR && (
+                    <QRCodeModal
+                        visible={showQR}
+                        onClose={() => setShowQR(false)}
+                        value={bookingLink}
+                        name={trainerName}
+                        onShare={handleShare}
+                    />
+                )}
+            </>
         )
     }
 
@@ -85,6 +112,9 @@ export function ShareBookingLink({ trainerId, trainerName, specialty, variant = 
                     <Text style={styles.title}>Your Booking Link</Text>
                     <Text style={styles.subtitle}>Share to get more clients</Text>
                 </View>
+                <TouchableOpacity onPress={() => setShowQR(true)} style={styles.miniQrBtn}>
+                    <Ionicons name="qr-code" size={20} color="#7ED957" />
+                </TouchableOpacity>
             </View>
 
             <View style={styles.linkBox}>
@@ -109,7 +139,63 @@ export function ShareBookingLink({ trainerId, trainerName, specialty, variant = 
                     Add this to your Instagram bio & stories!
                 </Text>
             </View>
+
+            {showQR && (
+                <QRCodeModal
+                    visible={showQR}
+                    onClose={() => setShowQR(false)}
+                    value={bookingLink}
+                    name={trainerName}
+                    onShare={handleShare}
+                />
+            )}
         </View>
+    )
+}
+
+function QRCodeModal({ visible, onClose, value, name, onShare }: {
+    visible: boolean,
+    onClose: () => void,
+    value: string,
+    name: string,
+    onShare: () => void
+}) {
+    return (
+        <Modal
+            visible={visible}
+            transparent
+            animationType="fade"
+            onRequestClose={onClose}
+        >
+            <View style={styles.modalOverlay}>
+                <View style={styles.modalContent}>
+                    <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
+                        <Ionicons name="close" size={24} color="#FFF" />
+                    </TouchableOpacity>
+
+                    <Text style={styles.modalTitle}>Scan to Book</Text>
+                    <Text style={styles.modalSubtitle}>{name}</Text>
+
+                    <View style={styles.qrContainer}>
+                        <QRCode
+                            value={value}
+                            size={200}
+                            color="#000000"
+                            backgroundColor="#FFFFFF"
+                        />
+                    </View>
+
+                    <Text style={styles.qrHint}>
+                        Clients can scan to book immediately without downloading the app.
+                    </Text>
+
+                    <TouchableOpacity style={styles.modalShareBtn} onPress={onShare}>
+                        <Ionicons name="share-outline" size={20} color="#000" />
+                        <Text style={styles.modalShareText}>Share Link Instead</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        </Modal>
     )
 }
 
@@ -148,6 +234,16 @@ const styles = StyleSheet.create({
         color: "#888",
         fontSize: 12,
         marginTop: 2,
+    },
+    miniQrBtn: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: "#1A1A1A",
+        justifyContent: "center",
+        alignItems: "center",
+        borderWidth: 1,
+        borderColor: "#333",
     },
     linkBox: {
         backgroundColor: "#0A0A0A",
@@ -244,6 +340,70 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: "center",
         justifyContent: "center",
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: "rgba(0,0,0,0.85)",
+        justifyContent: "center",
+        alignItems: "center",
+        padding: 20,
+    },
+    modalContent: {
+        width: "100%",
+        maxWidth: 340,
+        backgroundColor: "#1A1A1A",
+        borderRadius: 24,
+        padding: 30,
+        alignItems: "center",
+        borderWidth: 1,
+        borderColor: "#333",
+    },
+    closeBtn: {
+        position: "absolute",
+        top: 16,
+        right: 16,
+        padding: 4,
+    },
+    modalTitle: {
+        fontSize: 24,
+        fontWeight: "700",
+        color: "#FFF",
+        marginBottom: 4,
+    },
+    modalSubtitle: {
+        fontSize: 16,
+        color: "#7ED957",
+        marginBottom: 24,
+        fontWeight: "600",
+    },
+    qrContainer: {
+        padding: 16,
+        backgroundColor: "#FFF",
+        borderRadius: 16,
+        marginBottom: 24,
+    },
+    qrHint: {
+        textAlign: "center",
+        color: "#9CA3AF",
+        fontSize: 14,
+        marginBottom: 24,
+        lineHeight: 20,
+    },
+    modalShareBtn: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+        backgroundColor: "#7ED957",
+        paddingHorizontal: 24,
+        paddingVertical: 12,
+        borderRadius: 12,
+        width: "100%",
+        justifyContent: "center",
+    },
+    modalShareText: {
+        color: "#000",
+        fontWeight: "600",
+        fontSize: 16,
     },
 })
 

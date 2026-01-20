@@ -1,1 +1,2 @@
-export { default } from "../business/subscription";
+import SubscriptionScreen from "../business/subscription";
+export default SubscriptionScreen;

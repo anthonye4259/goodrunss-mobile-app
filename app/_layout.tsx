@@ -2,13 +2,10 @@
 import { Stack } from "expo-router"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
 import { UserPreferencesProvider, useUserPreferences } from "@/lib/user-preferences"
-import { LocationProvider, useLocation } from "@/lib/location-context"
-import { StripeProvider } from "@/lib/stripe-provider"
+import { LocationProvider } from "@/lib/location-context"
+// import { StripeProvider } from "@/lib/stripe-provider"
 import { NotificationService } from "@/lib/notification-service"
 import { dailyEngagementService } from "@/lib/services/daily-engagement-service"
-import { upgradeNotificationService } from "@/lib/services/upgrade-notification-service"
-import { liveActivityNotifications } from "@/lib/services/live-activity-notifications"
-import { crashReporting } from "@/lib/services/crash-reporting-service"
 import { useEffect, useCallback } from "react"
 import "@/lib/i18n"
 import "../global.css"
@@ -20,25 +17,21 @@ import { ToastProvider } from "@/components/ui/Toast"
 import { NudgesProvider } from "@/components/ui/OnboardingNudges"
 import {
   useFonts,
-  Outfit_400Regular,
-  Outfit_500Medium,
-  Outfit_600SemiBold,
-  Outfit_700Bold,
-} from "@expo-google-fonts/outfit"
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from "@expo-google-fonts/inter"
 import * as SplashScreen from "expo-splash-screen"
 
 // Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync()
-
-// Initialize crash reporting early
-crashReporting.init()
 
 
 
 // Inner component that has access to auth
 function AppContent({ children }: { children: React.ReactNode }) {
   const { user } = useAuth()
-  const { preferences } = useUserPreferences()
 
   // Initialize deep linking
   useDeepLinking()
@@ -54,49 +47,26 @@ function AppContent({ children }: { children: React.ReactNode }) {
       console.log("[Engagement] Failed to schedule:", err)
     )
 
-    // Schedule upgrade prompts for free trainers/facilities
-    const userType = preferences?.userType
-    if (userType === "trainer" || userType === "instructor") {
-      upgradeNotificationService.scheduleUpgradePrompt("trainer").catch(err =>
-        console.log("[UpgradeNotif] Failed to schedule trainer prompt:", err)
-      )
-    } else if (userType === "facility") {
-      upgradeNotificationService.scheduleUpgradePrompt("facility").catch(err =>
-        console.log("[UpgradeNotif] Failed to schedule facility prompt:", err)
-      )
-    }
-
-    // Start live activity notifications for players
-    // (friend check-ins, active runs, etc.)
-    if (userType === "player" || userType === "both") {
-      // Get friend IDs from user profile (would need to fetch from Firestore)
-      const friendIds = user.friendIds || []
-      if (friendIds.length > 0) {
-        liveActivityNotifications.startFriendCheckInListener(user.id, friendIds)
-      }
-    }
-
     // Set up client sync (works for both clients and trainers for now)
     const cleanup = setupClientRealTimeSync(user.id)
 
     return () => {
       if (cleanup) cleanup()
       unsubscribeAll()
-      liveActivityNotifications.stopFriendCheckInListener()
     }
-  }, [user?.id, user?.role, preferences?.userType])
+  }, [user?.id, user?.role])
 
   return <>{children}</>
 }
 
 
 export default function RootLayout() {
-  // Load Outfit fonts
+  // Load Inter fonts
   const [fontsLoaded] = useFonts({
-    Outfit_400Regular,
-    Outfit_500Medium,
-    Outfit_600SemiBold,
-    Outfit_700Bold,
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
   })
 
   // Hide splash screen once fonts are loaded
@@ -165,39 +135,39 @@ export default function RootLayout() {
           <UserPreferencesProvider>
             <LocationProvider>
               <RadarInitializer />
-              <StripeProvider>
-                <ToastProvider>
-                  <NudgesProvider>
-                    <Stack screenOptions={{ headerShown: false }}>
-                      <Stack.Screen name="index" />
-                      <Stack.Screen name="language-selection" />
-                      <Stack.Screen name="auth" />
-                      <Stack.Screen name="onboarding" />
-                      <Stack.Screen name="(tabs)" />
-                      <Stack.Screen name="referrals" />
-                      <Stack.Screen name="rating/[sport]" />
-                      <Stack.Screen name="venues/[id]" />
-                      <Stack.Screen name="trainers/[id]" />
-                      <Stack.Screen name="instructors/[id]" />
-                      <Stack.Screen name="chat/[id]" />
-                      <Stack.Screen name="need-players/[venueId]" />
-                      <Stack.Screen name="alerts/index" />
-                      <Stack.Screen name="settings/edit-profile" />
-                      <Stack.Screen name="settings/payment-methods" />
-                      <Stack.Screen name="settings/privacy" />
-                      <Stack.Screen name="settings/help" />
-                      <Stack.Screen name="settings/terms" />
-                      <Stack.Screen name="booking/[id]" />
-                      <Stack.Screen name="review/[id]" />
-                      <Stack.Screen name="friends/[friendshipId]/settings" />
-                      <Stack.Screen name="settings/notifications/friends" />
-                      <Stack.Screen name="waitlist/claim/[classId]" />
-                      <Stack.Screen name="instructor-dashboard" />
-                      <Stack.Screen name="trainer-dashboard" />
-                    </Stack>
-                  </NudgesProvider>
-                </ToastProvider>
-              </StripeProvider>
+              {/* <StripeProvider> */}
+              <ToastProvider>
+                <NudgesProvider>
+                  <Stack screenOptions={{ headerShown: false }}>
+                    <Stack.Screen name="index" />
+                    <Stack.Screen name="language-selection" />
+                    <Stack.Screen name="auth" />
+                    <Stack.Screen name="onboarding" />
+                    <Stack.Screen name="(tabs)" />
+                    <Stack.Screen name="referrals" />
+                    <Stack.Screen name="rating/[sport]" />
+                    <Stack.Screen name="venues/[id]" />
+                    <Stack.Screen name="trainers/[id]" />
+                    <Stack.Screen name="instructors/[id]" />
+                    <Stack.Screen name="chat/[id]" />
+                    <Stack.Screen name="need-players/[venueId]" />
+                    <Stack.Screen name="alerts/index" />
+                    <Stack.Screen name="settings/edit-profile" />
+                    <Stack.Screen name="settings/payment-methods" />
+                    <Stack.Screen name="settings/privacy" />
+                    <Stack.Screen name="settings/help" />
+                    <Stack.Screen name="settings/terms" />
+                    <Stack.Screen name="booking/[id]" />
+                    <Stack.Screen name="review/[id]" />
+                    <Stack.Screen name="friends/[friendshipId]/settings" />
+                    <Stack.Screen name="settings/notifications/friends" />
+                    <Stack.Screen name="waitlist/claim/[classId]" />
+                    <Stack.Screen name="instructor-dashboard" />
+                    <Stack.Screen name="trainer-dashboard" />
+                  </Stack>
+                </NudgesProvider>
+              </ToastProvider>
+              {/* </StripeProvider> */}
             </LocationProvider>
           </UserPreferencesProvider>
         </AppContent>
@@ -207,7 +177,7 @@ export default function RootLayout() {
 }
 
 // Separate component to access LocationContext
-
+import { useLocation } from "@/lib/location-context"
 import { geofenceService } from "@/lib/services/geofence-service"
 import { venueService } from "@/lib/services/venue-service"
 

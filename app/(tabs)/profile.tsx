@@ -347,7 +347,7 @@ export default function ProfileScreen() {
             style={styles.connectHealthBanner}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-              router.push("/settings/health-sync")
+              router.push("/settings/wearables" as any)
             }}
           >
             <View style={styles.connectHealthLeft}>

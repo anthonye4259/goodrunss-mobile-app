@@ -7,8 +7,9 @@ import * as Haptics from "expo-haptics"
 
 export default function PaymentMethodsScreen() {
   const paymentMethods = [
-    { id: 1, type: "card", last4: "4242", brand: "Visa", isDefault: true },
-    { id: 2, type: "card", last4: "5555", brand: "Mastercard", isDefault: false },
+    { id: 1, type: "card", last4: "4242", brand: "Visa", isDefault: false },
+    { id: 2, type: "apple-pay", last4: "", brand: "Apple Pay", isDefault: true },
+    { id: 3, type: "card", last4: "5555", brand: "Mastercard", isDefault: false },
   ]
 
   return (

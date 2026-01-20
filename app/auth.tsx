@@ -7,6 +7,7 @@ import { useUserPreferences } from "@/lib/user-preferences"
 import firebase, { db, auth } from "@/lib/firebase-config"
 import * as AppleAuthentication from "expo-apple-authentication"
 import * as Crypto from "expo-crypto"
+import { Ionicons } from "@expo/vector-icons"
 
 // Generate a secure random nonce for Apple Sign In
 // This is required for replay attack protection
@@ -159,13 +160,13 @@ export default function AuthScreen() {
         }
 
         // New user or no preferences - go through onboarding
-        router.replace("/onboarding/index")
+        router.replace("/onboarding")
       } else {
         await signup(email, password, name)
         // Save name to preferences for persistence
         setPreferences({ name })
         // Go through onboarding to collect userType and activities
-        router.replace("/onboarding/index")
+        router.replace("/onboarding")
       }
     } catch (error: any) {
       console.error("Login error:", error.code, error.message)
@@ -246,14 +247,13 @@ export default function AuthScreen() {
         })
       } catch (appleError: any) {
         if (appleError.code === "ERR_REQUEST_CANCELED" || appleError.code === "ERR_CANCELED") {
-          // User cancelled - do nothing
           console.log("User cancelled Apple Sign In")
           return
         }
         console.error("❌ Apple authentication failed:", appleError)
         Alert.alert(
-          "Apple Sign In Failed",
-          "Could not authenticate with Apple. Please try again or use email/password.",
+          "Apple Sign In Error",
+          `Code: ${appleError.code || 'Unknown'}\nMessage: ${appleError.message || 'Please try again.'}`,
           [{ text: "OK" }]
         )
         return
@@ -311,7 +311,7 @@ export default function AuthScreen() {
         console.error("❌ Firebase sign in failed:", firebaseError)
 
         if (firebaseError.code === "auth/invalid-credential") {
-          Alert.alert("Sign In Error", "Could not verify your Apple ID. Please try again.")
+          Alert.alert("Sign In Error", `Could not verify your Apple ID.\n${firebaseError.message}`)
         } else if (firebaseError.code === "auth/network-request-failed") {
           Alert.alert("Network Error", "Please check your internet connection and try again.")
         } else if (firebaseError.code === "auth/user-disabled") {
@@ -380,7 +380,7 @@ export default function AuthScreen() {
 
       // New Apple user - go to onboarding
       console.log("➡️ Navigating to onboarding...")
-      router.replace("/onboarding/index")
+      router.replace("/onboarding")
     } catch (error: any) {
       console.error("❌ Unexpected Apple Sign In error:", error)
       Alert.alert(
@@ -420,7 +420,7 @@ export default function AuthScreen() {
               className="bg-primary/10 border border-primary/30 rounded-xl p-4 mb-6"
             >
               <Text className="text-primary font-semibold text-center">
-                👋 Already have a Dashboard account?
+                Already have a Dashboard account?
               </Text>
               <Text className="text-muted-foreground text-center text-sm mt-1">
                 Tap here to sign in and sync your data
@@ -441,7 +441,7 @@ export default function AuthScreen() {
                   <Text className="text-lg font-semibold mr-2" style={{ color: "#000" }}>
                     Continue as {storedEmail.split('@')[0]}
                   </Text>
-                  <Text style={{ fontSize: 20 }}>🔐</Text>
+                  <Ionicons name="finger-print" size={20} color="#000" />
                 </TouchableOpacity>
                 <View className="flex-row items-center my-2">
                   <View className="flex-1 h-px bg-border" />
@@ -457,7 +457,7 @@ export default function AuthScreen() {
                 buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
                 buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
                 cornerRadius={12}
-                style={{ height: 54, width: "100%" }}
+                style={{ height: 50, width: "100%" }}
                 onPress={handleAppleSignIn}
               />
             )}

@@ -103,14 +103,16 @@ export default function HomeScreen() {
   }
 
   // Mock upcoming booking for player (would come from real service)
-  const upcomingBooking = user ? {
-    id: "1",
-    venue: "Riverside Courts",
-    court: "Court 2",
-    date: "Today",
-    time: "4:30 PM",
-    duration: "1 hr",
-  } : null
+  // Mock upcoming booking for player (would come from real service)
+  // const upcomingBooking = user ? {
+  //   id: "1",
+  //   venue: "Riverside Courts",
+  //   court: "Court 2",
+  //   date: "Today",
+  //   time: "4:30 PM",
+  //   duration: "1 hr",
+  // } : null
+  const upcomingBooking = null
 
   // For "both" users - read from preferences for persistence across screens (including GIA)
   const viewMode = preferences.activeMode || "trainer"
