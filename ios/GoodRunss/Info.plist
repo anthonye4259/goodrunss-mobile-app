@@ -33,13 +33,23 @@
           <string>com.goodrunss.app</string>
         </array>
       </dict>
+      <dict>
+        <key>CFBundleURLSchemes</key>
+        <array>
+          <string>exp+goodrunss-mobile</string>
+        </array>
+      </dict>
     </array>
     <key>CFBundleVersion</key>
-    <string>152</string>
+    <string>168</string>
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
     <key>LSMinimumSystemVersion</key>
     <string>12.0</string>
+    <key>UIDeviceFamily</key>
+    <array>
+      <integer>1</integer>
+    </array>
     <key>LSRequiresIPhoneOS</key>
     <true/>
     <key>NSAppTransportSecurity</key>
@@ -54,25 +64,21 @@
     <key>NSCalendarsUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your calendars</string>
     <key>NSCameraUsageDescription</key>
-    <string>GoodRunss needs camera access to take photos.</string>
+    <string>To set your profile picture and report court conditions, GoodRunss needs access to your camera. For example, you can take a photo of a court to show others it is busy.</string>
     <key>NSContactsUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your contacts</string>
     <key>NSFaceIDUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to use Face ID</string>
     <key>NSHealthShareUsageDescription</key>
-    <string>GoodRunss reads your workout data from Apple Health to track your activity history and provide personalized court recommendations based on your fitness level.</string>
+    <string>GoodRunss reads your workout data to visualize your fitness trends and activity history.</string>
     <key>NSHealthUpdateUsageDescription</key>
-    <string>GoodRunss saves your court sessions and training activities to Apple Health so you can track your fitness progress across all your apps.</string>
-    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-    <string>Allow GoodRunss to use your location to show nearby trainers, courts, and studios.</string>
-    <key>NSLocationAlwaysUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to access your location</string>
+    <string>GoodRunss saves your court sessions to Apple Health.</string>
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>GoodRunss uses your location to find basketball courts, tennis courts, and trainers near you. For example, when you open the map, we show courts within 10 miles of your current location so you can see which ones are active.</string>
+    <string>GoodRunss uses your location to find nearby basketball courts, tennis courts, and trainers. This allows you to see facilities on the map relative to your position.</string>
     <key>NSMicrophoneUsageDescription</key>
-    <string>GoodRunss uses your microphone to record voice messages when chatting with trainers or other players.</string>
+    <string>GoodRunss uses the microphone for voice messages in chat.</string>
     <key>NSPhotoLibraryUsageDescription</key>
-    <string>GoodRunss needs access to your photos to upload profile pictures and venue photos.</string>
+    <string>GoodRunss accesses your photo library to let you upload profile pictures and share photos of court conditions.</string>
     <key>NSRemindersFullAccessUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your reminders</string>
     <key>NSRemindersUsageDescription</key>
@@ -85,7 +91,6 @@
     <true/>
     <key>UIBackgroundModes</key>
     <array>
-      <string>location</string>
       <string>fetch</string>
       <string>remote-notification</string>
     </array>
@@ -103,6 +108,8 @@
     <array>
       <string>UIInterfaceOrientationPortrait</string>
       <string>UIInterfaceOrientationPortraitUpsideDown</string>
+      <string>UIInterfaceOrientationLandscapeLeft</string>
+      <string>UIInterfaceOrientationLandscapeRight</string>
     </array>
     <key>UISupportedInterfaceOrientations~ipad</key>
     <array>

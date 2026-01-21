@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { router, Stack } from "expo-router"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useAuth } from "@/lib/auth-context"
+import { PoweredByDal } from "@/components/PoweredByDal"
 
 export default function SettingsMenuScreen() {
     const { logout } = useAuth()
@@ -60,6 +61,28 @@ export default function SettingsMenuScreen() {
                     ))}
                 </View>
 
+                {/* Viral / White Label Unlock */}
+                <View style={[styles.menuContainer, { marginTop: -16 }]}>
+                    <TouchableOpacity
+                        style={[styles.menuItem, { borderBottomWidth: 0 }]}
+                        onPress={() => router.push("/settings/remove-branding" as any)} // We'll handle logic in the new screen or inline here? Inline is easier for now.
+                    >
+                        <View style={styles.menuItemLeft}>
+                            <View style={[styles.menuIcon, { backgroundColor: 'rgba(255, 215, 0, 0.1)' }]}>
+                                <Ionicons name="diamond-outline" size={22} color="#FFD700" />
+                            </View>
+                            <View>
+                                <Text style={[styles.menuLabel, { color: '#FFD700' }]}>Remove Branding</Text>
+                                {/* Gamification Progress */}
+                                <Text style={{ color: '#666', fontSize: 12, marginTop: 2 }}>
+                                    Refer 5 trainers (2/5)
+                                </Text>
+                            </View>
+                        </View>
+                        <Ionicons name="chevron-forward" size={20} color="#666" />
+                    </TouchableOpacity>
+                </View>
+
                 {/* Account Deletion (Required by Apple) */}
                 <TouchableOpacity
                     style={[styles.menuItem, { borderBottomWidth: 0, marginTop: 24 }]}
@@ -86,6 +109,7 @@ export default function SettingsMenuScreen() {
                     <Text style={[styles.logoutText, { color: '#666', fontSize: 14 }]}>Delete Account</Text>
                 </TouchableOpacity>
 
+                <PoweredByDal />
                 <Text style={styles.version}>GoodRunss v1.0.0</Text>
             </ScrollView>
         </LinearGradient>

@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { LinearGradient } from "expo-linear-gradient"
 import { useState } from "react"
 import { PostBookingShareModal } from "./post-booking-share-modal"
-import { useStripe } from "@stripe/stripe-react-native"
+// import { useStripe } from "@stripe/stripe-react-native"
 import { CalendarPicker } from "./calendar-picker"
 import { TimeSlotPicker } from "./time-slot-picker"
 import { NotificationService } from "@/lib/notification-service"
@@ -34,7 +34,7 @@ export function TrainerBookingModal({ visible, onClose, trainer }: TrainerBookin
   const [showWaitlist, setShowWaitlist] = useState(false)
   const [isFullyBooked, setIsFullyBooked] = useState(false) // Track if trainer is fully booked
 
-  const { initPaymentSheet, presentPaymentSheet } = useStripe()
+  // const { initPaymentSheet, presentPaymentSheet } = useStripe()
   const notificationService = NotificationService.getInstance()
 
   const availableTimes = ["9:00 AM", "10:00 AM", "11:00 AM", "2:00 PM", "3:00 PM", "4:00 PM"]
@@ -53,6 +53,10 @@ export function TrainerBookingModal({ visible, onClose, trainer }: TrainerBookin
   }
 
   const handlePayment = async () => {
+    Alert.alert("Booking Unavailable", "Bookings are temporarily disabled in this version.")
+    return;
+
+    /*
     try {
       setIsProcessing(true)
 
@@ -167,6 +171,7 @@ export function TrainerBookingModal({ visible, onClose, trainer }: TrainerBookin
     } finally {
       setIsProcessing(false)
     }
+    */
   }
 
   const handleJoinWaitlist = (preferences: any) => {

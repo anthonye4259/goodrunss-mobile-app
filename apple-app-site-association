@@ -1,0 +1,24 @@
+{
+    "applinks": {
+        "apps": [],
+        "details": [
+            {
+                "appID": "KF86S48Y7B.com.goodrunss.app",
+                "paths": [
+                    "/c/*"
+                ]
+            },
+            {
+                "appID": "KF86S48Y7B.com.goodrunss.app.Clip",
+                "paths": [
+                    "/c/*"
+                ]
+            }
+        ]
+    },
+    "webcredentials": {
+        "apps": [
+            "A16611EA.com.goodrunss.app"
+        ]
+    }
+}

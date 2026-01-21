@@ -35,9 +35,9 @@ function getMockWeather(): WeatherData {
     const condition = conditions[Math.floor(Math.random() * conditions.length)]
 
     const suggestions: Record<WeatherCondition, string> = {
-        sunny: "Perfect day for outdoor courts! ☀️",
+        sunny: "Perfect day for outdoor courts!",
         cloudy: "Good conditions for a game today",
-        rainy: "Try indoor courts at LA Fitness 🏢",
+        rainy: "Try indoor courts at LA Fitness",
         stormy: "Stay safe! Check indoor options",
         snowy: "Indoor courts recommended today",
     }

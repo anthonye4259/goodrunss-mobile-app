@@ -22,7 +22,7 @@ import {
 } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import * as Haptics from "expo-haptics"
-import { useStripe } from "@stripe/stripe-react-native"
+// import { useStripe } from "@stripe/stripe-react-native"
 
 import { useAuth } from "@/lib/auth-context"
 import {
@@ -52,7 +52,7 @@ export function PrivateBookingModal({
     instructor,
 }: PrivateBookingModalProps) {
     const { user } = useAuth()
-    const { initPaymentSheet, presentPaymentSheet } = useStripe()
+    // const { initPaymentSheet, presentPaymentSheet } = useStripe()
     const [step, setStep] = useState<"time" | "details" | "payment">("time")
     const [loading, setLoading] = useState(true)
     const [slots, setSlots] = useState<AvailabilitySlot[]>([])
@@ -147,6 +147,10 @@ export function PrivateBookingModal({
     const handleBookSession = async () => {
         if (!selectedSlot || !user) return
 
+        Alert.alert("Booking Unavailable", "Bookings are temporarily disabled in this version.")
+        return;
+
+        /*
         setIsProcessing(true)
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy)
 
@@ -223,6 +227,7 @@ export function PrivateBookingModal({
         } finally {
             setIsProcessing(false)
         }
+        */
     }
 
     const handleBack = () => {

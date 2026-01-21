@@ -37,6 +37,7 @@ import { MissedSessionNudge } from "@/components/Trainer/MissedSessionNudge"
 import { ClientBirthdayReminder } from "@/components/Trainer/ClientBirthdayReminder"
 import { ShareBookingLink } from "@/components/Social/ShareBookingLink"
 import { ShareMilestone } from "@/components/Social/ShareMilestone"
+import { ShareAndEarn } from "@/components/Social/ShareAndEarn"
 
 export default function TrainerDashboardScreen() {
     const { user } = useAuth()
@@ -309,6 +310,7 @@ export default function TrainerDashboardScreen() {
                         trainerName={preferences.name || "Trainer"}
                         specialty={isInstructor ? "Wellness" : "Training"}
                     />
+                    <ShareAndEarn />
                     {(analytics?.totalSessions || 0) >= 100 && (
                         <ShareMilestone
                             type="sessions_100"

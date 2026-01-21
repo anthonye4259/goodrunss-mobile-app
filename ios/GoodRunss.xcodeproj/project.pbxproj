@@ -11,7 +11,8 @@
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
-		48BC93B6F17F49819FBBB8CB /* noop-file.swift in Sources */ = {isa = PBXBuildFile; fileRef = 704DCBE422974032AEE28197 /* noop-file.swift */; };
+		9FC72A801786468A845FB82B /* noop-file.swift in Sources */ = {isa = PBXBuildFile; fileRef = 444A8CBD778D4B8EA7C37231 /* noop-file.swift */; };
+		EF7A775A576D435E85D2EEF8 /* GoodRunssClip.app in Copy Files */ = {isa = PBXBuildFile; fileRef = A182CDCF035C42048E14DF29 /* GoodRunssClip.app */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -23,7 +24,8 @@
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = GoodRunss/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* GoodRunss-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "GoodRunss-Bridging-Header.h"; path = "GoodRunss/GoodRunss-Bridging-Header.h"; sourceTree = "<group>"; };
-		704DCBE422974032AEE28197 /* noop-file.swift */ = {isa = PBXFileReference; name = "noop-file.swift"; path = "GoodRunss/noop-file.swift"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.swift; explicitFileType = undefined; includeInIndex = 0; };
+		444A8CBD778D4B8EA7C37231 /* noop-file.swift */ = {isa = PBXFileReference; name = "noop-file.swift"; path = "GoodRunss/noop-file.swift"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.swift; explicitFileType = undefined; includeInIndex = 0; };
+		A182CDCF035C42048E14DF29 /* GoodRunssClip.app */ = {isa = PBXFileReference; name = "GoodRunssClip.app"; path = "GoodRunssClip.app"; sourceTree = BUILT_PRODUCTS_DIR; fileEncoding = undefined; lastKnownFileType = undefined; explicitFileType = "wrapper.application"; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -46,7 +48,7 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				704DCBE422974032AEE28197 /* noop-file.swift */,
+				444A8CBD778D4B8EA7C37231 /* noop-file.swift */,
 			);
 			name = GoodRunss;
 			sourceTree = "<group>";
@@ -83,6 +85,7 @@
 			isa = PBXGroup;
 			children = (
 				13B07F961A680F5B00A75B9A /* GoodRunss.app */,
+				A182CDCF035C42048E14DF29 /* GoodRunssClip.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -119,6 +122,21 @@
 			productReference = 13B07F961A680F5B00A75B9A /* GoodRunss.app */;
 			productType = "com.apple.product-type.application";
 		};
+		41B983186A8F4B5DBD5E661B /* "GoodRunssClip" */ = {
+			isa = PBXNativeTarget;
+			name = "GoodRunssClip";
+			productName = "GoodRunssClip";
+			productReference = A182CDCF035C42048E14DF29;
+			productType = "com.apple.product-type.application.on-demand-install-capable";
+			buildConfigurationList = 49B6EC59596B4045B6727008;
+			buildPhases = (
+				0BE329E2BCEB496AA9599CE9 /* Bundle React Native code and images */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -146,6 +164,7 @@
 			projectRoot = "";
 			targets = (
 				13B07F861A680F5B00A75B9A /* GoodRunss */,
+				41B983186A8F4B5DBD5E661B /* "GoodRunssClip" */,
 			);
 		};
 /* End PBXProject section */
@@ -225,6 +244,25 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-GoodRunss/Pods-GoodRunss-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
+		0BE329E2BCEB496AA9599CE9 /* Bundle React Native code and images */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			name = "Bundle React Native code and images";
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			shellPath = /bin/sh;
+			shellScript = "
+export NODE_BINARY=node
+export ENTRY_FILE=index.clip.js
+export BUNDLE_COMMAND=ram-bundle
+../node_modules/react-native/scripts/react-native-xcode.sh
+";
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -233,7 +271,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				48BC93B6F17F49819FBBB8CB /* noop-file.swift in Sources */,
+				9FC72A801786468A845FB82B /* noop-file.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -413,6 +451,32 @@
 			};
 			name = Release;
 		};
+		684D819F3A2D4ADF9DA7EC42 /* Debug */ = {
+			name = Debug;
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = "GoodRunssClip/GoodRunssClip-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				PRODUCT_NAME = "GoodRunssClip";
+				SKIP_INSTALL = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.goodrunss.app.Clip";
+			};
+		};
+		6C5DDF430E1F4AA4AD77D251 /* Release */ = {
+			name = Release;
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				INFOPLIST_FILE = "GoodRunssClip/GoodRunssClip-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				PRODUCT_NAME = "GoodRunssClip";
+				SKIP_INSTALL = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.goodrunss.app.Clip";
+			};
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -430,6 +494,15 @@
 			buildConfigurations = (
 				83CBBA201A601CBA00E9B192 /* Debug */,
 				83CBBA211A601CBA00E9B192 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		49B6EC59596B4045B6727008 /* Build configuration list for PBXNativeTarget "GoodRunssClip" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				684D819F3A2D4ADF9DA7EC42 /* Debug */,
+				6C5DDF430E1F4AA4AD77D251 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

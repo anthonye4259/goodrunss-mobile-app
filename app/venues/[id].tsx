@@ -38,6 +38,7 @@ import { ShareCourtTraffic } from "@/components/Social/ShareCourtTraffic"
 import { PlayInvite } from "@/components/Social/PlayInvite"
 import { WhereImHeaded } from "@/components/Social/WhereImHeaded"
 import { ShareCourtStatus } from "@/components/Social/ShareCourtStatus"
+import { PoweredByDal } from "@/components/PoweredByDal"
 
 // Live Data Components
 import { HistoricalComparison } from "@/components/Live/HistoricalComparison"
@@ -842,6 +843,10 @@ export default function VenueDetailScreen() {
                   />
                 </View>
               )}
+
+              <View className="mt-6 items-center">
+                <PoweredByDal />
+              </View>
             </View>
 
             <View className="px-6 mb-6">

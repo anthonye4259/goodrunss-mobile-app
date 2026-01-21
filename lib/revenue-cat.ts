@@ -2,9 +2,10 @@ import Purchases, { PurchasesOffering, PurchasesPackage, CustomerInfo } from 're
 import { Platform } from 'react-native';
 
 // Keys from RevenueCat Dashboard (User needs to set these)
+// Keys from RevenueCat Dashboard
 const API_KEYS = {
-    apple: "test_TJNBixMPtnFLzrVWsWZhBOtCUQf",
-    google: "goog_YOUR_GOOGLE_API_KEY"
+    apple: "appl_srZUPxmRipLypYkUEFFkXNHHmXb", // Correct Production Key
+    google: "goog_REPLACE_ME_WITH_PRODUCTION_KEY"
 };
 
 export class RevenueCatService {
@@ -42,6 +43,35 @@ export class RevenueCatService {
         } catch (e) {
             console.error("Error fetching offerings", e);
             return null;
+        }
+    }
+
+    public async getProducts(productIdentifiers: string[]): Promise<PurchasesPackage[]> {
+        try {
+            // Note: getProducts returns StoreProducts, but we need packages for purchase
+            // Ideally we use offerings, but this is a fallback. 
+            // RevenueCat doesn't let us easily manufacture a "Package" from a "StoreProduct" manually 
+            // without it being in an offering.
+            // HOWEVER, we can just return the offerings packages if found, 
+            // OR if strictly needed, we might need to rely on the offering being correct.
+            // If the offering is missing, it's usually a configuration error in RevenueCat Dashboard.
+            // But let's try to get offerings again or return empty.
+
+            // Actually, for purchasePackage(pack), we NEED a Package object.
+            // Converting StoreProduct to Package isn't standard SDK usage.
+            // Best bet: Ensure we can fetch ALl offerings and find it there.
+            const offerings = await Purchases.getOfferings();
+            const allPackages: PurchasesPackage[] = [];
+
+            // Collect all packages from all offerings
+            Object.values(offerings.all).forEach(offering => {
+                offering.availablePackages.forEach(p => allPackages.push(p));
+            });
+
+            return allPackages.filter(p => productIdentifiers.includes(p.product.identifier));
+        } catch (e) {
+            console.error("Error fetching products", e);
+            return [];
         }
     }
 
