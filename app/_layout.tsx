@@ -22,6 +22,7 @@ import {
   Inter_600SemiBold,
   Inter_700Bold,
 } from "@expo-google-fonts/inter"
+import BuildYourOwnCTA, { useBuildYourOwnTrigger } from "@/components/BuildYourOwnCTA"
 import * as SplashScreen from "expo-splash-screen"
 
 // Prevent splash screen from auto-hiding
@@ -135,6 +136,7 @@ export default function RootLayout() {
           <UserPreferencesProvider>
             <LocationProvider>
               <RadarInitializer />
+              <RootLayoutComponents />
               {/* <StripeProvider> */}
               <ToastProvider>
                 <NudgesProvider>
@@ -217,5 +219,16 @@ function RadarInitializer() {
   }, [location])
 
   return null
+}
+
+function RootLayoutComponents() {
+  const { shouldShow, setShouldShow } = useBuildYourOwnTrigger()
+
+  return (
+    <BuildYourOwnCTA
+      visible={shouldShow}
+      onClose={() => setShouldShow(false)}
+    />
+  )
 }
 

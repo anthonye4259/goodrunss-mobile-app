@@ -4,33 +4,70 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export const ConditionCard = () => {
+    // Dynamic Mock Data Generation
+    const date = new Date();
+    const hour = date.getHours();
+    const month = date.getMonth(); // 0 = Jan
+
+    // Heuristics
+    const isNight = hour >= 19 || hour < 6;
+    const isWinter = month <= 2 || month >= 10; // Nov-Mar
+
+    // Determine Temperature
+    let baseTemp = isWinter ? 38 : 72;
+    if (isNight) baseTemp -= 10;
+    const temp = `${baseTemp}°`;
+
+    // Determine Status
+    let statusText = "EXCELLENT CONDITIONS";
+    let statusColor = "#A4FF00";
+    let iconName: "sunny" | "moon" | "cloudy" | "snow" = "sunny";
+    let iconColor = "#FDB813";
+    let footer = "Perfect for outdoor tennis today! Courts are dry.";
+
+    if (isWinter) {
+        statusText = "POOR CONDITIONS";
+        statusColor = "#EF4444"; // Red for bad
+        iconName = "snow";
+        iconColor = "#FFF";
+        footer = "It's freezing! We recommend indoor courts.";
+    }
+
+    if (isNight) {
+        statusText = "COURTS CLOSED / DARK";
+        statusColor = "#666";
+        iconName = "moon";
+        iconColor = "#CCC";
+        footer = "It's late. Most outdoor lights are off.";
+    }
+
     return (
         <View style={styles.container}>
             <LinearGradient
-                colors={['#1A2900', '#0F1A00']}
+                colors={isNight ? ['#0F172A', '#020617'] : ['#1A2900', '#0F1A00']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.gradient}
             >
                 <View style={styles.header}>
-                    <View style={styles.statusBadge}>
-                        <View style={styles.dot} />
-                        <Text style={styles.statusText}>EXCELLENT CONDITIONS</Text>
+                    <View style={[styles.statusBadge, { backgroundColor: `${statusColor}20` }]}>
+                        <View style={[styles.dot, { backgroundColor: statusColor }]} />
+                        <Text style={[styles.statusText, { color: statusColor }]}>{statusText}</Text>
                     </View>
-                    <Ionicons name="sunny" size={20} color="#FDB813" />
+                    <Ionicons name={iconName} size={20} color={iconColor} />
                 </View>
 
                 <View style={styles.mainInfo}>
-                    <Text style={styles.temperature}>72°</Text>
+                    <Text style={styles.temperature}>{temp}</Text>
                     <View style={styles.divider} />
                     <View>
-                        <Text style={styles.subtext}>Wind: 3mph N</Text>
-                        <Text style={styles.subtext}>Humidity: 45%</Text>
+                        <Text style={styles.subtext}>Wind: {isWinter ? '12' : '3'}mph N</Text>
+                        <Text style={styles.subtext}>Humidity: {isWinter ? '65%' : '45%'}</Text>
                     </View>
                 </View>
 
                 <Text style={styles.footerText}>
-                    Perfect for outdoor tennis today! Courts are dry.
+                    {footer}
                 </Text>
             </LinearGradient>
         </View>

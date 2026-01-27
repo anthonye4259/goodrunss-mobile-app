@@ -47,10 +47,10 @@ export default function RecoveryHubScreen() {
                     <View style={styles.readinessSection}>
                         <Text style={styles.readinessLabel}>TODAY'S READINESS</Text>
                         <View style={styles.readinessScore}>
-                            <Text style={styles.readinessValue}>85</Text>
+                            <Text style={styles.readinessValue}>--</Text>
                             <Text style={styles.readinessMax}>/100</Text>
                         </View>
-                        <Text style={styles.readinessStatus}>💪 Ready to Train</Text>
+                        <Text style={styles.readinessStatus}>Connect Apple Health</Text>
                     </View>
 
                     {/* Widget Grid */}
@@ -59,72 +59,72 @@ export default function RecoveryHubScreen() {
                         <WidgetCard
                             title="SLEEP"
                             subtitle="Last Night"
-                            value="7.5h"
+                            value="--"
                             gradient="teal"
                             visualization="wave"
-                            status="Optimal"
+                            status="Sync Required"
                         />
                         <WidgetCard
                             title="RECOVERY"
                             subtitle="Score"
-                            value="92%"
+                            value="--"
                             gradient="green"
                             visualization="pulse"
-                            status="Fully Recovered"
+                            status="Sync Required"
                         />
 
                         {/* Row 2: HRV & Resting HR */}
                         <WidgetCard
                             title="HRV"
                             subtitle="Variability"
-                            value="68"
+                            value="--"
                             gradient="purple"
                             visualization="wave"
-                            status="Above Baseline"
+                            status="Sync Required"
                         />
                         <WidgetCard
                             title="RESTING HR"
                             subtitle="BPM"
-                            value="52"
+                            value="--"
                             gradient="coral"
                             visualization="pulse"
-                            status="Athletic"
+                            status="Sync Required"
                         />
 
                         {/* Row 3: Strain & Activity */}
                         <WidgetCard
                             title="STRAIN"
                             subtitle="Today"
-                            value="4.2"
+                            value="--"
                             gradient="amber"
                             visualization="bars"
-                            status="Low-Medium"
+                            status="Sync Required"
                         />
                         <WidgetCard
                             title="CALORIES"
                             subtitle="Active"
-                            value="420"
+                            value="--"
                             gradient="blue"
                             visualization="bars"
-                            status="On Track"
+                            status="Sync Required"
                         />
 
                         {/* Row 4: Steps & Active */}
                         <WidgetCard
                             title="STEPS"
                             subtitle="Today"
-                            value="6,240"
+                            value="--"
                             gradient="green"
                             visualization="dots"
-                            status="62% of Goal"
+                            status="Sync Required"
                         />
                         <WidgetCard
                             title="MINDFUL"
                             subtitle="Minutes"
-                            value="15"
+                            value="--"
                             gradient="magenta"
                             visualization="wave"
-                            status="Good Start"
+                            status="Sync Required"
                         />
                     </View>
 
@@ -153,12 +153,7 @@ export default function RecoveryHubScreen() {
                         <Text style={styles.insightsTitle}>💡 Today's Insights</Text>
                         <View style={styles.insightCard}>
                             <Text style={styles.insightText}>
-                                Your HRV is 12% above your baseline. Great recovery! You're ready for high-intensity training today.
-                            </Text>
-                        </View>
-                        <View style={styles.insightCard}>
-                            <Text style={styles.insightText}>
-                                You got 7.5 hours of sleep with 2 hours of deep sleep. Aim for 8+ hours tonight.
+                                Connect Apple Health to see personalized insights based on your sleep, activity, and recovery data.
                             </Text>
                         </View>
                     </View>

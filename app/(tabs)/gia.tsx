@@ -109,6 +109,12 @@ export default function GIAScreen() {
   const scrollViewRef = useRef<ScrollView>(null)
 
   const handleSend = async () => {
+    // Paywall Gate for Trainers
+    if (isTrainerMode && !isPremium) {
+      setShowPaywall(true)
+      return
+    }
+
     if (!input.trim()) return
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
@@ -179,11 +185,20 @@ export default function GIAScreen() {
         setHasHealthAccess(true); // Simulate auto-connect for demo
         setShowRings(true); // Show rings again
       } else if (lowerText.includes("play outside") || lowerText.includes("weather") || lowerText.includes("condition")) {
-        responseText += "Conditions are looking great! "
+        const hour = new Date().getHours();
+        const month = new Date().getMonth();
+        const isWinter = month <= 2 || month >= 10;
+        const isNight = hour >= 19 || hour < 6;
+
+        let conditionMsg = "Conditions are looking great! ";
+        if (isWinter) conditionMsg = "It's pretty freezing out there! 🥶 ";
+        if (isNight) conditionMsg = "It's quite late, so outdoor visibility might be an issue. ";
+
+        responseText += conditionMsg
         widgetType = 'conditions';
         nextSuggestions = [
-          { label: "Find outdoor courts", icon: "sunny-outline" },
-          { label: "Set alert", icon: "notifications-outline" }
+          { label: "Find INDOOR courts", icon: "home-outline" },
+          { label: "Check hours", icon: "time-outline" }
         ]
       } else {
         responseText += "What specifically are you looking to achieve today?"

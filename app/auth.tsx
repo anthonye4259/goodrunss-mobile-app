@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Alert, Image } from "react-native"
-import { useRouter } from "expo-router"
+import { useRouter, useLocalSearchParams } from "expo-router"
 import { LinearGradient } from "expo-linear-gradient"
 import { useAuth } from "@/lib/auth-context"
 import { useUserPreferences } from "@/lib/user-preferences"
@@ -24,9 +24,10 @@ const sha256 = async (input: string): Promise<string> => {
 
 export default function AuthScreen() {
   const router = useRouter()
+  const params = useLocalSearchParams()
   const { login, signup, continueAsGuest, loginWithBiometrics, hasBiometricCredentials, getStoredEmail } = useAuth()
   const { setPreferences } = useUserPreferences()
-  const [isLogin, setIsLogin] = useState(true)
+  const [isLogin, setIsLogin] = useState(params.mode !== "signup")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [name, setName] = useState("")
@@ -52,12 +53,29 @@ export default function AuthScreen() {
     try {
       const success = await loginWithBiometrics()
       if (success) {
-        // Check user type from Firestore to route correctly
+        // Sync user data for biometrics too
         if (db && auth?.currentUser) {
           try {
             const userDoc = await db.collection("users").doc(auth.currentUser.uid).get()
             if (userDoc.exists) {
               const userData = userDoc.data() || {}
+
+              // Sync preferences
+              if (userData.userType) {
+                setPreferences({
+                  userType: userData.userType,
+                  activities: userData.activities || ["Basketball"],
+                  primaryActivity: userData.primaryActivity,
+                  isStudioUser: userData.userType === "instructor",
+                  isRecUser: userData.userType === "trainer",
+                  name: userData.name,
+                  onboardingComplete: true,
+                  isPremium: userData.subscriptionActive || false
+                })
+              }
+
+
+
               if (userData.userType === "facility") {
                 router.replace("/facility/dashboard")
                 return
@@ -130,7 +148,10 @@ export default function AuthScreen() {
               if (userDoc.exists) {
                 const userData = userDoc.data() || {}
 
-                // If user has userType set (trainer/instructor/facility from dashboard), sync and skip onboarding
+                // Check for premium status
+                const isPremium = userData.subscriptionActive || false
+
+                // If user has userType set
                 if (userData.userType) {
                   setPreferences({
                     userType: userData.userType,
@@ -140,15 +161,17 @@ export default function AuthScreen() {
                     isRecUser: userData.userType === "trainer",
                     name: userData.name,
                     onboardingComplete: true,
+                    isPremium: isPremium
                   })
 
-                  // Route facility users to facility dashboard
+
+
+                  // Route facility users
                   if (userData.userType === "facility") {
                     router.replace("/facility/dashboard")
                     return
                   }
 
-                  // Skip to main app - they're a returning trainer/instructor
                   router.replace("/(tabs)")
                   return
                 }
@@ -159,14 +182,15 @@ export default function AuthScreen() {
           }
         }
 
-        // New user or no preferences - go through onboarding
-        router.replace("/onboarding")
+        // New user or no preferences - assume onboarding done if we are here
+        router.replace("/(tabs)")
       } else {
         await signup(email, password, name)
         // Save name to preferences for persistence
+        // Save name to preferences
         setPreferences({ name })
         // Go through onboarding to collect userType and activities
-        router.replace("/onboarding")
+        router.replace("/(tabs)")
       }
     } catch (error: any) {
       console.error("Login error:", error.code, error.message)
@@ -364,6 +388,8 @@ export default function AuthScreen() {
                 return
               }
 
+
+
               router.replace("/(tabs)")
               return
             }
@@ -373,14 +399,14 @@ export default function AuthScreen() {
         }
       }
 
-      // Store name from Apple if available (only provided on first sign in)
+      // Store name from Apple if available
       if (userName) {
         setPreferences({ name: userName })
       }
 
       // New Apple user - go to onboarding
-      console.log("➡️ Navigating to onboarding...")
-      router.replace("/onboarding")
+      console.log("➡️ Navigating to Tabs...")
+      router.replace("/(tabs)")
     } catch (error: any) {
       console.error("❌ Unexpected Apple Sign In error:", error)
       Alert.alert(
@@ -393,10 +419,7 @@ export default function AuthScreen() {
     }
   }
 
-  const handleGuestMode = () => {
-    continueAsGuest()
-    router.replace("/onboarding")
-  }
+
 
 
   return (
@@ -519,9 +542,7 @@ export default function AuthScreen() {
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={handleGuestMode} className="border-2 border-border rounded-xl py-4">
-              <Text className="text-center text-foreground font-bold text-lg">Continue as Guest</Text>
-            </TouchableOpacity>
+
 
             <TouchableOpacity onPress={() => setIsLogin(!isLogin)} className="py-4">
               <Text className="text-center text-muted-foreground">

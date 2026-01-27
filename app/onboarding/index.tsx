@@ -59,26 +59,9 @@ export default function OnboardingScreen() {
     }
   }
 
-  const handleSkip = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-    setPreferences({
-      userType: "player",
-      activities: ["Basketball"],
-      primaryActivity: "Basketball",
-      isStudioUser: false,
-      isRecUser: true,
-      onboardingComplete: false,
-    })
-    router.replace("/(tabs)")
-  }
-
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        {/* Skip Button */}
-        <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
-          <Text style={styles.skipText}>Skip</Text>
-        </TouchableOpacity>
 
         {/* Header with Accent */}
         <View style={styles.header}>
@@ -160,8 +143,8 @@ export default function OnboardingScreen() {
             You can always change this later
           </Text>
         </View>
-      </SafeAreaView>
-    </View>
+      </SafeAreaView >
+    </View >
   )
 }
 

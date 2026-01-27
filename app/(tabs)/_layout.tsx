@@ -2,7 +2,6 @@ import { Tabs } from "expo-router"
 import { View } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useUserPreferences } from "@/lib/user-preferences"
-import { GIAFloatingButton } from "@/components/GIAFloatingButton"
 import { QuickReportFloatingButton } from "@/components/QuickReportFloatingButton"
 
 export default function TabLayout() {
@@ -126,7 +125,6 @@ export default function TabLayout() {
       </Tabs>
 
       {/* Floating Action Buttons - Cal.ai Aesthetic */}
-      <GIAFloatingButton hidden={isFacility || isTrainer} />
       <QuickReportFloatingButton hidden={isFacility} />
     </>
   )

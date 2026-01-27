@@ -347,7 +347,7 @@ export default function FeaturesScreen() {
     const handleComplete = async () => {
         await AsyncStorage.setItem("hasSeenFeatures", "true")
         await AsyncStorage.setItem("hasCompletedOnboarding", "true")
-        router.replace("/(tabs)")
+        router.replace("/auth?mode=signup")
     }
 
     const handleDotPress = (index: number) => {

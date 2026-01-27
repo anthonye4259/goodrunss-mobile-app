@@ -11,14 +11,19 @@ import { ImageService } from "@/lib/image-service"
 export default function EditProfileScreen() {
   const { preferences, setPreferences } = useUserPreferences()
   const [name, setName] = useState(preferences.name || "")
-  const [bio, setBio] = useState("")
-  const [profileImage, setProfileImage] = useState<string | null>(null)
+  const [bio, setBio] = useState(preferences.bio || "")
+  const [profileImage, setProfileImage] = useState<string | null>(preferences.profileImage || null)
   const [uploading, setUploading] = useState(false)
 
   const imageService = ImageService.getInstance()
 
   const handleSave = async () => {
-    setPreferences({ ...preferences, name })
+    setPreferences({
+      ...preferences,
+      name,
+      bio,
+      profileImage: profileImage || undefined
+    })
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
     router.back()
   }

@@ -4,6 +4,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage"
 
 type UserPreferences = {
   name?: string
+  bio?: string
+  profileImage?: string
   activities: string[]
   isStudioUser: boolean
   isRecUser: boolean

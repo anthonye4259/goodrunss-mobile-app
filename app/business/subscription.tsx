@@ -120,7 +120,7 @@ export default function SubscriptionScreen() {
         setProcessing(false)
         if (success) {
             Alert.alert("Success", "Your purchases check out. Welcome back! 🚀", [
-                { text: "OK", onPress: () => router.back() }
+                { text: "OK", onPress: () => router.replace("/(tabs)") }
             ])
         } else {
             Alert.alert("No Subscription Found", "We couldn't find an active pro subscription for this Apple ID.")
@@ -138,8 +138,8 @@ export default function SubscriptionScreen() {
         try {
             const success = await revenueCatService.purchasePackage(pack)
             if (success) {
-                Alert.alert("You're Pro! 🏆", "You now have full access to the Trainer SaaS tools.", [
-                    { text: "Let's Work", onPress: () => router.back() }
+                Alert.alert("You're Pro! 🏆", "You now have full access to GIA and Pro tools.", [
+                    { text: "Let's Go", onPress: () => router.replace("/(tabs)") }
                 ])
             }
         } catch (e) {
@@ -163,11 +163,13 @@ export default function SubscriptionScreen() {
     )
 
     // Fallback Package if RevenueCat not configured
-    // Flexible Package Selection:
-    // 1. Try to find explicit MONTHLY type
-    // 2. Fallback to the FIRST available package in the list (since we might have filtered specifically for it)
+    // Prefer lifetime, then monthly
+    const lifetimePackage = offering?.availablePackages?.find((p: any) => p.packageType === "LIFETIME" || p.identifier === "gia_lifetime_999")
     const monthlyPackage = offering?.availablePackages?.find((p: any) => p.packageType === "MONTHLY")
         || offering?.availablePackages?.[0]
+
+    // Default to lifetime if available, or just mock it for the UI update
+    const displayPackage = lifetimePackage || monthlyPackage
 
     return (
         <View style={styles.container}>

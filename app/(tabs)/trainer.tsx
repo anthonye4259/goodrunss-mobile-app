@@ -51,7 +51,16 @@ export default function TrainerDashboard() {
     }).start()
   }, [])
 
+  const checkPaywall = () => {
+    if (preferences.userType !== "player" && !preferences.isPremium) {
+      router.push("/settings/subscription")
+      return false
+    }
+    return true
+  }
+
   const handleAddClient = () => {
+    if (!checkPaywall()) return
     if (!newClientName.trim() || !newClientEmail.trim()) return
 
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
@@ -71,6 +80,7 @@ export default function TrainerDashboard() {
   }
 
   const generatePromoPost = () => {
+    if (!checkPaywall()) return
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
     setShowPromoGenerator(true)
   }
@@ -97,6 +107,7 @@ export default function TrainerDashboard() {
   }
 
   const openWebDashboard = () => {
+    if (!checkPaywall()) return
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
     const webDashboardUrl = "https://goodrunss.com/dashboard/personas"
     // In production: Linking.openURL(webDashboardUrl)

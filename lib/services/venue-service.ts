@@ -16,7 +16,7 @@ export const venueService = {
      */
     async getVenuesNearby(
         center: GeoPoint,
-        radiusKm: number = 50,
+        radiusMiles: number = 50,
         sport?: string,
         limitCount: number = 20
     ): Promise<Venue[]> {
@@ -25,9 +25,9 @@ export const venueService = {
             return []
         }
 
-        // Calculate bounding box
-        const latDelta = radiusKm / 111.12 // 1 deg lat ~ 111.12 km
-        const lngDelta = radiusKm / (111.12 * Math.cos(center.lat * (Math.PI / 180)))
+        // Calculate bounding box (using Miles)
+        const latDelta = radiusMiles / 69 // 1 deg lat ~ 69 miles
+        const lngDelta = radiusMiles / (69 * Math.cos(center.lat * (Math.PI / 180)))
 
         const minLat = center.lat - latDelta
         const maxLat = center.lat + latDelta

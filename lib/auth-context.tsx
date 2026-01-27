@@ -36,7 +36,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [isGuest, setIsGuest] = useState(true)
+  const [isGuest, setIsGuest] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [hasBiometricCredentials, setHasBiometricCredentials] = useState(false)
@@ -262,9 +262,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const continueAsGuest = async () => {
-    await AsyncStorage.setItem("guestMode", "true")
-    setIsGuest(true)
-    setIsAuthenticated(false)
+    // Guest mode disabled
+    // await AsyncStorage.setItem("guestMode", "true")
+    // setIsGuest(true)
+    // setIsAuthenticated(false)
   }
 
   const promptLogin = (feature: string): boolean => {

@@ -23,6 +23,7 @@ const PHASE_1_CITIES = [
   { zip: "900", city: "Los Angeles", state: "CA" },
   { zip: "902", city: "Los Angeles", state: "CA" },
   { zip: "606", city: "Chicago", state: "IL" },
+  { zip: "295", city: "Myrtle Beach", state: "SC" },
 ]
 
 // ZIP to City/State lookup (first 3 digits)

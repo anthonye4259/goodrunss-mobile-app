@@ -44,9 +44,14 @@ export default function Index() {
           return
         }
 
-        // Priority 5: All onboarding done - go to main app
-        // Works for guests AND returning signed-in users
-        router.replace("/(tabs)")
+        // Priority 5: All onboarding done but NOT signed in -> Go to Auth
+        if (hasCompletedOnboarding && !isAuthenticated) {
+          router.replace("/auth")
+          return
+        }
+
+        // Priority 6: Fallback (should be covered by priority 1) -> Auth
+        router.replace("/auth")
 
       } catch (error) {
         console.error("Error checking onboarding:", error)

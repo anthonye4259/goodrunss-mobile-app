@@ -71,6 +71,40 @@ service cloud.firestore {
       allow write: if isAuthenticated();
     }
 
+    // =============================================
+    // IMPRINT/DAL AI COLLECTIONS
+    // =============================================
+    
+    // Studios - allow public read for invite code lookup (before auth)
+    match /imprint_studios/{studioId} {
+      allow read: if true;  // Public read for invite code lookup
+      allow write: if isAuthenticated();
+    }
+
+    // Classes for studios
+    match /imprint_classes/{classId} {
+      allow read: if true;  // Public read for schedule display
+      allow write: if isAuthenticated();
+    }
+
+    // Membership plans
+    match /imprint_plans/{planId} {
+      allow read: if true;  // Public read for pricing display
+      allow write: if isAuthenticated();
+    }
+
+    // Memberships (user-specific)
+    match /imprint_memberships/{membershipId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    // Bookings (user-specific)
+    match /imprint_bookings/{bookingId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
     // Allow any authenticated read/write for flexibility during development
     // TODO: Tighten these rules for production
     match /{document=**} {
