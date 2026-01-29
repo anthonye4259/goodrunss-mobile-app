@@ -183,7 +183,7 @@ export function TrainerBookingModal({ visible, onClose, trainer }: TrainerBookin
 
   return (
     <>
-      <Modal visible={visible} transparent animationType="slide">
+      <Modal visible={visible} transparent animationType="slide" presentationStyle="overFullScreen" supportedOrientations={["portrait", "landscape"]}>
         <View className="flex-1 bg-black/80 justify-end">
           <LinearGradient colors={["#0A0A0A", "#141414"]} className="rounded-t-3xl max-h-[90%]">
             <ScrollView className="flex-1" contentContainerClassName="p-6">

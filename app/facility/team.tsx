@@ -312,7 +312,7 @@ export default function TeamScreen() {
             </SafeAreaView>
 
             {/* Invite Modal */}
-            <Modal visible={showInviteModal} animationType="slide" transparent>
+            <Modal visible={showInviteModal} animationType="slide" transparent presentationStyle="overFullScreen" supportedOrientations={["portrait", "landscape"]}>
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
                         <View style={styles.modalHeader}>

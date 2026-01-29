@@ -87,7 +87,7 @@ export function PlayRequestModal({ sport, visible, onClose, location }: PlayRequ
     if (!visible) return null
 
     return (
-        <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+        <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} presentationStyle="overFullScreen" supportedOrientations={["portrait", "landscape"]}>
             <BlurView intensity={20} style={styles.modalOverlay}>
                 <View style={styles.modalContent}>
                     {success ? (

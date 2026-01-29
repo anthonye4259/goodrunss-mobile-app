@@ -93,7 +93,7 @@ export function ClientNotes({ clientId, clientName, notes, onAddNote, onDeleteNo
             )}
 
             {/* Add Note Modal */}
-            <Modal visible={isModalOpen} transparent animationType="slide">
+            <Modal visible={isModalOpen} transparent animationType="slide" presentationStyle="overFullScreen" supportedOrientations={["portrait", "landscape"]}>
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
                         <View style={styles.modalHeader}>

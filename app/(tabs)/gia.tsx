@@ -389,7 +389,7 @@ export default function GIAScreen() {
       </SafeAreaView>
 
       {/* Facility Paywall Modal */}
-      <Modal visible={showPaywall} transparent animationType="fade">
+      <Modal visible={showPaywall} transparent animationType="fade" presentationStyle="overFullScreen" supportedOrientations={["portrait", "landscape"]}>
         <View style={styles.paywallOverlay}>
           <View style={styles.paywallCard}>
             <LinearGradient

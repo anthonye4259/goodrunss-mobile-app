@@ -206,10 +206,12 @@ export function UpgradePrompt({
                                 </View>
 
                                 {monthlySavings <= 0 && (
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 12 }}>
                                         <Ionicons name="bulb-outline" size={14} color="#888" style={{ marginRight: 6 }} />
                                         <Text style={styles.breakEvenNote}>
                                             Break-even at ~$1,700/month in bookings
                                         </Text>
+                                    </View>
                                 )}
                             </View>
 

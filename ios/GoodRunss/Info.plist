@@ -41,15 +41,11 @@
       </dict>
     </array>
     <key>CFBundleVersion</key>
-    <string>179</string>
+    <string>180</string>
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
     <key>LSMinimumSystemVersion</key>
     <string>12.0</string>
-    <key>UIDeviceFamily</key>
-    <array>
-      <integer>1</integer>
-    </array>
     <key>LSRequiresIPhoneOS</key>
     <true/>
     <key>NSAppTransportSecurity</key>
@@ -64,7 +60,7 @@
     <key>NSCalendarsUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your calendars</string>
     <key>NSCameraUsageDescription</key>
-    <string>To set your profile picture and report court conditions, GoodRunss needs access to your camera. For example, you can take a photo of a court to show others it is busy.</string>
+    <string>GoodRunss needs camera access so you can take a profile picture or share a photo of a court condition.</string>
     <key>NSContactsUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your contacts</string>
     <key>NSFaceIDUsageDescription</key>
@@ -73,12 +69,16 @@
     <string>GoodRunss reads your workout data to visualize your fitness trends and activity history.</string>
     <key>NSHealthUpdateUsageDescription</key>
     <string>GoodRunss saves your court sessions to Apple Health.</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>GoodRunss uses your location to notify you when you are near active courts or facilities you've favorited.</string>
+    <key>NSLocationAlwaysUsageDescription</key>
+    <string>Allow $(PRODUCT_NAME) to access your location</string>
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>GoodRunss uses your location to find nearby basketball courts, tennis courts, and trainers. This allows you to see facilities on the map relative to your position.</string>
+    <string>Allow GoodRunss to use your location to show nearby trainers, courts, and studios.</string>
     <key>NSMicrophoneUsageDescription</key>
-    <string>GoodRunss uses the microphone for voice messages in chat.</string>
+    <string>GoodRunss uses the microphone for voice during coaching sessions.</string>
     <key>NSPhotoLibraryUsageDescription</key>
-    <string>GoodRunss accesses your photo library to let you upload profile pictures and share photos of court conditions.</string>
+    <string>GoodRunss needs access to your photos to upload profile pictures and venue photos.</string>
     <key>NSRemindersFullAccessUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your reminders</string>
     <key>NSRemindersUsageDescription</key>
@@ -105,13 +105,6 @@
     <key>UIStatusBarStyle</key>
     <string>UIStatusBarStyleDefault</string>
     <key>UISupportedInterfaceOrientations</key>
-    <array>
-      <string>UIInterfaceOrientationPortrait</string>
-      <string>UIInterfaceOrientationPortraitUpsideDown</string>
-      <string>UIInterfaceOrientationLandscapeLeft</string>
-      <string>UIInterfaceOrientationLandscapeRight</string>
-    </array>
-    <key>UISupportedInterfaceOrientations~ipad</key>
     <array>
       <string>UIInterfaceOrientationPortrait</string>
       <string>UIInterfaceOrientationPortraitUpsideDown</string>

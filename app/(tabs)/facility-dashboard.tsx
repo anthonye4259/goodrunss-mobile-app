@@ -525,7 +525,7 @@ export default function FacilityDashboardScreen() {
             </SafeAreaView>
 
             {/* Invite Employee Modal */}
-            <Modal visible={showInviteModal} transparent animationType="slide">
+            <Modal visible={showInviteModal} transparent animationType="slide" presentationStyle="overFullScreen" supportedOrientations={["portrait", "landscape"]}>
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
                         <View style={styles.modalHeader}>

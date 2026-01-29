@@ -112,7 +112,7 @@ export function QuickBlockTimes({ courtId, courtName, onBlock, variant = "button
         <>
             {trigger}
 
-            <Modal visible={modalVisible} transparent animationType="slide">
+            <Modal visible={modalVisible} transparent animationType="slide" presentationStyle="overFullScreen" supportedOrientations={["portrait", "landscape"]}>
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
                         <View style={styles.modalHeader}>

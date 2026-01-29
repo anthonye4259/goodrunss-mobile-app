@@ -12,7 +12,7 @@ interface LoginPromptModalProps {
 
 export function LoginPromptModal({ visible, onClose, feature, description }: LoginPromptModalProps) {
   return (
-    <Modal visible={visible} transparent animationType="fade">
+    <Modal visible={visible} transparent animationType="fade" presentationStyle="overFullScreen" supportedOrientations={["portrait", "landscape"]}>
       <View className="flex-1 bg-black/80 justify-center px-6">
         <View className="bg-card rounded-3xl overflow-hidden">
           <LinearGradient colors={["#7ED957", "#6BB642"]} className="p-6 items-center">

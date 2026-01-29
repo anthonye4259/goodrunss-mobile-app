@@ -129,7 +129,7 @@ export function QuickResponseTemplates({ templates = DEFAULT_TEMPLATES, onSelect
                     <Text style={styles.triggerText}>Quick Responses</Text>
                 </TouchableOpacity>
 
-                <Modal visible={modalVisible} transparent animationType="slide">
+                <Modal visible={modalVisible} transparent animationType="slide" presentationStyle="overFullScreen" supportedOrientations={["portrait", "landscape"]}>
                     <View style={styles.modalOverlay}>
                         <View style={styles.modalContent}>
                             <View style={styles.modalHeader}>

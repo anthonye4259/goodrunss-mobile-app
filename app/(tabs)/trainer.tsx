@@ -276,7 +276,7 @@ export default function TrainerDashboard() {
       </Animated.View>
 
       {/* Add Client Modal */}
-      <Modal visible={showAddClient} transparent animationType="slide" onRequestClose={() => setShowAddClient(false)}>
+      <Modal visible={showAddClient} transparent animationType="slide" onRequestClose={() => setShowAddClient(false)} presentationStyle="overFullScreen" supportedOrientations={["portrait", "landscape"]}>
         <View className="flex-1 bg-black/80 justify-end">
           <View className="bg-zinc-900 rounded-t-3xl p-6 border-t border-zinc-800">
             <View className="flex-row items-center justify-between mb-6">

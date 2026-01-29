@@ -26,7 +26,7 @@ export function ReviewModal({ visible, onClose, onSubmit, venueName }: ReviewMod
     }
 
     return (
-        <Modal visible={visible} transparent animationType="fade">
+        <Modal visible={visible} transparent animationType="fade" presentationStyle="overFullScreen" supportedOrientations={["portrait", "landscape"]}>
             <View style={styles.container}>
                 <BlurView intensity={20} style={StyleSheet.absoluteFill} tint="dark" />
 

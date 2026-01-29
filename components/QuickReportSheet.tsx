@@ -156,7 +156,7 @@ export function QuickReportSheet({
     if (!visible) return null
 
     return (
-        <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
+        <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose} presentationStyle="overFullScreen" supportedOrientations={["portrait", "landscape"]}>
             <GestureHandlerRootView style={{ flex: 1 }}>
                 <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={handleClose}>
                     <BlurView intensity={30} style={StyleSheet.absoluteFill} tint="dark" />

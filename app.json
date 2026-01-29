@@ -20,7 +20,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.goodrunss.app",
-      "buildNumber": "179",
+      "buildNumber": "180",
       "deploymentTarget": "15.1",
       "associatedDomains": [
         "applinks:goodrunss.com",
@@ -118,7 +118,15 @@
       "expo-font",
       "expo-localization",
       "expo-web-browser",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "GoodRunss uses the camera for video coaching sessions.",
+          "microphonePermission": "GoodRunss uses the microphone for voice during coaching sessions.",
+          "recordAudioAndroid": true
+        }
+      ]
     ],
     "extra": {
       "router": {

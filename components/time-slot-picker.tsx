@@ -52,7 +52,7 @@ export function TimeSlotPicker({
   }
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
+    <Modal visible={visible} animationType="slide" transparent presentationStyle="overFullScreen" supportedOrientations={["portrait", "landscape"]}>
       <View className="flex-1 justify-end">
         <TouchableOpacity className="flex-1 bg-black/50" onPress={onClose} activeOpacity={1} />
         <LinearGradient colors={["#141414", "#0A0A0A"]} className="rounded-t-3xl max-h-[70%]">
@@ -69,9 +69,8 @@ export function TimeSlotPicker({
                 {availableSlots.map((slot) => (
                   <TouchableOpacity
                     key={slot}
-                    className={`rounded-xl px-6 py-4 border ${
-                      selected === slot ? "bg-primary border-primary" : "bg-card border-border"
-                    }`}
+                    className={`rounded-xl px-6 py-4 border ${selected === slot ? "bg-primary border-primary" : "bg-card border-border"
+                      }`}
                     onPress={() => handleSlotPress(slot)}
                   >
                     <Text className={`font-semibold ${selected === slot ? "text-background" : "text-foreground"}`}>

@@ -95,7 +95,7 @@ export function PostBookingShareModal({ visible, onClose, bookingDetails }: Post
   }
 
   return (
-    <Modal visible={visible} transparent animationType="slide">
+    <Modal visible={visible} transparent animationType="slide" presentationStyle="overFullScreen" supportedOrientations={["portrait", "landscape"]}>
       <View className="flex-1 bg-black/80 justify-end">
         <LinearGradient colors={["#0A0A0A", "#141414"]} className="rounded-t-3xl p-6">
           <ViewShot ref={viewShotRef} options={{ format: "png", quality: 1.0 }}>

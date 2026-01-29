@@ -47,7 +47,7 @@ export function WaitlistJoinModal({ visible, onClose, onJoin, type, name }: Wait
 
   return (
     <>
-      <Modal visible={visible} transparent animationType="slide">
+      <Modal visible={visible} transparent animationType="slide" presentationStyle="overFullScreen" supportedOrientations={["portrait", "landscape"]}>
         <View className="flex-1 bg-black/80 justify-end">
           <LinearGradient colors={["#0A0A0A", "#141414"]} className="rounded-t-3xl max-h-[90%]">
             <ScrollView className="flex-1" contentContainerClassName="p-6">
@@ -86,9 +86,8 @@ export function WaitlistJoinModal({ visible, onClose, onJoin, type, name }: Wait
                   {timeOptions.map((option) => (
                     <TouchableOpacity
                       key={option.value}
-                      className={`flex-1 min-w-[45%] rounded-xl p-4 border ${
-                        timePreference === option.value ? "bg-primary/20 border-primary" : "bg-card border-border"
-                      }`}
+                      className={`flex-1 min-w-[45%] rounded-xl p-4 border ${timePreference === option.value ? "bg-primary/20 border-primary" : "bg-card border-border"
+                        }`}
                       onPress={() => {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
                         setTimePreference(option.value)
@@ -101,9 +100,8 @@ export function WaitlistJoinModal({ visible, onClose, onJoin, type, name }: Wait
                           color={timePreference === option.value ? "#7ED957" : "#666"}
                         />
                         <Text
-                          className={`mt-2 font-semibold ${
-                            timePreference === option.value ? "text-primary" : "text-muted-foreground"
-                          }`}
+                          className={`mt-2 font-semibold ${timePreference === option.value ? "text-primary" : "text-muted-foreground"
+                            }`}
                         >
                           {option.label}
                         </Text>
