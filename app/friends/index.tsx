@@ -1,5 +1,5 @@
 
-import { View, Text, ScrollView, TouchableOpacity, Image, StyleSheet, RefreshControl } from "react-native"
+import { View, Text, ScrollView, TouchableOpacity, Image, StyleSheet, RefreshControl, ActivityIndicator } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { useState, useEffect } from "react"
@@ -71,24 +71,43 @@ export default function FriendsListScreen() {
             >
                 {activeTab === "friends" ? (
                     <>
-                        <Text style={styles.sectionTitle}>{friends.length} Friends</Text>
-                        {friends.map((friend) => (
-                            <TouchableOpacity key={friend.id} style={styles.friendCard} onPress={() => router.push(`/chat/${friend.id}`)}>
-                                <View style={styles.avatarContainer}>
-                                    <Text style={styles.avatarText}>{friend.avatar}</Text>
-                                    {/* In real app use Image source={{ uri: friend.avatarUrl }} */}
-                                </View>
-                                <View style={styles.friendInfo}>
-                                    <Text style={styles.friendName}>{friend.name}</Text>
-                                    <Text style={[styles.statusText, { color: friend.status === "online" ? "#7ED957" : "#666" }]}>
-                                        {friend.status === "online" ? "Online Now" : "Offline"}
-                                    </Text>
-                                </View>
-                                <TouchableOpacity style={styles.messageBtn}>
-                                    <Ionicons name="chatbubble-ellipses-outline" size={20} color="#FFF" />
+                        {loading ? (
+                            <View style={styles.centerState}>
+                                <ActivityIndicator size="large" color="#7ED957" />
+                                <Text style={styles.loadingText}>Loading friends...</Text>
+                            </View>
+                        ) : friends.length === 0 ? (
+                            <View style={styles.centerState}>
+                                <Ionicons name="people-outline" size={48} color="#444" />
+                                <Text style={styles.emptyTitle}>No Friends Yet</Text>
+                                <Text style={styles.emptySubtitle}>Add friends to see them here</Text>
+                                <TouchableOpacity style={styles.addFriendBtn} onPress={() => router.push("/friends/add")}>
+                                    <Ionicons name="person-add" size={18} color="#000" />
+                                    <Text style={styles.addFriendText}>Add Friends</Text>
                                 </TouchableOpacity>
-                            </TouchableOpacity>
-                        ))}
+                            </View>
+                        ) : (
+                            <>
+                                <Text style={styles.sectionTitle}>{friends.length} Friends</Text>
+                                {friends.map((friend) => (
+                                    <TouchableOpacity key={friend.id} style={styles.friendCard} onPress={() => router.push(`/chat/${friend.id}`)}>
+                                        <View style={styles.avatarContainer}>
+                                            <Text style={styles.avatarText}>{friend.avatar}</Text>
+                                            {/* In real app use Image source={{ uri: friend.avatarUrl }} */}
+                                        </View>
+                                        <View style={styles.friendInfo}>
+                                            <Text style={styles.friendName}>{friend.name}</Text>
+                                            <Text style={[styles.statusText, { color: friend.status === "online" ? "#7ED957" : "#666" }]}>
+                                                {friend.status === "online" ? "Online Now" : "Offline"}
+                                            </Text>
+                                        </View>
+                                        <TouchableOpacity style={styles.messageBtn}>
+                                            <Ionicons name="chatbubble-ellipses-outline" size={20} color="#FFF" />
+                                        </TouchableOpacity>
+                                    </TouchableOpacity>
+                                ))}
+                            </>
+                        )}
                     </>
                 ) : (
                     <View style={styles.requestsContainer}>
@@ -274,5 +293,42 @@ const styles = StyleSheet.create({
         color: "#000",
         fontWeight: "bold",
         fontSize: 12
+    },
+    centerState: {
+        alignItems: "center",
+        justifyContent: "center",
+        paddingVertical: 60,
+        gap: 12
+    },
+    loadingText: {
+        color: "#888",
+        fontSize: 14,
+        marginTop: 8
+    },
+    emptyTitle: {
+        color: "#FFF",
+        fontSize: 18,
+        fontWeight: "bold",
+        marginTop: 8
+    },
+    emptySubtitle: {
+        color: "#666",
+        fontSize: 14,
+        textAlign: "center"
+    },
+    addFriendBtn: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+        backgroundColor: "#7ED957",
+        paddingHorizontal: 20,
+        paddingVertical: 12,
+        borderRadius: 12,
+        marginTop: 16
+    },
+    addFriendText: {
+        color: "#000",
+        fontWeight: "bold",
+        fontSize: 14
     }
 })
