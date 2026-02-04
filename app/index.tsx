@@ -7,10 +7,13 @@ import { useAuth } from "@/lib/auth-context"
 
 export default function Index() {
   const router = useRouter()
-  const { isAuthenticated, isGuest } = useAuth()
+  const { isAuthenticated, isGuest, loading } = useAuth()
   const [isReady, setIsReady] = useState(false)
 
   useEffect(() => {
+    // Wait for auth to finish loading before making navigation decisions
+    if (loading) return
+
     const checkOnboarding = async () => {
       try {
         const hasCompletedOnboarding = await AsyncStorage.getItem("hasCompletedOnboarding")
@@ -60,7 +63,7 @@ export default function Index() {
     }
 
     checkOnboarding()
-  }, [isAuthenticated, isGuest])
+  }, [isAuthenticated, isGuest, loading])
 
   return (
     <LinearGradient colors={["#0A0A0A", "#141414", "#0A0A0A"]} style={styles.container}>
