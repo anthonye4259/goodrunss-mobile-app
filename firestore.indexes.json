@@ -45,16 +45,6 @@
                     "order": "DESCENDING"
                 }
             ]
-        },
-        {
-            "collectionGroup": "imprint_studios",
-            "queryScope": "COLLECTION",
-            "fields": [
-                {
-                    "fieldPath": "code",
-                    "order": "ASCENDING"
-                }
-            ]
         }
     ],
     "fieldOverrides": []
