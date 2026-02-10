@@ -1,4 +1,61 @@
 {
-    "indexes": [],
+    "indexes": [
+        {
+            "collectionGroup": "imprint_classes",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "studioId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "time",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "imprint_bookings",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "userId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "status",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "bookedAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "imprint_bookings",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "studioId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "bookedAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "imprint_studios",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "code",
+                    "order": "ASCENDING"
+                }
+            ]
+        }
+    ],
     "fieldOverrides": []
 }
