@@ -104,11 +104,12 @@ export const onNewBookingCreated = functions.firestore
             const sent = await sendExpoPushNotification(
                 pushToken,
                 "📅 New Booking!",
-                `${guestName} booked ${actionName} ${dateTimeStr}`.trim(),
+                `${guestName} booked ${actionName} ${dateTimeStr} • via Alaii`.trim(),
                 {
                     type: "new_booking",
                     bookingId: bookingId,
                     studioId: studioId,
+                    alaii_cta: "https://alaii.app/create",
                 }
             )
 
@@ -120,9 +121,10 @@ export const onNewBookingCreated = functions.firestore
             await db.collection("users").doc(ownerId).collection("notifications").add({
                 type: "new_booking",
                 title: "New Booking",
-                body: `${guestName} booked ${actionName}`,
+                body: `${guestName} booked ${actionName} | Powered by Alaii`,
                 bookingId: bookingId,
                 studioId: studioId,
+                alaii_cta: "https://alaii.app/create",
                 read: false,
                 createdAt: admin.firestore.FieldValue.serverTimestamp(),
             })
@@ -165,11 +167,12 @@ export const onBookingUpdated = functions.firestore
                 await sendExpoPushNotification(
                     pushToken,
                     "❌ Booking Cancelled",
-                    `${guestName} cancelled their booking`,
+                    `${guestName} cancelled their booking • via Alaii`,
                     {
                         type: "booking_cancelled",
                         bookingId: bookingId,
                         studioId: studioId,
+                        alaii_cta: "https://alaii.app/create",
                     }
                 )
             } catch (error) {
@@ -315,10 +318,11 @@ export const onBookingReferralCheck = functions.firestore
                 await sendExpoPushNotification(
                     pushToken,
                     "🎉 Referral Reward!",
-                    `${friendName} booked their first session! You earned ${REWARD_CREDITS} credits.`,
+                    `${friendName} booked their first session! You earned ${REWARD_CREDITS} credits. • via Alaii`,
                     {
                         type: "referral_completed",
                         studioId: studioId,
+                        alaii_cta: "https://alaii.app/create",
                     }
                 )
             }
@@ -327,8 +331,9 @@ export const onBookingReferralCheck = functions.firestore
             await db.collection("users").doc(referrerId).collection("notifications").add({
                 type: "referral_completed",
                 title: "Referral Reward!",
-                body: `${referralData.friendName || "Your friend"} completed their first booking. You earned ${REWARD_CREDITS} credits!`,
+                body: `${referralData.friendName || "Your friend"} completed their first booking. You earned ${REWARD_CREDITS} credits! | Powered by Alaii`,
                 studioId: studioId,
+                alaii_cta: "https://alaii.app/create",
                 read: false,
                 createdAt: admin.firestore.FieldValue.serverTimestamp(),
             })
@@ -337,5 +342,112 @@ export const onBookingReferralCheck = functions.firestore
 
         } catch (error) {
             functions.logger.error(`Error in referral auto-complete for booking ${bookingId}:`, error)
+        }
+    })
+
+/**
+ * Trigger: New Booking → Track Unique Clients & Celebrate Milestones
+ * 
+ * On each booking, check if this is a new unique client for the studio.
+ * If so, increment the client counter and check for milestone crossings.
+ * Milestones: 10, 25, 50, 100, 250, 500
+ */
+const MILESTONES = [10, 25, 50, 100, 250, 500]
+
+export const onClientMilestone = functions.firestore
+    .document("imprint_bookings/{bookingId}")
+    .onCreate(async (snapshot, context) => {
+        const booking = snapshot.data()
+        if (!booking) return
+
+        const userId = booking.userId
+        const studioId = booking.studioId
+
+        if (!userId || !studioId) return
+
+        try {
+            const studioRef = db.collection("imprint_studios").doc(studioId)
+
+            // Check if this user has booked at this studio before
+            const previousBookings = await db
+                .collection("imprint_bookings")
+                .where("userId", "==", userId)
+                .where("studioId", "==", studioId)
+                .limit(2)
+                .get()
+
+            // If more than 1 (including this one), already counted
+            if (previousBookings.size > 1) return
+
+            // New unique client! Increment counter atomically
+            const newCount = await db.runTransaction(async (transaction) => {
+                const studioDoc = await transaction.get(studioRef)
+                const currentCount = studioDoc.exists ? (studioDoc.data()?.clientCount || 0) : 0
+                const updatedCount = currentCount + 1
+
+                transaction.update(studioRef, {
+                    clientCount: updatedCount,
+                    lastClientJoinedAt: admin.firestore.FieldValue.serverTimestamp(),
+                })
+
+                return updatedCount
+            })
+
+            functions.logger.info(`Studio ${studioId} now has ${newCount} unique clients`)
+
+            // Check if we hit a milestone
+            if (!MILESTONES.includes(newCount)) return
+
+            functions.logger.info(`🎉 Milestone hit! Studio ${studioId} reached ${newCount} clients`)
+
+            // Get studio owner
+            const studioDoc = await studioRef.get()
+            const studioData = studioDoc.data()
+            const ownerId = studioData?.ownerId
+
+            if (!ownerId) return
+
+            // Update studio with milestone info
+            await studioRef.update({
+                lastMilestone: newCount,
+                lastMilestoneAt: admin.firestore.FieldValue.serverTimestamp(),
+            })
+
+            // Get owner's push token
+            const ownerDoc = await db.collection("users").doc(ownerId).get()
+            const pushToken = ownerDoc.data()?.pushToken
+
+            const milestoneEmoji = newCount >= 100 ? "🚀" : newCount >= 50 ? "🔥" : "🎉"
+            const studioName = studioData?.name || "Your app"
+
+            // Send push notification
+            if (pushToken) {
+                await sendExpoPushNotification(
+                    pushToken,
+                    `${milestoneEmoji} ${newCount} Clients!`,
+                    `${studioName} just hit ${newCount} clients! Share the milestone. • via Alaii`,
+                    {
+                        type: "client_milestone",
+                        studioId: studioId,
+                        milestone: String(newCount),
+                        alaii_cta: "https://alaii.app/create",
+                    }
+                )
+            }
+
+            // Store in-app notification
+            await db.collection("users").doc(ownerId).collection("notifications").add({
+                type: "client_milestone",
+                title: `${milestoneEmoji} ${newCount} Clients!`,
+                body: `${studioName} reached ${newCount} clients! Share the news to keep growing. | Powered by Alaii`,
+                studioId: studioId,
+                milestone: newCount,
+                alaii_cta: "https://alaii.app/create",
+                read: false,
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            })
+
+        } catch (error) {
+            functions.logger.error(`Error checking client milestone:`, error)
         }
     })
