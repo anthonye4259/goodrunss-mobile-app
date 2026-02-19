@@ -3,7 +3,7 @@
     "name": "GoodRunss",
     "slug": "goodrunss-mobile",
     "owner": "ateam9999",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "runtimeVersion": "1.0.1",
     "scheme": "goodrunss",
     "orientation": "default",
@@ -20,7 +20,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.goodrunss.app",
-      "buildNumber": "182",
+      "buildNumber": "183",
       "deploymentTarget": "15.1",
       "associatedDomains": [
         "applinks:goodrunss.com",
@@ -137,7 +137,8 @@
       }
     },
     "updates": {
-      "url": ""
+      "url": "https://u.expo.dev/a16611ea-d95f-46ff-bb08-7ca0725c9f4d",
+      "fallbackToCacheTimeout": 3000
     }
   }
 }
