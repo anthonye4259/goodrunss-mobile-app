@@ -105,6 +105,36 @@ service cloud.firestore {
       allow write: if isAuthenticated();
     }
 
+    // Properties (landlord)
+    match /imprint_properties/{propertyId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+
+      // Subcollections (tenants, payments, chat, etc.)
+      match /{subcol}/{docId} {
+        allow read: if isAuthenticated();
+        allow write: if isAuthenticated();
+      }
+    }
+
+    // Leases
+    match /imprint_leases/{leaseId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    // Rent payments
+    match /imprint_rent_payments/{paymentId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    // Maintenance requests
+    match /imprint_maintenance/{requestId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
     // Allow any authenticated read/write for flexibility during development
     // TODO: Tighten these rules for production
     match /{document=**} {

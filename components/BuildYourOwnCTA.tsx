@@ -57,7 +57,7 @@ export function BuildYourOwnCTA({ visible, onClose }: { visible: boolean, onClos
     const handleGetStarted = async () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
         await AsyncStorage.setItem(CTA_STORAGE_KEY, "true")
-        Linking.openURL("https://dalai.app/signup?utm_source=client_app")
+        Linking.openURL("https://dalaiweb.vercel.app/signup?utm_source=client_app")
         onClose()
     }
 

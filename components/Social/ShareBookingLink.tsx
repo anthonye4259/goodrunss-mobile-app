@@ -22,7 +22,7 @@ type Props = {
 }
 
 export function ShareBookingLink({ trainerId, trainerName, specialty, variant = "card", onShared }: Props) {
-    const bookingLink = `https://dalai.app/book/${trainerId}`
+    const bookingLink = `https://dalaiweb.vercel.app/book/${trainerId}`
     const [showQR, setShowQR] = useState(false)
 
     const getShareMessage = () => {

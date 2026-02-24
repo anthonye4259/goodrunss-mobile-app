@@ -1,0 +1,186 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+    background: var(--framer-color-bg, #fff);
+    color: var(--framer-color-text, #111);
+    font-size: 13px;
+    -webkit-font-smoothing: antialiased;
+}
+
+.plugin-container {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.plugin-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--framer-color-divider, #eee);
+}
+
+.logo {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+h1 {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.subtitle {
+    font-size: 12px;
+    color: var(--framer-color-text-tertiary, #888);
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--framer-color-text-secondary, #666);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--framer-color-divider, #ddd);
+    border-radius: 8px;
+    font-size: 13px;
+    background: var(--framer-color-bg-secondary, #f8f8f8);
+    color: var(--framer-color-text, #111);
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.input:focus {
+    border-color: #667eea;
+}
+
+.hint {
+    font-size: 11px;
+    color: var(--framer-color-text-tertiary, #999);
+}
+
+.hint a {
+    color: #667eea;
+    text-decoration: none;
+}
+
+.hint a:hover {
+    text-decoration: underline;
+}
+
+.theme-toggle {
+    display: flex;
+    gap: 8px;
+}
+
+.theme-btn {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid var(--framer-color-divider, #ddd);
+    border-radius: 8px;
+    background: var(--framer-color-bg-secondary, #f8f8f8);
+    color: var(--framer-color-text, #111);
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+}
+
+.theme-btn.active {
+    border-color: #667eea;
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    font-weight: 600;
+}
+
+.insert-btn {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.insert-btn:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.insert-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.insert-btn.success {
+    background: #22c55e;
+}
+
+.features {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--framer-color-divider, #eee);
+}
+
+.feature-item {
+    font-size: 11px;
+    color: var(--framer-color-text-secondary, #666);
+    padding: 6px 8px;
+    background: var(--framer-color-bg-secondary, #f8f8f8);
+    border-radius: 6px;
+    text-align: center;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .input {
+        background: #1a1a1a;
+        border-color: #333;
+        color: #fff;
+    }
+
+    .theme-btn {
+        background: #1a1a1a;
+        border-color: #333;
+        color: #ccc;
+    }
+
+    .feature-item {
+        background: #1a1a1a;
+        color: #999;
+    }
+}

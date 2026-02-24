@@ -18,7 +18,7 @@ type Props = {
 export function ShareAndEarn({ variant = "card" }: Props) {
     const { user } = useAuth()
     const referralCode = user?.id?.slice(0, 8).toUpperCase() || "DALAI"
-    const referralLink = `https://dalai.app/signup?ref=${referralCode}`
+    const referralLink = `https://dalaiweb.vercel.app/signup?ref=${referralCode}`
 
     const handleShare = async () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)

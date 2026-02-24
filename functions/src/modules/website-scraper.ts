@@ -180,7 +180,7 @@ export const scrapeWebsite = functions
                 const response = await fetch(normalizedUrl, {
                     signal: controller.signal,
                     headers: {
-                        "User-Agent": "Mozilla/5.0 (compatible; DalAI/1.0; +https://dalai.app)",
+                        "User-Agent": "Mozilla/5.0 (compatible; DalAI/1.0; +https://alaii.app)",
                         "Accept": "text/html,application/xhtml+xml",
                         "Accept-Language": "en-US,en;q=0.9",
                     },

@@ -1,0 +1,8 @@
+{
+    "id": "alaiiB",
+    "name": "Alaii — Booking & Payments",
+    "modes": [
+        "canvas"
+    ],
+    "icon": "https://us-central1-goodrunss-ai.cloudfunctions.net/metaFbeAuth"
+}

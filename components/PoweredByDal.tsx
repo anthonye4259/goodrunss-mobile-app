@@ -21,7 +21,7 @@ export function PoweredByDal({ dark = false }: { dark?: boolean }) {
     if (isHidden) return null
 
     const handlePress = () => {
-        Linking.openURL(`https://dalai.app/signup?ref=${user?.id}`)
+        Linking.openURL(`https://alaii.app/signup?ref=${user?.id}`)
     }
 
     const textColor = dark ? "#FFFFFF" : "#6B7280"
