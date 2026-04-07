@@ -14,8 +14,10 @@ export async function GET(
 
   // TikTok URL prefix verification file
   if (filename.startsWith('tiktok') && filename.endsWith('.txt')) {
-    const token = filename.replace('.txt', '');
-    return new NextResponse(token, {
+    // Content format: tiktok-developers-site-verification={token}
+    const token = filename.replace('tiktok', '').replace('.txt', '');
+    const content = `tiktok-developers-site-verification=${token}`;
+    return new NextResponse(content, {
       headers: {
         'Content-Type': 'text/plain',
         'Cache-Control': 'public, max-age=3600',
