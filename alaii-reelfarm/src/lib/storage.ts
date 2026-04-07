@@ -19,17 +19,25 @@ function getBucket() {
   _bucketName = process.env.FIREBASE_STORAGE_BUCKET || '';
 
   if (!admin.apps.length) {
-    const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-    if (serviceAccountPath && fs.existsSync(serviceAccountPath)) {
-      const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf-8'));
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-        storageBucket: _bucketName,
-      });
+    const serviceAccountEnv = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+    if (serviceAccountEnv) {
+      // Support both file path (local dev) and inline JSON (cloud deploy)
+      let serviceAccount;
+      if (serviceAccountEnv.startsWith('{')) {
+        serviceAccount = JSON.parse(serviceAccountEnv);
+      } else if (fs.existsSync(serviceAccountEnv)) {
+        serviceAccount = JSON.parse(fs.readFileSync(serviceAccountEnv, 'utf-8'));
+      }
+      if (serviceAccount) {
+        admin.initializeApp({
+          credential: admin.credential.cert(serviceAccount),
+          storageBucket: _bucketName,
+        });
+      } else {
+        admin.initializeApp({ storageBucket: _bucketName });
+      }
     } else {
-      admin.initializeApp({
-        storageBucket: _bucketName,
-      });
+      admin.initializeApp({ storageBucket: _bucketName });
     }
   }
 
