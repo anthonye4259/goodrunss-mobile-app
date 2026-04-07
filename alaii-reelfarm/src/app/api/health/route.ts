@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getAllCarouselCampaigns, getAllCarouselPosts } from '@/lib/carousel-autopilot';
 import { getAllAccounts } from '@/lib/tiktok';
+import { getDiscoveryStats } from '@/lib/influencer-discovery';
+import { getOutreachStats } from '@/lib/influencer-outreach';
 
 export async function GET() {
   const campaigns = getAllCarouselCampaigns();
@@ -26,6 +28,8 @@ export async function GET() {
       failed: posts.filter(p => p.status === 'failed').length,
     },
     recentPosts,
+    influencers: getDiscoveryStats(),
+    outreach: getOutreachStats(),
     timestamp: new Date().toISOString(),
   });
 }
