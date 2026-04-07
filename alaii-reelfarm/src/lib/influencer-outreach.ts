@@ -148,7 +148,7 @@ export async function runInfluencerOutreach(): Promise<{
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              from: 'Alaii Growth <growth@alaii.app>',
+              from: 'Anthony from Alaii <anthony@alaii.app>',
               to: [lead.email],
               subject,
               text: message,
