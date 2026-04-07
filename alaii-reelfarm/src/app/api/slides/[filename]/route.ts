@@ -12,6 +12,17 @@ export async function GET(
 ) {
   const { filename } = await params;
 
+  // TikTok URL prefix verification file
+  if (filename.startsWith('tiktok') && filename.endsWith('.txt')) {
+    const token = filename.replace('.txt', '');
+    return new NextResponse(token, {
+      headers: {
+        'Content-Type': 'text/plain',
+        'Cache-Control': 'public, max-age=3600',
+      },
+    });
+  }
+
   // First try local filesystem (for images not yet uploaded)
   const tmpDir = path.join(process.cwd(), 'tmp', 'carousel');
   if (fs.existsSync(tmpDir)) {

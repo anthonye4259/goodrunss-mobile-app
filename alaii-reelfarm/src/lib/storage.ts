@@ -110,9 +110,9 @@ export async function uploadCarouselImage(localPath: string): Promise<string> {
   const publicUrl = `https://storage.googleapis.com/${bucket.name}/${storagePath}`;
   console.log('☁️ Carousel image uploaded:', publicUrl);
 
-  // Return URL via reelfarm.alaii.app (TikTok-verified subdomain → Railway)
+  // Return URL via Railway domain (TikTok URL prefix verified)
   // The /api/slides/ endpoint proxies from Firebase Storage
-  const proxyUrl = `https://reelfarm.alaii.app/api/slides/${path.basename(localPath)}`;
+  const proxyUrl = `https://alaii-reelfarm-production.up.railway.app/api/slides/${path.basename(localPath)}`;
   console.log('🔗 TikTok URL:', proxyUrl);
 
   return proxyUrl;
