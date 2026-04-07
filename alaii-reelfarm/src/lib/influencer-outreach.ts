@@ -54,32 +54,41 @@ async function generateOutreachMessage(lead: InfluencerLead): Promise<string> {
 
   const response = await client.messages.create({
     model: 'claude-sonnet-4-20250514',
-    max_tokens: 300,
+    max_tokens: 400,
     messages: [
       {
         role: 'user',
-        content: `Write a short, casual DM/email to a beauty industry influencer inviting them to be an Alaii affiliate partner. Keep it under 100 words, warm and personal.
+        content: `Write a cold email from Anthony, a Carnegie Mellon University student who built a platform for beauty pros. The email should:
 
-INFLUENCER:
+1. Lead with THEIR specific pain point based on their niche (not a product pitch)
+2. Sound like a real college student reaching out, NOT a sales email
+3. Be warm, genuine, and conversational
+4. End with a soft ask to chat — "would love to hear your thoughts" or "could we talk for 5 min?"
+5. Keep it under 120 words
+6. NO bullet points, NO feature lists, NO "we offer" language
+
+RECIPIENT:
 - Name: ${lead.displayName}
 - Handle: ${lead.handle}
 - Niche: ${lead.niche}
+- Type: ${lead.creatorType || 'beauty pro'}
 - Followers: ${lead.followers.toLocaleString()}
 - Bio: ${lead.bio || 'N/A'}
 
-ABOUT ALAII:
-- AI-powered business platform for beauty pros
-- Replaces GlossGenius, Acuity, Square — saves $200+/month
-- Fills cancellations automatically with AI
-- Handles booking, payments, marketing on autopilot
+PAIN POINTS BY NICHE (use the relevant one):
+- Medspa/Injector: last-minute cancellations losing $300+ per empty chair, manual rebooking
+- Hair stylist: no-shows wrecking your schedule, spending nights doing admin instead of resting
+- Lash tech: clients ghosting appointments, manually DMing to fill gaps
+- Esthetician: spending more time on marketing than actual facials
+- Beauty school: students graduating with zero clients and no booking system
+- UGC/Affiliate: monetizing your audience beyond brand deals
 
-AFFILIATE OFFER:
-- 20% recurring commission on every signup
-- Their audience gets 60 days free
-- Dedicated affiliate dashboard
-- Custom promo code with their name
+ANTHONY'S STORY:
+- CMU CS student who noticed beauty pros drowning in admin
+- Built Alaii to automate the stuff that steals their time
+- Not trying to sell, genuinely wants to understand their problems better
 
-Write ONLY the message, no subject line. Sound like a real person, not a brand. Use their niche language.`,
+Write ONLY the email body. No subject line. No signature. Sound human.`,
       },
     ],
   });
