@@ -3,6 +3,7 @@ import { getAllCarouselCampaigns, getAllCarouselPosts } from '@/lib/carousel-aut
 import { getAllAccounts } from '@/lib/tiktok';
 import { getDiscoveryStats } from '@/lib/influencer-discovery';
 import { getOutreachStats } from '@/lib/influencer-outreach';
+import { getTwitterStats } from '@/lib/twitter';
 
 export async function GET() {
   const campaigns = getAllCarouselCampaigns();
@@ -30,6 +31,7 @@ export async function GET() {
     recentPosts,
     influencers: getDiscoveryStats(),
     outreach: getOutreachStats(),
+    twitter: getTwitterStats(),
     timestamp: new Date().toISOString(),
   });
 }
