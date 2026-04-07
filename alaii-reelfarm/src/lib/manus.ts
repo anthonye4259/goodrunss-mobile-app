@@ -17,6 +17,7 @@ export interface InfluencerLead {
   followers: number;
   engagementRate: number;
   niche: string;
+  creatorType: 'influencer' | 'ugc' | 'affiliate';
   bio?: string;
   email?: string;
   profileUrl: string;
@@ -71,7 +72,12 @@ FOLLOWERS: ${minFollowers.toLocaleString()} - ${maxFollowers.toLocaleString()}
 ENGAGEMENT RATE: minimum 2%
 LOCATION: ${country}
 
-Find the top 20 creators. For each creator, provide:
+Find the top 20 creators. For each, identify their TYPE:
+- "influencer" = established beauty pro with large following
+- "ugc" = creates product reviews, tutorials, get-ready-with-me content, before/after transformations
+- "affiliate" = mentions promo codes, affiliate links, brand ambassador, or "collab" in bio
+
+For each creator, provide:
 1. Instagram handle (username)
 2. Display name
 3. Follower count
@@ -79,9 +85,10 @@ Find the top 20 creators. For each creator, provide:
 5. Bio summary
 6. Contact email (if available in bio)
 7. Profile URL
+8. Creator type: "influencer", "ugc", or "affiliate"
 
-Format the output as a JSON array with these fields:
-[{"handle":"@example","displayName":"Name","followers":15000,"engagementRate":3.5,"bio":"Bio text","email":"email@example.com","profileUrl":"https://instagram.com/example"}]
+Format the output as a JSON array:
+[{"handle":"@example","displayName":"Name","followers":15000,"engagementRate":3.5,"bio":"Bio text","email":"email@example.com","profileUrl":"https://instagram.com/example","creatorType":"ugc"}]
 
 Only return the JSON array, no other text.`;
 
@@ -171,6 +178,9 @@ export function parseInfluencerResults(
       followers: Number(item.followers) || 0,
       engagementRate: Number(item.engagementRate || item.engagement_rate) || 0,
       niche,
+      creatorType: (['influencer', 'ugc', 'affiliate'].includes(item.creatorType || item.creator_type)
+        ? item.creatorType || item.creator_type
+        : 'influencer') as 'influencer' | 'ugc' | 'affiliate',
       bio: item.bio || '',
       email: item.email || undefined,
       profileUrl: item.profileUrl || item.profile_url || `https://instagram.com/${(item.handle || '').replace('@', '')}`,

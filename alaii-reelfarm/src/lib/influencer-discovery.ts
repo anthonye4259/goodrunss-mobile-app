@@ -72,6 +72,7 @@ export function updateLeadStatus(
 // ============================================================================
 
 const BEAUTY_NICHES = [
+  // ── INFLUENCERS ──
   'medspa injector botox filler aesthetics',
   'hair stylist hairdresser salon colorist',
   'lash technician lash extensions lash artist',
@@ -80,6 +81,17 @@ const BEAUTY_NICHES = [
   'permanent makeup microblading brow artist',
   'barber barbershop mens grooming',
   'makeup artist MUA bridal makeup',
+
+  // ── UGC CREATORS ──
+  'UGC creator beauty skincare product review tutorial',
+  'beauty content creator get ready with me GRWM salon',
+  'hair transformation before after stylist content',
+  'lash tutorial content creator beauty vlog',
+
+  // ── AFFILIATE / COLLAB READY ──
+  'beauty affiliate brand ambassador promo code discount',
+  'salon owner looking for tools booking software reviews',
+  'beauty entrepreneur small business owner collab open',
 ];
 
 // ============================================================================
