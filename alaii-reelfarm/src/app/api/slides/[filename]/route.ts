@@ -1,7 +1,10 @@
-// Serve carousel slide images from local filesystem
+// Serve carousel slide images — proxied from Firebase Storage
+// TikTok requires URL ownership verification, so we serve from our own domain
 import { NextRequest, NextResponse } from 'next/server';
 import * as fs from 'fs';
 import * as path from 'path';
+
+const STORAGE_BUCKET = process.env.FIREBASE_STORAGE_BUCKET || 'goodrunss-ai.firebasestorage.app';
 
 export async function GET(
   request: NextRequest,
@@ -9,35 +12,46 @@ export async function GET(
 ) {
   const { filename } = await params;
 
-  // Look for the file in the most recent carousel render directory
+  // First try local filesystem (for images not yet uploaded)
   const tmpDir = path.join(process.cwd(), 'tmp', 'carousel');
-
-  if (!fs.existsSync(tmpDir)) {
-    return NextResponse.json({ error: 'No slides found' }, { status: 404 });
-  }
-
-  // Search all carousel subdirectories for the file
-  const subdirs = fs.readdirSync(tmpDir).filter(d =>
-    fs.statSync(path.join(tmpDir, d)).isDirectory()
-  );
-
-  for (const subdir of subdirs.reverse()) { // Most recent first
-    const filePath = path.join(tmpDir, subdir, filename);
-    if (fs.existsSync(filePath)) {
-      const fileBuffer = fs.readFileSync(filePath);
-      const ext = path.extname(filename).toLowerCase();
-      const contentType = ext === '.jpg' || ext === '.jpeg' ? 'image/jpeg' :
-                          ext === '.png' ? 'image/png' :
-                          ext === '.webp' ? 'image/webp' : 'application/octet-stream';
-
-      return new NextResponse(fileBuffer, {
-        headers: {
-          'Content-Type': contentType,
-          'Cache-Control': 'public, max-age=3600',
-        },
-      });
+  if (fs.existsSync(tmpDir)) {
+    const subdirs = fs.readdirSync(tmpDir).filter(d =>
+      fs.statSync(path.join(tmpDir, d)).isDirectory()
+    );
+    for (const subdir of subdirs.reverse()) {
+      const filePath = path.join(tmpDir, subdir, filename);
+      if (fs.existsSync(filePath)) {
+        const fileBuffer = fs.readFileSync(filePath);
+        const ext = path.extname(filename).toLowerCase();
+        const contentType = ext === '.jpg' || ext === '.jpeg' ? 'image/jpeg' :
+                            ext === '.png' ? 'image/png' :
+                            ext === '.webp' ? 'image/webp' : 'application/octet-stream';
+        return new NextResponse(fileBuffer, {
+          headers: {
+            'Content-Type': contentType,
+            'Cache-Control': 'public, max-age=86400',
+          },
+        });
+      }
     }
   }
 
-  return NextResponse.json({ error: 'Slide not found' }, { status: 404 });
+  // Proxy from Firebase Storage
+  const storageUrl = `https://storage.googleapis.com/${STORAGE_BUCKET}/reelfarm/reels/${filename}`;
+  try {
+    const res = await fetch(storageUrl);
+    if (!res.ok) {
+      return NextResponse.json({ error: 'Slide not found' }, { status: 404 });
+    }
+    const buffer = await res.arrayBuffer();
+    const contentType = res.headers.get('content-type') || 'image/jpeg';
+    return new NextResponse(Buffer.from(buffer), {
+      headers: {
+        'Content-Type': contentType,
+        'Cache-Control': 'public, max-age=86400',
+      },
+    });
+  } catch {
+    return NextResponse.json({ error: 'Slide not found' }, { status: 404 });
+  }
 }

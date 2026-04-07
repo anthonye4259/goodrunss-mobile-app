@@ -102,7 +102,7 @@ export async function uploadCarouselImage(localPath: string): Promise<string> {
     },
   });
 
-  // Make the file publicly accessible
+  // Make the file publicly accessible (for proxy endpoint to fetch)
   const file = bucket.file(storagePath);
   await file.makePublic();
 
@@ -110,5 +110,12 @@ export async function uploadCarouselImage(localPath: string): Promise<string> {
   const publicUrl = `https://storage.googleapis.com/${bucket.name}/${storagePath}`;
   console.log('☁️ Carousel image uploaded:', publicUrl);
 
-  return publicUrl;
+  // Return URL via our own domain (TikTok requires URL ownership verification)
+  // The /api/slides/ endpoint proxies from Firebase Storage
+  const baseUrl = process.env.TIKTOK_REDIRECT_URI?.replace('/api/tiktok/callback', '') 
+    || 'https://alaii-reelfarm-production.up.railway.app';
+  const proxyUrl = `${baseUrl}/api/slides/${path.basename(localPath)}`;
+  console.log('🔗 TikTok URL:', proxyUrl);
+
+  return proxyUrl;
 }
