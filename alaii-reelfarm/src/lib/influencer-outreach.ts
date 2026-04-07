@@ -138,11 +138,33 @@ export async function runInfluencerOutreach(): Promise<{
         // Generate personalized message
         const message = await generateOutreachMessage(lead);
 
-        if (lead.email) {
-          // TODO: Send via Resend/Mailgun when configured
-          console.log(`  📧 [DRAFT] Email to ${lead.handle} (${lead.email})`);
+        if (lead.email && process.env.RESEND_API_KEY) {
+          // Send real email via Resend
+          const subject = `Hey ${lead.displayName.split(' ')[0] || 'there'} — quick collab idea 💫`;
+          const emailRes = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              from: 'Alaii Growth <growth@alaii.app>',
+              to: [lead.email],
+              subject,
+              text: message,
+            }),
+          });
+
+          if (emailRes.ok) {
+            console.log(`  📧 Email SENT to ${lead.handle} (${lead.email})`);
+          } else {
+            const err = await emailRes.text();
+            console.error(`  ❌ Email failed for ${lead.handle}: ${err}`);
+          }
+        } else if (lead.email) {
+          console.log(`  📧 [DRAFT] Email to ${lead.handle} (${lead.email}) — no RESEND_API_KEY`);
         } else {
-          console.log(`  💬 [DRAFT] DM to ${lead.handle}`);
+          console.log(`  💬 [DRAFT] DM to ${lead.handle} — no email found`);
         }
 
         // Save outreach record
