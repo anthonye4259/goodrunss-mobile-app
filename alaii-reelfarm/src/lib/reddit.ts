@@ -20,22 +20,21 @@ let tokenExpiry = 0;
 
 function getRedditConfig() {
   const clientId = process.env.REDDIT_CLIENT_ID;
-  const clientSecret = process.env.REDDIT_CLIENT_SECRET;
-  const username = process.env.REDDIT_USERNAME;
-  const password = process.env.REDDIT_PASSWORD;
+  const refreshToken = process.env.REDDIT_REFRESH_TOKEN;
 
-  if (!clientId || !clientSecret || !username || !password) {
-    throw new Error('Missing Reddit credentials (REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET, REDDIT_USERNAME, REDDIT_PASSWORD)');
+  if (!clientId || !refreshToken) {
+    throw new Error('Missing Reddit credentials (REDDIT_CLIENT_ID, REDDIT_REFRESH_TOKEN)');
   }
 
-  return { clientId, clientSecret, username, password };
+  return { clientId, refreshToken };
 }
 
 async function getAccessToken(): Promise<string> {
   if (accessToken && Date.now() < tokenExpiry) return accessToken;
 
   const config = getRedditConfig();
-  const auth = Buffer.from(`${config.clientId}:${config.clientSecret}`).toString('base64');
+  // Devvit apps use client_id only auth (no secret needed for installed apps)
+  const auth = Buffer.from(`${config.clientId}:`).toString('base64');
 
   const res = await fetch('https://www.reddit.com/api/v1/access_token', {
     method: 'POST',
@@ -45,9 +44,8 @@ async function getAccessToken(): Promise<string> {
       'User-Agent': 'AlaiiBitby/1.0',
     },
     body: new URLSearchParams({
-      grant_type: 'password',
-      username: config.username,
-      password: config.password,
+      grant_type: 'refresh_token',
+      refresh_token: config.refreshToken,
     }),
   });
 
