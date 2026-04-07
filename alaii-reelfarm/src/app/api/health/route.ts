@@ -4,6 +4,7 @@ import { getAllAccounts } from '@/lib/tiktok';
 import { getDiscoveryStats } from '@/lib/influencer-discovery';
 import { getOutreachStats } from '@/lib/influencer-outreach';
 import { getTwitterStats } from '@/lib/twitter';
+import { getRedditStats } from '@/lib/reddit';
 
 export async function GET() {
   const campaigns = getAllCarouselCampaigns();
@@ -32,6 +33,7 @@ export async function GET() {
     influencers: getDiscoveryStats(),
     outreach: getOutreachStats(),
     twitter: getTwitterStats(),
+    reddit: getRedditStats(),
     timestamp: new Date().toISOString(),
   });
 }
