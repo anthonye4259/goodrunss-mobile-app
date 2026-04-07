@@ -175,3 +175,173 @@ export async function getAccountInfo() {
 function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
+
+// ============================================================================
+// Instagram Carousel Publishing (for image carousels)
+// ============================================================================
+
+/** Create a carousel child item (image) */
+async function createCarouselChild(imageUrl: string): Promise<string> {
+  const { userId, accessToken } = getConfig();
+
+  const params = new URLSearchParams({
+    image_url: imageUrl,
+    is_carousel_item: 'true',
+    access_token: accessToken,
+  });
+
+  const res = await fetch(`${IG_API_BASE}/${userId}/media`, {
+    method: 'POST',
+    body: params,
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(`IG carousel child failed: ${JSON.stringify(error)}`);
+  }
+
+  const data = await res.json();
+  return data.id;
+}
+
+/** Create carousel container and publish */
+export async function publishCarousel(
+  imageUrls: string[],
+  caption: string,
+): Promise<IGPublishResult> {
+  try {
+    // Check if we have direct Graph API creds
+    const hasDirectCreds = process.env.IG_USER_ID && process.env.IG_ACCESS_TOKEN;
+
+    if (hasDirectCreds) {
+      return await publishCarouselDirect(imageUrls, caption);
+    } else {
+      return await publishCarouselViaManus(imageUrls, caption);
+    }
+  } catch (error) {
+    return {
+      containerId: '',
+      status: 'error',
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+/** Direct Graph API carousel publishing */
+async function publishCarouselDirect(
+  imageUrls: string[],
+  caption: string,
+): Promise<IGPublishResult> {
+  const { userId, accessToken } = getConfig();
+
+  // Step 1: Create child containers for each image
+  console.log(`📸 Creating ${imageUrls.length} IG carousel children...`);
+  const childIds: string[] = [];
+  for (const url of imageUrls) {
+    const childId = await createCarouselChild(url);
+    childIds.push(childId);
+    await sleep(1000); // Rate limit
+  }
+
+  // Step 2: Create carousel container
+  const params = new URLSearchParams({
+    media_type: 'CAROUSEL',
+    caption,
+    access_token: accessToken,
+  });
+  childIds.forEach(id => params.append('children', id));
+
+  const res = await fetch(`${IG_API_BASE}/${userId}/media`, {
+    method: 'POST',
+    body: params,
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(`IG carousel container failed: ${JSON.stringify(error)}`);
+  }
+
+  const container = await res.json();
+  console.log('📦 IG carousel container:', container.id);
+
+  // Step 3: Poll until ready
+  const status = await pollContainerStatus(container.id);
+  if (status === 'ERROR') {
+    return { containerId: container.id, status: 'error', error: 'Processing failed' };
+  }
+
+  // Step 4: Publish
+  const mediaId = await publishContainer(container.id);
+  console.log('✅ IG carousel published! Media ID:', mediaId);
+
+  return { containerId: container.id, mediaId, status: 'published' };
+}
+
+/** Manus-based carousel publishing (fallback when no direct creds) */
+async function publishCarouselViaManus(
+  imageUrls: string[],
+  caption: string,
+): Promise<IGPublishResult> {
+  const MANUS_API_KEY = process.env.MANUS_API_KEY;
+  if (!MANUS_API_KEY) {
+    return { containerId: '', status: 'error', error: 'No IG creds or MANUS_API_KEY' };
+  }
+
+  const prompt = `Post a carousel to my Instagram account.
+
+CAROUSEL IMAGES (post these in order as a single carousel post):
+${imageUrls.map((url, i) => `${i + 1}. ${url}`).join('\n')}
+
+CAPTION:
+${caption}
+
+Post this as an Instagram carousel with all ${imageUrls.length} images. Confirm when posted.`;
+
+  const res = await fetch('https://api.manus.ai/v2/task.create', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-manus-api-key': MANUS_API_KEY,
+    },
+    body: JSON.stringify({
+      message: { content: [{ type: 'text', text: prompt }] },
+      agent_profile: 'manus-1.6',
+      interactive_mode: false,
+    }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    return { containerId: '', status: 'error', error: `Manus: ${text}` };
+  }
+
+  const result = await res.json();
+  const taskId = result.task_id || result.id;
+  console.log(`📸 IG carousel submitted via Manus (task: ${taskId})`);
+
+  return { containerId: taskId, status: 'published' };
+}
+
+/** Generate beauty-specific Instagram hashtags */
+export function generateHashtags(topic: string): string[] {
+  const base = ['alaii', 'beautybusiness', 'beautyentrepreneur', 'salonowner', 'beautypro'];
+
+  const nicheMap: Record<string, string[]> = {
+    'no-show': ['noshows', 'salonlife', 'clientretention'],
+    'book': ['onlinebooking', 'fullybooked', 'bookingapp'],
+    'lash': ['lashtech', 'lashartist', 'lashextensions'],
+    'hair': ['hairstylist', 'hairsalon', 'behindthechair'],
+    'inject': ['medspa', 'injector', 'botox', 'aesthetics'],
+    'nail': ['nailtech', 'nailartist', 'nailsalon'],
+    'skin': ['esthetician', 'skincare', 'facial'],
+    'automat': ['automation', 'aitools', 'businessautomation'],
+  };
+
+  const topicLower = topic.toLowerCase();
+  const niche: string[] = [];
+  for (const [key, tags] of Object.entries(nicheMap)) {
+    if (topicLower.includes(key)) niche.push(...tags);
+  }
+
+  return [...base, ...niche].slice(0, 20);
+}

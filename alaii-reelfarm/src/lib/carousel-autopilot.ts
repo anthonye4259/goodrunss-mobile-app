@@ -11,6 +11,7 @@ import { generateCarouselContent, type CarouselContent } from './carousel-ai';
 import { getSlideBackgrounds } from './pexels';
 import { renderCarousel, cleanupCarousel, type RenderedCarousel } from './carousel-render';
 import { publishCarouselToAll, getAllAccounts, type TikTokPublishResult } from './tiktok';
+import { publishCarousel as publishToIG, generateHashtags } from './instagram';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -287,7 +288,23 @@ async function runCarouselAutoPilot(campaign: CarouselCampaign): Promise<void> {
     campaign.lastPostedAt = new Date().toISOString();
     saveCarouselCampaign(campaign);
 
-    console.log(`\n🎉 Posted to ${successCount}/${Object.keys(results).length} accounts`);
+    console.log(`\n🎉 Posted to ${successCount}/${Object.keys(results).length} TikTok accounts`);
+
+    // === INSTAGRAM POST ===
+    try {
+      const hashtags = generateHashtags(content.hookText);
+      const igCaption = `${content.description}\n\n${hashtags.map(h => `#${h}`).join(' ')}`;
+      console.log(`\n📸 Posting to Instagram...`);
+      const igResult = await publishToIG(slideUrls, igCaption);
+      if (igResult.status === 'published') {
+        console.log(`✅ Instagram carousel posted!`);
+      } else {
+        console.log(`⚠️ Instagram post: ${igResult.status} — ${igResult.error || 'unknown'}`);
+      }
+    } catch (igError) {
+      console.error(`⚠️ Instagram post failed (non-blocking):`, igError);
+    }
+
     cleanupCarousel(rendered);
 
   } catch (error) {
