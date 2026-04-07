@@ -106,11 +106,9 @@ export async function uploadCarouselImage(localPath: string): Promise<string> {
   const file = bucket.file(storagePath);
   await file.makePublic();
 
-  // Return URL via cdn.alaii.app (Firebase Hosting → carouselImage Cloud Function)
-  // Falls back to goodrunss-ai.web.app if custom domain not yet configured
-  const cdnDomain = process.env.CAROUSEL_CDN_DOMAIN || 'goodrunss-ai.web.app';
-  const cdnUrl = `https://${cdnDomain}/carousel/${storagePath}`;
-  console.log('☁️ Carousel image uploaded:', cdnUrl);
+  // Use direct Firebase Storage public URL (cdn.alaii.app is not configured)
+  const publicUrl = `https://storage.googleapis.com/${bucket.name}/${storagePath}`;
+  console.log('☁️ Carousel image uploaded:', publicUrl);
 
-  return cdnUrl;
+  return publicUrl;
 }
