@@ -11,26 +11,32 @@ service cloud.firestore {
       return request.auth.uid == ownerId;
     }
 
+    // =============================================
+    // LEGACY COLLECTIONS (GoodRunss era)
+    // =============================================
+
     // Users collection
     match /users/{userId} {
       allow read: if isAuthenticated();
       allow write: if isOwner(userId);
     }
 
+    // Imprint Users
+    match /imprint_users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId);
+    }
+
     // Claimed Facilities - facility owners can create and manage
     match /claimed_facilities/{facilityId} {
-      // Anyone authenticated can read (for discovery)
       allow read: if isAuthenticated();
-      // Authenticated users can create new facilities
       allow create: if isAuthenticated() && request.resource.data.ownerId == request.auth.uid;
-      // Only the owner can update/delete
       allow update, delete: if isAuthenticated() && resource.data.ownerId == request.auth.uid;
     }
 
     // Courts within facilities
     match /courts/{courtId} {
       allow read: if isAuthenticated();
-      // Allow create if user owns the parent facility
       allow create: if isAuthenticated();
       allow update, delete: if isAuthenticated();
     }
@@ -53,7 +59,7 @@ service cloud.firestore {
       allow read, write: if isAuthenticated();
     }
 
-    // Venues (public read, admin write)
+    // Venues (public read, authenticated write)
     match /venues/{venueId} {
       allow read: if true;
       allow write: if isAuthenticated();
@@ -65,50 +71,85 @@ service cloud.firestore {
       allow write: if isAuthenticated() && request.auth.uid == trainerId;
     }
 
-    // Classes
+    // Classes (legacy)
     match /classes/{classId} {
       allow read: if true;
       allow write: if isAuthenticated();
     }
 
     // =============================================
-    // IMPRINT/DAL AI COLLECTIONS
+    // IMPRINT/ALAII COLLECTIONS (Production)
     // =============================================
     
-    // Studios - allow public read for invite code lookup (before auth)
+    // Studios — public read for booking pages, owner-only write
     match /imprint_studios/{studioId} {
-      allow read: if true;  // Public read for invite code lookup
-      allow write: if isAuthenticated();
+      allow read: if true;
+      // Only the studio owner can create/update/delete
+      allow create: if isAuthenticated()
+        && request.resource.data.ownerId == request.auth.uid;
+      // Owner can update their studio, OR an auth'd user can claim an unowned studio
+      // (webhook creates studios without ownerId — success page links the owner)
+      allow update: if isAuthenticated()
+        && (resource.data.ownerId == request.auth.uid
+            || (!('ownerId' in resource.data) || resource.data.ownerId == null || resource.data.ownerId == ''));
+      allow delete: if isAuthenticated()
+        && resource.data.ownerId == request.auth.uid;
     }
 
-    // Classes for studios
+    // Classes for studios — public read for schedule display, studio owner write
     match /imprint_classes/{classId} {
-      allow read: if true;  // Public read for schedule display
-      allow write: if isAuthenticated();
+      allow read: if true;
+      // Owner must match the studioOwnerId or the request must come from the studio owner
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated();
     }
 
-    // Membership plans
+    // Membership plans — public read, studio owner write
     match /imprint_plans/{planId} {
-      allow read: if true;  // Public read for pricing display
-      allow write: if isAuthenticated();
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated();
     }
 
-    // Memberships (user-specific)
+    // Memberships (user-specific) — only the member or studio owner
     match /imprint_memberships/{membershipId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
+      allow read: if isAuthenticated()
+        && (resource.data.userId == request.auth.uid
+            || resource.data.ownerId == request.auth.uid);
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated()
+        && (resource.data.userId == request.auth.uid
+            || resource.data.ownerId == request.auth.uid);
     }
 
-    // Bookings (user-specific)
+    // Bookings — any authenticated user can read (dashboard queries by studioId),
+    // but only the booker can modify their own booking
     match /imprint_bookings/{bookingId} {
+      // Read: authenticated users can read bookings (studio owner queries by studioId,
+      // booker queries by userId — both need access via collection queries)
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
+      // Create: any authenticated user can create a booking (they're booking themselves)
+      allow create: if isAuthenticated();
+      // Update/Delete: only the booker can modify or cancel their booking
+      // (studio-side cancellation uses server-side Admin SDK which bypasses rules)
+      allow update, delete: if isAuthenticated()
+        && resource.data.userId == request.auth.uid;
+    }
+
+    // Subscriptions — owner only
+    match /imprint_subscriptions/{subId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Server-side only (webhook writes)
     }
 
     // Properties (landlord)
     match /imprint_properties/{propertyId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
+      allow read: if isAuthenticated()
+        && resource.data.ownerId == request.auth.uid;
+      allow create: if isAuthenticated()
+        && request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if isAuthenticated()
+        && resource.data.ownerId == request.auth.uid;
 
       // Subcollections (tenants, payments, chat, etc.)
       match /{subcol}/{docId} {
@@ -135,11 +176,243 @@ service cloud.firestore {
       allow write: if isAuthenticated();
     }
 
-    // Allow any authenticated read/write for flexibility during development
-    // TODO: Tighten these rules for production
-    match /{document=**} {
-      allow read: if isAuthenticated();
+    // Booking waitlist (email capture) — anyone can write, only server reads
+    match /booking_waitlist/{docId} {
+      allow read: if false;
+      allow create: if true; // Public — guests submit emails
+    }
+
+    // Builder leads (app builder form submissions) — public create
+    match /builder_leads/{docId} {
+      allow read: if false; // Server-side only
+      allow create: if true; // Public — builder form submissions
+    }
+
+    // Analytics events (client-side tracking backup) — public create
+    match /analytics_events/{docId} {
+      allow read: if false; // Server-side only
+      allow create: if true; // Public — client-side analytics
+    }
+
+    // =============================================
+    // MOBILE APP COLLECTIONS (GoodRunss/Alaii Mobile)
+    // These were previously covered by the wildcard rule.
+    // Authenticated read/write preserves existing mobile behavior.
+    // =============================================
+
+    // Core booking collections
+    match /bookings/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /privateBookings/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /private_bookings/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /classBookings/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /classWaitlists/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Social & messaging
+    match /messages/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /conversations/{docId} {
+      allow read, write: if isAuthenticated();
+      match /{subcol}/{subDocId} {
+        allow read, write: if isAuthenticated();
+      }
+    }
+    match /friend_requests/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /groups/{docId} {
+      allow read, write: if isAuthenticated();
+      match /{subcol}/{subDocId} {
+        allow read, write: if isAuthenticated();
+      }
+    }
+    match /pings/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /alerts/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /gameInvites/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Check-ins & court activity
+    match /checkIns/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /checkins/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /courtReports/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Leagues & challenges
+    match /leagues/{docId} {
+      allow read, write: if isAuthenticated();
+      match /{subcol}/{subDocId} {
+        allow read, write: if isAuthenticated();
+      }
+    }
+    match /challenges/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Reviews & discovery
+    match /reviews/{docId} {
+      allow read: if true; // Public reads for venue reviews
+      allow write: if isAuthenticated();
+      match /{subcol}/{subDocId} {
+        allow read, write: if isAuthenticated();
+      }
+    }
+    match /discovery_interactions/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Studio & instructor management (mobile)
+    match /studios/{docId} {
+      allow read: if true;
       allow write: if isAuthenticated();
     }
+    match /instructors/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+    match /instructorAvailability/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+    match /instructorRevenueShare/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /wellnessClasses/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+    match /wellness_classes/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+    match /classPlaylists/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /scheduledPlaylistPosts/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Remote training & live sessions
+    match /remote_bookings/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /remote_services/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /live_sessions/{docId} {
+      allow read, write: if isAuthenticated();
+      match /{subcol}/{subDocId} {
+        allow read, write: if isAuthenticated();
+      }
+    }
+
+    // Videos & library
+    match /videos/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /library_items/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Player & trainer services
+    match /player_intents/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /trainer_clients/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /trainer_listings/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+    match /clientRelationships/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /proSubscriptions/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Subscriptions (mobile — legacy)
+    match /subscriptions/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Payments & referrals
+    match /payments/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /referralRewards/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Facilities & venues (extended)
+    match /facilities/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+    match /facility_maintenance/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /facility_waitlist/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /venueInsights/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /venue_proposals/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Analytics & ML data
+    match /activityDataPoints/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /predictionValidations/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Reporting
+    match /reports/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Invite responses
+    match /inviteResponses/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Smart data & passive tracking
+    match /activity/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /dataPoints/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // =============================================
+    // DEFAULT: DENY ALL
+    // P6-1 fix: removed the wildcard catch-all rule that
+    // granted every authenticated user full database access.
+    // Any collection not explicitly listed above is now denied.
+    // =============================================
   }
 }

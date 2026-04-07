@@ -20,5 +20,24 @@
     },
     "storage": {
         "rules": "storage.rules"
+    },
+    "hosting": {
+        "public": "hosting-public",
+        "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+        "rewrites": [
+            {
+                "source": "/carousel/**",
+                "function": "carouselImage"
+            }
+        ],
+        "headers": [
+            {
+                "source": "/carousel/**",
+                "headers": [
+                    { "key": "Access-Control-Allow-Origin", "value": "*" },
+                    { "key": "Cache-Control", "value": "public, max-age=86400" }
+                ]
+            }
+        ]
     }
 }

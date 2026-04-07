@@ -5,12 +5,8 @@ import Stripe from "stripe"
 const config = functions.config()
 const stripe = config.stripe?.secret_key ? new Stripe(config.stripe.secret_key, { apiVersion: "2023-10-16" }) : null
 
-// Price IDs for Pro Dashboard subscription
-const SUBSCRIPTION_PRICES = {
-    monthly: "price_1Sbzhb06I3eFkRUmi5i8z4V8",
-    "3months": "price_1SSrP106I3eFkRUm9qZHlG8K",
-    "6months": "price_1SSrQ706I3eFkRUmALT3M9tM",
-}
+// Price ID for Alaii Growth subscription
+const GROWTH_PRICE_ID = "price_1TFfyQ06I3eFkRUmtYNsD29o"
 
 /**
  * Create Subscription Checkout Session
@@ -25,12 +21,8 @@ export const createSubscriptionCheckout = functions.https.onCall(async (data, co
             throw new functions.https.HttpsError("unauthenticated", "User must be authenticated")
         }
 
-        const { period, successUrl, cancelUrl } = data
+        const { successUrl, cancelUrl } = data
         const userId = context.auth.uid
-
-        if (!period || !["monthly", "3months", "6months"].includes(period)) {
-            throw new functions.https.HttpsError("invalid-argument", "Invalid subscription period")
-        }
 
         const userDoc = await admin.firestore().collection("users").doc(userId).get()
         const userData = userDoc.data()
@@ -45,20 +37,17 @@ export const createSubscriptionCheckout = functions.https.onCall(async (data, co
             await admin.firestore().collection("users").doc(userId).update({ stripeCustomerId: customerId })
         }
 
-        const priceId = SUBSCRIPTION_PRICES[period as keyof typeof SUBSCRIPTION_PRICES]
-
         const session = await stripe.checkout.sessions.create({
             customer: customerId,
-            line_items: [{ price: priceId, quantity: 1 }],
+            line_items: [{ price: GROWTH_PRICE_ID, quantity: 1 }],
             mode: "subscription",
             payment_method_types: ["card"],
-            metadata: { firebaseUserId: userId, period },
+            metadata: { firebaseUserId: userId },
             subscription_data: {
-                trial_period_days: 7,
                 metadata: { firebaseUserId: userId },
             },
-            success_url: successUrl || "https://dashboard.goodrunss.com/subscription/success",
-            cancel_url: cancelUrl || "https://dashboard.goodrunss.com/subscription/canceled",
+            success_url: successUrl || "https://alaii.app/subscription/success",
+            cancel_url: cancelUrl || "https://alaii.app/subscription/canceled",
         })
 
         return { url: session.url }
@@ -138,7 +127,7 @@ export async function handleSubscriptionUpdated(subscription: Stripe.Subscriptio
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     }, { merge: true })
 
-    await sendSubscriptionPush(userId, "Subscription Updated", "Your Pro subscription has been updated.")
+    await sendSubscriptionPush(userId, "Subscription Updated", "Your Alaii Growth subscription has been updated.")
 }
 
 export async function handleSubscriptionCanceled(subscription: Stripe.Subscription) {
@@ -150,7 +139,7 @@ export async function handleSubscriptionCanceled(subscription: Stripe.Subscripti
         canceledAt: admin.firestore.FieldValue.serverTimestamp(),
     })
 
-    await sendSubscriptionPush(userId, "Subscription Canceled", "Your Pro subscription has been canceled.")
+    await sendSubscriptionPush(userId, "Subscription Canceled", "Your Alaii Growth subscription has been canceled.")
 }
 
 export async function handleSubscriptionPaymentFailed(invoice: Stripe.Invoice) {

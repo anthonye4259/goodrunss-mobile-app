@@ -1,0 +1,45 @@
+[
+  {
+    "id": "-0004dWHw5S1IRqSPTD0td8-W6Dh0OUh7Z4-",
+    "username": "-0004dWHw5S1IRqSPTD0td8-W6Dh0OUh7Z4-",
+    "displayName": "TikTok User",
+    "accessToken": "act.KX8VBBlO1RwHGNSfxZ0FxMk8CstCfq0PGWeGRckVKUB0zQQu0f6COvvE08sI!6381.u1",
+    "refreshToken": "rft.37aycv2Yvbe44FZu3ZxTbVADAWpjG8WfYxbH3apbwfkJQAKdeBFla17gd040!6457.u1",
+    "expiresAt": 1775603466996,
+    "connectedAt": "2026-04-06T23:11:06.996Z",
+    "totalPosted": 0
+  },
+  {
+    "id": "-000Ky0iMaTC3ASme4CJh-Ai2pUl3PU-1zp2",
+    "username": "-000Ky0iMaTC3ASme4CJh-Ai2pUl3PU-1zp2",
+    "displayName": "TikTok User",
+    "accessToken": "act.Xkd0N3gQ053xQQCbDbvJayYCHVVSwXGPXn6MLukvOVPuD7Oc7u3zxIkO25Rn!6375.u1",
+    "refreshToken": "rft.O6dGP9c9XK0MgD9Dq4fRDdgwkI1wE862plk3BmM58WTdnq2iv3T2t0qt6DMT!6373.u1",
+    "expiresAt": 1775603923207,
+    "connectedAt": "2026-04-06T23:18:43.208Z",
+    "totalPosted": 1,
+    "lastPostedAt": "2026-04-06T23:22:33.334Z"
+  },
+  {
+    "id": "-000pPST5M5rVWg4pAIIPhQEEi9NBQkvafNP",
+    "username": "-000pPST5M5rVWg4pAIIPhQEEi9NBQkvafNP",
+    "displayName": "TikTok User",
+    "accessToken": "act.dN0uiL6KA0lX6Hl5rmlA3Oghn5edyAU2bYiIdb39NM4tJw0Qc01MHpav1TUR!6385.u1",
+    "refreshToken": "rft.qzmS1lct9IMbbvu3Uxpr2V7b4GoHfSC4NYQa8LcCXq5MAO8bkh8pwirFIwLd!6361.u1",
+    "expiresAt": 1775603639565,
+    "connectedAt": "2026-04-06T23:13:59.565Z",
+    "totalPosted": 1,
+    "lastPostedAt": "2026-04-06T23:23:31.258Z"
+  },
+  {
+    "id": "-000VvnhH93HSI-_PBZuw0i5AdVXtpFLskYL",
+    "username": "-000VvnhH93HSI-_PBZuw0i5AdVXtpFLskYL",
+    "displayName": "TikTok User",
+    "accessToken": "act.bCrpgs4K2cbVWlmDo72Z6ol7biRtF89dDfhOGlIqglx2hU7U38HwWNcFrFkZ!6411.u1",
+    "refreshToken": "rft.zWQMzIINVnrEizea9zBLxakYlnkzkedruAQqXqTfSsqwqzMJAh3w6bZlAnku!6434.u1",
+    "expiresAt": 1775603757441,
+    "connectedAt": "2026-04-06T23:15:57.441Z",
+    "totalPosted": 1,
+    "lastPostedAt": "2026-04-06T23:24:33.357Z"
+  }
+]

@@ -1,0 +1,742 @@
+[
+  {
+    "id": "c4a843f5-da37-4e96-9974-2d0e076cbfea",
+    "content": {
+      "hookText": "5 ways i saved my salon business:",
+      "points": [
+        {
+          "headline": "1. ditched expensive booking platforms",
+          "painPoint": "paying $300/month for features i barely used",
+          "solution": "switched to one app that does everything for way less"
+        },
+        {
+          "headline": "2. automated client reminders completely",
+          "painPoint": "constantly texting clients about their appointments like a personal assistant",
+          "solution": "let ai handle all the booking texts automatically"
+        },
+        {
+          "headline": "3. stopped chasing late payments",
+          "painPoint": "awkwardly asking clients for money after their service",
+          "solution": "set up automatic payment processing so money comes first"
+        },
+        {
+          "headline": "4. created my own branded app",
+          "painPoint": "clients always forgetting to book through random third party sites",
+          "solution": "gave them my own custom app with my logo"
+        },
+        {
+          "headline": "5. streamlined my entire calendar system",
+          "painPoint": "double booking myself because nothing synced properly",
+          "solution": "everything connects to one calendar that updates in real time"
+        }
+      ],
+      "ctaText": "try Alaii free → alaii.app",
+      "caption": "honestly saved my business from drowning in admin work. Alaii handles all the boring stuff so i can focus on what i actually love doing. check it out at alaii.app #salonowner #beautyentrepreneur #smallbusiness #bookingapp #salonlife"
+    },
+    "slides": [
+      {
+        "type": "hook",
+        "headline": "5 ways i saved my salon business:",
+        "bodyLines": [],
+        "imageUrl": "https://images.pexels.com/photos/7440132/pexels-photo-7440132.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 3
+      },
+      {
+        "type": "point",
+        "headline": "1. ditched expensive booking platforms",
+        "bodyLines": [
+          "paying $300/month for features i barely used",
+          "switched to one app that does everything for way less"
+        ],
+        "imageUrl": "https://images.pexels.com/photos/3993462/pexels-photo-3993462.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 4
+      },
+      {
+        "type": "point",
+        "headline": "2. automated client reminders completely",
+        "bodyLines": [
+          "constantly texting clients about their appointments like a personal assistant",
+          "let ai handle all the booking texts automatically"
+        ],
+        "imageUrl": "https://images.pexels.com/photos/7750144/pexels-photo-7750144.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 4
+      },
+      {
+        "type": "point",
+        "headline": "3. stopped chasing late payments",
+        "bodyLines": [
+          "awkwardly asking clients for money after their service",
+          "set up automatic payment processing so money comes first"
+        ],
+        "imageUrl": "https://images.pexels.com/photos/7750115/pexels-photo-7750115.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 4
+      },
+      {
+        "type": "point",
+        "headline": "4. created my own branded app",
+        "bodyLines": [
+          "clients always forgetting to book through random third party sites",
+          "gave them my own custom app with my logo"
+        ],
+        "imageUrl": "https://images.pexels.com/photos/3993134/pexels-photo-3993134.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 4
+      },
+      {
+        "type": "point",
+        "headline": "5. streamlined my entire calendar system",
+        "bodyLines": [
+          "double booking myself because nothing synced properly",
+          "everything connects to one calendar that updates in real time"
+        ],
+        "imageUrl": "https://images.pexels.com/photos/5368632/pexels-photo-5368632.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 4
+      },
+      {
+        "type": "cta",
+        "headline": "try Alaii free → alaii.app",
+        "bodyLines": [],
+        "imageUrl": "https://images.pexels.com/photos/5368632/pexels-photo-5368632.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 3
+      }
+    ],
+    "status": "rendering",
+    "createdAt": "2026-03-22T17:13:05.133Z",
+    "updatedAt": "2026-03-22T17:13:07.064Z"
+  },
+  {
+    "id": "a364946b-128d-4020-8fd5-482b76ab1559",
+    "content": {
+      "hookText": "5 ways i saved my salon business:",
+      "points": [
+        {
+          "headline": "1. ditched expensive booking platforms",
+          "painPoint": "paying $300/month for features i barely used",
+          "solution": "switched to one app that does everything for way less"
+        },
+        {
+          "headline": "2. automated client reminders completely",
+          "painPoint": "constantly texting clients about their appointments like a personal assistant",
+          "solution": "let ai handle all the booking texts automatically"
+        },
+        {
+          "headline": "3. stopped chasing late payments",
+          "painPoint": "awkwardly asking clients for money after their service",
+          "solution": "set up automatic payment processing so money comes first"
+        },
+        {
+          "headline": "4. created my own branded app",
+          "painPoint": "clients always forgetting to book through random third party sites",
+          "solution": "gave them my own custom app with my logo"
+        },
+        {
+          "headline": "5. streamlined my entire calendar system",
+          "painPoint": "double booking myself because nothing synced properly",
+          "solution": "everything connects to one calendar that updates in real time"
+        }
+      ],
+      "ctaText": "try Alaii free → alaii.app",
+      "caption": "honestly saved my business from drowning in admin work. Alaii handles all the boring stuff so i can focus on what i actually love doing. check it out at alaii.app #salonowner #beautyentrepreneur #smallbusiness #bookingapp #salonlife"
+    },
+    "slides": [
+      {
+        "type": "hook",
+        "headline": "5 ways i saved my salon business:",
+        "bodyLines": [],
+        "imageUrl": "https://images.pexels.com/photos/7440132/pexels-photo-7440132.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 3
+      },
+      {
+        "type": "point",
+        "headline": "1. ditched expensive booking platforms",
+        "bodyLines": [
+          "paying $300/month for features i barely used",
+          "switched to one app that does everything for way less"
+        ],
+        "imageUrl": "https://images.pexels.com/photos/3993462/pexels-photo-3993462.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 4
+      },
+      {
+        "type": "point",
+        "headline": "2. automated client reminders completely",
+        "bodyLines": [
+          "constantly texting clients about their appointments like a personal assistant",
+          "let ai handle all the booking texts automatically"
+        ],
+        "imageUrl": "https://images.pexels.com/photos/7750144/pexels-photo-7750144.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 4
+      },
+      {
+        "type": "point",
+        "headline": "3. stopped chasing late payments",
+        "bodyLines": [
+          "awkwardly asking clients for money after their service",
+          "set up automatic payment processing so money comes first"
+        ],
+        "imageUrl": "https://images.pexels.com/photos/7750115/pexels-photo-7750115.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 4
+      },
+      {
+        "type": "point",
+        "headline": "4. created my own branded app",
+        "bodyLines": [
+          "clients always forgetting to book through random third party sites",
+          "gave them my own custom app with my logo"
+        ],
+        "imageUrl": "https://images.pexels.com/photos/3993134/pexels-photo-3993134.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 4
+      },
+      {
+        "type": "point",
+        "headline": "5. streamlined my entire calendar system",
+        "bodyLines": [
+          "double booking myself because nothing synced properly",
+          "everything connects to one calendar that updates in real time"
+        ],
+        "imageUrl": "https://images.pexels.com/photos/5368632/pexels-photo-5368632.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 4
+      },
+      {
+        "type": "cta",
+        "headline": "try Alaii free → alaii.app",
+        "bodyLines": [],
+        "imageUrl": "https://images.pexels.com/photos/5368632/pexels-photo-5368632.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 3
+      }
+    ],
+    "status": "uploading",
+    "createdAt": "2026-03-22T17:19:21.459Z",
+    "updatedAt": "2026-03-22T17:20:12.367Z",
+    "videoPath": "/Users/anthonyedwards/Downloads/goodrunss-ai-mobile-app/alaii-reelfarm/tmp/renders/reel_3403086e-72bb-4966-8c71-4237c92cab89.mp4"
+  },
+  {
+    "id": "1264cd80-924c-4685-b98d-1ae4dd7f5bd5",
+    "content": {
+      "hookText": "5 ways i saved my salon business:",
+      "points": [
+        {
+          "headline": "1. ditched expensive booking platforms",
+          "painPoint": "paying $300/month for features i barely used",
+          "solution": "switched to one app that does everything for way less"
+        },
+        {
+          "headline": "2. automated client reminders completely",
+          "painPoint": "constantly texting clients about their appointments like a personal assistant",
+          "solution": "let ai handle all the booking texts automatically"
+        },
+        {
+          "headline": "3. stopped chasing late payments",
+          "painPoint": "awkwardly asking clients for money after their service",
+          "solution": "set up automatic payment processing so money comes first"
+        },
+        {
+          "headline": "4. created my own branded app",
+          "painPoint": "clients always forgetting to book through random third party sites",
+          "solution": "gave them my own custom app with my logo"
+        },
+        {
+          "headline": "5. streamlined my entire calendar system",
+          "painPoint": "double booking myself because nothing synced properly",
+          "solution": "everything connects to one calendar that updates in real time"
+        }
+      ],
+      "ctaText": "try Alaii free → alaii.app",
+      "caption": "honestly saved my business from drowning in admin work. Alaii handles all the boring stuff so i can focus on what i actually love doing. check it out at alaii.app #salonowner #beautyentrepreneur #smallbusiness #bookingapp #salonlife"
+    },
+    "slides": [
+      {
+        "type": "hook",
+        "headline": "5 ways i saved my salon business:",
+        "bodyLines": [],
+        "imageUrl": "https://images.pexels.com/photos/7440132/pexels-photo-7440132.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 3
+      },
+      {
+        "type": "point",
+        "headline": "1. ditched expensive booking platforms",
+        "bodyLines": [
+          "paying $300/month for features i barely used",
+          "switched to one app that does everything for way less"
+        ],
+        "imageUrl": "https://images.pexels.com/photos/3993462/pexels-photo-3993462.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 4
+      },
+      {
+        "type": "point",
+        "headline": "2. automated client reminders completely",
+        "bodyLines": [
+          "constantly texting clients about their appointments like a personal assistant",
+          "let ai handle all the booking texts automatically"
+        ],
+        "imageUrl": "https://images.pexels.com/photos/7750144/pexels-photo-7750144.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 4
+      },
+      {
+        "type": "point",
+        "headline": "3. stopped chasing late payments",
+        "bodyLines": [
+          "awkwardly asking clients for money after their service",
+          "set up automatic payment processing so money comes first"
+        ],
+        "imageUrl": "https://images.pexels.com/photos/7750115/pexels-photo-7750115.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 4
+      },
+      {
+        "type": "point",
+        "headline": "4. created my own branded app",
+        "bodyLines": [
+          "clients always forgetting to book through random third party sites",
+          "gave them my own custom app with my logo"
+        ],
+        "imageUrl": "https://images.pexels.com/photos/3993134/pexels-photo-3993134.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 4
+      },
+      {
+        "type": "point",
+        "headline": "5. streamlined my entire calendar system",
+        "bodyLines": [
+          "double booking myself because nothing synced properly",
+          "everything connects to one calendar that updates in real time"
+        ],
+        "imageUrl": "https://images.pexels.com/photos/5368632/pexels-photo-5368632.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 4
+      },
+      {
+        "type": "cta",
+        "headline": "try Alaii free → alaii.app",
+        "bodyLines": [],
+        "imageUrl": "https://images.pexels.com/photos/5368632/pexels-photo-5368632.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 3
+      }
+    ],
+    "status": "uploading",
+    "createdAt": "2026-03-22T17:20:23.029Z",
+    "updatedAt": "2026-03-22T17:21:09.509Z",
+    "videoPath": "/Users/anthonyedwards/Downloads/goodrunss-ai-mobile-app/alaii-reelfarm/tmp/renders/reel_c1dd5374-dd6f-4189-a1d0-1b4cf661e0ff.mp4"
+  },
+  {
+    "id": "414660e9-588f-4868-94a2-2ab5db4b7843",
+    "content": {
+      "hookText": "5 ways i saved my salon business:",
+      "points": [
+        {
+          "headline": "1. ditched expensive booking platforms",
+          "painPoint": "paying $300/month for features i barely used",
+          "solution": "switched to one app that does everything for way less"
+        },
+        {
+          "headline": "2. automated client reminders completely",
+          "painPoint": "constantly texting clients about their appointments like a personal assistant",
+          "solution": "let ai handle all the booking texts automatically"
+        },
+        {
+          "headline": "3. stopped chasing late payments",
+          "painPoint": "awkwardly asking clients for money after their service",
+          "solution": "set up automatic payment processing so money comes first"
+        },
+        {
+          "headline": "4. created my own branded app",
+          "painPoint": "clients always forgetting to book through random third party sites",
+          "solution": "gave them my own custom app with my logo"
+        },
+        {
+          "headline": "5. streamlined my entire calendar system",
+          "painPoint": "double booking myself because nothing synced properly",
+          "solution": "everything connects to one calendar that updates in real time"
+        }
+      ],
+      "ctaText": "try Alaii free → alaii.app",
+      "caption": "honestly saved my business from drowning in admin work. Alaii handles all the boring stuff so i can focus on what i actually love doing. check it out at alaii.app #salonowner #beautyentrepreneur #smallbusiness #bookingapp #salonlife"
+    },
+    "slides": [
+      {
+        "type": "hook",
+        "headline": "5 ways i saved my salon business:",
+        "bodyLines": [],
+        "imageUrl": "https://images.pexels.com/photos/7440132/pexels-photo-7440132.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 3
+      },
+      {
+        "type": "point",
+        "headline": "1. ditched expensive booking platforms",
+        "bodyLines": [
+          "paying $300/month for features i barely used",
+          "switched to one app that does everything for way less"
+        ],
+        "imageUrl": "https://images.pexels.com/photos/3993462/pexels-photo-3993462.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 4
+      },
+      {
+        "type": "point",
+        "headline": "2. automated client reminders completely",
+        "bodyLines": [
+          "constantly texting clients about their appointments like a personal assistant",
+          "let ai handle all the booking texts automatically"
+        ],
+        "imageUrl": "https://images.pexels.com/photos/7750144/pexels-photo-7750144.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 4
+      },
+      {
+        "type": "point",
+        "headline": "3. stopped chasing late payments",
+        "bodyLines": [
+          "awkwardly asking clients for money after their service",
+          "set up automatic payment processing so money comes first"
+        ],
+        "imageUrl": "https://images.pexels.com/photos/7750115/pexels-photo-7750115.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 4
+      },
+      {
+        "type": "point",
+        "headline": "4. created my own branded app",
+        "bodyLines": [
+          "clients always forgetting to book through random third party sites",
+          "gave them my own custom app with my logo"
+        ],
+        "imageUrl": "https://images.pexels.com/photos/3993134/pexels-photo-3993134.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 4
+      },
+      {
+        "type": "point",
+        "headline": "5. streamlined my entire calendar system",
+        "bodyLines": [
+          "double booking myself because nothing synced properly",
+          "everything connects to one calendar that updates in real time"
+        ],
+        "imageUrl": "https://images.pexels.com/photos/5368632/pexels-photo-5368632.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 4
+      },
+      {
+        "type": "cta",
+        "headline": "try Alaii free → alaii.app",
+        "bodyLines": [],
+        "imageUrl": "https://images.pexels.com/photos/5368632/pexels-photo-5368632.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 3
+      }
+    ],
+    "status": "uploading",
+    "createdAt": "2026-03-22T17:21:18.379Z",
+    "updatedAt": "2026-03-22T17:22:03.753Z",
+    "videoPath": "/Users/anthonyedwards/Downloads/goodrunss-ai-mobile-app/alaii-reelfarm/tmp/renders/reel_67616a5e-307c-4b5e-b161-0598580f0130.mp4"
+  },
+  {
+    "id": "ddb02fd5-094f-45f7-8bb8-40cb6933772b",
+    "content": {
+      "hookText": "5 ways i grew my salon:",
+      "points": [
+        {
+          "headline": "1. ditched the expensive booking platform",
+          "painPoint": "paying $300/month for features i barely used",
+          "solution": "switched to Alaii and saved thousands while getting better tools"
+        },
+        {
+          "headline": "2. automated my client reminders",
+          "painPoint": "constantly texting clients about their appointments manually",
+          "solution": "let the AI handle all reminders so i focus on clients"
+        },
+        {
+          "headline": "3. created my own branded app",
+          "painPoint": "clients always forgot how to book with me",
+          "solution": "gave them a custom app with my logo and booking"
+        },
+        {
+          "headline": "4. streamlined my payment process",
+          "painPoint": "chasing clients for payment after every single service",
+          "solution": "set up automatic payments so money hits my account instantly"
+        },
+        {
+          "headline": "5. used AI for client communication",
+          "painPoint": "answering the same booking questions over and over",
+          "solution": "AI assistant handles inquiries while i sleep or work"
+        }
+      ],
+      "ctaText": "try Alaii free → alaii.app",
+      "caption": "honestly switching to Alaii was the best business decision i made last year. saved me like $2k and my clients love how easy booking is now. check it out at alaii.app #salon #booking #smallbusiness #entrepreneur #beauty"
+    },
+    "slides": [
+      {
+        "type": "hook",
+        "headline": "5 ways i grew my salon:",
+        "bodyLines": [],
+        "imageUrl": "https://images.pexels.com/photos/5368632/pexels-photo-5368632.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 3
+      },
+      {
+        "type": "point",
+        "headline": "1. ditched the expensive booking platform",
+        "bodyLines": [
+          "paying $300/month for features i barely used",
+          "switched to Alaii and saved thousands while getting better tools"
+        ],
+        "imageUrl": "https://images.pexels.com/photos/3065208/pexels-photo-3065208.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 4
+      },
+      {
+        "type": "point",
+        "headline": "2. automated my client reminders",
+        "bodyLines": [
+          "constantly texting clients about their appointments manually",
+          "let the AI handle all reminders so i focus on clients"
+        ],
+        "imageUrl": "https://images.pexels.com/photos/3993121/pexels-photo-3993121.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 4
+      },
+      {
+        "type": "point",
+        "headline": "3. created my own branded app",
+        "bodyLines": [
+          "clients always forgot how to book with me",
+          "gave them a custom app with my logo and booking"
+        ],
+        "imageUrl": "https://images.pexels.com/photos/7755557/pexels-photo-7755557.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 4
+      },
+      {
+        "type": "point",
+        "headline": "4. streamlined my payment process",
+        "bodyLines": [
+          "chasing clients for payment after every single service",
+          "set up automatic payments so money hits my account instantly"
+        ],
+        "imageUrl": "https://images.pexels.com/photos/7750144/pexels-photo-7750144.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 4
+      },
+      {
+        "type": "point",
+        "headline": "5. used AI for client communication",
+        "bodyLines": [
+          "answering the same booking questions over and over",
+          "AI assistant handles inquiries while i sleep or work"
+        ],
+        "imageUrl": "https://images.pexels.com/photos/7750103/pexels-photo-7750103.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 4
+      },
+      {
+        "type": "cta",
+        "headline": "try Alaii free → alaii.app",
+        "bodyLines": [],
+        "imageUrl": "https://images.pexels.com/photos/7750103/pexels-photo-7750103.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 3
+      }
+    ],
+    "status": "failed",
+    "createdAt": "2026-03-22T17:35:12.321Z",
+    "updatedAt": "2026-03-22T17:36:10.335Z",
+    "videoPath": "/Users/anthonyedwards/Downloads/goodrunss-ai-mobile-app/alaii-reelfarm/tmp/renders/reel_8c8debef-8801-45ff-84a7-424efa96741f.mp4",
+    "videoUrl": "https://storage.googleapis.com/goodrunss-ai.firebasestorage.app/reelfarm/reels/reel_8c8debef-8801-45ff-84a7-424efa96741f.mp4",
+    "error": "IG container creation failed: {\"error\":{\"message\":\"(#10) Application does not have permission for this action\",\"type\":\"OAuthException\",\"code\":10,\"fbtrace_id\":\"AD8pNsXJ1jMRwoiytlizYls\"}}"
+  },
+  {
+    "id": "9af72cb2-3054-4a4b-b129-69c8b63959a0",
+    "content": {
+      "hookText": "5 ways i grew my salon:",
+      "points": [
+        {
+          "headline": "1. ditched the expensive booking platform",
+          "painPoint": "paying $300/month for features i barely used",
+          "solution": "switched to Alaii and saved thousands while getting better tools"
+        },
+        {
+          "headline": "2. automated my client reminders",
+          "painPoint": "constantly texting clients about their appointments manually",
+          "solution": "let the AI handle all reminders so i focus on clients"
+        },
+        {
+          "headline": "3. created my own branded app",
+          "painPoint": "clients always forgot how to book with me",
+          "solution": "gave them a custom app with my logo and booking"
+        },
+        {
+          "headline": "4. streamlined my payment process",
+          "painPoint": "chasing clients for payment after every single service",
+          "solution": "set up automatic payments so money hits my account instantly"
+        },
+        {
+          "headline": "5. used AI for client communication",
+          "painPoint": "answering the same booking questions over and over",
+          "solution": "AI assistant handles inquiries while i sleep or work"
+        }
+      ],
+      "ctaText": "try Alaii free → alaii.app",
+      "caption": "honestly switching to Alaii was the best business decision i made last year. saved me like $2k and my clients love how easy booking is now. check it out at alaii.app #salon #booking #smallbusiness #entrepreneur #beauty"
+    },
+    "slides": [
+      {
+        "type": "hook",
+        "headline": "5 ways i grew my salon:",
+        "bodyLines": [],
+        "imageUrl": "https://images.pexels.com/photos/5368632/pexels-photo-5368632.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 3
+      },
+      {
+        "type": "point",
+        "headline": "1. ditched the expensive booking platform",
+        "bodyLines": [
+          "paying $300/month for features i barely used",
+          "switched to Alaii and saved thousands while getting better tools"
+        ],
+        "imageUrl": "https://images.pexels.com/photos/3065208/pexels-photo-3065208.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 4
+      },
+      {
+        "type": "point",
+        "headline": "2. automated my client reminders",
+        "bodyLines": [
+          "constantly texting clients about their appointments manually",
+          "let the AI handle all reminders so i focus on clients"
+        ],
+        "imageUrl": "https://images.pexels.com/photos/3993121/pexels-photo-3993121.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 4
+      },
+      {
+        "type": "point",
+        "headline": "3. created my own branded app",
+        "bodyLines": [
+          "clients always forgot how to book with me",
+          "gave them a custom app with my logo and booking"
+        ],
+        "imageUrl": "https://images.pexels.com/photos/7755557/pexels-photo-7755557.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 4
+      },
+      {
+        "type": "point",
+        "headline": "4. streamlined my payment process",
+        "bodyLines": [
+          "chasing clients for payment after every single service",
+          "set up automatic payments so money hits my account instantly"
+        ],
+        "imageUrl": "https://images.pexels.com/photos/7750144/pexels-photo-7750144.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 4
+      },
+      {
+        "type": "point",
+        "headline": "5. used AI for client communication",
+        "bodyLines": [
+          "answering the same booking questions over and over",
+          "AI assistant handles inquiries while i sleep or work"
+        ],
+        "imageUrl": "https://images.pexels.com/photos/7750103/pexels-photo-7750103.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 4
+      },
+      {
+        "type": "cta",
+        "headline": "try Alaii free → alaii.app",
+        "bodyLines": [],
+        "imageUrl": "https://images.pexels.com/photos/7750103/pexels-photo-7750103.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 3
+      }
+    ],
+    "status": "failed",
+    "createdAt": "2026-03-22T17:36:16.555Z",
+    "updatedAt": "2026-03-22T17:37:04.657Z",
+    "videoPath": "/Users/anthonyedwards/Downloads/goodrunss-ai-mobile-app/alaii-reelfarm/tmp/renders/reel_37f53e7d-3b58-4bec-b57e-0cb97435aed6.mp4",
+    "videoUrl": "https://storage.googleapis.com/goodrunss-ai.firebasestorage.app/reelfarm/reels/reel_37f53e7d-3b58-4bec-b57e-0cb97435aed6.mp4",
+    "error": "IG container creation failed: {\"error\":{\"message\":\"(#10) Application does not have permission for this action\",\"type\":\"OAuthException\",\"code\":10,\"fbtrace_id\":\"AgoUf-_Gp4GKi5gKdES_esS\"}}"
+  },
+  {
+    "id": "d4808517-992c-4cf2-be9e-88d556e2b5f1",
+    "content": {
+      "hookText": "5 ways i grew my salon:",
+      "points": [
+        {
+          "headline": "1. stopped using expensive booking platforms",
+          "painPoint": "paying $300/month for features i barely used was killing me",
+          "solution": "switched to Alaii - same features, way less money"
+        },
+        {
+          "headline": "2. automated my reminder texts",
+          "painPoint": "manually texting clients about appointments was eating my whole day",
+          "solution": "set up auto reminders so clients never forget anymore"
+        },
+        {
+          "headline": "3. made my own branded app",
+          "painPoint": "clients kept booking with competitors who looked more professional",
+          "solution": "gave clients my custom app so they book with me first"
+        },
+        {
+          "headline": "4. let ai handle late bookings",
+          "painPoint": "missing calls meant losing clients to salons with 24/7 booking",
+          "solution": "ai assistant books appointments even when i'm sleeping"
+        },
+        {
+          "headline": "5. streamlined my payment processing",
+          "painPoint": "chasing clients for payment was awkward and time consuming",
+          "solution": "built payments right into booking so everything happens automatically"
+        }
+      ],
+      "ctaText": "try Alaii free → alaii.app",
+      "caption": "honestly switching to Alaii was the best business decision i made this year. went from spending hours on admin to actually focusing on my clients. everything's in one place and it's free to start → alaii.app #salon #beauty #smallbusiness #entrepreneur #bookingapp"
+    },
+    "slides": [
+      {
+        "type": "hook",
+        "headline": "5 ways i grew my salon:",
+        "bodyLines": [],
+        "imageUrl": "https://images.pexels.com/photos/7750115/pexels-photo-7750115.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 3
+      },
+      {
+        "type": "point",
+        "headline": "1. stopped using expensive booking platforms",
+        "bodyLines": [
+          "paying $300/month for features i barely used was killing me",
+          "switched to Alaii - same features, way less money"
+        ],
+        "imageUrl": "https://images.pexels.com/photos/7755557/pexels-photo-7755557.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 4
+      },
+      {
+        "type": "point",
+        "headline": "2. automated my reminder texts",
+        "bodyLines": [
+          "manually texting clients about appointments was eating my whole day",
+          "set up auto reminders so clients never forget anymore"
+        ],
+        "imageUrl": "https://images.pexels.com/photos/7819733/pexels-photo-7819733.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 4
+      },
+      {
+        "type": "point",
+        "headline": "3. made my own branded app",
+        "bodyLines": [
+          "clients kept booking with competitors who looked more professional",
+          "gave clients my custom app so they book with me first"
+        ],
+        "imageUrl": "https://images.pexels.com/photos/7750103/pexels-photo-7750103.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 4
+      },
+      {
+        "type": "point",
+        "headline": "4. let ai handle late bookings",
+        "bodyLines": [
+          "missing calls meant losing clients to salons with 24/7 booking",
+          "ai assistant books appointments even when i'm sleeping"
+        ],
+        "imageUrl": "https://images.pexels.com/photos/3993134/pexels-photo-3993134.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 4
+      },
+      {
+        "type": "point",
+        "headline": "5. streamlined my payment processing",
+        "bodyLines": [
+          "chasing clients for payment was awkward and time consuming",
+          "built payments right into booking so everything happens automatically"
+        ],
+        "imageUrl": "https://images.pexels.com/photos/7273415/pexels-photo-7273415.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 4
+      },
+      {
+        "type": "cta",
+        "headline": "try Alaii free → alaii.app",
+        "bodyLines": [],
+        "imageUrl": "https://images.pexels.com/photos/7273415/pexels-photo-7273415.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=800",
+        "duration": 3
+      }
+    ],
+    "status": "failed",
+    "createdAt": "2026-03-22T19:13:57.848Z",
+    "updatedAt": "2026-03-22T19:15:23.052Z",
+    "videoPath": "/Users/anthonyedwards/Downloads/goodrunss-ai-mobile-app/alaii-reelfarm/tmp/renders/reel_c703a5e4-0d37-4d84-a6c7-69a449060fc0.mp4",
+    "videoUrl": "https://storage.googleapis.com/goodrunss-ai.firebasestorage.app/reelfarm/reels/reel_c703a5e4-0d37-4d84-a6c7-69a449060fc0.mp4",
+    "error": "IG container creation failed: {\"error\":{\"message\":\"(#10) Application does not have permission for this action\",\"type\":\"OAuthException\",\"code\":10,\"fbtrace_id\":\"A8TA4UM2EdWS6f_MmmL0fhm\"}}"
+  }
+]

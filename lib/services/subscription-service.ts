@@ -5,8 +5,8 @@ import { db } from "@/lib/firebase-config"
 // SUBSCRIPTION TYPES
 // ============================================
 
-export type SubscriptionTier = "free" | "pro"
-export type SubscriptionPeriod = "monthly" | "3months" | "6months"
+export type SubscriptionTier = "free" | "growth"
+export type SubscriptionPeriod = "monthly"
 export type SubscriptionStatus = "active" | "expired" | "canceled" | "trial"
 
 export interface Subscription {
@@ -98,9 +98,7 @@ export const PRO_FEATURES: ProFeature[] = [
 // ============================================
 
 export const PRICING = {
-    monthly: { price: 15, period: "month", stripePriceId: "price_1Sbzhb06I3eFkRUmi5i8z4V8" },
-    "3months": { price: 40, period: "3 months", stripePriceId: "price_1SSrP106I3eFkRUm9qZHlG8K", savings: "11%" },
-    "6months": { price: 75, period: "6 months", stripePriceId: "price_1SSrQ706I3eFkRUmALT3M9tM", savings: "17%" },
+    monthly: { price: 20, period: "month", stripePriceId: "price_1TFfyQ06I3eFkRUmtYNsD29o" },
 }
 
 // ============================================
@@ -205,7 +203,7 @@ class SubscriptionService {
 
         // Fallback to Firebase/Stripe (Web Source of Truth)
         const sub = await this.getSubscription()
-        return sub.tier === "pro" && (sub.status === "active" || sub.status === "trial")
+        return sub.tier === "growth" && (sub.status === "active" || sub.status === "trial")
     }
 
     async isTrialing(): Promise<boolean> {
@@ -292,7 +290,7 @@ class SubscriptionService {
         }
 
         const subscription: Subscription = {
-            tier: "pro",
+            tier: "growth",
             status: "active",
             period,
             startDate: startDate.toISOString(),
@@ -336,9 +334,8 @@ class SubscriptionService {
             const createCheckout = httpsCallable(functions, "createSubscriptionCheckout")
 
             const result = await createCheckout({
-                period,
-                successUrl: "goodrunss://subscription/success",
-                cancelUrl: "goodrunss://subscription/canceled",
+                successUrl: "dalai://subscription/success",
+                cancelUrl: "dalai://subscription/canceled",
             })
 
             const data = result.data as { sessionId: string; url: string }

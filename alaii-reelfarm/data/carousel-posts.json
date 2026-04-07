@@ -1,0 +1,255 @@
+[
+  {
+    "id": "4a853904-2e24-4f9f-ad3f-b81191e02982",
+    "campaignId": "6fb0c19e-b43c-4710-97aa-4e09f209b4ab",
+    "content": {
+      "hookText": "5 things i stopped doing manually as a nurse injector (my sanity is back)",
+      "slides": [
+        {
+          "headline": "1. stop manually scheduling follow-ups",
+          "body": "no more sticky notes for 2-week botox check-ins. automate those touch-up appointments so patients don't fall through the cracks"
+        },
+        {
+          "headline": "2. stop chasing patients individually",
+          "body": "tired of texting each patient about their lip filler maintenance? let AI handle the follow-ups while you focus on injecting"
+        },
+        {
+          "headline": "3. stop filling gaps last minute",
+          "body": "when someone cancels their consultation, AI instantly reaches out to your waitlist. no more scrambling to fill treatment rooms"
+        },
+        {
+          "headline": "4. stop creating content after hours",
+          "body": "posting before/afters at 10pm is not the vibe. automate your aesthetic content so you can actually have a life"
+        },
+        {
+          "headline": "5. stop using expensive booking systems",
+          "body": "why pay $300/month for basic scheduling? get AI that actually grows your practice plus free booking and payments"
+        }
+      ],
+      "ctaText": "try Alaii free → alaii.app | app store + android",
+      "title": "stop doing these manually bestie",
+      "description": "these 5 things changed everything for my medspa. Alaii handles the busywork so i can focus on patients → alaii.app #nurseinjector #medspa #aestheticnurse #botox #fillers #injectorlife #medspabusiness #aesthetics"
+    },
+    "slideImageUrls": [
+      "https://cdn.alaii.app/carousel/reelfarm/reels/4a853904-2e24-4f9f-ad3f-b81191e02982_slide_0.jpg",
+      "https://cdn.alaii.app/carousel/reelfarm/reels/4a853904-2e24-4f9f-ad3f-b81191e02982_slide_1.jpg",
+      "https://cdn.alaii.app/carousel/reelfarm/reels/4a853904-2e24-4f9f-ad3f-b81191e02982_slide_2.jpg",
+      "https://cdn.alaii.app/carousel/reelfarm/reels/4a853904-2e24-4f9f-ad3f-b81191e02982_slide_3.jpg",
+      "https://cdn.alaii.app/carousel/reelfarm/reels/4a853904-2e24-4f9f-ad3f-b81191e02982_slide_4.jpg",
+      "https://cdn.alaii.app/carousel/reelfarm/reels/4a853904-2e24-4f9f-ad3f-b81191e02982_slide_5.jpg",
+      "https://cdn.alaii.app/carousel/reelfarm/reels/4a853904-2e24-4f9f-ad3f-b81191e02982_slide_6.jpg"
+    ],
+    "status": "failed",
+    "results": {
+      "default": {
+        "status": "error",
+        "error": "spam_risk_too_many_pending_share"
+      }
+    },
+    "createdAt": "2026-04-06T23:21:31.195Z"
+  },
+  {
+    "id": "14a2277f-e9ff-4f95-a96a-16dcfcf8530f",
+    "campaignId": "6fb0c19e-b43c-4710-97aa-4e09f209b4ab",
+    "content": {
+      "hookText": "5 ways i automated patient follow-ups after fillers (game changer)",
+      "slides": [
+        {
+          "headline": "1. stop manually texting every patient",
+          "body": "used to spend 2 hours every evening checking on patients. now it happens automatically without me lifting a finger."
+        },
+        {
+          "headline": "2. automated 24-hour check-ins",
+          "body": "patients get a sweet message asking how they're feeling. catches any concerns early and shows i care about their results."
+        },
+        {
+          "headline": "3. auto-schedule 2-week touch-ups",
+          "body": "instead of hoping patients remember to book their touch-up, the system sends a gentle reminder with direct booking link."
+        },
+        {
+          "headline": "4. before/after photo reminders",
+          "body": "automatically asks patients to submit their glow-up photos at the perfect timing. my social content practically creates itself now."
+        },
+        {
+          "headline": "5. win back patients who ghost",
+          "body": "AI reaches out to patients who haven't been in a while with personalized messages. brings back 30% of my lost patients."
+        }
+      ],
+      "ctaText": "try Alaii free → alaii.app | app store + android",
+      "title": "automated my entire patient follow-up process",
+      "description": "honestly wish i found this sooner. follow-ups used to take hours every week, now Alaii handles it all automatically and my patients love the consistent care → alaii.app #nurseinjector #medspa #aestheticnurse #fillers #injectorlife #medspabusiness #aesthetics #botox"
+    },
+    "slideImageUrls": [
+      "https://cdn.alaii.app/carousel/reelfarm/reels/14a2277f-e9ff-4f95-a96a-16dcfcf8530f_slide_0.jpg",
+      "https://cdn.alaii.app/carousel/reelfarm/reels/14a2277f-e9ff-4f95-a96a-16dcfcf8530f_slide_1.jpg",
+      "https://cdn.alaii.app/carousel/reelfarm/reels/14a2277f-e9ff-4f95-a96a-16dcfcf8530f_slide_2.jpg",
+      "https://cdn.alaii.app/carousel/reelfarm/reels/14a2277f-e9ff-4f95-a96a-16dcfcf8530f_slide_3.jpg",
+      "https://cdn.alaii.app/carousel/reelfarm/reels/14a2277f-e9ff-4f95-a96a-16dcfcf8530f_slide_4.jpg",
+      "https://cdn.alaii.app/carousel/reelfarm/reels/14a2277f-e9ff-4f95-a96a-16dcfcf8530f_slide_5.jpg",
+      "https://cdn.alaii.app/carousel/reelfarm/reels/14a2277f-e9ff-4f95-a96a-16dcfcf8530f_slide_6.jpg"
+    ],
+    "status": "posted",
+    "results": {
+      "default": {
+        "publishId": "p_inbox_url~v2.7625790316741871629",
+        "status": "success"
+      }
+    },
+    "createdAt": "2026-04-06T23:22:33.344Z",
+    "postedAt": "2026-04-06T23:22:33.344Z"
+  },
+  {
+    "id": "9a2d829a-903b-4dfd-b21f-3c03a7b82d9d",
+    "campaignId": "6fb0c19e-b43c-4710-97aa-4e09f209b4ab",
+    "content": {
+      "hookText": "3 ways i stopped losing patients to other injectors",
+      "slides": [
+        {
+          "headline": "1. automated follow-up reminders",
+          "body": "stopped manually texting every patient about their 2-week check-ins. now they automatically get reminded for touch-ups before they book elsewhere."
+        },
+        {
+          "headline": "2. instant cancellation fills",
+          "body": "when someone cancels botox last minute, my AI reaches out to waitlist patients immediately. no more empty treatment rooms."
+        },
+        {
+          "headline": "3. consistent content posting",
+          "body": "my before/after posts go out automatically now. patients see my work regularly so i stay top of mind when they're ready for their next treatment."
+        }
+      ],
+      "ctaText": "try Alaii free → alaii.app | app store + android",
+      "title": "how i stopped losing patients to competitors",
+      "description": "these 3 changes literally saved my medspa from losing patients to other injectors. Alaii handles all the follow-ups and marketing automatically so i can focus on treatments → alaii.app #nurseinjector #medspa #aestheticnurse #botox #fillers #injectorlife #medspabusiness #aesthetics"
+    },
+    "slideImageUrls": [
+      "https://cdn.alaii.app/carousel/reelfarm/reels/9a2d829a-903b-4dfd-b21f-3c03a7b82d9d_slide_0.jpg",
+      "https://cdn.alaii.app/carousel/reelfarm/reels/9a2d829a-903b-4dfd-b21f-3c03a7b82d9d_slide_1.jpg",
+      "https://cdn.alaii.app/carousel/reelfarm/reels/9a2d829a-903b-4dfd-b21f-3c03a7b82d9d_slide_2.jpg",
+      "https://cdn.alaii.app/carousel/reelfarm/reels/9a2d829a-903b-4dfd-b21f-3c03a7b82d9d_slide_3.jpg",
+      "https://cdn.alaii.app/carousel/reelfarm/reels/9a2d829a-903b-4dfd-b21f-3c03a7b82d9d_slide_4.jpg"
+    ],
+    "status": "posted",
+    "results": {
+      "default": {
+        "publishId": "p_inbox_url~v2.7625790654332995597",
+        "status": "success"
+      }
+    },
+    "createdAt": "2026-04-06T23:23:31.266Z",
+    "postedAt": "2026-04-06T23:23:31.266Z"
+  },
+  {
+    "id": "cf1afa08-15e8-4d86-819f-9a4f0219dd01",
+    "campaignId": "6fb0c19e-b43c-4710-97aa-4e09f209b4ab",
+    "content": {
+      "hookText": "7 things i wish i knew before opening my medspa",
+      "slides": [
+        {
+          "headline": "1. patients will ghost you constantly",
+          "body": "they book consultations then disappear. having ai follow up automatically saved my sanity and booking rate."
+        },
+        {
+          "headline": "2. consent forms kill your flow",
+          "body": "spending 10 minutes on paperwork between every patient adds hours to your day. automate what you can."
+        },
+        {
+          "headline": "3. nervous patients need extra nurturing",
+          "body": "first-time botox patients spiral with anxiety. automated check-ins and educational content build trust before they even arrive."
+        },
+        {
+          "headline": "4. empty treatment rooms = lost money",
+          "body": "every cancelled appointment that sits empty is $300+ gone. you need systems to fill those gaps instantly."
+        },
+        {
+          "headline": "5. marketing aesthetics feels icky",
+          "body": "posting discount botox feels gross but you need patients. focus on education and before/afters instead of sales-y content."
+        },
+        {
+          "headline": "6. manual scheduling is chaos",
+          "body": "juggling multiple providers, treatment rooms, and follow-up protocols manually will burn you out fast."
+        },
+        {
+          "headline": "7. software costs add up quickly",
+          "body": "$300/month for booking, $50 for payments, $100 for reminders. it's insane how much we pay for basic business tools."
+        }
+      ],
+      "ctaText": "try Alaii free → alaii.app | app store + android",
+      "title": "things i wish i knew before opening my medspa",
+      "description": "wish someone told me this stuff earlier 😅 now i use Alaii to handle the chaos automatically → alaii.app #nurseinjector #medspa #aestheticnurse #botox #medspabusiness #aesthetics #injectorlife #aestheticmedicine"
+    },
+    "slideImageUrls": [
+      "https://cdn.alaii.app/carousel/reelfarm/reels/cf1afa08-15e8-4d86-819f-9a4f0219dd01_slide_0.jpg",
+      "https://cdn.alaii.app/carousel/reelfarm/reels/cf1afa08-15e8-4d86-819f-9a4f0219dd01_slide_1.jpg",
+      "https://cdn.alaii.app/carousel/reelfarm/reels/cf1afa08-15e8-4d86-819f-9a4f0219dd01_slide_2.jpg",
+      "https://cdn.alaii.app/carousel/reelfarm/reels/cf1afa08-15e8-4d86-819f-9a4f0219dd01_slide_3.jpg",
+      "https://cdn.alaii.app/carousel/reelfarm/reels/cf1afa08-15e8-4d86-819f-9a4f0219dd01_slide_4.jpg",
+      "https://cdn.alaii.app/carousel/reelfarm/reels/cf1afa08-15e8-4d86-819f-9a4f0219dd01_slide_5.jpg",
+      "https://cdn.alaii.app/carousel/reelfarm/reels/cf1afa08-15e8-4d86-819f-9a4f0219dd01_slide_6.jpg",
+      "https://cdn.alaii.app/carousel/reelfarm/reels/cf1afa08-15e8-4d86-819f-9a4f0219dd01_slide_7.jpg",
+      "https://cdn.alaii.app/carousel/reelfarm/reels/cf1afa08-15e8-4d86-819f-9a4f0219dd01_slide_8.jpg"
+    ],
+    "status": "posted",
+    "results": {
+      "default": {
+        "publishId": "p_inbox_url~v2.7625790864601843726",
+        "status": "success"
+      }
+    },
+    "createdAt": "2026-04-06T23:24:33.358Z",
+    "postedAt": "2026-04-06T23:24:33.358Z"
+  },
+  {
+    "id": "0ad353b3-2651-4d9a-b0c7-fd8fe78a7259",
+    "campaignId": "6fb0c19e-b43c-4710-97aa-4e09f209b4ab",
+    "content": {
+      "hookText": "6 things i stopped doing that turned my empty treatment rooms into a 3-month waitlist",
+      "slides": [
+        {
+          "headline": "1. chasing ghost patients individually",
+          "body": "stopped manually texting every patient who went MIA. now i have systems that automatically win them back without me lifting a finger."
+        },
+        {
+          "headline": "2. posting content during patient hours",
+          "body": "used to spend my lunch breaks creating posts instead of eating. now my content runs on autopilot while i focus on consultations."
+        },
+        {
+          "headline": "3. accepting empty slots as 'slow days'",
+          "body": "those random 2pm cancellations used to stay empty. now they get filled automatically from my waitlist within minutes."
+        },
+        {
+          "headline": "4. sending basic appointment reminders",
+          "body": "generic 'you have an appointment tomorrow' texts led to constant no-shows. personalized reminders cut my no-shows by 80%."
+        },
+        {
+          "headline": "5. manually following up after treatments",
+          "body": "remembering to check in with every botox patient at 2 weeks was impossible. automated follow-ups book touch-ups before i even think about it."
+        },
+        {
+          "headline": "6. paying $300/month for basic booking",
+          "body": "was throwing money at software that barely worked. switched to something that actually fills my calendar AND saves me money."
+        }
+      ],
+      "ctaText": "try Alaii free → alaii.app | app store + android",
+      "title": "empty treatment rooms to waitlist in 3 months",
+      "description": "stopped doing these 6 things and now i'm booked solid. Alaii handles all the stuff that used to eat up my patient time → alaii.app #nurseinjector #medspa #aestheticnurse #botox #injectorlife #medspabusiness #aesthetics #aestheticmedicine"
+    },
+    "slideImageUrls": [
+      "https://cdn.alaii.app/carousel/reelfarm/reels/0ad353b3-2651-4d9a-b0c7-fd8fe78a7259_slide_0.jpg",
+      "https://cdn.alaii.app/carousel/reelfarm/reels/0ad353b3-2651-4d9a-b0c7-fd8fe78a7259_slide_1.jpg",
+      "https://cdn.alaii.app/carousel/reelfarm/reels/0ad353b3-2651-4d9a-b0c7-fd8fe78a7259_slide_2.jpg",
+      "https://cdn.alaii.app/carousel/reelfarm/reels/0ad353b3-2651-4d9a-b0c7-fd8fe78a7259_slide_3.jpg",
+      "https://cdn.alaii.app/carousel/reelfarm/reels/0ad353b3-2651-4d9a-b0c7-fd8fe78a7259_slide_4.jpg",
+      "https://cdn.alaii.app/carousel/reelfarm/reels/0ad353b3-2651-4d9a-b0c7-fd8fe78a7259_slide_5.jpg",
+      "https://cdn.alaii.app/carousel/reelfarm/reels/0ad353b3-2651-4d9a-b0c7-fd8fe78a7259_slide_6.jpg",
+      "https://cdn.alaii.app/carousel/reelfarm/reels/0ad353b3-2651-4d9a-b0c7-fd8fe78a7259_slide_7.jpg"
+    ],
+    "status": "failed",
+    "results": {
+      "default": {
+        "status": "error",
+        "error": "spam_risk_too_many_pending_share"
+      }
+    },
+    "createdAt": "2026-04-06T23:25:35.463Z"
+  }
+]
