@@ -29,18 +29,22 @@ export interface InfluencerLead {
 const MANUS_API_URL = 'https://api.manus.ai/v2';
 const MANUS_API_KEY = process.env.MANUS_API_KEY || '';
 
-async function manusRequest(endpoint: string, body: object): Promise<any> {
+async function manusRequest(endpoint: string, body?: object, method: 'GET' | 'POST' = 'POST'): Promise<any> {
   if (!MANUS_API_KEY) {
     throw new Error('MANUS_API_KEY not configured');
   }
 
-  const res = await fetch(`${MANUS_API_URL}/${endpoint}`, {
-    method: 'POST',
+  const url = method === 'GET' && body
+    ? `${MANUS_API_URL}/${endpoint}?${new URLSearchParams(body as Record<string, string>).toString()}`
+    : `${MANUS_API_URL}/${endpoint}`;
+
+  const res = await fetch(url, {
+    method,
     headers: {
       'Content-Type': 'application/json',
       'x-manus-api-key': MANUS_API_KEY,
     },
-    body: JSON.stringify(body),
+    ...(method === 'POST' && body ? { body: JSON.stringify(body) } : {}),
   });
 
   if (!res.ok) {
@@ -104,19 +108,43 @@ Only return the JSON array, no other text.`;
 }
 
 /**
- * Check the status/result of a Manus task.
+ * Check the status of a Manus task via task.detail (GET).
  */
 export async function getTaskStatus(taskId: string): Promise<ManusTask> {
-  const result = await manusRequest('task.status', { task_id: taskId });
+  const detail = await manusRequest('task.detail', { task_id: taskId }, 'GET');
 
-  return {
-    taskId,
-    status: result.status === 'done' ? 'completed'
-      : result.status === 'error' ? 'failed'
-      : result.status === 'running' ? 'running'
-      : 'pending',
-    result: result.output || result.result || undefined,
-  };
+  const agentStatus = detail.agent_status || detail.status || 'pending';
+  let status: ManusTask['status'] = 'pending';
+  if (agentStatus === 'completed' || agentStatus === 'done') status = 'completed';
+  else if (agentStatus === 'error' || agentStatus === 'failed') status = 'failed';
+  else if (agentStatus === 'running') status = 'running';
+
+  // If completed, fetch messages to get the result
+  let result: string | undefined;
+  if (status === 'completed') {
+    try {
+      const messages = await manusRequest('task.listMessages', {
+        task_id: taskId,
+        order: 'desc',
+        limit: '10',
+      }, 'GET');
+
+      // Find assistant messages with the actual content
+      const assistantMsgs = (messages.data || messages.messages || [])
+        .filter((m: any) => m.role === 'assistant' || m.type === 'assistant_message');
+
+      if (assistantMsgs.length > 0) {
+        const lastMsg = assistantMsgs[0];
+        result = typeof lastMsg.content === 'string'
+          ? lastMsg.content
+          : lastMsg.content?.map((c: any) => c.text || '').join('\n') || JSON.stringify(lastMsg);
+      }
+    } catch (msgErr) {
+      console.warn('⚠️ Could not fetch task messages:', msgErr);
+    }
+  }
+
+  return { taskId, status, result };
 }
 
 /**
