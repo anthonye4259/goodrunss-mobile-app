@@ -25,8 +25,19 @@ COPY . .
 RUN npm run build
 
 # Create data directory for persistent storage
-RUN mkdir -p /app/data /app/tmp
+RUN mkdir -p /app/data /app/tmp /app/data-seed
+
+# Copy data files to seed directory (used on first boot if volume is empty)
+COPY data/ /app/data-seed/
+
+# Create entrypoint script that seeds the volume on first boot
+RUN echo '#!/bin/sh\n\
+if [ ! -f /app/data/tiktok-accounts.json ]; then\n\
+  echo "Seeding data volume with initial data..."\n\
+  cp -r /app/data-seed/* /app/data/ 2>/dev/null || true\n\
+fi\n\
+exec npm start' > /app/entrypoint.sh && chmod +x /app/entrypoint.sh
 
 EXPOSE 3000
 
-CMD ["npm", "start"]
+CMD ["/app/entrypoint.sh"]
