@@ -224,6 +224,12 @@ async function generateReply(tweet: any): Promise<string> {
       role: 'user',
       content: `Write a short, helpful Twitter reply to this tweet from a beauty industry professional. Be genuinely helpful, not salesy. Only mention Alaii if the tweet is about booking software, no-shows, or scheduling problems. Keep it under 200 characters. Sound like a real person, not a brand.
 
+FORMATTING RULES:
+- NEVER use em dashes (—) or semicolons. Use periods and commas only.
+- No words like: furthermore, moreover, utilize, streamline, leverage, game-changer
+- Don't start with "Great question!" or "Love this!" or "This is so true!"
+- Write like a real person texting, not a brand account
+
 TWEET: "${tweet.text}"
 AUTHOR: @${tweet.author?.username || 'unknown'} (${tweet.author?.description?.slice(0, 100) || 'beauty pro'})
 

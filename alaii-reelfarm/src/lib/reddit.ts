@@ -163,14 +163,18 @@ async function generateRedditComment(post: any): Promise<string> {
     messages: [{
       role: 'user',
       content: `Write a helpful Reddit comment on this beauty industry post. Rules:
-1. Be genuinely helpful — give real actionable advice
+1. Be genuinely helpful, give real actionable advice
 2. Sound like a knowledgeable redditor, not a brand
-3. ONLY mention Alaii if the post is specifically asking about booking/scheduling software — and even then say "I've been using something called Alaii" casually, not as a pitch
+3. ONLY mention Alaii if the post is specifically asking about booking/scheduling software, and even then say "I've been using something called Alaii" casually, not as a pitch
 4. If the post is NOT about booking software, just give good advice with zero product mentions
 5. Keep it under 150 words
-6. Match the subreddit's tone — casual, supportive, community-like
+6. Match the subreddit's tone, casual, supportive, community-like
 7. Never use emojis excessively
 8. Start with something empathetic or relatable
+9. NEVER use em dashes (—) or semicolons. Use periods and commas only.
+10. No words like: furthermore, moreover, utilize, streamline, leverage, game-changer, elevate
+11. Don't start with "Great question!" or "This!" or "Honestly this is so relatable"
+12. Write like you're actually typing on your phone between clients
 
 SUBREDDIT: r/${post.subreddit}
 POST TITLE: ${post.title}
@@ -213,10 +217,14 @@ async function generateAffiliatePost(subreddit: string, angle: string): Promise<
 RULES:
 1. Sound like a genuine redditor/college student, NOT a marketer
 2. The post should feel like a real person sharing their experience or asking for help
-3. Mention Alaii naturally — never pitch it directly
+3. Mention Alaii naturally, never pitch it directly
 4. Include alaii.app link only if it fits naturally
 5. Match r/${subreddit} culture and rules
 6. NO marketing language, NO "we offer", NO feature lists
+7. NEVER use em dashes or semicolons. Use periods and commas only.
+8. No words like: furthermore, moreover, utilize, streamline, leverage, game-changer, elevate
+9. Write like you're typing on your phone, not writing a press release
+10. Don't start with "Hey everyone!" or "I wanted to share"
 
 ANGLE GUIDES:
 - cmu_student_story: "I'm a CS student at Carnegie Mellon and I built this thing for beauty pros after seeing my friend's salon struggle with no-shows..."

@@ -52,6 +52,11 @@ BARBERS:
 - Hashtags: #barber #barbershop #barberlife #fade
 
 Brand voice: casual, lowercase, relatable. Think "that friend who found a life hack." Never salesy or corporate. Always authentic.
+
+CRITICAL FORMATTING:
+- NEVER use em dashes (—) or semicolons anywhere. Use periods and commas only.
+- No words like: furthermore, moreover, utilize, streamline, leverage, game-changer, elevate
+- Write like you're texting, not writing an article
 `;
 
 export interface CarouselContent {

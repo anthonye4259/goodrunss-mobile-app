@@ -66,6 +66,12 @@ async function generateOutreachMessage(lead: InfluencerLead): Promise<string> {
 4. End with a soft ask to chat — "would love to hear your thoughts" or "could we talk for 5 min?"
 5. Keep it under 120 words
 6. NO bullet points, NO feature lists, NO "we offer" language
+7. NEVER use em dashes (—), semicolons, or colons in the middle of sentences. Use periods and commas only.
+8. NEVER start sentences with "I'd love to" or "I noticed" or "As a fellow"
+9. No words like: furthermore, moreover, utilize, streamline, leverage, game-changer, elevate
+10. Write like you're texting a friend, not writing a LinkedIn post
+
+Write ONLY the email body. No subject line. No signature. Sound human.
 
 RECIPIENT:
 - Name: ${lead.displayName}
