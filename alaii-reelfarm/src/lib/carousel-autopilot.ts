@@ -293,19 +293,22 @@ async function runCarouselAutoPilot(campaign: CarouselCampaign): Promise<void> {
 
     console.log(`\n🎉 Posted to ${successCount}/${Object.keys(results).length} TikTok accounts`);
 
-    // === INSTAGRAM POST ===
+    // === INSTAGRAM POST (always post, regardless of TikTok result) ===
     try {
       const hashtags = generateHashtags(content.hookText);
       const igCaption = `${content.description}\n\n${hashtags.map(h => `#${h}`).join(' ')}`;
-      console.log(`\n📸 Posting to Instagram...`);
+      console.log(`\n📸 Posting to Instagram via ${process.env.IG_USER_ID ? 'Graph API' : 'Manus'}...`);
+      console.log(`📸 IG caption (${igCaption.length} chars): "${igCaption.slice(0, 100)}..."`);
+      console.log(`📸 IG slide URLs: ${slideUrls.length} images`);
       const igResult = await publishToIG(slideUrls, igCaption);
+      console.log(`📸 IG result: ${JSON.stringify(igResult)}`);
       if (igResult.status === 'published') {
         console.log(`✅ Instagram carousel posted!`);
       } else {
         console.log(`⚠️ Instagram post: ${igResult.status} — ${igResult.error || 'unknown'}`);
       }
     } catch (igError) {
-      console.error(`⚠️ Instagram post failed (non-blocking):`, igError);
+      console.error(`❌ Instagram post failed:`, igError);
     }
 
     cleanupCarousel(rendered);
@@ -315,7 +318,7 @@ async function runCarouselAutoPilot(campaign: CarouselCampaign): Promise<void> {
     const post: CarouselPost = {
       id: postId,
       campaignId: campaign.id,
-      content: { hookText: 'Error', slides: [], ctaText: '', title: '', description: '' },
+      content: { hookText: 'Error', slides: [], ctaText: '', title: '', description: '', industry: '' },
       slideImageUrls: [],
       status: 'failed',
       results: {},
