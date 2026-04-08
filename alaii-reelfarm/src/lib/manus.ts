@@ -29,6 +29,80 @@ export interface InfluencerLead {
 
 const MANUS_API_URL = 'https://api.manus.ai/v2';
 const MANUS_API_KEY = process.env.MANUS_API_KEY || '';
+const SLACK_BOT_TOKEN = process.env.SLACK_BOT_TOKEN || '';
+const SLACK_MANUS_CHANNEL_ID = process.env.SLACK_MANUS_CHANNEL_ID || '';
+
+const useSlack = !!SLACK_BOT_TOKEN && !!SLACK_MANUS_CHANNEL_ID;
+
+// ── Slack-based Manus Client (50% fewer credits) ──
+
+async function slackPostMessage(text: string): Promise<string> {
+  const res = await fetch('https://slack.com/api/chat.postMessage', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${SLACK_BOT_TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      channel: SLACK_MANUS_CHANNEL_ID,
+      text,
+    }),
+  });
+  const data = await res.json();
+  if (!data.ok) {
+    throw new Error(`Slack postMessage failed: ${data.error}`);
+  }
+  return data.ts; // message timestamp (used to track conversation)
+}
+
+async function slackGetLatestBotReply(afterTs: string, maxWaitMs: number = 10 * 60 * 1000): Promise<string | null> {
+  const startTime = Date.now();
+  const pollInterval = 15000;
+
+  while (Date.now() - startTime < maxWaitMs) {
+    await new Promise(resolve => setTimeout(resolve, pollInterval));
+
+    const res = await fetch(`https://slack.com/api/conversations.history?channel=${SLACK_MANUS_CHANNEL_ID}&oldest=${afterTs}&limit=20`, {
+      headers: { Authorization: `Bearer ${SLACK_BOT_TOKEN}` },
+    });
+    const data = await res.json();
+
+    if (data.ok && data.messages) {
+      // Find bot messages (from Manus) after our message
+      const botMessages = data.messages
+        .filter((m: any) => m.ts > afterTs && m.bot_id)
+        .sort((a: any, b: any) => parseFloat(b.ts) - parseFloat(a.ts));
+
+      if (botMessages.length > 0) {
+        const latest = botMessages[0];
+        // Check if it looks like a complete response (has JSON or substantial text)
+        const text = latest.text || '';
+        if (text.length > 100 || text.includes('[') || text.includes('completed')) {
+          return text;
+        }
+      }
+    }
+  }
+  return null;
+}
+
+/** Send a task to Manus via Slack and wait for response */
+async function manusViaSlack(prompt: string, waitForResponse: boolean = true): Promise<{ taskId: string; result?: string }> {
+  console.log(`💬 Sending Manus task via Slack (50% credits)...`);
+  const ts = await slackPostMessage(prompt);
+
+  if (!waitForResponse) {
+    return { taskId: `slack_${ts}` };
+  }
+
+  const response = await slackGetLatestBotReply(ts);
+  if (response) {
+    return { taskId: `slack_${ts}`, result: response };
+  }
+  return { taskId: `slack_${ts}` };
+}
+
+// ── Direct Manus API Client (fallback) ──
 
 async function manusRequest(endpoint: string, body?: object, method: 'GET' | 'POST' = 'POST'): Promise<any> {
   if (!MANUS_API_KEY) {
@@ -106,11 +180,49 @@ Only return the JSON array, no other text.`;
     hide_in_task_list: false,
   });
 
-  console.log(`🔍 Manus task created for "${niche}":`, result.task_id || result.id);
+  console.log(`🔍 Manus task created for "${niche}" via ${useSlack ? 'Slack' : 'API'}:`, result.task_id || result.id);
 
   return {
     taskId: result.task_id || result.id,
     status: 'pending',
+  };
+}
+
+/**
+ * Find influencers via Slack (50% credit savings) — fire and wait for response.
+ */
+export async function findInfluencersViaSlack(
+  niche: string,
+  minFollowers: number = 5000,
+  maxFollowers: number = 100000,
+  country: string = 'US',
+): Promise<ManusTask> {
+  const prompt = `Search Instagram Creator Marketplace for beauty industry creators matching these criteria:
+
+NICHE: ${niche}
+FOLLOWERS: ${minFollowers.toLocaleString()} - ${maxFollowers.toLocaleString()}
+ENGAGEMENT RATE: minimum 2%
+LOCATION: ${country}
+
+Find the top 20 creators. For each, identify their TYPE:
+- "influencer" = established beauty pro with large following
+- "ugc" = creates product reviews, tutorials, get-ready-with-me content
+- "affiliate" = mentions promo codes, affiliate links, brand ambassador
+
+For each creator provide: Instagram handle, display name, follower count, engagement rate, bio summary, contact email, profile URL, creator type.
+
+Format as JSON array:
+[{"handle":"@example","displayName":"Name","followers":15000,"engagementRate":3.5,"bio":"Bio text","email":"email@example.com","profileUrl":"https://instagram.com/example","creatorType":"ugc"}]
+
+Only return the JSON array.`;
+
+  const slackResult = await manusViaSlack(prompt, true);
+  console.log(`🔍 Manus discovery via Slack for "${niche}"`);
+
+  return {
+    taskId: slackResult.taskId,
+    status: slackResult.result ? 'completed' : 'pending',
+    result: slackResult.result,
   };
 }
 

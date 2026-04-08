@@ -10,6 +10,7 @@ import * as path from 'path';
 import cron from 'node-cron';
 import {
   findInfluencers,
+  findInfluencersViaSlack,
   waitForTask,
   parseInfluencerResults,
   parseEngagementResults,
@@ -173,8 +174,17 @@ export async function runInfluencerDiscovery(): Promise<{
         console.log(`\n🎯 Searching niche: "${niche}"...`);
         searchedNiches.push(niche);
 
-        const task = await findInfluencers(niche, 5000, 100000, 'US');
-        const result = await waitForTask(task.taskId);
+        // Try Slack route first (50% fewer credits), fall back to API
+        const slackAvailable = !!process.env.SLACK_BOT_TOKEN && !!process.env.SLACK_MANUS_CHANNEL_ID;
+        let result;
+
+        if (slackAvailable) {
+          console.log(`  💬 Using Slack route (50% credit savings)...`);
+          result = await findInfluencersViaSlack(niche, 5000, 100000, 'US');
+        } else {
+          const task = await findInfluencers(niche, 5000, 100000, 'US');
+          result = await waitForTask(task.taskId);
+        }
 
         if (result.status === 'completed' && result.result) {
           const leads = parseInfluencerResults(result.result, niche);
