@@ -313,6 +313,48 @@ Return ONLY a JSON array:
     console.log(`   Queue ready: ${todaysQueue.length} targets for today`);
     console.log(`   Platform: ${platform}`);
     console.log('   ══════════════════════════════════════════\n');
+
+    // Send engagement queue to Slack
+    const SLACK_BOT_TOKEN = process.env.SLACK_BOT_TOKEN;
+    const SLACK_CHANNEL = process.env.SLACK_MANUS_CHANNEL_ID;
+    if (SLACK_BOT_TOKEN && SLACK_CHANNEL && todaysQueue.length > 0) {
+      try {
+        const notEngaged = todaysQueue.filter(t => !t.engaged);
+        const grouped: Record<string, typeof notEngaged> = {};
+        for (const t of notEngaged) {
+          const key = t.platform;
+          if (!grouped[key]) grouped[key] = [];
+          grouped[key].push(t);
+        }
+
+        let msg = `🎯 *Daily Engagement Queue* (${new Date().toLocaleDateString()})\n`;
+        msg += `${notEngaged.length} accounts to engage with today\n\n`;
+
+        for (const [plat, targets] of Object.entries(grouped)) {
+          msg += `*📱 ${plat.toUpperCase()}*\n`;
+          for (const t of targets) {
+            msg += `• *${t.handle}* (${t.followers.toLocaleString()} followers, ${t.niche})\n`;
+            msg += `  ${t.profileUrl}\n`;
+            msg += `  💬 _"${t.suggestedComment}"_\n`;
+            msg += `  Action: ${t.suggestedAction.replace(/_/g, ' + ')}\n\n`;
+          }
+        }
+
+        msg += `_Follow → Like 3 posts → Drop the comment. ~15 min total._`;
+
+        await fetch('https://slack.com/api/chat.postMessage', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${SLACK_BOT_TOKEN}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ channel: SLACK_CHANNEL, text: msg }),
+        });
+        console.log(`📬 Engagement queue sent to Slack (${notEngaged.length} targets)`);
+      } catch (slackErr) {
+        console.warn('⚠️ Failed to send queue to Slack:', slackErr);
+      }
+    }
   } catch (error) {
     console.error('❌ Engagement queue error:', error);
   } finally {
