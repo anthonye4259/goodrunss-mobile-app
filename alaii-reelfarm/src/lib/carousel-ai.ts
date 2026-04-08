@@ -76,7 +76,7 @@ export interface CarouselSlide {
 /** Generate carousel content from a topic */
 export async function generateCarouselContent(
   topic: string,
-  slideCount: number = 7,
+  slideCount: number = 5,
 ): Promise<CarouselContent> {
   const response = await anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
@@ -98,7 +98,7 @@ SLIDE 1 (HOOK):
 - All lowercase
 - This slide MUST make the reader feel called out. Hit a REAL pain point hard.
 
-SLIDES 2-${slideCount + 1} (TIPS/POINTS):
+SLIDES 2-${slideCount + 1} (TIPS/POINTS — keep it tight, ${slideCount - 2} tips max):
 - Each slide has:
   - headline: short title (5-8 words, numbered like "1. stop chasing clients")
   - body: 1-2 sentences, specific and actionable. Use real numbers and scenarios ("$300 per empty slot", "2 hours every night on DMs")

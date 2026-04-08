@@ -106,7 +106,7 @@ function ensureDataDir() {
       postTimes: ['08:00', '09:30', '11:00', '12:30', '14:00', '15:30', '17:00', '18:30', '20:00', '21:30'],
       topics: DEFAULT_CAROUSEL_TOPICS,
       accountIds: [], // Empty = all accounts
-      slideCount: 7,
+      slideCount: 5,
       createdAt: new Date().toISOString(),
       totalPosted: 0,
       totalGenerated: 0,
