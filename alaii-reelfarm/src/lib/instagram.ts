@@ -283,8 +283,9 @@ async function publishCarouselViaManus(
   caption: string,
 ): Promise<IGPublishResult> {
   const MANUS_API_KEY = process.env.MANUS_API_KEY;
-  const SLACK_BOT_TOKEN = process.env.SLACK_BOT_TOKEN;
-  const SLACK_MANUS_CHANNEL_ID = process.env.SLACK_MANUS_CHANNEL_ID;
+  if (!MANUS_API_KEY) {
+    return { containerId: '', status: 'error', error: 'No IG creds or MANUS_API_KEY' };
+  }
 
   const prompt = `Post a carousel to my Instagram account.
 
@@ -295,38 +296,6 @@ CAPTION:
 ${caption}
 
 Post this as an Instagram carousel with all ${imageUrls.length} images. Confirm when posted.`;
-
-  // Try Slack route first (50% fewer Manus credits)
-  if (SLACK_BOT_TOKEN && SLACK_MANUS_CHANNEL_ID) {
-    try {
-      console.log(`📸 Posting IG carousel via Manus (Slack, 50% credits)...`);
-      const res = await fetch('https://slack.com/api/chat.postMessage', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${SLACK_BOT_TOKEN}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          channel: SLACK_MANUS_CHANNEL_ID,
-          text: `<@U0AR7EFRSET> ${prompt}`,
-        }),
-      });
-      const data = await res.json();
-      if (data.ok) {
-        console.log(`📸 IG carousel submitted via Manus Slack (ts: ${data.ts})`);
-        return { containerId: data.ts, status: 'published' };
-      } else {
-        console.warn(`⚠️ Slack send failed: ${data.error}, falling back to API`);
-      }
-    } catch (err) {
-      console.warn(`⚠️ Slack route failed, falling back to API:`, err);
-    }
-  }
-
-  // Fallback: direct Manus API
-  if (!MANUS_API_KEY) {
-    return { containerId: '', status: 'error', error: 'No IG creds, MANUS_API_KEY, or Slack config' };
-  }
 
   const res = await fetch('https://api.manus.ai/v2/task.create', {
     method: 'POST',
