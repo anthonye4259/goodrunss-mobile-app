@@ -211,10 +211,13 @@ async function runCarouselAutoPilot(campaign: CarouselCampaign): Promise<void> {
     const content = await generateCarouselContent(topic, campaign.slideCount);
     console.log(`✅ Content: "${content.hookText}" (${content.slides.length} slides)`);
 
-    // Step 2: Fetch Pexels images
+    // Step 2: Fetch Pexels images using industry + topic for relevant backgrounds
     const totalSlides = content.slides.length + 2; // hook + tips + cta
-    console.log(`📸 Fetching ${totalSlides} background images...`);
-    const imageUrls = await getSlideBackgrounds(totalSlides, topic);
+    const imageSearchTerm = content.industry
+      ? `${content.industry} ${topic}`
+      : topic;
+    console.log(`📸 Fetching ${totalSlides} background images for "${content.industry || 'general'}"...`);
+    const imageUrls = await getSlideBackgrounds(totalSlides, imageSearchTerm);
     console.log(`✅ ${imageUrls.length} images fetched`);
 
     // Step 3: Render slides

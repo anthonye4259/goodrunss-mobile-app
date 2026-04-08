@@ -67,6 +67,7 @@ async function renderHookSlide(
   hookText: string,
   bgImagePath: string,
   outputPath: string,
+  industry?: string,
 ): Promise<void> {
   const canvas = createCanvas(SLIDE_WIDTH, SLIDE_HEIGHT);
   const ctx = canvas.getContext('2d');
@@ -83,6 +84,15 @@ async function renderHookSlide(
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, SLIDE_WIDTH, SLIDE_HEIGHT);
 
+  // Industry label at top (e.g., "for lash techs")
+  if (industry) {
+    ctx.font = 'bold 28px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = '#818CF8'; // Indigo accent
+    ctx.fillText(`for ${industry}`, SLIDE_WIDTH / 2, SLIDE_HEIGHT * 0.12);
+  }
+
   // Hook text — large, centered in upper portion
   ctx.font = 'bold 64px sans-serif';
   ctx.textAlign = 'center';
@@ -91,7 +101,9 @@ async function renderHookSlide(
   const maxWidth = SLIDE_WIDTH * 0.8;
   const lines = wrapText(ctx, hookText, maxWidth);
   const lineHeight = 80;
-  const startY = SLIDE_HEIGHT * 0.25 - (lines.length * lineHeight) / 2;
+  const startY = industry
+    ? SLIDE_HEIGHT * 0.18
+    : SLIDE_HEIGHT * 0.25 - (lines.length * lineHeight) / 2;
 
   for (let i = 0; i < lines.length; i++) {
     drawTextWithShadow(ctx, lines[i], SLIDE_WIDTH / 2, startY + i * lineHeight);
@@ -257,9 +269,9 @@ export async function renderCarousel(
 
   // Render hook slide
   const hookPath = path.join(tmpDir, `slide_0_hook.jpg`);
-  await renderHookSlide(content.hookText, bgPaths[0], hookPath);
+  await renderHookSlide(content.hookText, bgPaths[0], hookPath, content.industry);
   slidePaths.push(hookPath);
-  console.log(`  ✅ Hook slide rendered`);
+  console.log(`  ✅ Hook slide rendered (industry: ${content.industry || 'general'})`);
 
   // Render tip slides
   for (let i = 0; i < content.slides.length; i++) {

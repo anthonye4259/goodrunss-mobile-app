@@ -65,6 +65,7 @@ export interface CarouselContent {
   ctaText: string;
   title: string;       // TikTok post title
   description: string; // TikTok caption with hashtags
+  industry: string;    // Industry name for slide 1 label
 }
 
 export interface CarouselSlide {
@@ -89,22 +90,27 @@ Generate a TikTok photo carousel about: "${topic}"
 
 FORMAT — This is a PHOTO CAROUSEL (swipable images), NOT a video.
 
+IMPORTANT: Determine which SPECIFIC industry this topic targets (e.g., "nurse injectors", "lash techs", "hair stylists", "estheticians", "barbers", "nail techs", "medspa owners"). Return this in the "industry" field.
+
 SLIDE 1 (HOOK):
 - Bold, attention-grabbing hook text
 - Should introduce a numbered list (e.g., "5 things i stopped doing...")
 - All lowercase
+- This slide MUST make the reader feel called out. Hit a REAL pain point hard.
 
 SLIDES 2-${slideCount + 1} (TIPS/POINTS):
 - Each slide has:
   - headline: short title (5-8 words, numbered like "1. stop chasing clients")
-  - body: 1-2 sentences expanding on the point, relatable and specific
-- Pattern: identify a relatable pain → give a specific actionable tip
+  - body: 1-2 sentences, specific and actionable. Use real numbers and scenarios ("$300 per empty slot", "2 hours every night on DMs")
+- Pattern: identify a SHARP relatable pain, give a specific fix
+- Be brutally honest and specific. No generic advice.
 
 LAST SLIDE (CTA):
-- Must mention Alaii
+- Must mention Alaii and free booking
 - Include "alaii.app"
 - Mention it's free on App Store + Android
-- Example: "try alaii free → alaii.app | app store + android"
+- Mention "free booking + payments" specifically
+- Example: "free booking + payments, no monthly fee. try alaii → alaii.app"
 
 TIKTOK TITLE:
 - Under 50 characters, attention-grabbing, all lowercase
@@ -112,21 +118,21 @@ TIKTOK TITLE:
 
 TIKTOK DESCRIPTION (CAPTION):
 - 2-3 sentences, casual tone
-- Mention Alaii naturally
-- Include alaii.app link
+- Must include a CTA: mention "free booking" or "alaii.app" or "link in bio"
 - End with 5-8 relevant hashtags
 - All lowercase
 
 Respond in this exact JSON format:
 {
   "hookText": "5 things i stopped doing...",
+  "industry": "lash techs",
   "slides": [
     {
       "headline": "1. short title here",
       "body": "1-2 sentences expanding on this point relatably"
     }
   ],
-  "ctaText": "try alaii free → alaii.app",
+  "ctaText": "free booking + payments. try alaii → alaii.app",
   "title": "short catchy tiktok title",
   "description": "caption text with hashtags"
 }
@@ -135,6 +141,8 @@ CRITICAL:
 - ALL text lowercase (only "Alaii" capitalized)
 - Make it feel authentic and personal, NOT an ad
 - Each slide should be valuable standalone
+- NEVER use em dashes, semicolons, or corporate words
+- The CTA caption MUST mention free booking or alaii.app
 - Only return valid JSON, no other text`
       }
     ],
@@ -144,12 +152,20 @@ CRITICAL:
   const jsonStr = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
   const content: CarouselContent = JSON.parse(jsonStr);
 
-  // Ensure description mentions Alaii
+  // Ensure industry is set
+  if (!content.industry) {
+    content.industry = 'beauty pros';
+  }
+
+  // Ensure description mentions Alaii and free booking
   if (!content.description.includes('alaii') && !content.description.includes('Alaii')) {
-    content.description += '\n\ntry Alaii free → alaii.app';
+    content.description += '\n\nfree booking + payments at alaii.app';
   }
   if (!content.description.includes('alaii.app')) {
     content.description += '\nalaii.app';
+  }
+  if (!content.description.includes('free')) {
+    content.description = content.description.replace('alaii.app', 'free booking at alaii.app');
   }
 
   return content;
