@@ -283,7 +283,7 @@ Search using TikTok's creator search and hashtags.`,
 - Are based in the US`,
   };
 
-  const prompt = `Find 15 active ${niche} professionals on ${platform} that I should engage with (follow, like their posts, and comment).
+  const prompt = `Find 25 active ${niche} professionals on ${platform} that I should engage with (follow, like their posts, and comment).
 
 ${platformInstructions[platform]}
 
@@ -360,16 +360,19 @@ export function parseEngagementResults(
   }
 }
 
-/** Get today's engagement niches (rotates daily) */
+/** Get today's engagement niches — all 3 platforms, 6 niches total */
 export function getTodaysEngagementNiches(): { niche: string; platform: 'instagram' | 'tiktok' | 'facebook' }[] {
-  const dayOfWeek = new Date().getDay(); // 0=Sun, 6=Sat
+  const dayOfWeek = new Date().getDay();
   const platforms: ('instagram' | 'tiktok' | 'facebook')[] = ['instagram', 'tiktok', 'facebook'];
-  const platform = platforms[dayOfWeek % 3]; // Rotate platforms
 
-  // Pick 2 niches per day
-  const startIdx = (dayOfWeek * 2) % ENGAGEMENT_NICHES.length;
-  return [
-    { niche: ENGAGEMENT_NICHES[startIdx], platform },
-    { niche: ENGAGEMENT_NICHES[(startIdx + 1) % ENGAGEMENT_NICHES.length], platform },
-  ];
+  // Pick 2 niches per platform = 6 total searches = ~150 targets
+  const results: { niche: string; platform: 'instagram' | 'tiktok' | 'facebook' }[] = [];
+  for (const platform of platforms) {
+    const startIdx = (dayOfWeek * 2 + platforms.indexOf(platform) * 3) % ENGAGEMENT_NICHES.length;
+    results.push(
+      { niche: ENGAGEMENT_NICHES[startIdx], platform },
+      { niche: ENGAGEMENT_NICHES[(startIdx + 1) % ENGAGEMENT_NICHES.length], platform },
+    );
+  }
+  return results;
 }

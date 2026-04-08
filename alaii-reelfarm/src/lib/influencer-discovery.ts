@@ -306,17 +306,29 @@ export function startInfluencerDiscovery(): void {
     console.log(`📊 Discovery: ${result.newLeads} new leads`);
   });
 
-  // Engagement queue: daily at 7 AM EST (11 AM UTC)
+  // Engagement queue: 3x daily at 7 AM, 12 PM, 5 PM EST (11, 16, 21 UTC)
   cron.schedule('0 11 * * *', async () => {
-    console.log('⏰ Daily engagement queue generation triggered');
+    console.log('⏰ Morning engagement queue triggered');
     const result = await runEngagementQueueGeneration();
     console.log(`🎯 Queue: ${result.totalTargets} targets on ${result.platform}`);
   });
 
+  cron.schedule('0 16 * * *', async () => {
+    console.log('⏰ Midday engagement queue triggered');
+    const result = await runEngagementQueueGeneration();
+    console.log(`🎯 Queue: ${result.totalTargets} more targets`);
+  });
+
+  cron.schedule('0 21 * * *', async () => {
+    console.log('⏰ Evening engagement queue triggered');
+    const result = await runEngagementQueueGeneration();
+    console.log(`🎯 Queue: ${result.totalTargets} more targets`);
+  });
+
   const todaysQueue = getTodaysEngagementQueue();
-  console.log(`   🎯 ${todaysQueue.length} engagement targets for today`);
+  console.log(`   🎯 ${todaysQueue.length} engagement targets for today (goal: 100+)`);
   console.log('   ⏰ Discovery: daily at 6 AM EST');
-  console.log('   ⏰ Engagement: daily at 7 AM EST\n');
+  console.log('   ⏰ Engagement: 7 AM, 12 PM, 5 PM EST (all platforms)\n');
 }
 
 // ============================================================================
