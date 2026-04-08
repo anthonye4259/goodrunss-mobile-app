@@ -150,36 +150,45 @@ async function replyToTweet(tweetId: string, text: string): Promise<boolean> {
 }
 
 /** Follow a user */
-async function followUser(userId: string): Promise<boolean> {
-  const config = getTwitterConfig();
-  // Need our own user ID — get from access token
+let cachedMyUserId: string | null = null;
+
+async function getMyUserId(): Promise<string> {
+  if (cachedMyUserId) return cachedMyUserId;
   const myUrl = `${TWITTER_API}/users/me`;
   const myAuth = createOAuthHeader('GET', myUrl);
   const meRes = await fetch(myUrl, { headers: { Authorization: myAuth } });
-
-  if (!meRes.ok) return false;
+  if (!meRes.ok) throw new Error('Failed to get own user ID');
   const me = await meRes.json();
-  const myId = me.data.id;
+  cachedMyUserId = me.data.id;
+  return cachedMyUserId!;
+}
 
-  const url = `${TWITTER_API}/users/${myId}/following`;
-  const auth = createOAuthHeader('POST', url);
+async function followUser(userId: string): Promise<boolean> {
+  try {
+    const myId = await getMyUserId();
+    const url = `${TWITTER_API}/users/${myId}/following`;
+    const auth = createOAuthHeader('POST', url);
 
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: {
-      Authorization: auth,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ target_user_id: userId }),
-  });
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: auth,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ target_user_id: userId }),
+    });
 
-  if (!res.ok) {
-    console.error(`❌ Follow failed:`, await res.text());
+    if (!res.ok) {
+      console.error(`❌ Follow failed:`, await res.text());
+      return false;
+    }
+
+    console.log(`👤 Followed user ${userId}`);
+    return true;
+  } catch (err) {
+    console.error(`❌ Follow error:`, err);
     return false;
   }
-
-  console.log(`👤 Followed user ${userId}`);
-  return true;
 }
 
 /** Send a DM */
@@ -222,13 +231,19 @@ async function generateReply(tweet: any): Promise<string> {
     max_tokens: 150,
     messages: [{
       role: 'user',
-      content: `Write a short, helpful Twitter reply to this tweet from a beauty industry professional. Be genuinely helpful, not salesy. Only mention Alaii if the tweet is about booking software, no-shows, or scheduling problems. Keep it under 200 characters. Sound like a real person, not a brand.
+      content: `Write a short, helpful Twitter reply to this tweet from a beauty industry professional.
+
+CONTEXT: You are replying as someone who knows the beauty industry well. If the tweet is about booking problems, no-shows, scheduling, or managing a salon/medspa, you can casually mention "I've been using something called Alaii" or "a friend built this tool called Alaii". Otherwise just be genuinely helpful with zero product mentions.
+
+If the tweet is about business struggles, you can weave in the CMU student angle: "my friend at carnegie mellon built something for this" or "a CS student I know made a free tool for this".
 
 FORMATTING RULES:
-- NEVER use em dashes (—) or semicolons. Use periods and commas only.
+- Keep it under 200 characters
+- NEVER use em dashes or semicolons. Use periods and commas only.
 - No words like: furthermore, moreover, utilize, streamline, leverage, game-changer
 - Don't start with "Great question!" or "Love this!" or "This is so true!"
 - Write like a real person texting, not a brand account
+- Sound casual and real. Use lowercase.
 
 TWEET: "${tweet.text}"
 AUTHOR: @${tweet.author?.username || 'unknown'} (${tweet.author?.description?.slice(0, 100) || 'beauty pro'})
@@ -356,6 +371,15 @@ export async function runTwitterEngagement(): Promise<{
       for (const tweet of tweets) {
         if (actionsThisRun >= MAX_ACTIONS_PER_HOUR) break;
         if (hasEngaged(tweet.id)) continue;
+        // Skip retweets
+        if (tweet.text?.startsWith('RT @')) continue;
+        // Skip tweets with low engagement (likely bots)
+        if ((tweet.metrics?.like_count || 0) < 2) continue;
+        // Skip tweets older than 24 hours
+        if (tweet.createdAt) {
+          const tweetAge = Date.now() - new Date(tweet.createdAt).getTime();
+          if (tweetAge > 24 * 60 * 60 * 1000) continue;
+        }
 
         // Reply to tweet
         try {

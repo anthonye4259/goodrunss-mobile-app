@@ -27,6 +27,8 @@ interface OutreachRecord {
   message: string;
   sentAt: string;
   method: 'email' | 'dm_draft';
+  step: number; // 1, 2, or 3
+  email?: string;
 }
 
 function getOutreachLog(): OutreachRecord[] {
@@ -46,11 +48,17 @@ function saveOutreachRecord(record: OutreachRecord): void {
 // AI Message Generation
 // ============================================================================
 
-async function generateOutreachMessage(lead: InfluencerLead): Promise<string> {
+async function generateOutreachMessage(lead: InfluencerLead, step: number = 1): Promise<string> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error('ANTHROPIC_API_KEY not set');
 
   const client = new Anthropic({ apiKey });
+
+  const stepInstructions: Record<number, string> = {
+    1: `Step 1 (Initial reach out). Lead with THEIR specific pain point. Sound like a real college student, NOT a sales email. End with a soft ask. Keep it under 120 words.`,
+    2: `Step 2 (Follow-up, 2 days after step 1). Start with "hey, following up" casually. Briefly mention how Alaii solves their specific pain (cancellations, no-shows, admin time). Mention it's free for 60 days, no card needed. Keep it under 100 words. Don't repeat what you said in the first email.`,
+    3: `Step 3 (Final follow-up, 5 days after step 1). Quick and casual. Share a specific result ("one lash tech filled 12 empty slots in her first week"). End with "no pressure, just thought you'd want to know". Keep it under 80 words.`,
+  };
 
   const response = await client.messages.create({
     model: 'claude-sonnet-4-20250514',
@@ -58,20 +66,19 @@ async function generateOutreachMessage(lead: InfluencerLead): Promise<string> {
     messages: [
       {
         role: 'user',
-        content: `Write a cold email from Anthony, a Carnegie Mellon University student who built a platform for beauty pros. The email should:
+        content: `Write a cold email from Anthony, a Carnegie Mellon University student who built a platform for beauty pros.
 
+${stepInstructions[step] || stepInstructions[1]}
+
+Rules:
 1. Lead with THEIR specific pain point based on their niche (not a product pitch)
 2. Sound like a real college student reaching out, NOT a sales email
 3. Be warm, genuine, and conversational
-4. End with a soft ask to chat — "would love to hear your thoughts" or "could we talk for 5 min?"
-5. Keep it under 120 words
-6. NO bullet points, NO feature lists, NO "we offer" language
-7. NEVER use em dashes (—), semicolons, or colons in the middle of sentences. Use periods and commas only.
-8. NEVER start sentences with "I'd love to" or "I noticed" or "As a fellow"
-9. No words like: furthermore, moreover, utilize, streamline, leverage, game-changer, elevate
-10. Write like you're texting a friend, not writing a LinkedIn post
-
-Write ONLY the email body. No subject line. No signature. Sound human.
+4. NO bullet points, NO feature lists, NO "we offer" language
+5. NEVER use em dashes, semicolons, or colons in the middle of sentences. Use periods and commas only.
+6. NEVER start sentences with "I'd love to" or "I noticed" or "As a fellow"
+7. No words like: furthermore, moreover, utilize, streamline, leverage, game-changer, elevate
+8. Write like you're texting a friend, not writing a LinkedIn post
 
 RECIPIENT:
 - Name: ${lead.displayName}
@@ -133,7 +140,8 @@ export async function runInfluencerOutreach(): Promise<{
     console.log('   ══════════════════════════════════════════\n');
 
     const leads = getAllLeads().filter((l) => l.outreachStatus === 'new');
-    const todaysSent = getOutreachLog().filter((r) => {
+    const outreachLog = getOutreachLog();
+    const todaysSent = outreachLog.filter((r) => {
       const sentDate = new Date(r.sentAt).toDateString();
       return sentDate === new Date().toDateString();
     }).length;
@@ -145,17 +153,94 @@ export async function runInfluencerOutreach(): Promise<{
       return { sent: 0, skipped: leads.length, errors: 0 };
     }
 
-    const batch = leads.slice(0, remaining);
-    console.log(`  📋 ${leads.length} new leads, sending to ${batch.length} (limit: ${remaining})`);
+    // === FOLLOW-UP DRIP: check for leads needing step 2 or step 3 ===
+    const now = Date.now();
+    const followUpCandidates = outreachLog.filter(r => {
+      if (!r.email || r.method !== 'email') return false;
+      const daysSince = (now - new Date(r.sentAt).getTime()) / (1000 * 60 * 60 * 24);
+      // Step 1 sent 2+ days ago, no step 2 yet
+      if (r.step === 1 && daysSince >= 2) {
+        return !outreachLog.some(o => o.handle === r.handle && o.step === 2);
+      }
+      // Step 2 sent 3+ days ago (5 days from step 1), no step 3 yet
+      if (r.step === 2 && daysSince >= 3) {
+        return !outreachLog.some(o => o.handle === r.handle && o.step === 3);
+      }
+      return false;
+    });
+
+    let followUpsSent = 0;
+    for (const prev of followUpCandidates.slice(0, 5)) {
+      if (todaysSent + followUpsSent >= MAX_OUTREACH_PER_DAY) break;
+      const nextStep = prev.step + 1;
+      if (nextStep > 3) continue;
+
+      try {
+        const lead = getAllLeads().find(l => l.handle === prev.handle);
+        if (!lead || !lead.email) continue;
+
+        const message = await generateOutreachMessage(lead, nextStep);
+        const subjects: Record<number, string> = {
+          2: `following up, ${lead.displayName.split(' ')[0] || 'hey'}`,
+          3: `one last thing, ${lead.displayName.split(' ')[0] || 'hey'}`,
+        };
+
+        const emailRes = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: 'Anthony from Alaii <anthony@alaii.app>',
+            to: [lead.email],
+            subject: subjects[nextStep] || 'hey',
+            text: message,
+          }),
+        });
+
+        if (emailRes.ok) {
+          console.log(`  📧 Follow-up step ${nextStep} SENT to ${lead.handle}`);
+          saveOutreachRecord({
+            handle: lead.handle,
+            platform: lead.platform,
+            message,
+            sentAt: new Date().toISOString(),
+            method: 'email',
+            step: nextStep,
+            email: lead.email,
+          });
+          followUpsSent++;
+          sent++;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 5000));
+      } catch (err) {
+        console.error(`  ❌ Follow-up error:`, err);
+        errors++;
+      }
+    }
+
+    // === NEW LEADS: Step 1 ===
+    const remainingAfterFollowups = remaining - followUpsSent;
+
+    const batch = leads.slice(0, Math.max(0, remainingAfterFollowups));
+    console.log(`  📋 ${leads.length} new leads, sending to ${batch.length} (limit: ${remainingAfterFollowups})`);
 
     for (const lead of batch) {
       try {
-        // Generate personalized message
-        const message = await generateOutreachMessage(lead);
+        // Generate personalized message (step 1)
+        const message = await generateOutreachMessage(lead, 1);
 
         if (lead.email && process.env.RESEND_API_KEY) {
-          // Send real email via Resend
-          const subject = `Hey ${lead.displayName.split(' ')[0] || 'there'} — quick collab idea 💫`;
+          // A/B test subject lines
+          const subjectOptions = [
+            `do you still lose $300+ every time someone cancels?`,
+            `${lead.displayName.split(' ')[0] || 'hey'}, quick question about your ${lead.niche || 'beauty'} biz`,
+            `free booking for ${lead.niche || 'beauty'} pros, no catch`,
+          ];
+          const subject = subjectOptions[Math.floor(Math.random() * subjectOptions.length)];
+
           const emailRes = await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: {
@@ -189,6 +274,8 @@ export async function runInfluencerOutreach(): Promise<{
           message,
           sentAt: new Date().toISOString(),
           method: lead.email ? 'email' : 'dm_draft',
+          step: 1,
+          email: lead.email,
         });
 
         // Update lead status

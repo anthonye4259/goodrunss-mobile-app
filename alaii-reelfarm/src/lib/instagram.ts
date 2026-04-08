@@ -322,20 +322,29 @@ Post this as an Instagram carousel with all ${imageUrls.length} images. Confirm 
   return { containerId: taskId, status: 'published' };
 }
 
-/** Generate beauty-specific Instagram hashtags */
+/** Generate beauty-specific Instagram hashtags (3-tier strategy: base + niche + trending) */
 export function generateHashtags(topic: string): string[] {
-  const base = ['alaii', 'beautybusiness', 'beautyentrepreneur', 'salonowner', 'beautypro'];
+  // Tier 1: Core brand + general beauty (always included)
+  const base = ['alaii', 'beautybusiness', 'beautyentrepreneur', 'salonowner', 'beautypro', 'beautyindustry', 'freebooking'];
 
+  // Tier 2: Niche-specific (matched from topic)
   const nicheMap: Record<string, string[]> = {
-    'no-show': ['noshows', 'salonlife', 'clientretention'],
-    'book': ['onlinebooking', 'fullybooked', 'bookingapp'],
-    'lash': ['lashtech', 'lashartist', 'lashextensions'],
-    'hair': ['hairstylist', 'hairsalon', 'behindthechair'],
-    'inject': ['medspa', 'injector', 'botox', 'aesthetics'],
-    'nail': ['nailtech', 'nailartist', 'nailsalon'],
-    'skin': ['esthetician', 'skincare', 'facial'],
-    'automat': ['automation', 'aitools', 'businessautomation'],
+    'no-show': ['noshows', 'salonlife', 'clientretention', 'cancellationpolicy', 'salonproblems'],
+    'book': ['onlinebooking', 'fullybooked', 'bookingapp', 'appointmentbooking', 'bookingsystem'],
+    'lash': ['lashtech', 'lashartist', 'lashextensions', 'lashlove', 'lashboss', 'volumelashes'],
+    'hair': ['hairstylist', 'hairsalon', 'behindthechair', 'haircolorist', 'salonlife', 'hairdresser'],
+    'inject': ['medspa', 'injector', 'botox', 'aesthetics', 'nurseinjector', 'fillers', 'medspabusiness'],
+    'nail': ['nailtech', 'nailartist', 'nailsalon', 'nailboss', 'naillife'],
+    'skin': ['esthetician', 'skincare', 'facial', 'skincareroutine', 'aesthetician'],
+    'automat': ['automation', 'aitools', 'businessautomation', 'techforbusiness'],
+    'cancel': ['cancellations', 'lastminutecancellation', 'emptychairs', 'fillyourschedule'],
+    'barber': ['barber', 'barbershop', 'barberlife', 'fade', 'mensgrooming'],
+    'wax': ['waxing', 'waxspecialist', 'bodywaxing', 'estheticianlife'],
+    'brow': ['microblading', 'browartist', 'browsonfleek', 'permanentmakeup'],
   };
+
+  // Tier 3: Trending / engagement boosters
+  const trending = ['smallbusinessowner', 'womeninbusiness', 'bossbabes', 'entrepreneurlife', 'solopreneur', 'sidehustle'];
 
   const topicLower = topic.toLowerCase();
   const niche: string[] = [];
@@ -343,5 +352,7 @@ export function generateHashtags(topic: string): string[] {
     if (topicLower.includes(key)) niche.push(...tags);
   }
 
-  return [...base, ...niche].slice(0, 20);
+  // Combine all tiers, deduplicate, cap at 28 (IG limit is 30)
+  const all = [...new Set([...base, ...niche, ...trending])];
+  return all.slice(0, 28);
 }

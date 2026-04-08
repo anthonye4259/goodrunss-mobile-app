@@ -165,16 +165,18 @@ async function generateRedditComment(post: any): Promise<string> {
       content: `Write a helpful Reddit comment on this beauty industry post. Rules:
 1. Be genuinely helpful, give real actionable advice
 2. Sound like a knowledgeable redditor, not a brand
-3. ONLY mention Alaii if the post is specifically asking about booking/scheduling software, and even then say "I've been using something called Alaii" casually, not as a pitch
+3. ONLY mention Alaii if the post is specifically asking about booking/scheduling software, and even then say "I've been using something called Alaii" or "a friend at Carnegie Mellon built this free tool" casually
 4. If the post is NOT about booking software, just give good advice with zero product mentions
 5. Keep it under 150 words
 6. Match the subreddit's tone, casual, supportive, community-like
 7. Never use emojis excessively
 8. Start with something empathetic or relatable
-9. NEVER use em dashes (—) or semicolons. Use periods and commas only.
+9. NEVER use em dashes or semicolons. Use periods and commas only.
 10. No words like: furthermore, moreover, utilize, streamline, leverage, game-changer, elevate
 11. Don't start with "Great question!" or "This!" or "Honestly this is so relatable"
 12. Write like you're actually typing on your phone between clients
+13. VARY your comment length. Sometimes write 2 sentences, sometimes write a full paragraph. Don't always write the same length.
+14. If the post asks about booking tools specifically, mention "free booking at alaii.app" naturally
 
 SUBREDDIT: r/${post.subreddit}
 POST TITLE: ${post.title}
@@ -360,6 +362,14 @@ export async function runRedditEngagement(): Promise<{
           url: c.data.permalink,
         }));
 
+        // Sort by intent: posts asking for recommendations/tools get priority
+        const HIGH_INTENT_WORDS = ['recommend', 'suggestion', 'what app', 'what do you use', 'booking', 'scheduling', 'software', 'looking for', 'alternative to', 'switch from'];
+        posts.sort((a: any, b: any) => {
+          const aIntent = HIGH_INTENT_WORDS.some(w => (a.title + ' ' + (a.body || '')).toLowerCase().includes(w)) ? 1 : 0;
+          const bIntent = HIGH_INTENT_WORDS.some(w => (b.title + ' ' + (b.body || '')).toLowerCase().includes(w)) ? 1 : 0;
+          return bIntent - aIntent;
+        });
+
         for (const post of posts) {
           if (comments >= MAX_COMMENTS_PER_RUN) break;
           if (hasCommented(post.id)) continue;
@@ -377,6 +387,14 @@ export async function runRedditEngagement(): Promise<{
               thing_id: post.id,
               text: comment,
             });
+
+            // Also upvote the post (looks natural, builds karma)
+            try {
+              await redditPost('/api/vote', {
+                id: post.id,
+                dir: '1',
+              });
+            } catch { /* non-critical */ }
 
             comments++;
             logRedditAction({
