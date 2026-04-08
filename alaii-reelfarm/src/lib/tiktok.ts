@@ -335,7 +335,7 @@ export async function publishCarousel(
         photo_cover_index: 0,
         photo_images: finalUrls,
       },
-      post_mode: 'MEDIA_UPLOAD',
+      post_mode: 'DIRECT_POST',
       media_type: 'PHOTO',
     };
     console.log(`  📡 Request body:`, JSON.stringify(requestBody).slice(0, 500));
