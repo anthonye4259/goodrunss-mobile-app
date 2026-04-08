@@ -401,7 +401,94 @@ export function startInfluencerDiscovery(): void {
   const todaysQueue = getTodaysEngagementQueue();
   console.log(`   🎯 ${todaysQueue.length} engagement targets for today (goal: 100+)`);
   console.log('   ⏰ Discovery: daily at 6 AM EST');
-  console.log('   ⏰ Engagement: 7 AM, 12 PM, 5 PM EST (all platforms)\n');
+  console.log('   ⏰ Engagement: 7 AM, 12 PM, 5 PM EST (all platforms)');
+  console.log('   📬 Status summary: every 6 hours to Slack\n');
+
+  // Status summary: every 6 hours (6AM, 12PM, 6PM, 12AM EST = 10, 16, 22, 4 UTC)
+  cron.schedule('0 4,10,16,22 * * *', async () => {
+    await sendSlackStatusSummary();
+  });
+}
+
+/** Send a full status summary to Slack */
+async function sendSlackStatusSummary(): Promise<void> {
+  const SLACK_BOT_TOKEN = process.env.SLACK_BOT_TOKEN;
+  const SLACK_CHANNEL = process.env.SLACK_MANUS_CHANNEL_ID;
+  if (!SLACK_BOT_TOKEN || !SLACK_CHANNEL) return;
+
+  try {
+    // Gather all stats
+    const { getAllCarouselPosts } = await import('./carousel-autopilot');
+    const { getOutreachStats } = await import('./influencer-outreach');
+    const { getTwitterStats } = await import('./twitter');
+    const { getRedditStats } = await import('./reddit');
+
+    const posts = getAllCarouselPosts();
+    const todayPosts = posts.filter(p => {
+      const d = new Date(p.createdAt);
+      return d.toDateString() === new Date().toDateString();
+    });
+    const discoveryStats = getDiscoveryStats();
+    const outreach = getOutreachStats();
+    const twitter = getTwitterStats();
+    const reddit = getRedditStats();
+
+    const posted = todayPosts.filter(p => p.status === 'posted').length;
+    const failed = todayPosts.filter(p => p.status === 'failed').length;
+
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'America/New_York' });
+
+    let msg = `📊 *Alaii Growth Engine Status* (${now.toLocaleDateString()} ${timeStr} EST)\n\n`;
+
+    // TikTok
+    msg += `*🎵 TikTok Carousels*\n`;
+    msg += `  Posted today: ${posted} | Failed: ${failed}\n\n`;
+
+    // Instagram
+    msg += `*📸 Instagram*\n`;
+    msg += `  Carousels posted via Manus (Slack): check #manus-automation\n\n`;
+
+    // Twitter
+    msg += `*🐦 Twitter*\n`;
+    msg += `  Actions today: ${twitter.today} (${twitter.byAction?.replies || 0} replies, ${twitter.byAction?.follows || 0} follows)\n`;
+    msg += `  Total all-time: ${twitter.totalActions}\n\n`;
+
+    // Reddit
+    msg += `*🤖 Reddit*\n`;
+    msg += `  Actions today: ${reddit.today}\n`;
+    msg += `  Total all-time: ${reddit.totalActions}\n\n`;
+
+    // Cold Email
+    msg += `*📧 Cold Email Outreach*\n`;
+    msg += `  Sent today: ${outreach.sentToday}/${outreach.dailyLimit}\n`;
+    msg += `  Total all-time: ${outreach.totalSent}\n\n`;
+
+    // Influencer Discovery
+    msg += `*🔍 Influencer Discovery*\n`;
+    msg += `  Total leads: ${discoveryStats.totalLeads}\n`;
+    msg += `  New: ${discoveryStats.byStatus.new} | Contacted: ${discoveryStats.byStatus.contacted} | Replied: ${discoveryStats.byStatus.replied} | Converted: ${discoveryStats.byStatus.converted}\n\n`;
+
+    // Engagement Queue
+    msg += `*🎯 Engagement Queue*\n`;
+    msg += `  Today: ${discoveryStats.engagementQueue.todayTargets} targets (${discoveryStats.engagementQueue.todayEngaged} engaged)\n`;
+    msg += `  7-day total: ${discoveryStats.engagementQueue.totalTargets7d}\n\n`;
+
+    msg += `_Next summary in 6 hours. Full stats: /api/health_`;
+
+    await fetch('https://slack.com/api/chat.postMessage', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${SLACK_BOT_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ channel: SLACK_CHANNEL, text: msg }),
+    });
+
+    console.log(`📬 Status summary sent to Slack at ${timeStr} EST`);
+  } catch (err) {
+    console.error('❌ Failed to send Slack summary:', err);
+  }
 }
 
 // ============================================================================
