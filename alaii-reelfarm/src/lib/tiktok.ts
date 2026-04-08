@@ -335,7 +335,7 @@ export async function publishCarousel(
         photo_cover_index: 0,
         photo_images: finalUrls,
       },
-      post_mode: 'DIRECT_POST',
+      post_mode: 'MEDIA_UPLOAD', // DIRECT_POST requires TikTok app audit — using drafts for now
       media_type: 'PHOTO',
     };
     console.log(`  📡 Request body:`, JSON.stringify(requestBody).slice(0, 500));

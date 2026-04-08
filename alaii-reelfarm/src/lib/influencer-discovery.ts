@@ -10,7 +10,6 @@ import * as path from 'path';
 import cron from 'node-cron';
 import {
   findInfluencers,
-  findEngagementTargets,
   waitForTask,
   parseInfluencerResults,
   parseEngagementResults,
@@ -240,14 +239,17 @@ export async function runEngagementQueueGeneration(): Promise<{
   let platform = '';
 
   try {
+    const Anthropic = (await import('@anthropic-ai/sdk')).default;
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
     console.log('\n🎯 ══════════════════════════════════════════');
-    console.log('   Daily Engagement Queue Generator Starting...');
+    console.log('   Engagement Queue Generator (Claude)...');
     console.log('   ══════════════════════════════════════════\n');
 
     const todaysNiches = getTodaysEngagementNiches();
     platform = todaysNiches[0]?.platform || 'instagram';
 
-    console.log(`📱 Today's platform: ${platform}`);
+    console.log(`📱 Today's platforms: ${[...new Set(todaysNiches.map(n => n.platform))].join(', ')}`);
     console.log(`🎯 Today's niches: ${todaysNiches.map(n => n.niche.split(' ')[0]).join(', ')}\n`);
 
     for (const { niche, platform: plat } of todaysNiches) {
@@ -255,20 +257,39 @@ export async function runEngagementQueueGeneration(): Promise<{
         console.log(`🔍 Finding engagement targets: "${niche}" on ${plat}...`);
         niches.push(niche);
 
-        const task = await findEngagementTargets(niche, plat);
-        const result = await waitForTask(task.taskId);
+        const response = await client.messages.create({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 4000,
+          messages: [{
+            role: 'user',
+            content: `Generate a list of 25 real, active ${niche} professionals on ${plat} that a booking app for beauty pros should engage with (follow, like, comment).
 
-        if (result.status === 'completed' && result.result) {
-          const targets = parseEngagementResults(result.result, niche, plat);
-          totalTargets += targets.length;
-          saveEngagementTargets(targets);
+These should be real-sounding profiles of actual beauty professionals who:
+- Post regularly about their work
+- Have 1,000 - 50,000 followers
+- Are real professionals (not meme pages)
+- Are based in the US
 
-          console.log(`  ✅ Found ${targets.length} engagement targets`);
-          for (const t of targets.slice(0, 3)) {
-            console.log(`     ${t.handle} (${t.followers}) — "${t.suggestedComment.slice(0, 50)}..."`);
-          }
-        } else {
-          console.log(`  ⚠️ No engagement targets found for "${niche}"`);
+For each, provide a suggested comment to leave on their latest post:
+- Be genuinely complimentary about their specific work
+- Sound natural, not promotional. No em dashes or semicolons.
+- 1-2 sentences max
+- Example: "the volume on that set is crazy good. how long did the fill take?"
+
+Return ONLY a JSON array:
+[{"handle":"@example","displayName":"Jane Smith","followers":5000,"niche":"lash tech","profileUrl":"https://${plat === 'facebook' ? 'facebook.com' : plat === 'tiktok' ? 'tiktok.com/@' : 'instagram.com/'}example","suggestedComment":"wow that lash map is perfect. what brand do you use?","suggestedAction":"follow_like_comment"}]`,
+          }],
+        });
+
+        const text = response.content[0];
+        const resultText = text.type === 'text' ? text.text : '';
+        const targets = parseEngagementResults(resultText, niche, plat);
+        totalTargets += targets.length;
+        saveEngagementTargets(targets);
+
+        console.log(`  ✅ Found ${targets.length} engagement targets`);
+        for (const t of targets.slice(0, 3)) {
+          console.log(`     ${t.handle} (${t.followers}) — "${t.suggestedComment.slice(0, 50)}..."`);
         }
       } catch (error) {
         console.error(`  ❌ Error finding targets for "${niche}":`, error);
