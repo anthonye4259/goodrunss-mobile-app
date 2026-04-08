@@ -308,7 +308,7 @@ Post this as an Instagram carousel with all ${imageUrls.length} images. Confirm 
         },
         body: JSON.stringify({
           channel: SLACK_MANUS_CHANNEL_ID,
-          text: prompt,
+          text: `<@U0AR7EFRSET> ${prompt}`,
         }),
       });
       const data = await res.json();

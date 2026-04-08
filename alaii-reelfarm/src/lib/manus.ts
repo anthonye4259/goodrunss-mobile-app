@@ -36,6 +36,8 @@ const useSlack = !!SLACK_BOT_TOKEN && !!SLACK_MANUS_CHANNEL_ID;
 
 // ── Slack-based Manus Client (50% fewer credits) ──
 
+const MANUS_SLACK_USER_ID = 'U0AR7EFRSET';
+
 async function slackPostMessage(text: string): Promise<string> {
   const res = await fetch('https://slack.com/api/chat.postMessage', {
     method: 'POST',
@@ -45,7 +47,7 @@ async function slackPostMessage(text: string): Promise<string> {
     },
     body: JSON.stringify({
       channel: SLACK_MANUS_CHANNEL_ID,
-      text,
+      text: `<@${MANUS_SLACK_USER_ID}> ${text}`,
     }),
   });
   const data = await res.json();
