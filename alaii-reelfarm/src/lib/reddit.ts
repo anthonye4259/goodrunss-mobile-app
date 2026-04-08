@@ -117,6 +117,20 @@ const BEAUTY_SUBREDDITS = [
   'barbershop',
 ];
 
+// Subreddits where we can post to recruit affiliates / get users
+const AFFILIATE_POST_SUBREDDITS = [
+  'Esthetics',
+  'HairStylist',
+  'SalonOwners',
+  'cosmetology',
+  'BeautyIndustry',
+  'Entrepreneur',
+  'smallbusiness',
+  'SideProject',
+  'startups',
+  'indiehackers',
+];
+
 const SEARCH_QUERIES = [
   'no shows booking',
   'scheduling software',
@@ -172,6 +186,74 @@ Write ONLY the comment text.`,
 }
 
 // ============================================================================
+// AI Affiliate Post Generation
+// ============================================================================
+
+const AFFILIATE_POST_ANGLES = [
+  'cmu_student_story',
+  'looking_for_beta_testers',
+  'affiliate_opportunity',
+  'pain_point_discussion',
+  'tool_recommendation_ask',
+] as const;
+
+async function generateAffiliatePost(subreddit: string, angle: string): Promise<{ title: string; body: string } | null> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return null;
+
+  const client = new Anthropic({ apiKey });
+
+  const response = await client.messages.create({
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: 500,
+    messages: [{
+      role: 'user',
+      content: `Write a Reddit post for r/${subreddit} using the angle: "${angle}".
+
+RULES:
+1. Sound like a genuine redditor/college student, NOT a marketer
+2. The post should feel like a real person sharing their experience or asking for help
+3. Mention Alaii naturally — never pitch it directly
+4. Include alaii.app link only if it fits naturally
+5. Match r/${subreddit} culture and rules
+6. NO marketing language, NO "we offer", NO feature lists
+
+ANGLE GUIDES:
+- cmu_student_story: "I'm a CS student at Carnegie Mellon and I built this thing for beauty pros after seeing my friend's salon struggle with no-shows..."
+- looking_for_beta_testers: "Built a free tool for [specific beauty niche] and looking for feedback from real pros"
+- affiliate_opportunity: "Looking for beauty pros who want to earn passive income recommending tools to their network"
+- pain_point_discussion: Start a genuine discussion about a pain point, share how you solved it, mention Alaii at the end naturally
+- tool_recommendation_ask: "What tools do you all use for booking? I've been trying a few and wanted to share what I found"
+
+ABOUT ALAII:
+- AI platform that replaces GlossGenius/Acuity/Square for beauty pros
+- Free 60-day trial, no credit card
+- Built by Anthony, Carnegie Mellon CS student
+- Fills cancellations automatically with AI
+- Website: alaii.app
+
+AFFILIATE PROGRAM (only mention for affiliate_opportunity angle):
+- 20% recurring commission
+- Custom promo code
+- Dedicated dashboard
+
+Respond in JSON: {"title": "post title", "body": "post body text"}
+Only return JSON.`,
+    }],
+  });
+
+  const text = response.content[0];
+  if (text.type !== 'text') return null;
+
+  try {
+    const jsonStr = text.text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    return JSON.parse(jsonStr);
+  } catch {
+    return null;
+  }
+}
+
+// ============================================================================
 // Engagement Data
 // ============================================================================
 
@@ -182,7 +264,7 @@ interface RedditEngagement {
   subreddit: string;
   postTitle: string;
   comment: string;
-  action: 'comment' | 'upvote';
+  action: 'comment' | 'upvote' | 'post';
   timestamp: string;
 }
 
@@ -201,6 +283,23 @@ function logRedditAction(record: RedditEngagement): void {
 
 function hasCommented(postId: string): boolean {
   return getRedditLog().some(r => r.postId === postId);
+}
+
+function hasPostedToday(subreddit: string): boolean {
+  const today = new Date().toDateString();
+  return getRedditLog().some(r =>
+    r.action === 'post' &&
+    r.subreddit === subreddit &&
+    new Date(r.timestamp).toDateString() === today
+  );
+}
+
+function totalPostsToday(): number {
+  const today = new Date().toDateString();
+  return getRedditLog().filter(r =>
+    r.action === 'post' &&
+    new Date(r.timestamp).toDateString() === today
+  ).length;
 }
 
 // ============================================================================
@@ -339,6 +438,44 @@ export async function runRedditEngagement(): Promise<{
         }
       } catch (err) {
         console.error(`  ❌ Search error:`, err);
+      }
+    }
+
+    // METHOD 3: Create affiliate recruitment posts (max 2/day)
+    if (totalPostsToday() < 2) {
+      try {
+        const shuffledAffiliateSubs = [...AFFILIATE_POST_SUBREDDITS].sort(() => Math.random() - 0.5);
+        const targetSub = shuffledAffiliateSubs.find(s => !hasPostedToday(s));
+
+        if (targetSub) {
+          const angle = AFFILIATE_POST_ANGLES[Math.floor(Math.random() * AFFILIATE_POST_ANGLES.length)];
+          console.log(`  📝 Creating affiliate post in r/${targetSub} (angle: ${angle})...`);
+
+          const postContent = await generateAffiliatePost(targetSub, angle);
+          if (postContent) {
+            const result = await redditPost('/api/submit', {
+              sr: targetSub,
+              kind: 'self',
+              title: postContent.title,
+              text: postContent.body,
+              api_type: 'json',
+            });
+
+            const postId = result?.json?.data?.name || `post_${Date.now()}`;
+            logRedditAction({
+              postId,
+              subreddit: targetSub,
+              postTitle: postContent.title,
+              comment: postContent.body,
+              action: 'post',
+              timestamp: new Date().toISOString(),
+            });
+
+            console.log(`  ✅ Posted to r/${targetSub}: "${postContent.title}"`);
+          }
+        }
+      } catch (err) {
+        console.error(`  ❌ Affiliate post error:`, err);
       }
     }
 
