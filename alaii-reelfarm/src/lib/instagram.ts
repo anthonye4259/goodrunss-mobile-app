@@ -277,17 +277,19 @@ async function publishCarouselDirect(
   return { containerId: container.id, mediaId, status: 'published' };
 }
 
-/** Manus-based carousel publishing (via Slack for 50% savings, fallback to API) */
+/** Manus-based carousel publishing (sends to existing IG task for context reuse) */
 async function publishCarouselViaManus(
   imageUrls: string[],
   caption: string,
 ): Promise<IGPublishResult> {
   const MANUS_API_KEY = process.env.MANUS_API_KEY;
+  const MANUS_IG_TASK_ID = process.env.MANUS_IG_TASK_ID || 'RrKavjtZduKG2moEJvJywk';
+
   if (!MANUS_API_KEY) {
     return { containerId: '', status: 'error', error: 'No IG creds or MANUS_API_KEY' };
   }
 
-  const prompt = `Post a carousel to my Instagram account.
+  const prompt = `Post a new carousel to my Instagram account right now.
 
 CAROUSEL IMAGES (post these in order as a single carousel post):
 ${imageUrls.map((url, i) => `${i + 1}. ${url}`).join('\n')}
@@ -297,6 +299,34 @@ ${caption}
 
 Post this as an Instagram carousel with all ${imageUrls.length} images. Confirm when posted.`;
 
+  // Try sending to existing task first (has IG context/login saved)
+  try {
+    console.log(`📸 Sending to existing Manus task ${MANUS_IG_TASK_ID}...`);
+    const sendRes = await fetch('https://api.manus.ai/v2/task.sendMessage', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-manus-api-key': MANUS_API_KEY,
+      },
+      body: JSON.stringify({
+        task_id: MANUS_IG_TASK_ID,
+        message: { content: [{ type: 'text', text: prompt }] },
+      }),
+    });
+
+    if (sendRes.ok) {
+      const result = await sendRes.json();
+      console.log(`📸 IG carousel sent to existing Manus task (${MANUS_IG_TASK_ID})`);
+      return { containerId: MANUS_IG_TASK_ID, status: 'published' };
+    } else {
+      const errText = await sendRes.text();
+      console.warn(`⚠️ task.sendMessage failed (${sendRes.status}): ${errText}, creating new task...`);
+    }
+  } catch (err) {
+    console.warn(`⚠️ task.sendMessage error, creating new task:`, err);
+  }
+
+  // Fallback: create a new task
   const res = await fetch('https://api.manus.ai/v2/task.create', {
     method: 'POST',
     headers: {
@@ -317,7 +347,7 @@ Post this as an Instagram carousel with all ${imageUrls.length} images. Confirm 
 
   const result = await res.json();
   const taskId = result.task_id || result.id;
-  console.log(`📸 IG carousel submitted via Manus API (task: ${taskId})`);
+  console.log(`📸 IG carousel submitted via new Manus task (${taskId})`);
 
   return { containerId: taskId, status: 'published' };
 }
