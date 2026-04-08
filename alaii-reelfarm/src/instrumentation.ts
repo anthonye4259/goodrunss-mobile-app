@@ -8,6 +8,13 @@ export async function register() {
     const { startInfluencerOutreach } = await import('./lib/influencer-outreach');
     const { startTwitterEngagement } = await import('./lib/twitter');
     const { startRedditEngagement } = await import('./lib/reddit');
+    const { importUgcCsvFiles } = await import('./lib/ugc-importer');
+
+    // Import any UGC CSVs first (before outreach starts)
+    const ugcResult = importUgcCsvFiles();
+    if (ugcResult.imported > 0) {
+      console.log(`📥 UGC Import: ${ugcResult.imported} leads from ${ugcResult.files.join(', ')}`);
+    }
 
     startCarouselAutoPilot();
     startInfluencerDiscovery();
