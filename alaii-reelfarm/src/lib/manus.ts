@@ -216,3 +216,160 @@ export async function waitForTask(
 
   return { taskId, status: 'failed', result: 'Timeout waiting for Manus task' };
 }
+
+// ============================================================================
+// Engagement Target Discovery
+// ============================================================================
+
+export interface EngagementTarget {
+  handle: string;
+  platform: 'instagram' | 'tiktok' | 'facebook';
+  displayName: string;
+  followers: number;
+  niche: string;
+  profileUrl: string;
+  latestPostUrl?: string;
+  suggestedComment: string;
+  suggestedAction: 'follow_like_comment' | 'follow_like' | 'like_comment';
+  discoveredAt: string;
+  engaged: boolean;
+}
+
+const ENGAGEMENT_NICHES = [
+  // Beauty pros to warm up
+  'lash technician lash extensions lash artist',
+  'medspa injector botox filler nurse injector',
+  'hair stylist hairdresser salon owner colorist',
+  'esthetician skincare facial treatment',
+  'nail technician nail artist',
+  'permanent makeup microblading brow artist',
+  'barber barbershop owner',
+  // Beauty schools
+  'beauty school cosmetology school aesthetician school',
+  'cosmetology student beauty student graduating',
+];
+
+/**
+ * Ask Manus to find beauty pros to engage with on IG, TikTok, and Facebook.
+ * Returns profiles + suggested comments for daily warmup.
+ */
+export async function findEngagementTargets(
+  niche: string,
+  platform: 'instagram' | 'tiktok' | 'facebook' = 'instagram',
+): Promise<ManusTask> {
+  const platformInstructions: Record<string, string> = {
+    instagram: `Search Instagram for active beauty professionals in this niche. Look for accounts that:
+- Post regularly (at least 1x/week)
+- Have 1,000 - 50,000 followers (not too big, not too small)
+- Are real professionals (not meme pages or repost accounts)
+- Have a business or professional account
+- Are based in the US
+
+Search using hashtags like #${niche.split(' ')[0]}, #${niche.split(' ')[1] || 'beauty'}life, and search the Instagram search/explore page.`,
+
+    tiktok: `Search TikTok for active beauty professionals in this niche. Look for accounts that:
+- Post beauty content regularly
+- Have 1,000 - 100,000 followers
+- Are real professionals showing their work
+- Are based in the US
+
+Search using TikTok's creator search and hashtags.`,
+
+    facebook: `Search Facebook for beauty professionals and beauty business pages in this niche. Look for:
+- Active business pages with regular posts
+- Beauty schools with active student communities
+- Local medspa/salon pages
+- Have 500 - 20,000 followers
+- Are based in the US`,
+  };
+
+  const prompt = `Find 15 active ${niche} professionals on ${platform} that I should engage with (follow, like their posts, and comment).
+
+${platformInstructions[platform]}
+
+For each account, provide:
+1. Their handle/username
+2. Display name
+3. Approximate follower count
+4. Their niche (be specific: "lash tech", "medspa owner", etc.)
+5. Profile URL
+6. URL of their latest/most recent post (if possible)
+7. A suggested comment to leave on their latest post. The comment should:
+   - Be genuinely helpful or complimentary about their specific work
+   - Sound natural, not promotional
+   - Be 1-2 sentences max
+   - NO em dashes, NO semicolons
+   - Example: "the volume on that set is crazy good. how long did the fill take?"
+   - Example: "that before/after is unreal, your clients must love you"
+
+Format as JSON array:
+[{"handle":"@example","displayName":"Jane Smith","followers":5000,"niche":"lash tech","profileUrl":"https://instagram.com/example","latestPostUrl":"https://instagram.com/p/abc123","suggestedComment":"wow that lash map is perfect. what brand of fans do you use?","suggestedAction":"follow_like_comment"}]
+
+Only return the JSON array.`;
+
+  const result = await manusRequest('task.create', {
+    message: {
+      content: [{ type: 'text', text: prompt }],
+    },
+    agent_profile: 'manus-1.6',
+    interactive_mode: false,
+    hide_in_task_list: false,
+  });
+
+  console.log(`🎯 Manus engagement task created for "${niche}" on ${platform}:`, result.task_id || result.id);
+
+  return {
+    taskId: result.task_id || result.id,
+    status: 'pending',
+  };
+}
+
+/**
+ * Parse engagement target results from Manus.
+ */
+export function parseEngagementResults(
+  result: string,
+  niche: string,
+  platform: 'instagram' | 'tiktok' | 'facebook',
+): EngagementTarget[] {
+  try {
+    const jsonMatch = result.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) {
+      console.warn('⚠️ No JSON array found in engagement results');
+      return [];
+    }
+
+    const raw = JSON.parse(jsonMatch[0]) as any[];
+
+    return raw.map((item: any) => ({
+      handle: item.handle || item.username || '',
+      platform,
+      displayName: item.displayName || item.display_name || item.name || '',
+      followers: Number(item.followers) || 0,
+      niche: item.niche || niche.split(' ')[0],
+      profileUrl: item.profileUrl || item.profile_url || '',
+      latestPostUrl: item.latestPostUrl || item.latest_post_url || undefined,
+      suggestedComment: item.suggestedComment || item.suggested_comment || '',
+      suggestedAction: item.suggestedAction || 'follow_like_comment',
+      discoveredAt: new Date().toISOString(),
+      engaged: false,
+    }));
+  } catch (error) {
+    console.error('❌ Failed to parse engagement results:', error);
+    return [];
+  }
+}
+
+/** Get today's engagement niches (rotates daily) */
+export function getTodaysEngagementNiches(): { niche: string; platform: 'instagram' | 'tiktok' | 'facebook' }[] {
+  const dayOfWeek = new Date().getDay(); // 0=Sun, 6=Sat
+  const platforms: ('instagram' | 'tiktok' | 'facebook')[] = ['instagram', 'tiktok', 'facebook'];
+  const platform = platforms[dayOfWeek % 3]; // Rotate platforms
+
+  // Pick 2 niches per day
+  const startIdx = (dayOfWeek * 2) % ENGAGEMENT_NICHES.length;
+  return [
+    { niche: ENGAGEMENT_NICHES[startIdx], platform },
+    { niche: ENGAGEMENT_NICHES[(startIdx + 1) % ENGAGEMENT_NICHES.length], platform },
+  ];
+}

@@ -1,17 +1,22 @@
 // ============================================================================
-// Alaii ReelFarm — Influencer & UGC Discovery Engine
+// Alaii ReelFarm — Influencer & UGC Discovery + Engagement Queue Engine
 // ============================================================================
 // Automated pipeline that discovers beauty influencers via Manus AI,
-// stores leads, and triggers outreach. Runs daily on Railway cron.
+// stores leads, triggers outreach, and generates daily engagement queues.
+// Runs daily on Railway cron.
 
 import * as fs from 'fs';
 import * as path from 'path';
 import cron from 'node-cron';
 import {
   findInfluencers,
+  findEngagementTargets,
   waitForTask,
   parseInfluencerResults,
+  parseEngagementResults,
+  getTodaysEngagementNiches,
   type InfluencerLead,
+  type EngagementTarget,
 } from './manus';
 
 // ============================================================================
@@ -19,6 +24,7 @@ import {
 // ============================================================================
 
 const LEADS_FILE = path.join(process.cwd(), 'data', 'influencer-leads.json');
+const ENGAGEMENT_FILE = path.join(process.cwd(), 'data', 'engagement-queue.json');
 
 function ensureLeadsFile() {
   const dir = path.join(process.cwd(), 'data');
@@ -40,7 +46,6 @@ export function saveLead(lead: InfluencerLead): void {
     (l) => l.handle === lead.handle && l.platform === lead.platform,
   );
   if (existing >= 0) {
-    // Don't overwrite outreach status if already contacted
     if (leads[existing].outreachStatus !== 'new') {
       lead.outreachStatus = leads[existing].outreachStatus;
       lead.outreachSentAt = leads[existing].outreachSentAt;
@@ -68,11 +73,56 @@ export function updateLeadStatus(
 }
 
 // ============================================================================
+// Engagement Queue Storage
+// ============================================================================
+
+function ensureEngagementFile() {
+  const dir = path.join(process.cwd(), 'data');
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  if (!fs.existsSync(ENGAGEMENT_FILE)) {
+    fs.writeFileSync(ENGAGEMENT_FILE, JSON.stringify([], null, 2));
+  }
+}
+
+export function getTodaysEngagementQueue(): EngagementTarget[] {
+  ensureEngagementFile();
+  const all: EngagementTarget[] = JSON.parse(fs.readFileSync(ENGAGEMENT_FILE, 'utf-8'));
+  const today = new Date().toDateString();
+  return all.filter(t => new Date(t.discoveredAt).toDateString() === today);
+}
+
+export function getAllEngagementTargets(): EngagementTarget[] {
+  ensureEngagementFile();
+  return JSON.parse(fs.readFileSync(ENGAGEMENT_FILE, 'utf-8'));
+}
+
+function saveEngagementTargets(targets: EngagementTarget[]): void {
+  ensureEngagementFile();
+  const existing = getAllEngagementTargets();
+  const existingHandles = new Set(existing.map(t => t.handle.toLowerCase()));
+  const newTargets = targets.filter(t => !existingHandles.has(t.handle.toLowerCase()));
+  const all = [...existing, ...newTargets];
+  // Keep only last 7 days
+  const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const trimmed = all.filter(t => new Date(t.discoveredAt).getTime() > cutoff);
+  fs.writeFileSync(ENGAGEMENT_FILE, JSON.stringify(trimmed, null, 2));
+}
+
+export function markEngaged(handle: string): void {
+  ensureEngagementFile();
+  const all = getAllEngagementTargets();
+  const target = all.find(t => t.handle.toLowerCase() === handle.toLowerCase());
+  if (target) {
+    target.engaged = true;
+    fs.writeFileSync(ENGAGEMENT_FILE, JSON.stringify(all, null, 2));
+  }
+}
+
+// ============================================================================
 // Beauty Niches to Search
 // ============================================================================
 
 const BEAUTY_NICHES = [
-  // ── INFLUENCERS ──
   'medspa injector botox filler aesthetics',
   'hair stylist hairdresser salon colorist',
   'lash technician lash extensions lash artist',
@@ -81,14 +131,10 @@ const BEAUTY_NICHES = [
   'permanent makeup microblading brow artist',
   'barber barbershop mens grooming',
   'makeup artist MUA bridal makeup',
-
-  // ── UGC CREATORS ──
   'UGC creator beauty skincare product review tutorial',
   'beauty content creator get ready with me GRWM salon',
   'hair transformation before after stylist content',
   'lash tutorial content creator beauty vlog',
-
-  // ── AFFILIATE / COLLAB READY ──
   'beauty affiliate brand ambassador promo code discount',
   'salon owner looking for tools booking software reviews',
   'beauty entrepreneur small business owner collab open',
@@ -100,10 +146,6 @@ const BEAUTY_NICHES = [
 
 let isDiscovering = false;
 
-/**
- * Run one full discovery cycle across all niches.
- * Searches each niche, deduplicates, and saves new leads.
- */
 export async function runInfluencerDiscovery(): Promise<{
   totalFound: number;
   newLeads: number;
@@ -124,7 +166,6 @@ export async function runInfluencerDiscovery(): Promise<{
     console.log('   Influencer Discovery Engine Starting...');
     console.log('   ══════════════════════════════════════════\n');
 
-    // Pick 2-3 random niches per run to avoid API overuse
     const shuffled = [...BEAUTY_NICHES].sort(() => Math.random() - 0.5);
     const nichesToSearch = shuffled.slice(0, 3);
 
@@ -133,17 +174,13 @@ export async function runInfluencerDiscovery(): Promise<{
         console.log(`\n🎯 Searching niche: "${niche}"...`);
         searchedNiches.push(niche);
 
-        // Create Manus discovery task
         const task = await findInfluencers(niche, 5000, 100000, 'US');
-
-        // Wait for results (up to 10 min per niche)
         const result = await waitForTask(task.taskId);
 
         if (result.status === 'completed' && result.result) {
           const leads = parseInfluencerResults(result.result, niche);
           totalFound += leads.length;
 
-          // Deduplicate and save
           const existingHandles = new Set(
             getAllLeads().map((l) => l.handle.toLowerCase()),
           );
@@ -154,14 +191,10 @@ export async function runInfluencerDiscovery(): Promise<{
               newLeads++;
               existingHandles.add(lead.handle.toLowerCase());
               console.log(
-                `  ✅ New lead: ${lead.handle} (${lead.followers.toLocaleString()} followers, ${lead.engagementRate}% engagement)`,
+                `  ✅ New: ${lead.handle} (${lead.followers.toLocaleString()} followers)`,
               );
             }
           }
-
-          console.log(
-            `  📊 ${niche}: ${leads.length} found, ${leads.length - (totalFound - newLeads)} new`,
-          );
         } else {
           console.log(`  ⚠️ Niche "${niche}" returned no results`);
         }
@@ -169,7 +202,6 @@ export async function runInfluencerDiscovery(): Promise<{
         console.error(`  ❌ Error searching "${niche}":`, error);
       }
 
-      // Rate limit between niche searches
       await new Promise((resolve) => setTimeout(resolve, 5000));
     }
 
@@ -187,21 +219,104 @@ export async function runInfluencerDiscovery(): Promise<{
 }
 
 // ============================================================================
-// Scheduler — Daily at 6 AM EST
+// Engagement Queue Generator
+// ============================================================================
+
+let isGeneratingQueue = false;
+
+export async function runEngagementQueueGeneration(): Promise<{
+  totalTargets: number;
+  platform: string;
+  niches: string[];
+}> {
+  if (isGeneratingQueue) {
+    console.log('⏸️ Engagement queue already generating, skipping...');
+    return { totalTargets: 0, platform: '', niches: [] };
+  }
+
+  isGeneratingQueue = true;
+  let totalTargets = 0;
+  const niches: string[] = [];
+  let platform = '';
+
+  try {
+    console.log('\n🎯 ══════════════════════════════════════════');
+    console.log('   Daily Engagement Queue Generator Starting...');
+    console.log('   ══════════════════════════════════════════\n');
+
+    const todaysNiches = getTodaysEngagementNiches();
+    platform = todaysNiches[0]?.platform || 'instagram';
+
+    console.log(`📱 Today's platform: ${platform}`);
+    console.log(`🎯 Today's niches: ${todaysNiches.map(n => n.niche.split(' ')[0]).join(', ')}\n`);
+
+    for (const { niche, platform: plat } of todaysNiches) {
+      try {
+        console.log(`🔍 Finding engagement targets: "${niche}" on ${plat}...`);
+        niches.push(niche);
+
+        const task = await findEngagementTargets(niche, plat);
+        const result = await waitForTask(task.taskId);
+
+        if (result.status === 'completed' && result.result) {
+          const targets = parseEngagementResults(result.result, niche, plat);
+          totalTargets += targets.length;
+          saveEngagementTargets(targets);
+
+          console.log(`  ✅ Found ${targets.length} engagement targets`);
+          for (const t of targets.slice(0, 3)) {
+            console.log(`     ${t.handle} (${t.followers}) — "${t.suggestedComment.slice(0, 50)}..."`);
+          }
+        } else {
+          console.log(`  ⚠️ No engagement targets found for "${niche}"`);
+        }
+      } catch (error) {
+        console.error(`  ❌ Error finding targets for "${niche}":`, error);
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 5000));
+    }
+
+    const todaysQueue = getTodaysEngagementQueue();
+    console.log('\n🎯 ══════════════════════════════════════════');
+    console.log(`   Queue ready: ${todaysQueue.length} targets for today`);
+    console.log(`   Platform: ${platform}`);
+    console.log('   ══════════════════════════════════════════\n');
+  } catch (error) {
+    console.error('❌ Engagement queue error:', error);
+  } finally {
+    isGeneratingQueue = false;
+  }
+
+  return { totalTargets, platform, niches };
+}
+
+// ============================================================================
+// Scheduler
 // ============================================================================
 
 export function startInfluencerDiscovery(): void {
   console.log('\n🔍 Influencer Discovery Engine initialized');
   console.log(`   📊 ${getAllLeads().length} leads in database`);
 
-  // Run daily at 6 AM (EST = UTC-4, so 10 AM UTC)
+  // Discovery: daily at 6 AM EST (10 AM UTC)
   cron.schedule('0 10 * * *', async () => {
     console.log('⏰ Daily influencer discovery triggered');
     const result = await runInfluencerDiscovery();
-    console.log(`📊 Daily discovery: ${result.newLeads} new leads from ${result.niches.length} niches`);
+    console.log(`📊 Discovery: ${result.newLeads} new leads`);
   });
 
-  console.log('   ⏰ Scheduled: daily at 6 AM EST\n');
+  // Engagement queue: daily at 7 AM EST (11 AM UTC)
+  cron.schedule('0 11 * * *', async () => {
+    console.log('⏰ Daily engagement queue generation triggered');
+    const result = await runEngagementQueueGeneration();
+    console.log(`🎯 Queue: ${result.totalTargets} targets on ${result.platform}`);
+  });
+
+  const todaysQueue = getTodaysEngagementQueue();
+  console.log(`   🎯 ${todaysQueue.length} engagement targets for today`);
+  console.log('   ⏰ Discovery: daily at 6 AM EST');
+  console.log('   ⏰ Engagement: daily at 7 AM EST\n');
 }
 
 // ============================================================================
@@ -210,6 +325,8 @@ export function startInfluencerDiscovery(): void {
 
 export function getDiscoveryStats() {
   const leads = getAllLeads();
+  const engagementQueue = getTodaysEngagementQueue();
+  const allEngagement = getAllEngagementTargets();
   return {
     totalLeads: leads.length,
     byStatus: {
@@ -219,17 +336,14 @@ export function getDiscoveryStats() {
       converted: leads.filter((l) => l.outreachStatus === 'converted').length,
       declined: leads.filter((l) => l.outreachStatus === 'declined').length,
     },
-    byNiche: BEAUTY_NICHES.reduce(
-      (acc, niche) => {
-        const nicheKey = niche.split(' ')[0];
-        acc[nicheKey] = leads.filter((l) => l.niche.includes(niche.split(' ')[0])).length;
-        return acc;
-      },
-      {} as Record<string, number>,
-    ),
     byPlatform: {
       instagram: leads.filter((l) => l.platform === 'instagram').length,
       tiktok: leads.filter((l) => l.platform === 'tiktok').length,
+    },
+    engagementQueue: {
+      todayTargets: engagementQueue.length,
+      todayEngaged: engagementQueue.filter(t => t.engaged).length,
+      totalTargets7d: allEngagement.length,
     },
   };
 }
