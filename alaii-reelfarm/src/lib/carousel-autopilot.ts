@@ -54,98 +54,77 @@ export interface CarouselPost {
 // ============================================================================
 
 const DEFAULT_CAROUSEL_TOPICS = [
-  // ── NO-SHOWS ──
-  "5 ways i finally stopped no-shows at my salon",
-  "things i wish i knew about no-shows before opening my medspa",
-  "how no-shows are silently draining your lash business",
-  "i lost $400 this week to no-shows. here's what i changed",
-  "the one policy that cut my no-shows by 80%",
+  // ── MONEY YOU'RE LOSING ──
+  "how much money you lose every time a client no-shows",
+  "the real cost of one empty slot per day ($75,000/year)",
+  "5 ways you're losing money without realizing it",
+  "i calculated how much ghost clients cost me. it was $23,000",
+  "empty slots are eating your income alive",
+  "you're leaving $400 on the table every week. here's how",
 
-  // ── EMPTY CALENDAR ──
-  "5 things i did when my schedule had more gaps than bookings",
-  "how i went from half-booked to fully booked in 30 days",
-  "things that changed when i let AI fill my cancellations",
-  "my calendar looked like swiss cheese. here's the fix",
-  "how i fill last-minute cancellations in under 10 minutes",
-  "3 reasons your calendar is empty (and it's not your work)",
+  // ── PASSIVE INCOME / WEALTH ──
+  "how i make money while i sleep as a beauty pro",
+  "the difference between being busy and being wealthy",
+  "5 things wealthy service providers do differently",
+  "you're working 12 hour days and still broke. here's why",
+  "how to stop trading time for money in the beauty industry",
+  "talented and broke is not a flex. build systems",
+  "i stopped hustling harder and started building smarter",
+  "passive income strategies for beauty professionals",
+  "how my AI makes me money while i'm with clients",
 
-  // ── MANUAL WORK ──
-  "5 things i stopped doing manually as a solo stylist",
-  "hours i wasted on admin that i'll never get back",
-  "how i automated my content so i could focus on clients",
-  "things i used to do at midnight that my app does now",
-  "i was spending 5 hours a week on scheduling. not anymore",
+  // ── WEALTH SYSTEMS ──
+  "the one system that changed my business income overnight",
+  "what happened when i let AI handle my client texts",
+  "i used to chase clients. now they chase me",
+  "how i fill cancellations in 10 minutes without touching my phone",
+  "your phone is not a business tool. it's holding you back",
+  "1 AI text recovered $2,400 in lost bookings last month",
+  "stop posting and start automating. your wallet will thank you",
 
-  // ── GROWTH ──
-  "5 ways to get more clients without spending on ads",
-  "things i did to double my rebooking rate",
-  "how i built a client waitlist without trying",
-  "i got 15 new clients this month. here's every step",
-  "the easiest way to turn one-time clients into regulars",
-  "how i got my first 100 clients with zero ad spend",
+  // ── INJECTORS / MEDSPA (WEALTH) ──
+  "one empty Botox slot costs you $400. 3/week = $62,000/year",
+  "how i built a 6-figure medspa with zero admin staff",
+  "the biggest money mistake new injectors make",
+  "patients ghost after consultations. here's what that costs you",
+  "why your medspa needs an AI that works nights and weekends",
+  "injector math: the real numbers behind a full vs empty book",
 
-  // ── COMPETITOR CALL-OUTS ──
-  "5 things glossgenius charges for that are free on alaii",
-  "why i switched from square to something better",
-  "things your booking app should do but probably doesn't",
-  "i was paying $50/month for something that's free now",
-  "acuity vs glossgenius vs alaii. honest comparison",
-  "your booking app is overcharging you. here's proof",
+  // ── HAIR STYLISTS (WEALTH) ──
+  "how much money you lose when clients don't rebook",
+  "the behind-the-chair habit that's costing you thousands",
+  "i went from renting a chair to owning my income in 90 days",
+  "solo stylists: stop doing $100/hr work for $30/hr pay",
+  "5 ways to keep your chair full without begging for clients",
 
-  // ── PRICING / MONEY ──
-  "5 signs you're undercharging for your services",
-  "how i raised my prices without losing a single client",
-  "ways to make more money without adding more hours",
-  "the math behind why $50 lashes don't pay your bills",
-  "how much you should actually be charging in 2026",
-
-  // ── INJECTORS / MEDSPA ──
-  "5 things every new injector needs to hear",
-  "how i built my medspa clientele from scratch",
-  "the biggest mistake new injectors make with pricing",
-  "botox booking tips that actually work",
-  "why your medspa needs an AI assistant in 2026",
-
-  // ── HAIR STYLISTS ──
-  "5 ways to keep your chair full every single day",
-  "how i stopped chasing clients and started attracting them",
-  "the behind-the-chair routine that changed my business",
-  "things hair stylists do that kill their rebooking rate",
-  "how i went from renting a chair to owning my schedule",
-
-  // ── LASH TECHS ──
-  "5 things clients wish their lash tech knew",
-  "how i went from 2 clients a day to fully booked",
-  "lash tech business tips nobody talks about",
-  "the real cost of being a lash tech in 2026",
+  // ── LASH TECHS (WEALTH) ──
+  "2 cancellations per week = $15,000/year in lost lash income",
   "how i built a 6-figure lash business working 4 days a week",
+  "the text that gets 90% of lash clients to rebook immediately",
+  "lash tech money tips nobody talks about",
+  "your lash room is a business. start treating it like one",
 
-  // ── ESTHETICIANS ──
-  "5 things that changed when i went independent",
-  "how i built a skincare clientele without social media ads",
-  "things i learned after 1000 facials",
-  "why estheticians are underpaid and how to fix it",
+  // ── ESTHETICIANS (WEALTH) ──
+  "every client who doesn't rebook costs you $8,000/year",
+  "how i filled my slow season without running a single ad",
+  "esthetician income: why you're underpaid and how to fix it",
+  "the follow-up that tripled my facial rebooking rate",
 
-  // ── NAIL TECHS ──
-  "5 ways to speed up your nail appointments without cutting quality",
-  "how i doubled my income as a nail tech in 6 months",
-  "nail tech business mistakes i made so you don't have to",
+  // ── NAIL TECHS (WEALTH) ──
+  "no-shows without deposits cost nail techs thousands per year",
+  "how i doubled my nail income in 6 months with one change",
+  "3 empty slots per week = $12,000/year you'll never see",
 
-  // ── CLIENT RETENTION ──
-  "the text i send that gets 90% of clients to rebook",
-  "5 reasons clients ghost you (it's not your work)",
-  "how i win back clients who haven't booked in months",
-  "the follow-up strategy that tripled my retention",
-
-  // ── TRENDING FORMATS ──
-  "day in the life of a solo beauty business owner",
-  "things nobody tells you about being your own boss",
-  "red flags in beauty clients and how to handle them",
-  "what $100 gets you at my salon vs the chain down the street",
-  "POV: you finally automated your booking and got your life back",
-  "the moment i realized i was running a business not just doing hair",
-  "things beauty school doesn't teach you about running a business",
-  "my honest income as a solo beauty pro (real numbers)",
+  // ── REAL TALK / TRENDING ──
+  "things beauty school never taught you about building wealth",
+  "the moment i realized i was running a business not just doing services",
+  "your competitors are automating everything. you're still texting clients manually",
+  "fully booked and still stressed? you have an income problem not a booking problem",
+  "my honest numbers as a solo beauty pro (what i actually keep)",
+  "POV: you finally stopped losing money and started building wealth",
+  "the $0 tool that replaced my $50/month booking app",
+  "red flag: if your booking app doesn't fill your cancellations for you",
+  "what $500/month in lost bookings looks like over 5 years",
 ];
 
 // ============================================================================
