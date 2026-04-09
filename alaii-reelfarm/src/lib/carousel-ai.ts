@@ -182,15 +182,26 @@ CRITICAL:
     content.industry = 'beauty pros';
   }
 
-  // Ensure description mentions Alaii and free booking
-  if (!content.description.includes('alaii') && !content.description.includes('Alaii')) {
-    content.description += '\n\nfree booking + payments at alaii.app';
+  // ═══════════════════════════════════════════════════════════
+  // BULLETPROOF: Every caption MUST end with alaii.app link
+  // ═══════════════════════════════════════════════════════════
+  const hasLink = content.description.includes('alaii.app');
+  const hasFree = content.description.toLowerCase().includes('free');
+
+  if (!hasLink) {
+    // Append the full CTA line
+    content.description += '\n\nstop losing money. free booking + payments at alaii.app';
+  } else if (!hasFree) {
+    // Has link but no "free" — replace bare link with full CTA
+    content.description = content.description.replace(
+      /alaii\.app/g,
+      'free booking + payments at alaii.app'
+    );
   }
+
+  // Final guarantee: if somehow alaii.app still isn't there, force it
   if (!content.description.includes('alaii.app')) {
-    content.description += '\nalaii.app';
-  }
-  if (!content.description.includes('free')) {
-    content.description = content.description.replace('alaii.app', 'free booking at alaii.app');
+    content.description += '\n\nalaii.app';
   }
 
   return content;
