@@ -58,31 +58,94 @@ const DEFAULT_CAROUSEL_TOPICS = [
   "5 ways i finally stopped no-shows at my salon",
   "things i wish i knew about no-shows before opening my medspa",
   "how no-shows are silently draining your lash business",
+  "i lost $400 this week to no-shows. here's what i changed",
+  "the one policy that cut my no-shows by 80%",
 
   // ── EMPTY CALENDAR ──
   "5 things i did when my schedule had more gaps than bookings",
   "how i went from half-booked to fully booked in 30 days",
   "things that changed when i let AI fill my cancellations",
+  "my calendar looked like swiss cheese. here's the fix",
+  "how i fill last-minute cancellations in under 10 minutes",
+  "3 reasons your calendar is empty (and it's not your work)",
 
   // ── MANUAL WORK ──
   "5 things i stopped doing manually as a solo stylist",
   "hours i wasted on admin that i'll never get back",
   "how i automated my content so i could focus on clients",
+  "things i used to do at midnight that my app does now",
+  "i was spending 5 hours a week on scheduling. not anymore",
 
   // ── GROWTH ──
   "5 ways to get more clients without spending on ads",
   "things i did to double my rebooking rate",
   "how i built a client waitlist without trying",
+  "i got 15 new clients this month. here's every step",
+  "the easiest way to turn one-time clients into regulars",
+  "how i got my first 100 clients with zero ad spend",
 
   // ── COMPETITOR CALL-OUTS ──
   "5 things glossgenius charges for that are free on alaii",
   "why i switched from square to something better",
   "things your booking app should do but probably doesn't",
+  "i was paying $50/month for something that's free now",
+  "acuity vs glossgenius vs alaii. honest comparison",
+  "your booking app is overcharging you. here's proof",
 
   // ── PRICING / MONEY ──
   "5 signs you're undercharging for your services",
   "how i raised my prices without losing a single client",
   "ways to make more money without adding more hours",
+  "the math behind why $50 lashes don't pay your bills",
+  "how much you should actually be charging in 2026",
+
+  // ── INJECTORS / MEDSPA ──
+  "5 things every new injector needs to hear",
+  "how i built my medspa clientele from scratch",
+  "the biggest mistake new injectors make with pricing",
+  "botox booking tips that actually work",
+  "why your medspa needs an AI assistant in 2026",
+
+  // ── HAIR STYLISTS ──
+  "5 ways to keep your chair full every single day",
+  "how i stopped chasing clients and started attracting them",
+  "the behind-the-chair routine that changed my business",
+  "things hair stylists do that kill their rebooking rate",
+  "how i went from renting a chair to owning my schedule",
+
+  // ── LASH TECHS ──
+  "5 things clients wish their lash tech knew",
+  "how i went from 2 clients a day to fully booked",
+  "lash tech business tips nobody talks about",
+  "the real cost of being a lash tech in 2026",
+  "how i built a 6-figure lash business working 4 days a week",
+
+  // ── ESTHETICIANS ──
+  "5 things that changed when i went independent",
+  "how i built a skincare clientele without social media ads",
+  "things i learned after 1000 facials",
+  "why estheticians are underpaid and how to fix it",
+
+  // ── NAIL TECHS ──
+  "5 ways to speed up your nail appointments without cutting quality",
+  "how i doubled my income as a nail tech in 6 months",
+  "nail tech business mistakes i made so you don't have to",
+
+  // ── CLIENT RETENTION ──
+  "the text i send that gets 90% of clients to rebook",
+  "5 reasons clients ghost you (it's not your work)",
+  "how i win back clients who haven't booked in months",
+  "the follow-up strategy that tripled my retention",
+
+  // ── TRENDING FORMATS ──
+  "day in the life of a solo beauty business owner",
+  "things nobody tells you about being your own boss",
+  "red flags in beauty clients and how to handle them",
+  "what $100 gets you at my salon vs the chain down the street",
+  "POV: you finally automated your booking and got your life back",
+  "the moment i realized i was running a business not just doing hair",
+  "things beauty school doesn't teach you about running a business",
+  "my honest income as a solo beauty pro (real numbers)",
 ];
 
 // ============================================================================
@@ -102,8 +165,13 @@ function ensureDataDir() {
       name: 'Alaii — TikTok Carousels',
       enabled: false,
       requireApproval: true,
-      postsPerDay: 10,
-      postTimes: ['08:00', '09:30', '11:00', '12:30', '14:00', '15:30', '17:00', '18:30', '20:00', '21:30'],
+      postsPerDay: 20,
+      postTimes: [
+        '07:00', '07:45', '08:30', '09:15', '10:00', '10:45',
+        '11:30', '12:15', '13:00', '13:45', '14:30', '15:15',
+        '16:00', '16:45', '17:30', '18:15', '19:00', '19:45',
+        '20:30', '21:15',
+      ],
       topics: DEFAULT_CAROUSEL_TOPICS,
       accountIds: [], // Empty = all accounts
       slideCount: 5,
