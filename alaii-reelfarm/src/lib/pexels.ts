@@ -46,6 +46,11 @@ const INDUSTRY_KEYWORDS: Record<string, string[]> = {
   barber: ['barber shop', 'barber cutting hair', 'barber chair', 'men haircut', 'barber tools'],
   nail: ['nail salon manicure', 'nail art design', 'nail technician', 'woman nails', 'nail polish'],
   spa: ['woman spa sauna', 'spa massage', 'woman wellness spa', 'spa treatment room', 'facial treatment'],
+  medspa: ['medical spa treatment', 'aesthetic clinic', 'skincare treatment room', 'woman beauty clinic', 'cosmetic treatment'],
+  injector: ['medical aesthetics', 'skincare professional', 'beauty clinic treatment', 'cosmetic procedure room', 'aesthetic beauty'],
+  filler: ['cosmetic treatment', 'beauty aesthetic clinic', 'skincare professional woman', 'medical beauty', 'lip treatment beauty'],
+  botox: ['aesthetic medicine', 'beauty treatment clinic', 'skincare clinic interior', 'cosmetic professional', 'beauty injection'],
+  esthetician: ['facial treatment spa', 'esthetician working', 'skincare professional', 'woman facial spa', 'beauty treatment room'],
   lash: ['eyelash extension', 'lash artist working', 'woman lashes closeup', 'beauty lash salon', 'eyelash beauty'],
   brow: ['eyebrow microblading', 'brow shaping', 'woman eyebrows', 'beauty brow treatment'],
   wax: ['waxing salon', 'beauty treatment room', 'esthetician working', 'spa treatment'],
@@ -69,6 +74,7 @@ const INDUSTRY_KEYWORDS: Record<string, string[]> = {
   cleaning: ['cleaning service', 'clean home interior', 'professional cleaning', 'organized space'],
   pet: ['pet grooming', 'dog grooming salon', 'pet care', 'cute dog'],
   auto: ['auto detailing', 'car wash', 'mechanic working', 'auto shop'],
+  beauty: ['beauty professional', 'beauty salon interior', 'woman beauty treatment', 'aesthetic beauty room', 'beauty workspace'],
 };
 
 // Fallback lifestyle terms when no industry match

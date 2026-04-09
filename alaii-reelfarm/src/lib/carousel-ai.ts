@@ -57,6 +57,9 @@ CRITICAL FORMATTING:
 - NEVER use em dashes (—) or semicolons anywhere. Use periods and commas only.
 - No words like: furthermore, moreover, utilize, streamline, leverage, game-changer, elevate
 - Write like you're texting, not writing an article
+- Keep slide text SHORT. Carousel slides are images, not blog posts.
+- Headlines: 5-8 words max. Body: 1 short sentence.
+- Think instagram carousel vibes, not essay paragraphs.
 `;
 
 export interface CarouselContent {
@@ -100,10 +103,11 @@ SLIDE 1 (HOOK):
 
 SLIDES 2-${slideCount + 1} (TIPS/POINTS — keep it tight, ${slideCount - 2} tips max):
 - Each slide has:
-  - headline: short title (5-8 words, numbered like "1. stop chasing clients")
-  - body: 1-2 sentences, specific and actionable. Use real numbers and scenarios ("$300 per empty slot", "2 hours every night on DMs")
+  - headline: SHORT title (4-7 words max, numbered like "1. stop chasing clients")
+  - body: ONE short sentence only (under 15 words). Think bumper sticker, not paragraph.
 - Pattern: identify a SHARP relatable pain, give a specific fix
 - Be brutally honest and specific. No generic advice.
+- These are IMAGE slides, not blog posts. Less text = more impact.
 
 LAST SLIDE (CTA):
 - Must mention Alaii and free booking

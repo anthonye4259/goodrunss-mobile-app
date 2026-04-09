@@ -1,8 +1,8 @@
 // ============================================================================
-// Alaii ReelFarm — Carousel Image Renderer
+// Alaii ReelFarm — Carousel Image Renderer (v2 — Premium Design)
 // ============================================================================
-// Renders text onto Pexels background images to create carousel slides.
-// Uses node-canvas for server-side image generation. No video/ffmpeg needed.
+// Renders branded carousel slides with Inter font, Alaii blue accents,
+// numbered circles, rounded card overlays, and professional layouts.
 // Output: 1080×1350 JPG images (TikTok carousel optimal size).
 
 import { createCanvas, loadImage, registerFont } from 'canvas';
@@ -15,18 +15,40 @@ import { downloadImage } from './pexels';
 const SLIDE_WIDTH = 1080;
 const SLIDE_HEIGHT = 1350;
 
+// Brand colors
+const ALAII_BLUE = '#4A9FD4';
+const ALAII_DARK = '#1A2B3C';
+const ALAII_LIGHT = '#E3F2FD';
+
+// Register Inter font (downloaded to /fonts)
+const fontsDir = path.join(process.cwd(), 'fonts');
+try {
+  if (fs.existsSync(path.join(fontsDir, 'Inter-Variable.ttf'))) {
+    registerFont(path.join(fontsDir, 'Inter-Variable.ttf'), {
+      family: 'Inter',
+      weight: '400',
+    });
+  }
+  if (fs.existsSync(path.join(fontsDir, 'Outfit-Variable.ttf'))) {
+    registerFont(path.join(fontsDir, 'Outfit-Variable.ttf'), {
+      family: 'Outfit',
+      weight: '700',
+    });
+  }
+} catch (e) {
+  console.warn('Font registration failed, falling back to system fonts:', e);
+}
+
+const HEADING_FONT = 'Outfit, Inter, sans-serif';
+const BODY_FONT = 'Inter, sans-serif';
+
 // ============================================================================
 // Text Rendering Helpers
 // ============================================================================
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Ctx = any; // node-canvas context differs from DOM CanvasRenderingContext2D
+type Ctx = any;
 
-function wrapText(
-  ctx: Ctx,
-  text: string,
-  maxWidth: number,
-): string[] {
+function wrapText(ctx: Ctx, text: string, maxWidth: number): string[] {
   const words = text.split(' ');
   const lines: string[] = [];
   let currentLine = words[0] || '';
@@ -45,18 +67,30 @@ function wrapText(
   return lines;
 }
 
-function drawTextWithShadow(
-  ctx: Ctx,
-  text: string,
-  x: number,
-  y: number,
-) {
-  // Shadow
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-  ctx.fillText(text, x + 2, y + 2);
-  // Main text
-  ctx.fillStyle = '#FFFFFF';
+function drawTextGlow(ctx: Ctx, text: string, x: number, y: number, color: string = '#000') {
+  // Soft glow behind text for readability
+  ctx.save();
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 20;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
+  ctx.fillStyle = 'rgba(0,0,0,0)';
   ctx.fillText(text, x, y);
+  ctx.restore();
+}
+
+function drawRoundedRect(ctx: Ctx, x: number, y: number, w: number, h: number, r: number) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
 }
 
 // ============================================================================
@@ -76,46 +110,71 @@ async function renderHookSlide(
   const img = await loadImage(bgImagePath);
   ctx.drawImage(img, 0, 0, SLIDE_WIDTH, SLIDE_HEIGHT);
 
-  // Dark gradient overlay (stronger for readability)
+  // Strong dark gradient overlay
   const gradient = ctx.createLinearGradient(0, 0, 0, SLIDE_HEIGHT);
-  gradient.addColorStop(0, 'rgba(0, 0, 0, 0.75)');
-  gradient.addColorStop(0.5, 'rgba(0, 0, 0, 0.4)');
-  gradient.addColorStop(1, 'rgba(0, 0, 0, 0.6)');
+  gradient.addColorStop(0, 'rgba(10, 15, 25, 0.85)');
+  gradient.addColorStop(0.4, 'rgba(10, 15, 25, 0.55)');
+  gradient.addColorStop(0.7, 'rgba(10, 15, 25, 0.45)');
+  gradient.addColorStop(1, 'rgba(10, 15, 25, 0.80)');
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, SLIDE_WIDTH, SLIDE_HEIGHT);
 
-  // Industry label at top (e.g., "for lash techs")
+  // Accent bar at top
+  ctx.fillStyle = ALAII_BLUE;
+  ctx.fillRect(0, 0, SLIDE_WIDTH, 6);
+
+  // Industry pill at top
   if (industry) {
-    ctx.font = 'bold 28px sans-serif';
+    const pillText = `for ${industry}`;
+    ctx.font = `bold 24px ${BODY_FONT}`;
     ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
-    ctx.fillStyle = '#818CF8'; // Indigo accent
-    ctx.fillText(`for ${industry}`, SLIDE_WIDTH / 2, SLIDE_HEIGHT * 0.12);
+    const pillW = ctx.measureText(pillText).width + 40;
+    const pillX = (SLIDE_WIDTH - pillW) / 2;
+    const pillY = SLIDE_HEIGHT * 0.10;
+
+    drawRoundedRect(ctx, pillX, pillY, pillW, 42, 21);
+    ctx.fillStyle = ALAII_BLUE;
+    ctx.fill();
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(pillText, SLIDE_WIDTH / 2, pillY + 21);
   }
 
-  // Hook text — large, centered in upper portion
-  ctx.font = 'bold 64px sans-serif';
+  // Hook text — large, centered
+  ctx.font = `bold 62px ${HEADING_FONT}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
 
-  const maxWidth = SLIDE_WIDTH * 0.8;
+  const maxWidth = SLIDE_WIDTH * 0.78;
   const lines = wrapText(ctx, hookText, maxWidth);
-  const lineHeight = 80;
+  const lineHeight = 78;
   const startY = industry
-    ? SLIDE_HEIGHT * 0.18
-    : SLIDE_HEIGHT * 0.25 - (lines.length * lineHeight) / 2;
+    ? SLIDE_HEIGHT * 0.22
+    : SLIDE_HEIGHT * 0.28 - (lines.length * lineHeight) / 2;
 
   for (let i = 0; i < lines.length; i++) {
-    drawTextWithShadow(ctx, lines[i], SLIDE_WIDTH / 2, startY + i * lineHeight);
+    const ly = startY + i * lineHeight;
+    // Glow for readability
+    drawTextGlow(ctx, lines[i], SLIDE_WIDTH / 2, ly, 'rgba(0,0,0,0.8)');
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillText(lines[i], SLIDE_WIDTH / 2, ly);
   }
 
-  // Alaii watermark
-  ctx.font = '24px sans-serif';
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-  ctx.fillText('alaii.app', SLIDE_WIDTH / 2, SLIDE_HEIGHT - 60);
+  // "Swipe" indicator at bottom
+  ctx.font = `600 22px ${BODY_FONT}`;
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+  ctx.textAlign = 'center';
+  ctx.fillText('swipe →', SLIDE_WIDTH / 2, SLIDE_HEIGHT - 100);
 
-  // Save
-  const buffer = canvas.toBuffer('image/jpeg', { quality: 0.92 });
+  // Alaii watermark
+  ctx.font = `bold 20px ${BODY_FONT}`;
+  ctx.fillStyle = ALAII_BLUE;
+  ctx.globalAlpha = 0.6;
+  ctx.fillText('alaii.app', SLIDE_WIDTH / 2, SLIDE_HEIGHT - 50);
+  ctx.globalAlpha = 1;
+
+  const buffer = canvas.toBuffer('image/jpeg', { quality: 0.93 });
   fs.writeFileSync(outputPath, buffer);
 }
 
@@ -123,6 +182,7 @@ async function renderTipSlide(
   slide: CarouselSlide,
   bgImagePath: string,
   outputPath: string,
+  slideIndex?: number,
 ): Promise<void> {
   const canvas = createCanvas(SLIDE_WIDTH, SLIDE_HEIGHT);
   const ctx = canvas.getContext('2d');
@@ -133,52 +193,87 @@ async function renderTipSlide(
 
   // Dark overlay
   const gradient = ctx.createLinearGradient(0, 0, 0, SLIDE_HEIGHT);
-  gradient.addColorStop(0, 'rgba(0, 0, 0, 0.7)');
-  gradient.addColorStop(0.4, 'rgba(0, 0, 0, 0.35)');
-  gradient.addColorStop(1, 'rgba(0, 0, 0, 0.5)');
+  gradient.addColorStop(0, 'rgba(10, 15, 25, 0.82)');
+  gradient.addColorStop(0.3, 'rgba(10, 15, 25, 0.50)');
+  gradient.addColorStop(0.7, 'rgba(10, 15, 25, 0.45)');
+  gradient.addColorStop(1, 'rgba(10, 15, 25, 0.75)');
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, SLIDE_WIDTH, SLIDE_HEIGHT);
 
+  // Content card (frosted glass effect)
+  const cardMargin = 60;
+  const cardY = SLIDE_HEIGHT * 0.12;
+  const cardH = SLIDE_HEIGHT * 0.65;
+
+  drawRoundedRect(ctx, cardMargin, cardY, SLIDE_WIDTH - cardMargin * 2, cardH, 28);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+  ctx.fill();
+
+  // Card border
+  drawRoundedRect(ctx, cardMargin, cardY, SLIDE_WIDTH - cardMargin * 2, cardH, 28);
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Number circle
+  if (slideIndex !== undefined) {
+    const circleX = cardMargin + 50;
+    const circleY = cardY + 50;
+    const circleR = 28;
+
+    ctx.beginPath();
+    ctx.arc(circleX, circleY, circleR, 0, Math.PI * 2);
+    ctx.fillStyle = ALAII_BLUE;
+    ctx.fill();
+
+    ctx.font = `bold 28px ${HEADING_FONT}`;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(slideIndex), circleX, circleY + 1);
+  }
+
   // Headline
-  ctx.font = 'bold 48px sans-serif';
+  ctx.font = `bold 44px ${HEADING_FONT}`;
   ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
 
-  const margin = SLIDE_WIDTH * 0.1;
-  const textMaxWidth = SLIDE_WIDTH * 0.8;
+  const textX = cardMargin + 40;
+  const textMaxWidth = SLIDE_WIDTH - cardMargin * 2 - 80;
+  const headlineY = slideIndex !== undefined ? cardY + 100 : cardY + 50;
   const headlineLines = wrapText(ctx, slide.headline, textMaxWidth);
-  let y = SLIDE_HEIGHT * 0.15;
+  let y = headlineY;
 
   for (const line of headlineLines) {
-    drawTextWithShadow(ctx, line, margin, y);
-    y += 60;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillText(line, textX, y);
+    y += 56;
   }
 
-  // Divider line
-  y += 20;
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(margin, y);
-  ctx.lineTo(margin + textMaxWidth * 0.3, y);
-  ctx.stroke();
+  // Accent bar under headline
+  y += 10;
+  ctx.fillStyle = ALAII_BLUE;
+  ctx.fillRect(textX, y, 60, 4);
   y += 30;
 
   // Body text
-  ctx.font = '36px sans-serif';
+  ctx.font = `400 34px ${BODY_FONT}`;
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
   const bodyLines = wrapText(ctx, slide.body, textMaxWidth);
   for (const line of bodyLines) {
-    drawTextWithShadow(ctx, line, margin, y);
-    y += 48;
+    ctx.fillText(line, textX, y);
+    y += 46;
   }
 
   // Watermark
-  ctx.font = '22px sans-serif';
+  ctx.font = `bold 18px ${BODY_FONT}`;
   ctx.textAlign = 'center';
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+  ctx.fillStyle = ALAII_BLUE;
+  ctx.globalAlpha = 0.5;
   ctx.fillText('alaii.app', SLIDE_WIDTH / 2, SLIDE_HEIGHT - 50);
+  ctx.globalAlpha = 1;
 
-  const buffer = canvas.toBuffer('image/jpeg', { quality: 0.92 });
+  const buffer = canvas.toBuffer('image/jpeg', { quality: 0.93 });
   fs.writeFileSync(outputPath, buffer);
 }
 
@@ -194,45 +289,76 @@ async function renderCtaSlide(
   const img = await loadImage(bgImagePath);
   ctx.drawImage(img, 0, 0, SLIDE_WIDTH, SLIDE_HEIGHT);
 
-  // Stronger overlay for CTA
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+  // Very strong overlay
+  ctx.fillStyle = 'rgba(10, 15, 25, 0.82)';
   ctx.fillRect(0, 0, SLIDE_WIDTH, SLIDE_HEIGHT);
 
-  // Accent color circle/glow
+  // Radial glow behind CTA
   const grd = ctx.createRadialGradient(
-    SLIDE_WIDTH / 2, SLIDE_HEIGHT * 0.35, 0,
-    SLIDE_WIDTH / 2, SLIDE_HEIGHT * 0.35, 300,
+    SLIDE_WIDTH / 2, SLIDE_HEIGHT * 0.38, 0,
+    SLIDE_WIDTH / 2, SLIDE_HEIGHT * 0.38, 350,
   );
-  grd.addColorStop(0, 'rgba(99, 102, 241, 0.25)');
-  grd.addColorStop(1, 'rgba(99, 102, 241, 0)');
+  grd.addColorStop(0, 'rgba(74, 159, 212, 0.2)');
+  grd.addColorStop(1, 'rgba(74, 159, 212, 0)');
   ctx.fillStyle = grd;
   ctx.fillRect(0, 0, SLIDE_WIDTH, SLIDE_HEIGHT);
 
-  // CTA Text
-  ctx.font = 'bold 56px sans-serif';
+  // CTA card
+  const cardW = SLIDE_WIDTH * 0.82;
+  const cardH = 380;
+  const cardX = (SLIDE_WIDTH - cardW) / 2;
+  const cardY = SLIDE_HEIGHT * 0.22;
+
+  drawRoundedRect(ctx, cardX, cardY, cardW, cardH, 28);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
+  ctx.fill();
+  drawRoundedRect(ctx, cardX, cardY, cardW, cardH, 28);
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // CTA Text inside card
+  ctx.font = `bold 48px ${HEADING_FONT}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
 
-  const maxWidth = SLIDE_WIDTH * 0.75;
+  const maxWidth = cardW - 80;
   const lines = wrapText(ctx, ctaText, maxWidth);
-  const lineHeight = 72;
-  const startY = SLIDE_HEIGHT * 0.28;
+  const lineHeight = 62;
+  const textStartY = cardY + 50;
 
   for (let i = 0; i < lines.length; i++) {
-    drawTextWithShadow(ctx, lines[i], SLIDE_WIDTH / 2, startY + i * lineHeight);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillText(lines[i], SLIDE_WIDTH / 2, textStartY + i * lineHeight);
   }
 
-  // "alaii.app" big
-  ctx.font = 'bold 42px sans-serif';
-  ctx.fillStyle = '#818CF8'; // Indigo accent
-  ctx.fillText('alaii.app', SLIDE_WIDTH / 2, startY + lines.length * lineHeight + 40);
+  // "Try Alaii" button
+  const btnY = cardY + cardH - 80;
+  const btnW = 300;
+  const btnH = 56;
+  const btnX = (SLIDE_WIDTH - btnW) / 2;
 
-  // App store text
-  ctx.font = '28px sans-serif';
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-  ctx.fillText('free on app store + android', SLIDE_WIDTH / 2, startY + lines.length * lineHeight + 100);
+  drawRoundedRect(ctx, btnX, btnY, btnW, btnH, 28);
+  ctx.fillStyle = ALAII_BLUE;
+  ctx.fill();
 
-  const buffer = canvas.toBuffer('image/jpeg', { quality: 0.92 });
+  ctx.font = `bold 24px ${HEADING_FONT}`;
+  ctx.fillStyle = '#FFFFFF';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('try alaii free →', SLIDE_WIDTH / 2, btnY + btnH / 2);
+
+  // "alaii.app" below card
+  ctx.font = `bold 40px ${HEADING_FONT}`;
+  ctx.fillStyle = ALAII_BLUE;
+  ctx.textBaseline = 'top';
+  ctx.fillText('alaii.app', SLIDE_WIDTH / 2, cardY + cardH + 40);
+
+  // App store line
+  ctx.font = `400 24px ${BODY_FONT}`;
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+  ctx.fillText('free on app store + google play', SLIDE_WIDTH / 2, cardY + cardH + 100);
+
+  const buffer = canvas.toBuffer('image/jpeg', { quality: 0.93 });
   fs.writeFileSync(outputPath, buffer);
 }
 
@@ -273,10 +399,10 @@ export async function renderCarousel(
   slidePaths.push(hookPath);
   console.log(`  ✅ Hook slide rendered (industry: ${content.industry || 'general'})`);
 
-  // Render tip slides
+  // Render tip slides with numbered circles
   for (let i = 0; i < content.slides.length; i++) {
     const tipPath = path.join(tmpDir, `slide_${i + 1}_tip.jpg`);
-    await renderTipSlide(content.slides[i], bgPaths[i + 1], tipPath);
+    await renderTipSlide(content.slides[i], bgPaths[i + 1], tipPath, i + 1);
     slidePaths.push(tipPath);
     console.log(`  ✅ Tip slide ${i + 1} rendered`);
   }
