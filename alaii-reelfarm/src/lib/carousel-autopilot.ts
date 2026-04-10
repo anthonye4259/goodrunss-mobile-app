@@ -54,77 +54,65 @@ export interface CarouselPost {
 // ============================================================================
 
 const DEFAULT_CAROUSEL_TOPICS = [
-  // ── MONEY YOU'RE LOSING ──
-  "how much money you lose every time a client no-shows",
-  "the real cost of one empty slot per day ($75,000/year)",
-  "5 ways you're losing money without realizing it",
-  "i calculated how much ghost clients cost me. it was $23,000",
-  "empty slots are eating your income alive",
-  "you're leaving $400 on the table every week. here's how",
+  // ── PROOF / RESULTS ──
+  "i filled 6 empty slots this week without touching my phone",
+  "got 3 new clients in 24 hours. here's what changed",
+  "woke up to $1,200 in bookings i didn't have yesterday",
+  "haven't had a no-show in 3 weeks. here's why",
+  "one text filled my entire Thursday afternoon",
+  "i stopped chasing clients. now my phone fills my book for me",
 
-  // ── PASSIVE INCOME / WEALTH ──
-  "how i make money while i sleep as a beauty pro",
-  "the difference between being busy and being wealthy",
-  "5 things wealthy service providers do differently",
-  "you're working 12 hour days and still broke. here's why",
-  "how to stop trading time for money in the beauty industry",
-  "talented and broke is not a flex. build systems",
-  "i stopped hustling harder and started building smarter",
-  "passive income strategies for beauty professionals",
-  "how my AI makes me money while i'm with clients",
+  // ── MONEY LOST (specific, painful) ──
+  "i tracked my no-shows for a month. i lost $3,200",
+  "one empty slot per day = $75,000 per year. do the math",
+  "3 ghost clients cost me $8,400 this year alone",
+  "i was losing $400 every time someone cancelled. not anymore",
+  "$62,000. that's what 3 empty Botox slots per week costs per year",
+  "every client who doesn't rebook costs you $8,000 per year",
 
-  // ── WEALTH SYSTEMS ──
-  "the one system that changed my business income overnight",
-  "what happened when i let AI handle my client texts",
-  "i used to chase clients. now they chase me",
-  "how i fill cancellations in 10 minutes without touching my phone",
-  "your phone is not a business tool. it's holding you back",
-  "1 AI text recovered $2,400 in lost bookings last month",
-  "stop posting and start automating. your wallet will thank you",
+  // ── BEFORE/AFTER ──
+  "before: texting clients at 11pm. after: my book fills itself",
+  "before: 4 empty slots per week. after: fully booked, no chasing",
+  "i used to lose $500/month to cancellations. last month i lost $0",
+  "before: spending $48/month on booking. now: $0 and better results",
+  "my Tuesdays used to be dead. now they fill by Monday night",
+  "i went from 3 no-shows per week to zero. one change",
 
-  // ── INJECTORS / MEDSPA (WEALTH) ──
-  "one empty Botox slot costs you $400. 3/week = $62,000/year",
-  "how i built a 6-figure medspa with zero admin staff",
-  "the biggest money mistake new injectors make",
-  "patients ghost after consultations. here's what that costs you",
-  "why your medspa needs an AI that works nights and weekends",
-  "injector math: the real numbers behind a full vs empty book",
+  // ── INJECTORS / MEDSPA ──
+  "one empty Botox slot = $400 gone. i stopped letting that happen",
+  "filled a last-minute cancellation in 8 minutes. patient paid $400",
+  "my medspa fills cancellations now. zero phone calls",
+  "patients used to ghost after consultations. now they rebook automatically",
+  "i lost $1,200/week in empty slots. last week i lost $0",
 
-  // ── HAIR STYLISTS (WEALTH) ──
-  "how much money you lose when clients don't rebook",
-  "the behind-the-chair habit that's costing you thousands",
-  "i went from renting a chair to owning my income in 90 days",
-  "solo stylists: stop doing $100/hr work for $30/hr pay",
-  "5 ways to keep your chair full without begging for clients",
+  // ── HAIR STYLISTS ──
+  "filled 4 no-show slots in one week without posting on Instagram",
+  "clients who ghosted me for 2 months are booking again. i didn't text them",
+  "my chair hasn't been empty in 3 weeks. i'm not working harder",
+  "i stopped begging clients to rebook. now it happens automatically",
+  "solo stylist: stop texting clients. let your book fill itself",
 
-  // ── LASH TECHS (WEALTH) ──
-  "2 cancellations per week = $15,000/year in lost lash income",
-  "how i built a 6-figure lash business working 4 days a week",
-  "the text that gets 90% of lash clients to rebook immediately",
-  "lash tech money tips nobody talks about",
-  "your lash room is a business. start treating it like one",
+  // ── LASH TECHS ──
+  "2 cancellations per week was costing me $15,000/year. fixed it",
+  "filled a lash cancellation in 12 minutes. $250 saved",
+  "my lash room hasn't had an empty slot in weeks",
+  "lash clients who disappeared are coming back. i didn't chase them",
 
-  // ── ESTHETICIANS (WEALTH) ──
-  "every client who doesn't rebook costs you $8,000/year",
-  "how i filled my slow season without running a single ad",
-  "esthetician income: why you're underpaid and how to fix it",
-  "the follow-up that tripled my facial rebooking rate",
+  // ── ESTHETICIANS ──
+  "filled my slow season without running a single ad",
+  "facial rebooking rate went from 40% to 85%. one change",
+  "clients who hadn't booked in 60 days are back. i didn't text them",
 
-  // ── NAIL TECHS (WEALTH) ──
-  "no-shows without deposits cost nail techs thousands per year",
-  "how i doubled my nail income in 6 months with one change",
-  "3 empty slots per week = $12,000/year you'll never see",
+  // ── NAIL TECHS ──
+  "no-shows were costing me $12,000/year. last month: zero no-shows",
+  "my nail book fills itself. i haven't chased a client in weeks",
 
-  // ── REAL TALK / TRENDING ──
-  "things beauty school never taught you about building wealth",
-  "the moment i realized i was running a business not just doing services",
-  "your competitors are automating everything. you're still texting clients manually",
-  "fully booked and still stressed? you have an income problem not a booking problem",
-  "my honest numbers as a solo beauty pro (what i actually keep)",
-  "POV: you finally stopped losing money and started building wealth",
-  "the $0 tool that replaced my $50/month booking app",
-  "red flag: if your booking app doesn't fill your cancellations for you",
-  "what $500/month in lost bookings looks like over 5 years",
+  // ── REAL TALK ──
+  "the real reason you're fully booked and still broke",
+  "you're paying $48/month for booking. i pay $0 and get better results",
+  "your booking app doesn't fill your cancellations. that's a problem",
+  "i stopped losing money and my income went up $2,000/month",
+  "if your empty slots aren't filling themselves, you're losing thousands",
 ];
 
 // ============================================================================
