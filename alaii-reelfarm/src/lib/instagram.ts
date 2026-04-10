@@ -210,13 +210,14 @@ export async function publishCarousel(
   caption: string,
 ): Promise<IGPublishResult> {
   try {
-    // Check if we have direct Graph API creds
+    // Require direct Graph API creds (no more Manus fallback)
     const hasDirectCreds = process.env.IG_USER_ID && process.env.IG_ACCESS_TOKEN;
 
     if (hasDirectCreds) {
       return await publishCarouselDirect(imageUrls, caption);
     } else {
-      return await publishCarouselViaManus(imageUrls, caption);
+      console.warn('⚠️ No IG Graph API creds (IG_USER_ID / IG_ACCESS_TOKEN). Skipping IG post.');
+      return { containerId: '', status: 'error', error: 'No IG Graph API credentials configured' };
     }
   } catch (error) {
     return {

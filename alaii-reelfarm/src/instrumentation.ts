@@ -1,17 +1,16 @@
 // Next.js instrumentation — runs on server startup
-// Active engines: TikTok/IG carousel posting + influencer discovery
+// Only the carousel autopilot (TikTok + IG) is active
 
 export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
     const { startCarouselAutoPilot } = await import('./lib/carousel-autopilot');
-    const { startInfluencerDiscovery } = await import('./lib/influencer-discovery');
 
     startCarouselAutoPilot();
-    startInfluencerDiscovery();
 
-    // DISABLED — no longer running:
-    // startInfluencerOutreach();  // cold outreach
-    // startTwitterEngagement();   // Twitter engagement
-    // startRedditEngagement();    // Reddit engagement
+    // DISABLED — all of these are off:
+    // startInfluencerDiscovery();  // was using Manus credits
+    // startInfluencerOutreach();   // cold outreach
+    // startTwitterEngagement();    // Twitter engagement
+    // startRedditEngagement();     // Reddit engagement
   }
 }
