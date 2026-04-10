@@ -12,6 +12,7 @@ import { getSlideBackgrounds } from './pexels';
 import { renderCarousel, cleanupCarousel, type RenderedCarousel } from './carousel-render';
 import { publishCarouselToAll, getAllAccounts, type TikTokPublishResult } from './tiktok';
 import { publishCarousel as publishToIG, generateHashtags } from './instagram';
+import { getNextDemo, postDemoVideo } from './demo-rotation';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -453,8 +454,22 @@ export function startCarouselAutoPilot(): void {
           const last = new Date(campaign.lastGeneratedAt);
           if (now.getTime() - last.getTime() < 30 * 60 * 1000) continue;
         }
-        console.log(`⏰ Carousel time for "${campaign.name}" (${currentTime})`);
-        await runCarouselAutoPilot(campaign);
+
+        // Every 3rd post is a demo video (if available)
+        const shouldPostDemo = campaign.totalGenerated > 0 && campaign.totalGenerated % 3 === 0;
+        const nextDemo = shouldPostDemo ? getNextDemo() : null;
+
+        if (nextDemo) {
+          console.log(`📹 Demo time for "${campaign.name}" — posting ${nextDemo.id}`);
+          await postDemoVideo(nextDemo);
+          // Still count it for the campaign
+          campaign.totalGenerated += 1;
+          campaign.lastGeneratedAt = new Date().toISOString();
+          saveCarouselCampaign(campaign);
+        } else {
+          console.log(`⏰ Carousel time for "${campaign.name}" (${currentTime})`);
+          await runCarouselAutoPilot(campaign);
+        }
       }
     }
   });
