@@ -106,71 +106,51 @@ async function renderHookSlide(
   const canvas = createCanvas(SLIDE_WIDTH, SLIDE_HEIGHT);
   const ctx = canvas.getContext('2d');
 
-  // Background image
+  // Full-bleed background image — photo IS the slide
   const img = await loadImage(bgImagePath);
   ctx.drawImage(img, 0, 0, SLIDE_WIDTH, SLIDE_HEIGHT);
 
-  // Strong dark gradient overlay
+  // Light gradient overlay — just enough for text readability, photo stays visible
   const gradient = ctx.createLinearGradient(0, 0, 0, SLIDE_HEIGHT);
-  gradient.addColorStop(0, 'rgba(10, 15, 25, 0.85)');
-  gradient.addColorStop(0.4, 'rgba(10, 15, 25, 0.55)');
-  gradient.addColorStop(0.7, 'rgba(10, 15, 25, 0.45)');
-  gradient.addColorStop(1, 'rgba(10, 15, 25, 0.80)');
+  gradient.addColorStop(0, 'rgba(0, 0, 0, 0.45)');
+  gradient.addColorStop(0.35, 'rgba(0, 0, 0, 0.20)');
+  gradient.addColorStop(0.65, 'rgba(0, 0, 0, 0.15)');
+  gradient.addColorStop(1, 'rgba(0, 0, 0, 0.50)');
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, SLIDE_WIDTH, SLIDE_HEIGHT);
 
-  // Accent bar at top
-  ctx.fillStyle = ALAII_BLUE;
-  ctx.fillRect(0, 0, SLIDE_WIDTH, 6);
-
-  // Industry pill at top
-  if (industry) {
-    const pillText = `for ${industry}`;
-    ctx.font = `bold 24px ${BODY_FONT}`;
-    ctx.textAlign = 'center';
-    const pillW = ctx.measureText(pillText).width + 40;
-    const pillX = (SLIDE_WIDTH - pillW) / 2;
-    const pillY = SLIDE_HEIGHT * 0.10;
-
-    drawRoundedRect(ctx, pillX, pillY, pillW, 42, 21);
-    ctx.fillStyle = ALAII_BLUE;
-    ctx.fill();
-
-    ctx.fillStyle = '#FFFFFF';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(pillText, SLIDE_WIDTH / 2, pillY + 21);
-  }
-
-  // Hook text — large, centered
-  ctx.font = `bold 62px ${HEADING_FONT}`;
-  ctx.textAlign = 'center';
+  // Hook text — bold, directly on photo, top area
+  ctx.font = `bold 64px ${HEADING_FONT}`;
+  ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
 
-  const maxWidth = SLIDE_WIDTH * 0.78;
+  const textX = 60;
+  const maxWidth = SLIDE_WIDTH - 120;
   const lines = wrapText(ctx, hookText, maxWidth);
-  const lineHeight = 78;
-  const startY = industry
-    ? SLIDE_HEIGHT * 0.22
-    : SLIDE_HEIGHT * 0.28 - (lines.length * lineHeight) / 2;
+  const lineHeight = 80;
+  const startY = 80;
+
+  // Text shadow for readability on any photo
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
+  ctx.shadowBlur = 12;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 2;
 
   for (let i = 0; i < lines.length; i++) {
-    const ly = startY + i * lineHeight;
-    // Glow for readability
-    drawTextGlow(ctx, lines[i], SLIDE_WIDTH / 2, ly, 'rgba(0,0,0,0.8)');
     ctx.fillStyle = '#FFFFFF';
-    ctx.fillText(lines[i], SLIDE_WIDTH / 2, ly);
+    ctx.fillText(lines[i], textX, startY + i * lineHeight);
   }
 
-  // "Swipe" indicator at bottom
-  ctx.font = `600 22px ${BODY_FONT}`;
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-  ctx.textAlign = 'center';
-  ctx.fillText('swipe →', SLIDE_WIDTH / 2, SLIDE_HEIGHT - 100);
+  // Reset shadow
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetY = 0;
 
-  // Alaii watermark
+  // Alaii watermark — subtle, bottom center
   ctx.font = `bold 20px ${BODY_FONT}`;
-  ctx.fillStyle = ALAII_BLUE;
-  ctx.globalAlpha = 0.6;
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#FFFFFF';
+  ctx.globalAlpha = 0.5;
   ctx.fillText('alaii.app', SLIDE_WIDTH / 2, SLIDE_HEIGHT - 50);
   ctx.globalAlpha = 1;
 
@@ -187,89 +167,74 @@ async function renderTipSlide(
   const canvas = createCanvas(SLIDE_WIDTH, SLIDE_HEIGHT);
   const ctx = canvas.getContext('2d');
 
-  // Background
+  // Full-bleed background — photo IS the slide
   const img = await loadImage(bgImagePath);
   ctx.drawImage(img, 0, 0, SLIDE_WIDTH, SLIDE_HEIGHT);
 
-  // Dark overlay
+  // Light gradient overlay — photo stays visible
   const gradient = ctx.createLinearGradient(0, 0, 0, SLIDE_HEIGHT);
-  gradient.addColorStop(0, 'rgba(10, 15, 25, 0.82)');
-  gradient.addColorStop(0.3, 'rgba(10, 15, 25, 0.50)');
-  gradient.addColorStop(0.7, 'rgba(10, 15, 25, 0.45)');
-  gradient.addColorStop(1, 'rgba(10, 15, 25, 0.75)');
+  gradient.addColorStop(0, 'rgba(0, 0, 0, 0.50)');
+  gradient.addColorStop(0.3, 'rgba(0, 0, 0, 0.25)');
+  gradient.addColorStop(0.65, 'rgba(0, 0, 0, 0.15)');
+  gradient.addColorStop(1, 'rgba(0, 0, 0, 0.35)');
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, SLIDE_WIDTH, SLIDE_HEIGHT);
 
-  // Content card (frosted glass effect)
-  const cardMargin = 60;
-  const cardY = SLIDE_HEIGHT * 0.12;
-  const cardH = SLIDE_HEIGHT * 0.65;
+  // Text shadow for readability
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
+  ctx.shadowBlur = 12;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 2;
 
-  drawRoundedRect(ctx, cardMargin, cardY, SLIDE_WIDTH - cardMargin * 2, cardH, 28);
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
-  ctx.fill();
+  const textX = 60;
+  const textMaxWidth = SLIDE_WIDTH - 120;
 
-  // Card border
-  drawRoundedRect(ctx, cardMargin, cardY, SLIDE_WIDTH - cardMargin * 2, cardH, 28);
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-
-  // Number circle
+  // Number + headline together (e.g. "1. stopped posting random content daily")
+  let headlineText = slide.headline;
   if (slideIndex !== undefined) {
-    const circleX = cardMargin + 50;
-    const circleY = cardY + 50;
-    const circleR = 28;
-
-    ctx.beginPath();
-    ctx.arc(circleX, circleY, circleR, 0, Math.PI * 2);
-    ctx.fillStyle = ALAII_BLUE;
-    ctx.fill();
-
-    ctx.font = `bold 28px ${HEADING_FONT}`;
-    ctx.fillStyle = '#FFFFFF';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(String(slideIndex), circleX, circleY + 1);
+    headlineText = `${slideIndex}. ${slide.headline}`;
   }
 
-  // Headline
-  ctx.font = `bold 44px ${HEADING_FONT}`;
+  ctx.font = `bold 48px ${HEADING_FONT}`;
   ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
 
-  const textX = cardMargin + 40;
-  const textMaxWidth = SLIDE_WIDTH - cardMargin * 2 - 80;
-  const headlineY = slideIndex !== undefined ? cardY + 100 : cardY + 50;
-  const headlineLines = wrapText(ctx, slide.headline, textMaxWidth);
-  let y = headlineY;
+  const headlineLines = wrapText(ctx, headlineText, textMaxWidth);
+  let y = 80;
 
   for (const line of headlineLines) {
     ctx.fillStyle = '#FFFFFF';
     ctx.fillText(line, textX, y);
-    y += 56;
+    y += 62;
   }
 
   // Accent bar under headline
-  y += 10;
-  ctx.fillStyle = ALAII_BLUE;
-  ctx.fillRect(textX, y, 60, 4);
-  y += 30;
+  y += 8;
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(textX, y, 50, 3);
+  y += 24;
+  ctx.shadowBlur = 12;
 
-  // Body text
+  // Body text — slightly smaller, directly on photo
   ctx.font = `400 34px ${BODY_FONT}`;
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
   const bodyLines = wrapText(ctx, slide.body, textMaxWidth);
   for (const line of bodyLines) {
     ctx.fillText(line, textX, y);
     y += 46;
   }
 
+  // Reset shadow
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetY = 0;
+
   // Watermark
   ctx.font = `bold 18px ${BODY_FONT}`;
   ctx.textAlign = 'center';
-  ctx.fillStyle = ALAII_BLUE;
-  ctx.globalAlpha = 0.5;
+  ctx.fillStyle = '#FFFFFF';
+  ctx.globalAlpha = 0.4;
   ctx.fillText('alaii.app', SLIDE_WIDTH / 2, SLIDE_HEIGHT - 50);
   ctx.globalAlpha = 1;
 
