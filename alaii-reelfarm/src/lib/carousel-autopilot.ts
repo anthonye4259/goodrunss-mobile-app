@@ -141,15 +141,16 @@ function ensureDataDir() {
   if (!fs.existsSync(CAMPAIGNS_FILE)) {
     const defaultCampaign: CarouselCampaign = {
       id: uuid(),
-      name: 'Alaii — TikTok Carousels',
-      enabled: false,
+      name: 'Alaii Growth Engine',
+      enabled: true,
       requireApproval: true,
-      postsPerDay: 20,
+      postsPerDay: 5,
       postTimes: [
-        '07:00', '07:45', '08:30', '09:15', '10:00', '10:45',
-        '11:30', '12:15', '13:00', '13:45', '14:30', '15:15',
-        '16:00', '16:45', '17:30', '18:15', '19:00', '19:45',
-        '20:30', '21:15',
+        '07:30',  // morning scroll — beauty pros prepping for first client
+        '11:30',  // midday break — high engagement window
+        '15:00',  // afternoon lull — checking phones between clients
+        '18:30',  // post-work wind-down — peak TikTok/IG usage
+        '21:00',  // evening scroll — highest engagement for beauty niche
       ],
       topics: DEFAULT_CAROUSEL_TOPICS,
       accountIds: [], // Empty = all accounts
@@ -159,6 +160,25 @@ function ensureDataDir() {
       totalGenerated: 0,
     };
     fs.writeFileSync(CAMPAIGNS_FILE, JSON.stringify([defaultCampaign], null, 2));
+  } else {
+    // Force-update existing campaigns to new growth engine settings
+    const campaigns: CarouselCampaign[] = JSON.parse(fs.readFileSync(CAMPAIGNS_FILE, 'utf-8'));
+    let updated = false;
+    for (const c of campaigns) {
+      if (!c.enabled || c.postsPerDay !== 5) {
+        c.enabled = true;
+        c.requireApproval = true;
+        c.postsPerDay = 5;
+        c.postTimes = ['07:30', '11:30', '15:00', '18:30', '21:00'];
+        c.name = 'Alaii Growth Engine';
+        c.topics = DEFAULT_CAROUSEL_TOPICS;
+        updated = true;
+        console.log(`🔄 Force-updated campaign "${c.name}" → enabled, 5/day, no approval`);
+      }
+    }
+    if (updated) {
+      fs.writeFileSync(CAMPAIGNS_FILE, JSON.stringify(campaigns, null, 2));
+    }
   }
 
   if (!fs.existsSync(POSTS_FILE)) {
