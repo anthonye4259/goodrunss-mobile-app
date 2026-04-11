@@ -55,66 +55,62 @@ export interface CarouselPost {
 // ============================================================================
 
 const DEFAULT_CAROUSEL_TOPICS = [
-  // ── PROOF / RESULTS ──
-  "i filled 6 empty slots this week without touching my phone",
-  "got 3 new clients in 24 hours. here's what changed",
-  "woke up to $1,200 in bookings i didn't have yesterday",
-  "haven't had a no-show in 3 weeks. here's why",
-  "one text filled my entire Thursday afternoon",
-  "i stopped chasing clients. now my phone fills my book for me",
+  // ── THE PAIN (make them feel it) ──
+  "just had a cancellation? that's $200 gone. unless you do this",
+  "another no-show. another empty hour. another $0",
+  "3pm cancelled. 3pm is now empty. 3pm is now lost money",
+  "that feeling when your 2pm cancels 30 minutes before",
+  "you just lost $400 because someone 'forgot'",
+  "client cancelled. you texted 8 people. nobody replied. sound familiar?",
+  "cancellations aren't annoying. they're expensive. here's how much",
 
-  // ── MONEY LOST (specific, painful) ──
-  "i tracked my no-shows for a month. i lost $3,200",
-  "one empty slot per day = $75,000 per year. do the math",
-  "3 ghost clients cost me $8,400 this year alone",
-  "i was losing $400 every time someone cancelled. not anymore",
-  "$62,000. that's what 3 empty Botox slots per week costs per year",
-  "every client who doesn't rebook costs you $8,000 per year",
+  // ── THE MATH (make it real) ──
+  "2 cancellations per week × 52 weeks = $20,000+ lost per year",
+  "one empty Botox slot = $500 gone. one empty lash slot = $150 gone",
+  "i tracked my cancellations for 30 days. i lost $3,200",
+  "the average beauty pro loses $15,000/year to cancellations",
+  "$62,000. that's what 3 empty filler slots per week costs per year",
+  "every empty hour in your chair is money you'll never get back",
 
-  // ── BEFORE/AFTER ──
-  "before: texting clients at 11pm. after: my book fills itself",
-  "before: 4 empty slots per week. after: fully booked, no chasing",
-  "i used to lose $500/month to cancellations. last month i lost $0",
-  "before: spending $48/month on booking. now: $0 and better results",
-  "my Tuesdays used to be dead. now they fill by Monday night",
-  "i went from 3 no-shows per week to zero. one change",
+  // ── THE FIX (tap once) ──
+  "client cancelled at 10am. slot was filled by 10:08am",
+  "i stopped losing money to cancellations. one tap fixed it",
+  "cancelled slot → tap once → waitlist notified → slot filled. that simple",
+  "she cancelled at noon. by 12:05 someone else booked. here's how",
+  "i used to panic when clients cancelled. now i tap one button",
+  "the difference between losing $400 and making $400? one tap",
 
   // ── INJECTORS / MEDSPA ──
-  "one empty Botox slot = $400 gone. i stopped letting that happen",
-  "filled a last-minute cancellation in 8 minutes. patient paid $400",
-  "my medspa fills cancellations now. zero phone calls",
-  "patients used to ghost after consultations. now they rebook automatically",
-  "i lost $1,200/week in empty slots. last week i lost $0",
+  "Botox cancellation? that's $500 gone. tap once and rescue it",
+  "my medspa used to lose 3 filler slots per week. not anymore",
+  "patient cancelled their $600 appointment. i filled it in 7 minutes",
+  "empty Botox chair at 2pm? your waitlist wants that slot. let them know",
+  "one tap. 7 minutes. $500 saved. that's cancellation rescue",
 
   // ── HAIR STYLISTS ──
-  "filled 4 no-show slots in one week without posting on Instagram",
-  "clients who ghosted me for 2 months are booking again. i didn't text them",
-  "my chair hasn't been empty in 3 weeks. i'm not working harder",
-  "i stopped begging clients to rebook. now it happens automatically",
-  "solo stylist: stop texting clients. let your book fill itself",
+  "balayage cancelled. $200 gone. unless you rescue it in 5 minutes",
+  "my chair hasn't been empty from a cancellation in 3 weeks",
+  "color client ghosted. tapped once. filled in 12 minutes",
+  "solo stylist tip: stop losing money to cancellations. rescue them",
 
   // ── LASH TECHS ──
-  "2 cancellations per week was costing me $15,000/year. fixed it",
-  "filled a lash cancellation in 12 minutes. $250 saved",
-  "my lash room hasn't had an empty slot in weeks",
-  "lash clients who disappeared are coming back. i didn't chase them",
+  "lash fill cancelled. $150 gone. or you tap once and save it",
+  "2 lash cancellations per week = $15,000/year you're losing",
+  "she cancelled her lash appointment. 8 minutes later someone else had it",
+  "lash techs: your cancellations are costing you a vacation every year",
 
   // ── ESTHETICIANS ──
-  "filled my slow season without running a single ad",
-  "facial rebooking rate went from 40% to 85%. one change",
-  "clients who hadn't booked in 60 days are back. i didn't text them",
+  "facial cancelled last minute. $120 you'll never see. unless...",
+  "empty treatment room = lost money. fill it in minutes, not hours",
 
-  // ── NAIL TECHS ──
-  "no-shows were costing me $12,000/year. last month: zero no-shows",
-  "my nail book fills itself. i haven't chased a client in weeks",
-
-  // ── REAL TALK ──
-  "the real reason you're fully booked and still broke",
-  "you're paying $48/month for booking. i pay $0 and get better results",
-  "your booking app doesn't fill your cancellations. that's a problem",
-  "i stopped losing money and my income went up $2,000/month",
-  "if your empty slots aren't filling themselves, you're losing thousands",
+  // ── EMOTIONAL / RELATABLE ──
+  "stop accepting cancellations as 'part of the job'",
+  "you didn't start your business to lose money to no-shows",
+  "the hardest part isn't the cancellation. it's scrambling to fill it alone",
+  "what if cancellations stopped costing you money?",
+  "you're one tap away from never losing money to a cancellation again",
 ];
+
 
 // ============================================================================
 // Data Storage
