@@ -1,16 +1,17 @@
 // Next.js instrumentation — runs on server startup
-// Only the carousel autopilot (TikTok + IG) is active
+// ALL AUTOMATION DISABLED — everything is manual for now
 
 export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
-    const { startCarouselAutoPilot } = await import('./lib/carousel-autopilot');
+    // DISABLED — all automation off per owner request (2026-04-12)
+    // const { startCarouselAutoPilot } = await import('./lib/carousel-autopilot');
+    // startCarouselAutoPilot();
 
-    startCarouselAutoPilot();
-
-    // DISABLED — all of these are off:
     // startInfluencerDiscovery();  // was using Manus credits
     // startInfluencerOutreach();   // cold outreach
     // startTwitterEngagement();    // Twitter engagement
     // startRedditEngagement();     // Reddit engagement
+
+    console.log('⏸️ All automation disabled — manual mode only');
   }
 }
