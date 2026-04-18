@@ -142,7 +142,7 @@ function calculateTrafficPrediction(
 
     // 3. MODIFIER: Geo-Population Density (Using our database)
     // We fuzzy match closest city
-    let closestCity = null
+    let closestCity: { name: string; density: number; population: number; country: string } | null = null
     let minDist = Infinity
 
     for (const [key, city] of Object.entries(GLOBAL_CITIES)) {

@@ -119,7 +119,7 @@ export const getSmartSlotRecommendations = functions.https.onCall(async (data, c
 
         // Generate recommendations
         const today = new Date()
-        const recommendations = []
+        const recommendations: { date: string; time: string; reason: string; priority: number }[] = []
 
         for (let i = 0; i < 7; i++) {
             const date = new Date(today)

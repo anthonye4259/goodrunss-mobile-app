@@ -25,6 +25,26 @@ service cloud.firestore {
     match /imprint_users/{userId} {
       allow read: if isAuthenticated();
       allow write: if isOwner(userId);
+
+      // Referrals subcollection — any auth'd user can CREATE a referral
+      // (User A enters User B's code → writes to User B's subcollection)
+      match /referrals/{referralId} {
+        allow read: if isOwner(userId);
+        allow create: if isAuthenticated();
+        allow update, delete: if isOwner(userId);
+      }
+
+      // Wallet subcollection — owner read, server-side (Admin SDK) writes
+      match /wallet/{studioId} {
+        allow read: if isOwner(userId);
+        allow write: if false; // Server-side only (Cloud Functions)
+      }
+
+      // Rewards subcollection — owner read only
+      match /rewards/{rewardId} {
+        allow read: if isOwner(userId);
+        allow write: if false; // Server-side only
+      }
     }
 
     // Claimed Facilities - facility owners can create and manage

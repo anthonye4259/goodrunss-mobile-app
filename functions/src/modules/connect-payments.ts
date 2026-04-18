@@ -1,14 +1,14 @@
 /**
  * Stripe Connect Payments & Wallet Management
  *
- * Routes payments through business Connect accounts with 2.5% platform fee.
+ * Routes payments through business Connect accounts with 0.1% platform fee (client-side).
  * Manages Stripe Customers for wallet (saved payment methods).
  *
  * Client flow:
  *   1. Client taps Pay in any bizapp
  *   2. App calls createConnectPaymentIntent
  *   3. PaymentSheet opens with saved cards + Apple Pay
- *   4. Money flows: Client → Stripe → Business (minus 2.5% to Alaii)
+ *   4. Money flows: Client → Stripe → Business (minus 0.1% to Alaii)
  */
 
 import * as functions from "firebase-functions"
@@ -22,8 +22,8 @@ const stripe = config.stripe?.secret_key
 
 const db = admin.firestore()
 
-// Platform fee: 2.5%
-const PLATFORM_FEE_PERCENT = 0.025
+// Platform fee: 0.1% (client-side processing fee)
+const PLATFORM_FEE_PERCENT = 0.001
 
 // ==================== HELPERS ====================
 
@@ -93,8 +93,8 @@ async function getBusinessConnectAccountId(studioId: string): Promise<string | n
  * Create a PaymentIntent routed through a business's Stripe Connect account.
  *
  * Money flow:
- *   Client pays $100 → Stripe takes ~2.9% + $0.30 → Alaii gets 2.5% ($2.50)
- *   → Business receives the rest (~$94.60)
+ *   Client pays $100 → Stripe takes ~2.9% + $0.30 → Alaii gets 0.1% ($0.10)
+ *   → Business receives the rest (~$96.71)
  *
  * Returns clientSecret, ephemeralKey, customerId for PaymentSheet.
  */
@@ -160,12 +160,17 @@ export const createConnectPaymentIntent = functions.https.onCall(
                 { apiVersion: "2023-10-16" }
             )
 
-            // 5. Calculate platform fee (2.5%)
-            const applicationFee = Math.round(amount * PLATFORM_FEE_PERCENT)
+            // 5. Fee handling:
+            // The mobile app already calculates the final amount based on the studio's feeMode
+            // (client pays all fees / studio absorbs / 50-50 split).
+            // The amount received here is the FINAL charge to the client.
+            // We only need to extract Alaii's 0.1% as application_fee_amount.
+            const finalAmount = Math.round(amount)
+            const alaiiPlatformFee = Math.max(1, Math.round(finalAmount * PLATFORM_FEE_PERCENT))
 
             // 6. Build PaymentIntent params
             const intentParams: Stripe.PaymentIntentCreateParams = {
-                amount: Math.round(amount),
+                amount: finalAmount, // already includes any fees the client is paying
                 currency,
                 customer: customerId,
                 automatic_payment_methods: { enabled: true },
@@ -176,12 +181,14 @@ export const createConnectPaymentIntent = functions.https.onCall(
                     itemType: itemType || "payment",
                     itemId: itemId || "",
                     platform: "alaii",
+                    alaiiPlatformFee: String(alaiiPlatformFee),
                 },
             }
 
             // If business has Connect account, route payment to them
+            // application_fee_amount = Alaii's 0.1% cut from the payment
             if (connectedAccountId) {
-                intentParams.application_fee_amount = applicationFee
+                intentParams.application_fee_amount = alaiiPlatformFee
                 intentParams.transfer_data = {
                     destination: connectedAccountId,
                 }
@@ -195,9 +202,9 @@ export const createConnectPaymentIntent = functions.https.onCall(
                 {
                     userId,
                     studioId,
-                    amount,
+                    finalAmount,
+                    alaiiPlatformFee,
                     connectedAccountId: connectedAccountId || "platform-direct",
-                    applicationFee,
                 }
             )
 
@@ -206,8 +213,8 @@ export const createConnectPaymentIntent = functions.https.onCall(
                 paymentIntentId: paymentIntent.id,
                 userId,
                 studioId,
-                amount,
-                applicationFee,
+                amount: finalAmount,
+                alaiiPlatformFee,
                 connectedAccountId: connectedAccountId || null,
                 itemName: itemName || "Payment",
                 itemType: itemType || "payment",
